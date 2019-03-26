@@ -30,15 +30,14 @@ def main(args):
     (options, args) = parser.parse_args(args)
 
     # Configure UDP port
-    udp_send_port = 32100
-    udp_read_port = 32101
+    udp_send_port = 32107 # Communication from MTP
+    #udp_read_port = 30106 # Communication to MTP; not used by this emulator
     udp_ip = "127.0.0.1"
 
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    #sock.bind((udp_read_port)
 
     # Read in a record from the raw data file. A record consists of 6 lines 
     # starting with, in order, A, B, M01, M02, Pt, and E. Output as a single 
@@ -59,7 +58,7 @@ def main(args):
         # Send MTP ascii packet out over UDP
         if sock:
             bytes = sock.sendto(buffer.encode(), (udp_ip, udp_send_port))
-            print(bytes)
+            #print(bytes)
 
         # Wait before retrieve next scan, to emulate MTP 17 second gap between scans
         #time.sleep(1) # Seems to give about a 10-second gap
