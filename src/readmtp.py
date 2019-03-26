@@ -13,6 +13,20 @@
 # Pt: 2177 13823 13811 10352 13315 13327 13304 14460
 # E 021506 022917 022752 019806 021164 020697
 #
+# The variables in each line are (they should match the project
+# nidas/default.xml file:
+#
+# A <date> <time> SAPITCH SRPITCH SAROLL SRROLL SAPALT SRPALT SAAT SRAT SALAT SRLAT SALON SRLON SMCMD SMENC
+# B SCNT[30]
+# M01: VM08CNTE VVIDCNTE VP08CNTE VMTRCNTE VSYNCNTE VP15CNTE VP05CNTE VM15CNTE
+# M02: ACCPCNTE TDATCNTE TMTRCNTE TAIRCNTE TSMPCNTE TPSPCNTE TNCCNTE TSYNCNTE
+# Pt: TR350CNTP TTCNTRCNTP TTEDGCNTP TWINCNTP TMIXCNTP TAMPCNTP TNDCNTP TR600CNTP
+# E TCNT[6]
+#
+# When combined into a Ascii packet, the lines A, B, M01, M02, P, and E are
+# concatenated, in order, and changed so all values are comma-separated, e.g.:
+# MTP,20140606T062252,+03.98,00.25,+00.07,00.33,+03.18,0.01,268.08,00.11,-43.308,+0.009,+172.469,+0.000,+074146,+073392,018963,020184,019593,018971,020181,019593,018970,020170,019587,018982,020193,019589,018992,020223,019617,019001,020229,019623,018992,020208,019601,018972,020181,019572,018979,020166,019558,018977,020161,019554,2928,2321,2898,3082,1923,2921,2432,2944,2016,1394,2096,2202,2136,1508,4095,1558,2177,13823,13811,10352,13315,13327,13304,14460,021506,022917,022752,019806,021164,020697
+#
 # Written in Python 3
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
@@ -51,6 +65,12 @@ class readMTP:
         self.rawscan['M02line']['re'] = re.compile("(^M02): (.*)")
         self.rawscan['Ptline']['re'] = re.compile("(^Pt): (.*)")
         self.rawscan['Eline']['re'] = re.compile("(^E) (.*)")
+
+        # A string to hold an Ascii packet
+        self.asciiPacket = ""
+
+        # Empty dictionary to hold data from a record
+        self.data = {}
 
 
     def readRawScan(self,raw_data_file):
@@ -91,8 +111,10 @@ class readMTP:
                 self.rawscan[linetype]['found'] = False
             return(True) # Not at EOF
 
-    # Return an Ascii Packet (suitable for sending around the plane) e.g.
-    # MTP,20140606T062252,+03.98,00.25,+00.07,00.33,+03.18,0.01,268.08,00.11,-43.308,+0.009,+172.469,+0.000,+074146,+073392,018963,020184,019593,018971,020181,019593,018970,020170,019587,018982,020193,019589,018992,020223,019617,019001,020229,019623,018992,020208,019601,018972,020181,019572,018979,020166,019558,018977,020161,019554,2928,2321,2898,3082,1923,2921,2432,2944,2016,1394,2096,2202,2136,1508,4095,1558,2177,13823,13811,10352,13315,13327,13304,14460,021506,022917,022752,019806,021164,020697
+    # Combine the separate lines from a raw scan into an Ascii packet
+    # (suitable for sending around the plane).
+    # Stores the Ascii packet in the dictionary.
+    # Also, returns the Ascii packet to the caller.
     def getAsciiPacket(self):
         packet = [] 
         packet.append("MTP")
@@ -105,14 +127,56 @@ class readMTP:
         packet.append(self.rawscan['Eline']['data'])
 
         # Turn our packet into a comma separated string, and return it
-        # But since the individual data 
-        # strings are space separated, split string on spaces and rejoin with 
-        # commas
+        # But since the individual data strings are space separated, split 
+        # string on spaces and rejoin with commas
         separator = ' '
         line = separator.join(packet) # Join the components into a string
-        values = line.split()         # Split string on spaces
+        values = line.split(separator)         # Split string on spaces
         separator = ','
-        return separator.join(values) # Rejoin with commas
+        UDPpacket = separator.join(values)
+
+        # Store the new packet in our dictionary
+        self.asciiPacket = UDPpacket
+
+        # Return the newly created packet
+        return (UDPpacket)
+
+    # Parse an Ascii packet and store it's values in the data dictionary
+    def parseAsciiPacket(self,UDPpacket):
+        # Split string on commas
+        separator = ','
+        values = UDPpacket.split(separator)
+        # values[0] contains the packet identifier, in this case 'MTP'
+        # values[1] contains the datetime, i.e. yyyymmddThhMMss
+        self.assignAvalues(values[2:16])
+        # self.assignBvalues(values[16:46])
+        # self.assignM01values(values[46:54])
+        # self.assignM02values(values[54:62])
+        # self.assignPtvalues(values[62:70])
+        # self.assignEvalues(values[70:76])
+
+    # Parse the A line and assign to variables in the data dictionary
+    # Expects an array of values that are just the data from the Aline, i.e.
+    # does not contain the "A yyyymmdd hh:mm:ss"
+    def assignAvalues(self,values):
+        self.data['SAPITCH']=values[0] # MTP Scan Avg Pitch (degree)
+        self.data['SRPITCH']=values[1] # MTP Scan RMSE Pitch (degree)
+        self.data['SAROLL']=values[2]  # MTP Scan Avg Roll (degree)
+        self.data['SRROLL']=values[3]  # MTP Scan RMSE Roll (degree)
+        self.data['SAPALT']=values[4]  # MTP Scan Avg Pressure Altitude (km)
+        self.data['SRPALT']=values[5]  # MTP Scan RMSE Pressure Altitude (km)
+        self.data['SAAT']=values[6]    # MTP Scan Avg Ambient Air Temp (deg_K)
+        self.data['SRAT']=values[7]    # MTP Scan RMSE Ambient Air Temp (deg_K)
+        self.data['SALAT']=values[8]   # MTP Scan Avg Latitude (degree_N)
+        self.data['SRLAT']=values[9]   # MTP Scan RMSE Latitude (degree_N)
+        self.data['SALON']=values[10]  # MTP Scan Avg Longitude (degree_E)
+        self.data['SRLON']=values[11]  # MTP Scan RMSE Longitude (degree_E)
+        self.data['SMCMD']=values[12]  # MTP Scan Motor Commanded Position
+        self.data['SMENC']=values[13]  # MTP Scan Motor Encoded Position
+
+    # Get the value of a variable from the data dictionary
+    def getData(self,varname):
+        return(self.data[varname])
 
 if __name__ == "__main__":
     readRaw()
