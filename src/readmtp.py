@@ -146,8 +146,16 @@ class readMTP:
         # Split string on commas
         separator = ','
         values = UDPpacket.split(separator)
-        # values[0] contains the packet identifier, in this case 'MTP'
+
+        # values[0] contains the packet identifier, in this case 'MTP' so skip
         # values[1] contains the datetime, i.e. yyyymmddThhMMss
+        m = re.match("(........)T(..)(..)(..)",values[1])
+        if (m):
+            # Save YYYYMMDD to variable DATE
+            self.data['DATE'] = m.group(1)
+            # Save seconds since midnight to variable TIME
+            self.data['TIME'] = int(m.group(2))*3600+int(m.group(3))*60+int(m.group(4))
+
         self.assignAvalues(values[2:16])
         # self.assignBvalues(values[16:46])
         # self.assignM01values(values[46:54])
