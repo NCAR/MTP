@@ -33,6 +33,7 @@
 ################################################################################
 
 import re
+import numpy
 
 class readMTP:
 
@@ -70,7 +71,41 @@ class readMTP:
         self.asciiPacket = ""
 
         # Empty dictionary to hold data from a record
-        self.data = {}
+        # Index is AFTER date/time
+        self.rawscan['Aline']['data'] = {
+            'DATE': { # MTP Scan Avg Pitch (degree)
+                'val': numpy.nan , 'idx':-2},
+            'TIME': { # MTP Scan Avg Pitch (degree)
+                'val': numpy.nan , 'idx':-1},
+            'SAPITCH': { # MTP Scan Avg Pitch (degree)
+                'val': numpy.nan , 'idx':0},
+            'SRPITCH': { # MTP Scan RMSE Pitch (degree)
+                'val': numpy.nan , 'idx':1},
+            'SAROLL':  { # MTP Scan Avg Roll (degree)
+                'val': numpy.nan , 'idx':2},
+            'SRROLL':  {  # MTP Scan RMSE Roll (degree)
+                'val': numpy.nan , 'idx':3},
+            'SAPALT':  {  # MTP Scan Avg Pressure Altitude (km)
+                'val': numpy.nan , 'idx':4},
+            'SRPALT':  {  # MTP Scan RMSE Pressure Alt (km)
+                'val': numpy.nan , 'idx':5},
+            'SAAT':    {  # MTP Scan Avg Ambient Air Temp (deg_K)
+                'val': numpy.nan , 'idx':6},
+            'SRAT':    {  # MTP Scan RMSE Ambient Air Temp(deg_K)
+                'val': numpy.nan , 'idx':7},
+            'SALAT':   {  # MTP Scan Avg Latitude (degree_N)
+                'val': numpy.nan , 'idx':8},
+            'SRLAT':   {  # MTP Scan RMSE Latitude (degree_N)
+                'val': numpy.nan , 'idx':9},
+            'SALON':   {  # MTP Scan Avg Longitude (degree_E)
+                'val': numpy.nan , 'idx':10},
+            'SRLON':   {  # MTP Scan RMSE Longitude (degree_E)
+                'val': numpy.nan , 'idx':11},
+            'SMCMD':   {  # MTP Scan Motor Commanded Position
+                'val': numpy.nan , 'idx':12},
+            'SMENC':   {  # MTP Scan Motor Encoded Position
+                'val': numpy.nan , 'idx':13},
+        }
 
 
     def readRawScan(self,raw_data_file):
@@ -152,9 +187,10 @@ class readMTP:
         m = re.match("(........)T(..)(..)(..)",values[1])
         if (m):
             # Save YYYYMMDD to variable DATE
-            self.data['DATE'] = m.group(1)
+            self.rawscan['Aline']['data']['DATE']['val'] = m.group(1)
             # Save seconds since midnight to variable TIME
-            self.data['TIME'] = int(m.group(2))*3600+int(m.group(3))*60+int(m.group(4))
+            self.rawscan['Aline']['data']['TIME']['val'] = \
+                int(m.group(2))*3600+int(m.group(3))*60+int(m.group(4))
 
         self.assignAvalues(values[2:16])
         # self.assignBvalues(values[16:46])
@@ -167,24 +203,18 @@ class readMTP:
     # Expects an array of values that are just the data from the Aline, i.e.
     # does not contain the "A yyyymmdd hh:mm:ss"
     def assignAvalues(self,values):
-        self.data['SAPITCH']=values[0] # MTP Scan Avg Pitch (degree)
-        self.data['SRPITCH']=values[1] # MTP Scan RMSE Pitch (degree)
-        self.data['SAROLL']=values[2]  # MTP Scan Avg Roll (degree)
-        self.data['SRROLL']=values[3]  # MTP Scan RMSE Roll (degree)
-        self.data['SAPALT']=values[4]  # MTP Scan Avg Pressure Altitude (km)
-        self.data['SRPALT']=values[5]  # MTP Scan RMSE Pressure Altitude (km)
-        self.data['SAAT']=values[6]    # MTP Scan Avg Ambient Air Temp (deg_K)
-        self.data['SRAT']=values[7]    # MTP Scan RMSE Ambient Air Temp (deg_K)
-        self.data['SALAT']=values[8]   # MTP Scan Avg Latitude (degree_N)
-        self.data['SRLAT']=values[9]   # MTP Scan RMSE Latitude (degree_N)
-        self.data['SALON']=values[10]  # MTP Scan Avg Longitude (degree_E)
-        self.data['SRLON']=values[11]  # MTP Scan RMSE Longitude (degree_E)
-        self.data['SMCMD']=values[12]  # MTP Scan Motor Commanded Position
-        self.data['SMENC']=values[13]  # MTP Scan Motor Encoded Position
+        for key in self.rawscan['Aline']['data'].keys():
+            if (key != 'DATE' and key != 'TIME'):
+                self.rawscan['Aline']['data'][key]['val'] = \
+                    values[int(self.rawscan['Aline']['data'][key]['idx'])]
 
     # Get the value of a variable from the data dictionary
     def getData(self,varname):
-        return(self.data[varname])
+        return(self.rawscan['Aline']['data'][varname]['val'])
+
+    # Get the list of variable names that are in the dictionary
+    def getVarList(self):
+        return(list(self.rawscan['Aline']['data'].keys()))
 
 if __name__ == "__main__":
     readRaw()
