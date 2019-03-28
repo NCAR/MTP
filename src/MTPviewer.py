@@ -16,31 +16,47 @@ import PyQt5
 import numpy
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtGui
+import functools
+from functools import partial
 
-from PyQt5.QtWidgets import QApplication,QGridLayout,QWidget,QPushButton
+from PyQt5.QtWidgets import QApplication,QGridLayout,QWidget,QPushButton,QComboBox
 from PyQt5.QtCore import QSocketNotifier
 
 sys.path.append('.')
 from readmtp import readMTP
 
-app = QtGui.QApplication(sys.argv)
+app = QApplication(sys.argv)
 
 class MTPclient():
 
     def __init__(self):
+
+        self.udp_send_port = 32106 # from viewer to MTP
+        self.udp_read_port = 32107 # from MTP to viewer
+
         # Hack-y stuff to get plot to scroll. pyqtgraph must have a better way
         # that I haven't found yet.
         self.scanInterval = 17 # The MTP takes a scan about once every 17
                                # seconds. Used to scroll plotting
         self.plotWidth = 150   # 150 scans*17s=42.5 min = the width of the time
                                # window shown on the scrolling plot
-        self.xvar = [0]*self.plotWidth    # Current X values being plotted
-        self.yvar = [numpy.nan]*self.plotWidth # Necessary to get data to scroll
-                                               # Before get good data, plot NANs
+        self.xvals = []
+        self.yvals = []
+        (self.xvals,self.yvals)= self.initData()
 
-        self.udp_send_port = 32106 # from viewer to MTP
-        self.udp_read_port = 32107 # from MTP to viewer
+        self.xvar = 'TIME'
+        self.yvar = 'DATE'
 
+        # Instantiate an instance of an MTP reader
+        self.reader = readMTP()
+        self.varlist = self.reader.getVarList()
+
+
+    def initData(self):
+        self.xvals = [0]*self.plotWidth    # Current X values being plotted
+        self.yvals = [numpy.nan]*self.plotWidth #Necessary to get data to scroll
+                                           # Before get good data, plot NANs
+        return(self.xvals,self.yvals)
 
     def connect(self):
         # Connection to UDP data stream
@@ -51,44 +67,39 @@ class MTPclient():
         return self.sock.fileno()
 
     def readSocket(self,xvar,yvar):
-        # Instantiate an instance of an MTP reader
-        reader = readMTP()
-
         # Listen for UDP packets
         data = self.sock.recv(1024).decode()
 
         # Store data to data dictionary
-        reader.parseAsciiPacket(data)
+        self.reader.parseAsciiPacket(data)
 
         # Append new X value to end of list
-        self.xvar.append(int(reader.getData(xvar)))
+        self.xvals.append(int(self.reader.getData(xvar)))
 
         # First time through, populate list with fabricated X values before
         # first X value so plot will scroll
-        if (self.xvar[0] == 0):
-            self.xvar = list(range(self.xvar[self.plotWidth]-
-                self.plotWidth*self.scanInterval,self.xvar[self.plotWidth],
+        if (self.xvals[0] == 0):
+            self.xvals = list(range(self.xvals[self.plotWidth]-
+                self.plotWidth*self.scanInterval,self.xvals[self.plotWidth],
                 self.scanInterval))
 
         # Pop oldest X value off list
-        if (len(self.xvar) > self.plotWidth):
-            self.xvar.pop(0)
+        if (len(self.xvals) > self.plotWidth):
+            self.xvals.pop(0)
 
         # Append new X value to end of list
-        self.yvar.append(float(reader.getData(yvar)))
+        self.yvals.append(float(self.reader.getData(yvar)))
         # Pop oldest Y value off list
-        if (len(self.yvar) > self.plotWidth):
-            self.yvar.pop(0)
+        if (len(self.yvals) > self.plotWidth):
+            self.yvals.pop(0)
 
-        return(self.xvar,self.yvar)
+        return(self.xvals,self.yvals)
 
 
 class MTPviewer():
 
     def __init__(self,client):
 
-        self.x=[]
-        self.y=[]
         client.connect()
         self.initUI(client)
 
@@ -97,18 +108,24 @@ class MTPviewer():
         self.readNotifier.activated.connect(lambda: self.plotData(client))
 
     def plotData(self,client):
-        (self.x,self.y) = client.readSocket('TIME','SAPITCH')
+        (self.x,self.y) = client.readSocket(client.xvar,client.yvar)
 
         self.saplot.setData(self.x,self.y,connect="finite")
 
-        QtGui.QApplication.processEvents()
+        QApplication.processEvents()
 
+    def selectPlotVar(self,text):
+        self.saplot.clear()
+        client.initData()
+        self.p1.setLabel('left',text)
+        client.yvar = text
+        return()
 
     def initUI(self,client):
 
         # Define top-level widget to hold everything
-        self.w = QtGui.QWidget()
-        self.layout = QtGui.QGridLayout()
+        self.w = QWidget()
+        self.layout = QGridLayout()
         self.w.setLayout(self.layout)
 
         # Create a window to hold our timeseries plot
@@ -116,11 +133,19 @@ class MTPviewer():
         win.setWindowTitle('MTP Viewer')
 
         # Create empty space for the plot in the win
-        p1 = win.addPlot(title="SAPITCH")
+        self.p1 = win.addPlot(bottom=client.xvar,left=client.yvar)
         # Create an empty plot
-        self.saplot = p1.plot(client.xvar,client.yvar)
+        self.saplot = self.p1.plot(client.xvals,client.yvals)
         # Choose plot location
         self.layout.addWidget(win, 0, 1)
+
+        # Add a dropdown to select the variable to plot
+        varSelector = QComboBox()
+        for item in client.varlist:
+            varSelector.addItem(item)
+
+        varSelector.activated[str].connect(self.selectPlotVar)
+        self.layout.addWidget(varSelector,1,0)
 
         # Add a quit button
         button = QPushButton('Quit')
@@ -130,7 +155,7 @@ class MTPviewer():
         self.w.show()
 
         #Show the window even if data are not flowing
-        QtGui.QApplication.processEvents()
+        QApplication.processEvents()
 
     def close(self,client):
         if client.sock:
@@ -138,9 +163,9 @@ class MTPviewer():
         app.quit()
 
 
+client = MTPclient()
 def main():
 
-    client = MTPclient()
     viewer = MTPviewer(client)
 
     sys.exit( pg.QtGui.QApplication.exec_())
