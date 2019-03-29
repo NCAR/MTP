@@ -25,8 +25,6 @@ from PyQt5.QtCore import QSocketNotifier
 sys.path.append('.')
 from readmtp import readMTP
 
-app = QApplication(sys.argv)
-
 class MTPclient():
 
     def __init__(self):
@@ -58,6 +56,9 @@ class MTPclient():
                                            # Before get good data, plot NANs
         return(self.xvals,self.yvals)
 
+    def getXY(self):
+        return (self.xvals, self.yvals)
+
     def connect(self):
         # Connection to UDP data stream
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -66,7 +67,7 @@ class MTPclient():
     def getSocketFileDescriptor(self):
         return self.sock.fileno()
 
-    def readSocket(self,xvar,yvar):
+    def readSocket(self):
         # Listen for UDP packets
         data = self.sock.recv(1024).decode()
 
@@ -74,7 +75,7 @@ class MTPclient():
         self.reader.parseAsciiPacket(data)
 
         # Append new X value to end of list
-        self.xvals.append(int(self.reader.getData(xvar)))
+        self.xvals.append(int(self.reader.getData(self.xvar)))
 
         # First time through, populate list with fabricated X values before
         # first X value so plot will scroll
@@ -88,18 +89,18 @@ class MTPclient():
             self.xvals.pop(0)
 
         # Append new X value to end of list
-        self.yvals.append(float(self.reader.getData(yvar)))
+        self.yvals.append(float(self.reader.getData(self.yvar)))
+
         # Pop oldest Y value off list
         if (len(self.yvals) > self.plotWidth):
             self.yvals.pop(0)
 
-        return(self.xvals,self.yvals)
-
 
 class MTPviewer():
 
-    def __init__(self,client):
+    def __init__(self,client,app):
 
+        self.app = app
         client.connect()
         self.initUI(client)
 
@@ -107,8 +108,10 @@ class MTPviewer():
             client.getSocketFileDescriptor(), QSocketNotifier.Read)
         self.readNotifier.activated.connect(lambda: self.plotData(client))
 
+
     def plotData(self,client):
-        (self.x,self.y) = client.readSocket(client.xvar,client.yvar)
+        client.readSocket()
+        (self.x,self.y) = client.getXY()
 
         self.saplot.setData(self.x,self.y,connect="finite")
 
@@ -160,15 +163,17 @@ class MTPviewer():
     def close(self,client):
         if client.sock:
             client.sock.close()
-        app.quit()
+        self.app.quit()
 
 
 client = MTPclient()
 def main():
 
-    viewer = MTPviewer(client)
+    app = QApplication(sys.argv)
 
-    sys.exit( pg.QtGui.QApplication.exec_())
+    viewer = MTPviewer(client,app)
+
+    sys.exit(QApplication.exec_())
 
 
 if __name__ == "__main__":
