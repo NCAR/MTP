@@ -115,7 +115,7 @@ class MTPviewer():
 
         self.saplot.setData(self.x,self.y,connect="finite")
 
-        QApplication.processEvents()
+        self.app.processEvents()
 
     def selectPlotVar(self,text):
         self.saplot.clear()
@@ -158,7 +158,7 @@ class MTPviewer():
         self.w.show()
 
         #Show the window even if data are not flowing
-        QApplication.processEvents()
+        self.app.processEvents()
 
     def close(self,client):
         if client.sock:
@@ -173,7 +173,7 @@ def main():
 
     viewer = MTPviewer(client,app)
 
-    sys.exit(QApplication.exec_())
+    sys.exit(app.exec_())
 
 
 if __name__ == "__main__":
