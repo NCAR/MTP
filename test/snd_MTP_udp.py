@@ -60,9 +60,10 @@ def main(args):
             bytes = sock.sendto(buffer.encode(), (udp_ip, udp_send_port))
             #print(bytes)
 
-        # Wait before retrieve next scan, to emulate MTP 17 second gap between scans
-        #time.sleep(1) # Seems to give about a 10-second gap
-        time.sleep(0.1)
+        # Wait before retrieve next scan, to emulate MTP 17 second gap between 
+        # scans. For testing, I am using 1 sec data so I don't have to wait as 
+        # long.
+        time.sleep(1) # Sleep for 1 second
 
     raw_data_file.close()
 
