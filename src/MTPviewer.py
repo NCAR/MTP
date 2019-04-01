@@ -43,7 +43,7 @@ class MTPclient():
         (self.xvals,self.yvals)= self.initData()
 
         self.xvar = 'TIME'
-        self.yvar = 'DATE'
+        self.yvar = 'SAPALT'
 
         # Instantiate an instance of an MTP reader
         self.reader = readMTP()
@@ -55,6 +55,10 @@ class MTPclient():
         self.yvals = [numpy.nan]*self.plotWidth #Necessary to get data to scroll
                                            # Before get good data, plot NANs
         return(self.xvals,self.yvals)
+
+    def getSCNT(self):
+        vals = self.reader.getSCNTData()
+        return (vals)
 
     def getXY(self):
         return (self.xvals, self.yvals)
@@ -75,7 +79,7 @@ class MTPclient():
         self.reader.parseAsciiPacket(data)
 
         # Append new X value to end of list
-        self.xvals.append(int(self.reader.getData(self.xvar)))
+        self.xvals.append(int(self.reader.getXYData(self.xvar)))
 
         # First time through, populate list with fabricated X values before
         # first X value so plot will scroll
@@ -89,7 +93,7 @@ class MTPclient():
             self.xvals.pop(0)
 
         # Append new X value to end of list
-        self.yvals.append(float(self.reader.getData(self.yvar)))
+        self.yvals.append(float(self.reader.getXYData(self.yvar)))
 
         # Pop oldest Y value off list
         if (len(self.yvals) > self.plotWidth):
@@ -110,37 +114,82 @@ class MTPviewer():
 
 
     def plotData(self,client):
-        client.readSocket()
-        (self.x,self.y) = client.getXY()
 
-        self.saplot.setData(self.x,self.y,connect="finite")
+        client.readSocket()
+
+        self.plotDataxy(client)
+        self.plotDatascnt(client)
 
         self.app.processEvents()
 
+    def plotDataxy(self,client):
+
+        (self.x,self.y) = client.getXY()
+        self.xyplot = self.xy.plot()
+        self.xyplot.setData(self.x,self.y,connect="finite")
+
+    def plotDatascnt(self,client):
+        scnt = client.getSCNT()
+
+        # The scan counts are stored in the ads file as cnts[angle,channel],i.e.
+        # {a1c1,a1c2,a1c3,a2c1,...}. Processing requires, and the final data are
+        # output as {c1a1,c1a2,c1a3,c1a4,...}. Invert the array here.
+        scnt_inv= [numpy.nan]*30
+        NUM_SCAN_ANGLES = 10
+        NUM_CHANNELS = 3
+        for j in range(NUM_SCAN_ANGLES) :
+            for i in range(NUM_CHANNELS) :
+               scnt_inv[i*10+j]=int(scnt[j*3+i]);
+
+        scan1 = scnt_inv[0:10]
+        scan2 = scnt_inv[10:20]
+        scan3 = scnt_inv[20:30]
+        angles = numpy.array(range(10))+1
+
+        # Scan Counts[Angle,Channel]
+        self.scnt.clear()
+        self.scnt.invertY(True)
+        plot2 = self.scnt.plot(pen=pg.mkPen('r'))
+        plot2.setData(scan1,angles,connect="finite")
+        plot2 = self.scnt.plot(pen=pg.mkPen('w'))
+        plot2.setData(scan2,angles,connect="finite")
+        plot2 = self.scnt.plot(pen=pg.mkPen('b'))
+        plot2.setData(scan3,angles,connect="finite")
+
     def selectPlotVar(self,text):
-        self.saplot.clear()
+        self.xy.clear()
         client.initData()
-        self.p1.setLabel('left',text)
+        self.xy.setLabel('left',text)
         client.yvar = text
         return()
 
     def initUI(self,client):
 
+        self.layout = QGridLayout()
+
         # Define top-level widget to hold everything
         self.w = QWidget()
-        self.layout = QGridLayout()
+        self.w.setWindowTitle('MTP viewer')
         self.w.setLayout(self.layout)
 
         # Create a window to hold our timeseries plot
-        win = pg.GraphicsWindow()
-        win.setWindowTitle('MTP Viewer')
+        w1layout = QGridLayout()
+        self.layout.addLayout(w1layout,0,1)
 
-        # Create empty space for the plot in the win
-        self.p1 = win.addPlot(bottom=client.xvar,left=client.yvar)
-        # Create an empty plot
-        self.saplot = self.p1.plot(client.xvals,client.yvals)
-        # Choose plot location
-        self.layout.addWidget(win, 0, 1)
+        win1 = pg.GraphicsWindow()
+        win1.setWindowTitle('Timeseries')
+        w1layout.addWidget(win1, 0,0)
+        # Create empty space for the plot in the window and then
+        # create an empty plot
+        self.xy = win1.addPlot(bottom=client.xvar,left=client.yvar)
+
+        # Create a window to hold our profile plot
+        win2 = pg.GraphicsWindow()
+        win2.setWindowTitle('Histo')
+        self.layout.addWidget(win2, 0,0,3,1)
+        # Create empty space for the plot in the window and then
+        # reate an empty plot
+        self.scnt = win2.addPlot(bottom='Counts',left='Angle')
 
         # Add a dropdown to select the variable to plot
         varSelector = QComboBox()
@@ -148,12 +197,12 @@ class MTPviewer():
             varSelector.addItem(item)
 
         varSelector.activated[str].connect(self.selectPlotVar)
-        self.layout.addWidget(varSelector,1,0)
+        w1layout.addWidget(varSelector,1,0)
 
         # Add a quit button
         button = QPushButton('Quit')
         button.clicked.connect(lambda: self.close(client))
-        self.layout.addWidget(button,0,0)
+        self.layout.addWidget(button,1,2)
 
         self.w.show()
 

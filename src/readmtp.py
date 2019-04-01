@@ -106,6 +106,68 @@ class readMTP:
             'SMENC':   {  # MTP Scan Motor Encoded Position
                 'val': numpy.nan , 'idx':13},
         }
+        self.rawscan['Bline']['data'] = {
+            'SCNT': { # MTP Scan Counts[Angle,Channel]
+                'val': [numpy.nan]*30 }
+        }
+        self.rawscan['M01line']['data'] = {
+            'VM08CNTE': { # MTP Engineering Multiplxr Vm08 Counts
+                'val': numpy.nan, 'idx':0},
+            'VVIDCNTE': { # MTP Engineering Multiplxr Vvid Counts
+                'val': numpy.nan, 'idx':1},
+            'VP08CNTE': { # MTP Engineering Multiplxr Vp08 Counts
+                'val': numpy.nan, 'idx':2},
+            'VMTRCNTE': { # MTP Engineering Multiplxr Vmtr Count
+                'val': numpy.nan, 'idx':3},
+            'VSYNCNTE': { # MTP Engineering Multiplxr Vsyn Counts
+                'val': numpy.nan, 'idx':4},
+            'VP15CNTE': { # MTP Engineering Multiplxr Vp15 Counts
+                'val': numpy.nan, 'idx':5},
+            'VP05CNTE': { # MTP Engineering Multiplxr Vp05 Counts
+                'val': numpy.nan, 'idx':6},
+            'VM15CNTE': { # MTP Engineering Multiplxr VM15 Counts
+                'val': numpy.nan, 'idx':7},
+        }
+        self.rawscan['M02line']['data'] = {
+            'ACCPCNTE': { # MTP Engineering Multiplxr Acceler Counts
+                'val': numpy.nan, 'idx':0},
+            'TDATCNTE': { # MTP Engineering Multiplxr T Data Counts
+                'val': numpy.nan, 'idx':1},
+            'TMTRCNTE': { # MTP Engineering Multiplxr T Motor Counts
+                'val': numpy.nan, 'idx':2},
+            'TAIRCNTE': { # MTP Engineering Multiplxr T Pod Air Counts
+                'val': numpy.nan, 'idx':3},
+            'TSMPCNTE': { # MTP Engineering Multiplxr T Scan Counts
+                'val': numpy.nan, 'idx':4},
+            'TPSPCNTE': { # MTP Engineering Multiplxr T Power Supply Counts
+                'val': numpy.nan, 'idx':5},
+            'TNCCNTE': { # MTP Engineering Multiplxr T N/C Counts
+                'val': numpy.nan, 'idx':6},
+            'TSYNCNTE': { # MTP Engineering Multiplxr T Synth Counts
+                'val': numpy.nan, 'idx':7},
+        }
+        self.rawscan['Ptline']['data'] = {
+            'TR350CNTP': { # MTP Platinum Multiplxr R350 Counts
+                'val': numpy.nan, 'idx':0},
+            'TTCNTRCNTP': { # MTP Platinum Multiplxr Target Center Temp Counts
+                'val': numpy.nan, 'idx':1},
+            'TTEDGCNTP': { # MTP Platinum Multiplxr Target Edge Temp Counts
+                'val': numpy.nan, 'idx':2},
+            'TWINCNTP': { # MTP Platinum Multiplxr Polyethelene Window Temp Counts
+                'val': numpy.nan, 'idx':3},
+            'TMIXCNTP': { # MTP Platinum Multiplxr Mixer Temperature Counts
+                'val': numpy.nan, 'idx':4},
+            'TAMPCNTP': { # MTP Platinum Multiplxr Amplifier Temp Counts
+                'val': numpy.nan, 'idx':5},
+            'TNDCNTP': { # MTP Platinum Multiplxr Noise Diode Temp Counts
+                'val': numpy.nan, 'idx':6},
+            'TR600CNTP': { # MTP Platinum Multiplxr R600 Counts
+                'val': numpy.nan, 'idx':7},
+        }
+        self.rawscan['Eline']['data'] = {
+            'TCNT': { # MTP Target Counts[Target,Channel]
+                'val': [numpy.nan]*6 }
+        }
 
 
     def readRawScan(self,raw_data_file):
@@ -193,7 +255,7 @@ class readMTP:
                 int(m.group(2))*3600+int(m.group(3))*60+int(m.group(4))
 
         self.assignAvalues(values[2:16])
-        # self.assignBvalues(values[16:46])
+        self.assignBvalues(values[16:46])
         # self.assignM01values(values[46:54])
         # self.assignM02values(values[54:62])
         # self.assignPtvalues(values[62:70])
@@ -208,8 +270,17 @@ class readMTP:
                 self.rawscan['Aline']['data'][key]['val'] = \
                     values[int(self.rawscan['Aline']['data'][key]['idx'])]
 
+    # Parse the B line and assign to variables in the data dictionary
+    def assignBvalues(self,values):
+        for key in self.rawscan['Bline']['data'].keys():
+            self.rawscan['Bline']['data'][key]['val'] = values
+
     # Get the value of a variable from the data dictionary
-    def getData(self,varname):
+    def getSCNTData(self):
+        return(self.rawscan['Bline']['data']['SCNT']['val'])
+
+    # Get the value of a variable from the data dictionary
+    def getXYData(self,varname):
         return(self.rawscan['Aline']['data'][varname]['val'])
 
     # Get the list of variable names that are in the dictionary
