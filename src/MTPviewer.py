@@ -19,11 +19,12 @@ from pyqtgraph.Qt import QtGui
 import functools
 from functools import partial
 
-from PyQt5.QtWidgets import QApplication,QGridLayout,QWidget,QPushButton,QComboBox
+from PyQt5.QtWidgets import QApplication,QGridLayout,QWidget,QTabWidget,QPushButton,QComboBox,QHBoxLayout
 from PyQt5.QtCore import QSocketNotifier
 
 sys.path.append('.')
 from readmtp import readMTP
+from MTPgui import Ui_MTPgui
 
 class MTPclient():
 
@@ -165,12 +166,33 @@ class MTPviewer():
 
     def initUI(self,client):
 
-        self.layout = QGridLayout()
-
         # Define top-level widget to hold everything
-        self.w = QWidget()
-        self.w.setWindowTitle('MTP viewer')
-        self.w.setLayout(self.layout)
+        self.glayout = QHBoxLayout()
+        self.MTPgui = QWidget()
+        self.MTPgui.setLayout(self.glayout)
+        self.MTPgui.setObjectName("MTPgui")
+        self.MTPgui.setWindowTitle('MTP viewer')
+        self.MTPgui.resize(1000,600)
+
+        # Add a tab widget to the upper left
+        self.tab = QTabWidget()
+        self.glayout.addWidget(self.tab,0)
+
+        self.initCtrl() # Create the layout for the "ctrl" tab
+        self.initView(client) # Create the layout for the "view" tab
+        self.initStatus(client) # Init status column to the right
+
+        self.MTPgui.show()
+
+        #Show the window even if data are not flowing
+        self.app.processEvents()
+
+    def initView(self,client):
+        # Create the layout for the "view" tab
+        self.layout = QGridLayout()
+        self.view = QWidget()
+        self.tab.addTab(self.view, "view")
+        self.view.setLayout(self.layout)
 
         # Create a window to hold our timeseries plot
         w1layout = QGridLayout()
@@ -199,15 +221,18 @@ class MTPviewer():
         varSelector.activated[str].connect(self.selectPlotVar)
         w1layout.addWidget(varSelector,1,0)
 
-        # Add a quit button
+    def initStatus(self,client):
+        # Add a quit button to the right - later add a red/green indicator to
+        # display status of connectivity (like GNI).
+        self.window = QWidget()
         button = QPushButton('Quit')
         button.clicked.connect(lambda: self.close(client))
-        self.layout.addWidget(button,1,2)
+        self.glayout.addWidget(button,1)
 
-        self.w.show()
-
-        #Show the window even if data are not flowing
-        self.app.processEvents()
+    def initCtrl(self):
+        # Create the layout for the "ctrl" tab
+        self.ctrl = QWidget()
+        self.tab.addTab(self.ctrl, "ctrl")
 
     def close(self,client):
         if client.sock:
