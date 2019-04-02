@@ -63,6 +63,10 @@ class readMTP:
                         self.rawscan[linetype]['date'] =  \
                             m.group(1)+"T"+m.group(2)+m.group(3)+m.group(4)
                         self.rawscan[linetype]['data'] = m.group(5)
+                    elif (linetype == 'IWG1line'): # Reformat date/time
+                        self.rawscan[linetype]['asciiPacket'] =line.rstrip('\n')
+                        self.rawscan[linetype]['date'] = m.group(0)
+                        self.rawscan[linetype]['data'] = m.group(1).rstrip('\n')
                     else:
                         self.rawscan[linetype]['data'] = m.group(2).rstrip('\n')
                     # Mark found
@@ -82,6 +86,9 @@ class readMTP:
                 if 'found' in self.rawscan[linetype]:
                     self.rawscan[linetype]['found'] = False
             return(True) # Not at EOF
+
+    def getIwgPacket(self):
+        return(self.rawscan['IWG1line']['asciiPacket'])
 
     # Combine the separate lines from a raw scan into an Ascii packet
     # (suitable for sending around the plane).
