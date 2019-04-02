@@ -34,140 +34,12 @@
 
 import re
 import numpy
+from MTP import MTPrecord
 
 class readMTP:
 
     def __init__(self):
-        # A dictionary to hold a single raw data line. A data line from a .RAW
-        # MTP file has the following properties:
-        self.rawline = { 're': "", # Regular expression used to identify line
-                         'found': False,   # Have we found this linetype?
-                         'data': "", # The contents of the line
-                         'date': "", # Scan date (for the A line) or packet date
-                                     # (for IWG1 line). Not used for other lines
-                       }
-
-        # A dictionary to hold a single raw data scan. A raw scan consists of
-        # a set of 7 different line types
-        self.rawscan = { 'Aline': dict(self.rawline),
-                         'IWG1line': dict(self.rawline), 
-                         'Bline': dict(self.rawline),
-                         'M01line':dict(self.rawline),
-                         'M02line':dict(self.rawline),
-                         'Ptline':dict(self.rawline),
-                         'Eline':dict(self.rawline),
-                       }
-
-        # Regular expressions to match the various scan lines
-        self.rawscan['Aline']['re'] = re.compile("^A (........) (..):(..):(..) (.*)")
-        self.rawscan['IWG1line']['re'] = re.compile("^(IWG1)(,.*)")
-        self.rawscan['Bline']['re'] = re.compile("(^B) (.*)")
-        self.rawscan['M01line']['re'] = re.compile("(^M01): (.*)")
-        self.rawscan['M02line']['re'] = re.compile("(^M02): (.*)")
-        self.rawscan['Ptline']['re'] = re.compile("(^Pt): (.*)")
-        self.rawscan['Eline']['re'] = re.compile("(^E) (.*)")
-
-        # A string to hold an Ascii packet
-        self.asciiPacket = ""
-
-        # Empty dictionary to hold data from a record
-        # Index is AFTER date/time
-        self.rawscan['Aline']['data'] = {
-            'DATE': { # MTP Scan Avg Pitch (degree)
-                'val': numpy.nan , 'idx':-2},
-            'TIME': { # MTP Scan Avg Pitch (degree)
-                'val': numpy.nan , 'idx':-1},
-            'SAPITCH': { # MTP Scan Avg Pitch (degree)
-                'val': numpy.nan , 'idx':0},
-            'SRPITCH': { # MTP Scan RMSE Pitch (degree)
-                'val': numpy.nan , 'idx':1},
-            'SAROLL':  { # MTP Scan Avg Roll (degree)
-                'val': numpy.nan , 'idx':2},
-            'SRROLL':  {  # MTP Scan RMSE Roll (degree)
-                'val': numpy.nan , 'idx':3},
-            'SAPALT':  {  # MTP Scan Avg Pressure Altitude (km)
-                'val': numpy.nan , 'idx':4},
-            'SRPALT':  {  # MTP Scan RMSE Pressure Alt (km)
-                'val': numpy.nan , 'idx':5},
-            'SAAT':    {  # MTP Scan Avg Ambient Air Temp (deg_K)
-                'val': numpy.nan , 'idx':6},
-            'SRAT':    {  # MTP Scan RMSE Ambient Air Temp(deg_K)
-                'val': numpy.nan , 'idx':7},
-            'SALAT':   {  # MTP Scan Avg Latitude (degree_N)
-                'val': numpy.nan , 'idx':8},
-            'SRLAT':   {  # MTP Scan RMSE Latitude (degree_N)
-                'val': numpy.nan , 'idx':9},
-            'SALON':   {  # MTP Scan Avg Longitude (degree_E)
-                'val': numpy.nan , 'idx':10},
-            'SRLON':   {  # MTP Scan RMSE Longitude (degree_E)
-                'val': numpy.nan , 'idx':11},
-            'SMCMD':   {  # MTP Scan Motor Commanded Position
-                'val': numpy.nan , 'idx':12},
-            'SMENC':   {  # MTP Scan Motor Encoded Position
-                'val': numpy.nan , 'idx':13},
-        }
-        self.rawscan['Bline']['data'] = {
-            'SCNT': { # MTP Scan Counts[Angle,Channel]
-                'val': [numpy.nan]*30 }
-        }
-        self.rawscan['M01line']['data'] = {
-            'VM08CNTE': { # MTP Engineering Multiplxr Vm08 Counts
-                'val': numpy.nan, 'idx':0},
-            'VVIDCNTE': { # MTP Engineering Multiplxr Vvid Counts
-                'val': numpy.nan, 'idx':1},
-            'VP08CNTE': { # MTP Engineering Multiplxr Vp08 Counts
-                'val': numpy.nan, 'idx':2},
-            'VMTRCNTE': { # MTP Engineering Multiplxr Vmtr Count
-                'val': numpy.nan, 'idx':3},
-            'VSYNCNTE': { # MTP Engineering Multiplxr Vsyn Counts
-                'val': numpy.nan, 'idx':4},
-            'VP15CNTE': { # MTP Engineering Multiplxr Vp15 Counts
-                'val': numpy.nan, 'idx':5},
-            'VP05CNTE': { # MTP Engineering Multiplxr Vp05 Counts
-                'val': numpy.nan, 'idx':6},
-            'VM15CNTE': { # MTP Engineering Multiplxr VM15 Counts
-                'val': numpy.nan, 'idx':7},
-        }
-        self.rawscan['M02line']['data'] = {
-            'ACCPCNTE': { # MTP Engineering Multiplxr Acceler Counts
-                'val': numpy.nan, 'idx':0},
-            'TDATCNTE': { # MTP Engineering Multiplxr T Data Counts
-                'val': numpy.nan, 'idx':1},
-            'TMTRCNTE': { # MTP Engineering Multiplxr T Motor Counts
-                'val': numpy.nan, 'idx':2},
-            'TAIRCNTE': { # MTP Engineering Multiplxr T Pod Air Counts
-                'val': numpy.nan, 'idx':3},
-            'TSMPCNTE': { # MTP Engineering Multiplxr T Scan Counts
-                'val': numpy.nan, 'idx':4},
-            'TPSPCNTE': { # MTP Engineering Multiplxr T Power Supply Counts
-                'val': numpy.nan, 'idx':5},
-            'TNCCNTE': { # MTP Engineering Multiplxr T N/C Counts
-                'val': numpy.nan, 'idx':6},
-            'TSYNCNTE': { # MTP Engineering Multiplxr T Synth Counts
-                'val': numpy.nan, 'idx':7},
-        }
-        self.rawscan['Ptline']['data'] = {
-            'TR350CNTP': { # MTP Platinum Multiplxr R350 Counts
-                'val': numpy.nan, 'idx':0},
-            'TTCNTRCNTP': { # MTP Platinum Multiplxr Target Center Temp Counts
-                'val': numpy.nan, 'idx':1},
-            'TTEDGCNTP': { # MTP Platinum Multiplxr Target Edge Temp Counts
-                'val': numpy.nan, 'idx':2},
-            'TWINCNTP': { # MTP Platinum Multiplxr Polyethelene Window Temp Counts
-                'val': numpy.nan, 'idx':3},
-            'TMIXCNTP': { # MTP Platinum Multiplxr Mixer Temperature Counts
-                'val': numpy.nan, 'idx':4},
-            'TAMPCNTP': { # MTP Platinum Multiplxr Amplifier Temp Counts
-                'val': numpy.nan, 'idx':5},
-            'TNDCNTP': { # MTP Platinum Multiplxr Noise Diode Temp Counts
-                'val': numpy.nan, 'idx':6},
-            'TR600CNTP': { # MTP Platinum Multiplxr R600 Counts
-                'val': numpy.nan, 'idx':7},
-        }
-        self.rawscan['Eline']['data'] = {
-            'TCNT': { # MTP Target Counts[Target,Channel]
-                'val': [numpy.nan]*6 }
-        }
+        self.rawscan = MTPrecord
 
 
     def readRawScan(self,raw_data_file):
@@ -183,29 +55,32 @@ class readMTP:
         # Loop through possible line types, match the line, and store it in 
         # the dictionary
         for linetype in self.rawscan:
-            m = re.match(self.rawscan[linetype]['re'],line)
-            if (m):
-                # Store data. Handle special case of date in A line
-                if (linetype == 'Aline'): # Reformat date/time
-                    self.rawscan[linetype]['date'] =  \
-                        m.group(1)+"T"+m.group(2)+m.group(3)+m.group(4)
-                    self.rawscan[linetype]['data'] = m.group(5)
-                else:
-                    self.rawscan[linetype]['data'] = m.group(2).rstrip('\n')
-                # Mark found
-                self.rawscan[linetype]['found']=True
-                # Exit matching loop
-                break
+            if 're' in self.rawscan[linetype]:
+                m = re.match(self.rawscan[linetype]['re'],line)
+                if (m):
+                    # Store data. Handle special case of date in A line
+                    if (linetype == 'Aline'): # Reformat date/time
+                        self.rawscan[linetype]['date'] =  \
+                            m.group(1)+"T"+m.group(2)+m.group(3)+m.group(4)
+                        self.rawscan[linetype]['data'] = m.group(5)
+                    else:
+                        self.rawscan[linetype]['data'] = m.group(2).rstrip('\n')
+                    # Mark found
+                    self.rawscan[linetype]['found']=True
+                    # Exit matching loop
+                    break
 
         # Check if we have a complete scan (all linetypes have found = True
         foundall = True # Init so can boolean & per rawscan line
         for linetype in self.rawscan:
-            foundall = foundall & self.rawscan[linetype]['found']
+            if 'found' in self.rawscan[linetype]:
+                foundall = foundall & self.rawscan[linetype]['found']
 
         if (foundall):
             # Have a complete scan. Reset found to False for all and return
             for linetype in self.rawscan:
-                self.rawscan[linetype]['found'] = False
+                if 'found' in self.rawscan[linetype]:
+                    self.rawscan[linetype]['found'] = False
             return(True) # Not at EOF
 
     # Combine the separate lines from a raw scan into an Ascii packet
@@ -233,7 +108,7 @@ class readMTP:
         UDPpacket = separator.join(values)
 
         # Store the new packet in our dictionary
-        self.asciiPacket = UDPpacket
+        self.rawscan['asciiPacket'] = UDPpacket
 
         # Return the newly created packet
         return (UDPpacket)
