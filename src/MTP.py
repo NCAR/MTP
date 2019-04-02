@@ -64,12 +64,13 @@ MTPrecord = {
     },
     'IWG1line': {
         # From project "ascii_parms" file
-        're': re.compile("^(IWG1)(,.*)"),
+        're': re.compile("^IWG1,(........T......),(.*)"),
         'found': False,
         'date': "",
-        'data': { 'DATE': { # IWG1 packet Date (YYYY-MM-DD)
+        'asciiPacket': "",
+        'data': { 'DATE': { # IWG1 packet Date (YYYYMMDD)
                    'val': numpy.nan},
-                  'TIME': { # IWG1 packet Time (hh:mm:ss)
+                  'TIME': { # IWG1 packet Time (HHMMSS)
                    'val': numpy.nan},
         },
     },
