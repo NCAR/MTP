@@ -20,3 +20,6 @@ The MTPviewer software currently uses the following versions of code:
  * pip3 install pyserial
  * pip3 install psycopg2
  * pip3 install pyqtgraph
+
+## To run:
+ * Copy project ascii_parms file from proj dir to config/

@@ -32,6 +32,7 @@ class MTPclient():
 
         self.udp_send_port = 32106 # from viewer to MTP
         self.udp_read_port = 32107 # from MTP to viewer
+        self.iwg1_port = 7071 # IWG1 packets from GV
 
         # Hack-y stuff to get plot to scroll. pyqtgraph must have a better way
         # that I haven't found yet.
@@ -69,15 +70,20 @@ class MTPclient():
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind(("0.0.0.0", self.udp_read_port))
 
+        self.sockI = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sockI.bind(("0.0.0.0", self.iwg1_port))
+
     def getSocketFileDescriptor(self):
         return self.sock.fileno()
 
     def readSocket(self):
         # Listen for UDP packets
         data = self.sock.recv(1024).decode()
+        dataI = self.sockI.recv(1024).decode()
 
         # Store data to data dictionary
         self.reader.parseAsciiPacket(data)
+        self.reader.parseIwgPacket(dataI)
 
         # Append new X value to end of list
         self.xvals.append(int(self.reader.getXYData(self.xvar)))

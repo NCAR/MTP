@@ -41,10 +41,34 @@ class readMTP:
     def __init__(self):
         self.rawscan = MTPrecord
 
+        # Because the specific variables sent via the IWG packet can change per
+        # project, read the variable names from the project ascii_parms file,
+        # which has been copied to the config/ subdir. This will allow all
+        # displays to have the correct variable names for this project. If the
+        # project ascii_parms file has not been copied, overwriting the default,
+        # the data plotted will be good, but the variable name labels may not
+        # be right.
+        ascii_parms = open('../config/ascii_parms','r')
+        i=2 # index of each variable in IWG1 line (after dateTtime)
+        while True:
+            line = ascii_parms.readline()
+            if len(line) == 0: # EOF
+                break
+            m = re.match(re.compile("^#"),line)
+            if (m): # Have a comment
+                next
+            else:
+                newVar = line.rstrip('\n')
+                self.rawscan['IWG1line']['data'][newVar]= \
+                        {'val':numpy.nan,'idx':i}
+                i=i+1
+            if i > 31: # Only keep the first 31 values; the rest are user vals
+                break
+
 
     def readRawScan(self,raw_data_file):
-    # Read in a scan (a group of lines) from an MTP .RAW file and store them to a 
-    # dictionary
+    # Read in a scan (a group of lines) from an MTP .RAW file and store them to
+    # a dictionary
       while True:
 
         # Read in a single line
@@ -120,6 +144,27 @@ class readMTP:
         # Return the newly created packet
         return (UDPpacket)
 
+    # Parse an IWG1 packet and store it's values in the data dictionary
+    def parseIwgPacket(self,IWGpacket):
+        separator = ','
+        values =  IWGpacket.split(separator)
+
+        # values[0] contains the packet identifier, in this case 'IWG1' so skip
+        # values[1] contains the datetime, i.e. yyyymmddThhMMss
+        m = re.match("(........)T(..)(..)(..)",values[1])
+        if (m):
+            # Save YYYYMMDD to variable DATE
+            self.rawscan['IWG1line']['data']['DATE']['val'] = m.group(1)
+            # Save seconds since midnight to variable TIME
+            self.rawscan['IWG1line']['data']['TIME']['val'] = \
+                int(m.group(2))*3600+int(m.group(3))*60+int(m.group(4))
+
+        # Parse the rest of the line and assign variables to the data dictionary
+        for key in self.rawscan['IWG1line']['data']:
+            if (key != 'DATE' and key != 'TIME'):
+                self.rawscan['IWG1line']['data'][key]['val'] = \
+                    values[int(self.rawscan['IWG1line']['data'][key]['idx'])]
+
     # Parse an Ascii packet and store it's values in the data dictionary
     def parseAsciiPacket(self,UDPpacket):
         # Split string on commas
@@ -138,24 +183,50 @@ class readMTP:
 
         self.assignAvalues(values[2:16])
         self.assignBvalues(values[16:46])
-        # self.assignM01values(values[46:54])
-        # self.assignM02values(values[54:62])
-        # self.assignPtvalues(values[62:70])
-        # self.assignEvalues(values[70:76])
+        self.assignM01values(values[46:54])
+        self.assignM02values(values[54:62])
+        self.assignPtvalues(values[62:70])
+        self.assignEvalues(values[70:76])
 
     # Parse the A line and assign to variables in the data dictionary
     # Expects an array of values that are just the data from the Aline, i.e.
     # does not contain the "A yyyymmdd hh:mm:ss"
     def assignAvalues(self,values):
-        for key in self.rawscan['Aline']['data'].keys():
+        for key in self.rawscan['Aline']['data']:
             if (key != 'DATE' and key != 'TIME'):
                 self.rawscan['Aline']['data'][key]['val'] = \
                     values[int(self.rawscan['Aline']['data'][key]['idx'])]
 
     # Parse the B line and assign to variables in the data dictionary
     def assignBvalues(self,values):
-        for key in self.rawscan['Bline']['data'].keys():
+        for key in self.rawscan['Bline']['data']:
             self.rawscan['Bline']['data'][key]['val'] = values
+
+    # Parse the M01 line and assign to variables in the data dictionary
+    def assignM01values(self,values):
+        for  key in self.rawscan['M01line']['data']:
+            self.rawscan['M01line']['data'][key]['val'] = \
+                    values[int(self.rawscan['M01line']['data'][key]['idx'])]
+
+    # Parse the M02 line and assign to variables in the data dictionary
+    def assignM02values(self,values):
+        for  key in self.rawscan['M02line']['data']:
+            self.rawscan['M02line']['data'][key]['val'] = \
+                    values[int(self.rawscan['M02line']['data'][key]['idx'])]
+
+    # Parse the Pt line and assign to variables in the data dictionary
+    def assignPtvalues(self,values):
+        for  key in self.rawscan['Ptline']['data']:
+            self.rawscan['Ptline']['data'][key]['val'] = \
+                    values[int(self.rawscan['Ptline']['data'][key]['idx'])]
+
+    # Parse the E line and assign to variables in the data dictionary
+    def assignEvalues(self,values):
+        for key in self.rawscan['Eline']['data']:
+            self.rawscan['Eline']['data'][key]['val'] = values
+
+
+
 
     # Get the value of a variable from the data dictionary
     def getSCNTData(self):
@@ -167,7 +238,7 @@ class readMTP:
 
     # Get the list of variable names that are in the dictionary
     def getVarList(self):
-        return(list(self.rawscan['Aline']['data'].keys()))
+        return(list(self.rawscan['Aline']['data']))
 
 if __name__ == "__main__":
     readRaw()
