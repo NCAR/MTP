@@ -22,3 +22,12 @@ The MTPviewer software currently uses the following versions of code:
  * pip3 install pyqtgraph
 
 Information on operating the MTP, and other documentation, can be found on the (UCAR SEW MTP wiki)[https://wiki.ucar.edu/display/SEW/MicrowaveTemperatureProfiler]
+
+## To run:
+ * Copy project ascii_parms file from proj dir to config/
+ * cd src
+ * python3 MTPviewer.py
+
+## To run in test mode, generate fake "real-time" data by running
+ * cd test
+ * python3 snd_MTP_udp.py
