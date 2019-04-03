@@ -34,12 +34,14 @@
 
 import re
 import numpy
+import copy
 from MTP import MTPrecord
 
 class readMTP:
 
     def __init__(self):
         self.rawscan = MTPrecord
+        self.flightData = []
 
         # Because the specific variables sent via the IWG packet can change per
         # project, read the variable names from the project ascii_parms file,
@@ -105,7 +107,10 @@ class readMTP:
                 foundall = foundall & self.rawscan[linetype]['found']
 
         if (foundall):
-            # Have a complete scan. Reset found to False for all and return
+            # Have a complete scan. Save this record to the flight library
+            self.flightData.append(copy.deepcopy(self.rawscan))
+
+            # Reset found to False for all and return
             for linetype in self.rawscan:
                 if 'found' in self.rawscan[linetype]:
                     self.rawscan[linetype]['found'] = False
@@ -119,15 +124,16 @@ class readMTP:
     # Stores the Ascii packet in the dictionary.
     # Also, returns the Ascii packet to the caller.
     def getAsciiPacket(self):
+        recNum = len(self.flightData)-1
         packet = [] 
         packet.append("MTP")
-        packet.append(self.rawscan['Aline']['date']) # Date and Time
-        packet.append(self.rawscan['Aline']['data']) # Rest of A line
-        packet.append(self.rawscan['Bline']['data'])
-        packet.append(self.rawscan['M01line']['data'])
-        packet.append(self.rawscan['M02line']['data'])
-        packet.append(self.rawscan['Ptline']['data'])
-        packet.append(self.rawscan['Eline']['data'])
+        packet.append(self.flightData[recNum]['Aline']['date']) # Date and Time
+        packet.append(self.flightData[recNum]['Aline']['data']) # Rest of A line
+        packet.append(self.flightData[recNum]['Bline']['data'])
+        packet.append(self.flightData[recNum]['M01line']['data'])
+        packet.append(self.flightData[recNum]['M02line']['data'])
+        packet.append(self.flightData[recNum]['Ptline']['data'])
+        packet.append(self.flightData[recNum]['Eline']['data'])
 
         # Turn our packet into a comma separated string, and return it
         # But since the individual data strings are space separated, split 
@@ -138,8 +144,8 @@ class readMTP:
         separator = ','
         UDPpacket = separator.join(values)
 
-        # Store the new packet in our dictionary
-        self.rawscan['asciiPacket'] = UDPpacket
+        # Store the new packet in our dictionary.
+        self.flightData[recNum]['asciiPacket'] = UDPpacket
 
         # Return the newly created packet
         return (UDPpacket)
