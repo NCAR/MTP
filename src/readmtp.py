@@ -226,19 +226,13 @@ class readMTP:
             self.rawscan['Eline']['data'][key]['val'] = values
 
 
-
-
     # Get the value of a variable from the data dictionary
-    def getSCNTData(self):
-        return(self.rawscan['Bline']['data']['SCNT']['val'])
-
-    # Get the value of a variable from the data dictionary
-    def getXYData(self,varname):
-        return(self.rawscan['Aline']['data'][varname]['val'])
+    def getVar(self,linetype,varname):
+        return(self.rawscan[linetype]['data'][varname]['val'])
 
     # Get the list of variable names that are in the dictionary
-    def getVarList(self):
-        return(list(self.rawscan['Aline']['data']))
+    def getVarList(self,linetype):
+        return(list(self.rawscan[linetype]['data']))
 
 if __name__ == "__main__":
     readRaw()

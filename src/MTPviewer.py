@@ -49,7 +49,7 @@ class MTPclient():
 
         # Instantiate an instance of an MTP reader
         self.reader = readMTP()
-        self.varlist = self.reader.getVarList()
+        self.varlist = self.reader.getVarList('Aline')
 
 
     def initData(self):
@@ -59,7 +59,7 @@ class MTPclient():
         return(self.xvals,self.yvals)
 
     def getSCNT(self):
-        vals = self.reader.getSCNTData()
+        vals = self.reader.getVar('Bline','SCNT')
         return (vals)
 
     def getXY(self):
@@ -86,7 +86,7 @@ class MTPclient():
         self.reader.parseIwgPacket(dataI)
 
         # Append new X value to end of list
-        self.xvals.append(int(self.reader.getXYData(self.xvar)))
+        self.xvals.append(int(self.reader.getVar('Aline',self.xvar)))
 
         # First time through, populate list with fabricated X values before
         # first X value so plot will scroll
@@ -99,8 +99,8 @@ class MTPclient():
         if (len(self.xvals) > self.plotWidth):
             self.xvals.pop(0)
 
-        # Append new X value to end of list
-        self.yvals.append(float(self.reader.getXYData(self.yvar)))
+        # Append new Y value to end of list
+        self.yvals.append(float(self.reader.getVar('Aline',self.yvar)))
 
         # Pop oldest Y value off list
         if (len(self.yvals) > self.plotWidth):
