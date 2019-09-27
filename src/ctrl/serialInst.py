@@ -29,7 +29,6 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
 import logging
-#import fcntl
 import serial
 
 logging.basicConfig(level=logging.DEBUG)
@@ -62,17 +61,11 @@ class SerialInst(object):
         # -if-serial-port-is-already-open-by-another-process-in-linux-using
         try:
             self.sport = serial.Serial(self.device, 9600, timeout=0)
-            #if self.sport.isOpen():
-            #    try:
-            #        fcntl.flock(self.sport.fileno(), fcntl.LOCK_EX |
-            #                    fcntl.LOCK_NB)
-            #    except IOError:
-            #        logger.info("port is busy")
-            #        exit(1)
+            if self.sport.isOpen():
+                logger.info("port is open")
         except serial.SerialException as ex:
             logger.info("Port is unavailable: " + str(ex))
             exit()
-        #self.sport.nonblocking()
 
     def getSerial(self):
         """ Return the pointer to the serial port """
