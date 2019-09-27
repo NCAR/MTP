@@ -29,13 +29,14 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
 import logging
-import fcntl
+#import fcntl
 import serial
 
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
-class Serial(object):
+class SerialInst(object):
 
     def __init__(self, device=None):
         """
@@ -54,23 +55,24 @@ class Serial(object):
         """
 
         if not device:
-            device = '/dev/ttyUSB6'
+            device = 'COM6'
         self.device = device
         # Open serial port self.device
         # Lock it per https://stackoverflow.com/questions/19809867/how-to-check
         # -if-serial-port-is-already-open-by-another-process-in-linux-using
         try:
             self.sport = serial.Serial(self.device, 9600, timeout=0)
-            if self.sport.isOpen():
-                try:
-                    fcntl.flock(self.sport.fileno(), fcntl.LOCK_EX |
-                                fcntl.LOCK_NB)
-                except IOError:
-                    logger.info("port is busy")
-                    exit(1)
+            #if self.sport.isOpen():
+            #    try:
+            #        fcntl.flock(self.sport.fileno(), fcntl.LOCK_EX |
+            #                    fcntl.LOCK_NB)
+            #    except IOError:
+            #        logger.info("port is busy")
+            #        exit(1)
         except serial.SerialException as ex:
-            logger.info("Port is unavailable: " + ex)
-        self.sport.nonblocking()
+            logger.info("Port is unavailable: " + str(ex))
+            exit()
+        #self.sport.nonblocking()
 
     def getSerial(self):
         """ Return the pointer to the serial port """
@@ -79,12 +81,12 @@ class Serial(object):
 
     def getVersion(self):
         """ Send a command to the instrument """
-        self.sport.write("V\r")  # To get version, MTP expect "V" + vbCr
+        self.sport.write(b'V\r')  # To get version, MTP expect "V" + vbCr
         # vbCr : - return to line beginning
         # Represents a carriage-return character for print and display
         # functions.
         # ASCII character 13, vbCr, is a carriage return (without a line feed)
-        logger.info("Sending command%s - V\r")
+        logger.info("Sending command - V\r")
 
     def readData(self):
         """

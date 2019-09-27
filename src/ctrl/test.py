@@ -1,8 +1,8 @@
-from serial import Serial
+from serialInst import SerialInst
 
 
 def main():
-    device = Serial()
+    device = SerialInst()
 
     server = Server(device)
     # To start, just send a single command and get a response. Don't loop.
@@ -34,3 +34,9 @@ class Server(object):
         self.device.getVersion()
         # Get the response
         self.device.readData()
+
+    def close(self):
+        self.device.close()
+
+if __name__ == "__main__":
+    main()
