@@ -20,10 +20,22 @@ The MTPviewer software currently uses the following versions of code:
  * pip3 install pyserial
  * pip3 install psycopg2
  * pip3 install pyqtgraph
+ 
+## To operate the MTP from Windows10
+
+ * Install the driver for the USOPTL4 USB to serial converter
+ * Download the driver from https://support.advantech.com/support/DownloadSRDetail_New.aspx?SR_ID=1-HIPU-30&Doc_Source=Download 
+
+ * Extract the zip file to the desktop
+ * Run C:\Documents and Settings\mtp\Desktop\USB_Drivers_PKG_v2-08-28\BBSmartWorx\Windows\dpinst64
+ * Plug in the USB cable from the MTP to the laptop
+ * Go to the device manager and change the port to comm 6
+   * This PC -> right click -> manage -> device manager -> Other Devices or COM & PORT (I think) -> USOPTL4
+ * Comfirm port settings as 9600|8|None|1|None
 
 Information on operating the MTP, and other documentation, can be found on the (UCAR SEW MTP wiki)[https://wiki.ucar.edu/display/SEW/MicrowaveTemperatureProfiler]
 
-## To run:
+## To run this code:
  * Copy project ascii_parms file from proj dir to config/
  * cd src
  * python3 MTPviewer.py
