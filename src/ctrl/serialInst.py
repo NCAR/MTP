@@ -57,8 +57,7 @@ class SerialInst(object):
             device = 'COM6'
         self.device = device
         # Open serial port self.device
-        # Lock it per https://stackoverflow.com/questions/19809867/how-to-check
-        # -if-serial-port-is-already-open-by-another-process-in-linux-using
+        # To see a list of available ports, type 'python -m serial.tools.list_ports'
         try:
             self.sport = serial.Serial(self.device, 9600, timeout=0)
             if self.sport.isOpen():
@@ -72,24 +71,31 @@ class SerialInst(object):
         logger.debug("Connected to serial port " + self.sport.name)
         return self.sport
 
-    def getVersion(self):
+    def sendCommand(self, command):
         """ Send a command to the instrument """
-        self.sport.write(b'V\r')  # To get version, MTP expect "V" + vbCr
-        # vbCr : - return to line beginning
-        # Represents a carriage-return character for print and display
-        # functions.
-        # ASCII character 13, vbCr, is a carriage return (without a line feed)
-        logger.info("Sending command - V\r")
+        # To test on command line, run the included miniterm program by typing
+        # 'python -m serial.tools.miniterm COM6'
+        self.sport.write(command)  # To get version, MTP expect "V" + vbCr
+        logger.info('Sending command - '+ str(command))
 
     def readData(self):
         """
         Read data from the serial port and parse it for status updates.
 
-        How do we know if we have a complete command. End in newline?
-        Set number of chars??
+        How do we know if we have a complete command. For now, I am assuming
+        all responses are terminated by a new line. Can run commands through
+        the miniterm program to ensure this is true.
         """
-        rdata = self.sport.read(512)
-        logger.debug("read data: " + repr(rdata))
+        message = ""
+        byte = ""
+        while True:
+            byte = self.sport.read()
+            if byte.decode("utf-8") == "\n":
+                break
+            message += byte.decode("utf-8")
+        logger.debug("read data: " + message.rstrip())
+        return(message.rstrip())
+
 
     def close(self):
         self.sport.close()
