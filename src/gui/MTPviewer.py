@@ -23,8 +23,7 @@ from PyQt5.QtWidgets import QApplication,QGridLayout,QWidget,QTabWidget,QPushBut
 from PyQt5.QtCore import QSocketNotifier
 
 sys.path.append('.')
-from readmtp import readMTP
-from MTPgui import Ui_MTPgui
+from util.readmtp import readMTP
 
 class MTPclient():
 

@@ -17,7 +17,7 @@ import time
 from optparse import OptionParser
 
 sys.path.append('../src')
-from readmtp import readMTP
+from util.readmtp import readMTP
 
 def main(args):
 

@@ -35,7 +35,7 @@
 import re
 import numpy
 import copy
-from MTP import MTPrecord
+from util.MTP import MTPrecord
 
 class readMTP:
 
@@ -145,10 +145,16 @@ class readMTP:
         UDPpacket = separator.join(values)
 
         # Store the new packet in our dictionary.
-        self.flightData[recNum]['asciiPacket'] = UDPpacket
+        #self.flightData[recNum]['asciiPacket'] = UDPpacket
+        self.writeFlightData(UDPpacket)
 
         # Return the newly created packet
         return (UDPpacket)
+
+    # Save a UDP packet to the flightData array
+    def writeFlightData(self, UDPpacket):
+        recNum = len(self.flightData)-1
+        self.flightData[recNum]['asciiPacket'] = UDPpacket
 
     # Parse an IWG1 packet and store it's values in the data dictionary
     def parseIwgPacket(self,IWGpacket):
@@ -239,6 +245,17 @@ class readMTP:
     # Get the list of variable names that are in the dictionary
     def getVarList(self,linetype):
         return(list(self.rawscan[linetype]['data']))
+
+    # Get an array containing all measured values of a variable
+    def getVarArray(self,linetype,varname):
+        print(self.flightData)
+        print(len(self.flightData))
+        print(range(len(self.flightData)))
+        self.varArray = []
+        for i in range(len(self.flightData)-1):
+            self.varArray.append(float(self.flightData[i].getVar(linetype,varname)))
+        return(self.varArray)
+
 
 if __name__ == "__main__":
     readRaw()
