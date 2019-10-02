@@ -2,10 +2,6 @@
 # Convert/relay commands from a client UI via UDP to an instrument
 # via RS-232.
 #
-# To test serial connectivity via the command line, run the miniterm program
-# included in the serial library by typing
-#   'python -m serial.tools.miniterm COM6'
-#
 # Requires the pyserial package, preferably version 3.0+:
 #
 #   Github: https://github.com/pyserial/pyserial
@@ -26,7 +22,7 @@
 # 3.0 includes a miniterm tool that can be used to test the serial
 # connection directly, like so:
 #
-#   python -m serial.tools.miniterm /dev/ttyUSB6
+#   python -m serial.tools.miniterm COM6
 #
 # Written in Python 3
 #
