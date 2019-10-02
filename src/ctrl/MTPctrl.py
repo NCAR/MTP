@@ -17,7 +17,8 @@ def main():
     device = SerialInst()
 
     server = MTPctrl(device)
-    server.sendCommand()
+    #server.sendCommand("version")
+    server.sendCommand("status")
     server.loop()
 
     server.close()
@@ -44,18 +45,15 @@ class MTPctrl(object):
         # Get a pointer to the serial port
         self.device.getSerial()
 
-    def sendCommand(self):
+    def sendCommand(self, command):
         """ Send a command to request the Firmware Version """
-        # This is hardcoded for first test. Update to get commands from
-        # MTPcommand class.
-        self.device.sendCommand(b'V\r')
+        self.device.sendCommand(self.command.getCommand(command).encode('UTF-8'))
 
     def handleEvents(self, timeout=None):
         # Get the response
         response = self.device.readData()
         # MTP returns sent command before returns response
-        if (response != 'V'):
-            logger.info('Received response ' + response)
+        logger.info('Received response ' + response)
 
     def homeScan(self):
         """
