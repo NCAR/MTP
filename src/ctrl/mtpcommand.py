@@ -76,10 +76,10 @@ class MTPcommand():
 
         self.command = command_list  # dictionary to hold all MTP commands
 
-        def getCommand(self, key):
-            """ Return the command for a given user-requested key """
-            return(self.command[key])
+    def getCommand(self, key):
+        """ Return the command for a given user-requested key """
+        return(self.command[key])
 
-        def getCommands(self):
-            """ Return a list of all possible user commands """
-            return(self.command.keys())
+    def getCommands(self):
+        """ Return a list of all possible user commands """
+        return(self.command.keys())
