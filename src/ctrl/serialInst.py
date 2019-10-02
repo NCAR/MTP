@@ -2,6 +2,10 @@
 # Convert/relay commands from a client UI via UDP to an instrument
 # via RS-232.
 #
+# To test serial connectivity via the command line, run the miniterm program
+# included in the serial library by typing
+#   'python -m serial.tools.miniterm COM6'
+#
 # Requires the pyserial package, preferably version 3.0+:
 #
 #   Github: https://github.com/pyserial/pyserial
@@ -56,8 +60,8 @@ class SerialInst(object):
         if not device:
             device = 'COM6'
         self.device = device
-        # Open serial port self.device
-        # To see a list of available ports, type 'python -m serial.tools.list_ports'
+        # Open serial port self.device. To see a list of available ports, type
+        # 'python -m serial.tools.list_ports'
         try:
             self.sport = serial.Serial(self.device, 9600, timeout=0)
             if self.sport.isOpen():
@@ -72,11 +76,9 @@ class SerialInst(object):
         return self.sport
 
     def sendCommand(self, command):
-        """ Send a command to the instrument """
-        # To test on command line, run the included miniterm program by typing
-        # 'python -m serial.tools.miniterm COM6'
-        self.sport.write(command)  # To get version, MTP expect "V" + vbCr
-        logger.info('Sending command - '+ str(command))
+        """ Send a command to the serial port """
+        self.sport.write(command)
+        logger.info('Sending command - ' + str(command))
 
     def readData(self):
         """
@@ -84,7 +86,8 @@ class SerialInst(object):
 
         How do we know if we have a complete command. For now, I am assuming
         all responses are terminated by a new line. Can run commands through
-        the miniterm program to ensure this is true.
+        the miniterm program to ensure this is true. See comments at the top
+        of this file.
         """
         message = ""
         byte = ""
@@ -96,11 +99,11 @@ class SerialInst(object):
         logger.debug("read data: " + message.rstrip())
         return(message.rstrip())
 
-
     def close(self):
         self.sport.close()
 
 
-if __name__ in "__main__":
+if __name__ == "__main__":
+
     import doctest
     doctest.testmode()
