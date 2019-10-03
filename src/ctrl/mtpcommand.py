@@ -71,7 +71,11 @@ class MTPcommand():
             # decimal always required.
             # operate with "C" mode ( New SNP-1216 Synthesizers in 'C' mode )
             # This won't work because chan is not defined. Just a placeholder
-            # 'tune': 'F ' + chan + '\r',
+            # 'tuneC': 'C ' + chan + '\r',
+
+            # VB6 sub nwtune();
+            # 'tuneF': 'F ' + chan + '\r',
+            
         }
 
         self.command = command_list  # dictionary to hold all MTP commands
