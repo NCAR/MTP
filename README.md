@@ -1,3 +1,6 @@
+```diff
+CAUTION: When running the MTP instrument, if Tsynth under the Engineering tab gets to 50 degreesC, the probe needs to be shutdown to avoid overheating
+```
 # MTP
 
 The Microwave Temperature Profiler (MTP) is a HAIS instrument which was developed by JPL for the NSF/NCAR GV.
