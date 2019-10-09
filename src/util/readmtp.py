@@ -46,10 +46,12 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
+import os
 import re
 import numpy
 import copy
 from util.MTP import MTPrecord
+from lib.rootdir import getrootdir
 
 
 class readMTP:
@@ -65,7 +67,8 @@ class readMTP:
         # project ascii_parms file has not been copied, overwriting the
         # default, the data plotted will be good, but the variable name labels
         # may not be right.
-        ascii_parms = open('../config/ascii_parms', 'r')
+        ascii_parms = open(os.path.join(getrootdir(), 'config/ascii_parms'),
+                           'r')
         i = 2  # index of each variable in IWG1 line (after dateTtime)
         while True:
             line = ascii_parms.readline()
