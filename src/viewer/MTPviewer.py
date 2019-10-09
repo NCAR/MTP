@@ -1,138 +1,55 @@
 ###############################################################################
-#
-# This MTP client program runs on the user host, receives the MTP data packet
-# and creates plots and other displays to allow the user to monitor the status
-# and function of the MTP.
+# This MTP viewer program runs on the user host, accepts MTP data from the
+# client and creates plots and other displays to allow the user to monitor the
+# status and function of the MTP.
 #
 # Written in Python 3
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
-import socket
-import sys
 import numpy
 import pyqtgraph as pg
 
-from PyQt5.QtWidgets import QApplication, QGridLayout, QWidget, QTabWidget, \
+from PyQt5.QtWidgets import QGridLayout, QWidget, QTabWidget, \
      QPushButton, QComboBox, QHBoxLayout
 from PyQt5.QtCore import QSocketNotifier
 
-sys.path.append('.')
-from util.readmtp import readMTP
-
-
-class MTPclient():
-
-    def __init__(self):
-
-        self.udp_send_port = 32106  # from viewer to MTP
-        self.udp_read_port = 32107  # from MTP to viewer
-        self.iwg1_port = 7071       # IWG1 packets from GV
-
-        # Hack-y stuff to get plot to scroll. pyqtgraph must have a better way
-        # that I haven't found yet.
-        # The MTP takes a scan about once every 17 seconds. Used to scroll
-        # plotting
-        self.scanInterval = 17
-        # 150 scans*17s=42.5 min = the width of the time window shown on the
-        # scrolling plot
-        self.plotWidth = 150
-        self.xvals = []
-        self.yvals = []
-        (self.xvals, self.yvals) = self.initData()
-
-        self.xvar = 'TIME'
-        self.yvar = 'SAPALT'
-
-        # Instantiate an instance of an MTP reader
-        self.reader = readMTP()
-        self.varlist = self.reader.getVarList('Aline')
-
-    def initData(self):
-        self.xvals = [0]*self.plotWidth    # Current X values being plotted
-        # Necessary to get data to scroll. Before get good data, plot NANs
-        self.yvals = [numpy.nan]*self.plotWidth
-        return(self.xvals, self.yvals)
-
-    def getSCNT(self):
-        vals = self.reader.getVar('Bline', 'SCNT')
-        return (vals)
-
-    def getXY(self):
-        return (self.xvals, self.yvals)
-
-    def connect(self):
-        """ Connection to UDP data stream """
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.bind(("0.0.0.0", self.udp_read_port))
-
-        self.sockI = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sockI.bind(("0.0.0.0", self.iwg1_port))
-
-    def getSocketFileDescriptor(self):
-        return self.sock.fileno()
-
-    def readSocket(self):
-        # Listen for UDP packets
-        data = self.sock.recv(1024).decode()
-        dataI = self.sockI.recv(1024).decode()
-
-        # Store data to data dictionary
-        self.reader.parseAsciiPacket(data)
-        self.reader.parseIwgPacket(dataI)
-
-        # Append new X value to end of list
-        self.xvals.append(int(self.reader.getVar('Aline', self.xvar)))
-
-        # First time through, populate list with fabricated X values before
-        # first X value so plot will scroll
-        if (self.xvals[0] == 0):
-            self.xvals = list(range(self.xvals[self.plotWidth] -
-                                    self.plotWidth*self.scanInterval,
-                                    self.xvals[self.plotWidth],
-                                    self.scanInterval))
-
-        # Pop oldest X value off list
-        if (len(self.xvals) > self.plotWidth):
-            self.xvals.pop(0)
-
-        # Append new Y value to end of list
-        self.yvals.append(float(self.reader.getVar('Aline', self.yvar)))
-
-        # Pop oldest Y value off list
-        if (len(self.yvals) > self.plotWidth):
-            self.yvals.pop(0)
+from viewer.MTPclient import MTPclient
 
 
 class MTPviewer():
 
-    def __init__(self, client, app):
+    def __init__(self, app):
 
         self.app = app
-        client.connect()
-        self.initUI(client)
+
+        self.client = MTPclient()
+        self.client.connect()
+
+        self.initUI()
 
         self.readNotifier = QSocketNotifier(
-            client.getSocketFileDescriptor(), QSocketNotifier.Read)
-        self.readNotifier.activated.connect(lambda: self.plotData(client))
+            self.client.getSocketFileDescriptor(), QSocketNotifier.Read)
+        self.readNotifier.activated.connect(lambda: self.plotData())
 
-    def plotData(self, client):
+    def plotData(self):
 
-        client.readSocket()
+        self.client.readSocket()
 
-        self.plotDataxy(client)
-        self.plotDatascnt(client)
+        self.plotDataxy()
+        self.plotDatascnt()
 
         self.app.processEvents()
 
-    def plotDataxy(self, client):
+    def plotDataxy(self):
 
-        (self.x, self.y) = client.getXY()
+        (self.x, self.y) = self.client.getXY()
+        self.xy.clear()
         self.xyplot = self.xy.plot()
         self.xyplot.setData(self.x, self.y, connect="finite")
 
-    def plotDatascnt(self, client):
-        scnt = client.getSCNT()
+    def plotDatascnt(self):
+        scnt = self.client.getSCNT()
 
         # The scan counts are stored in the ads file as cnts[angle,channel],
         # i.e. {a1c1,a1c2,a1c3,a2c1,...}. Processing requires, and the final
@@ -161,12 +78,12 @@ class MTPviewer():
 
     def selectPlotVar(self, text):
         self.xy.clear()
-        client.initData()
+        self.client.initData()
         self.xy.setLabel('left', text)
-        client.yvar = text
+        self.client.yvar = text
         return()
 
-    def initUI(self, client):
+    def initUI(self):
 
         # Define top-level widget to hold everything
         self.glayout = QHBoxLayout()
@@ -180,16 +97,16 @@ class MTPviewer():
         self.tab = QTabWidget()
         self.glayout.addWidget(self.tab, 0)
 
-        self.initCtrl()          # Create the layout for the "ctrl" tab
-        self.initView(client)    # Create the layout for the "view" tab
-        self.initStatus(client)  # Init status column to the right
+        self.initCtrl()    # Create the layout for the "ctrl" tab
+        self.initView()    # Create the layout for the "view" tab
+        self.initStatus()  # Init status column to the right
 
         self.MTPgui.show()
 
         # Show the window even if data are not flowing
         self.app.processEvents()
 
-    def initView(self, client):
+    def initView(self):
         # Create the layout for the "view" tab
         self.layout = QGridLayout()
         self.view = QWidget()
@@ -205,30 +122,30 @@ class MTPviewer():
         w1layout.addWidget(win1, 0, 0)
         # Create empty space for the plot in the window and then
         # create an empty plot
-        self.xy = win1.addPlot(bottom=client.xvar, left=client.yvar)
+        self.xy = win1.addPlot(bottom=self.client.xvar, left=self.client.yvar)
 
         # Create a window to hold our profile plot
         win2 = pg.GraphicsWindow()
         win2.setWindowTitle('Histo')
         self.layout.addWidget(win2, 0, 0, 3, 1)
         # Create empty space for the plot in the window and then
-        # reate an empty plot
+        # create an empty plot
         self.scnt = win2.addPlot(bottom='Counts', left='Angle')
 
         # Add a dropdown to select the variable to plot
         varSelector = QComboBox()
-        for item in client.varlist:
+        for item in self.client.varlist:
             varSelector.addItem(item)
 
         varSelector.activated[str].connect(self.selectPlotVar)
         w1layout.addWidget(varSelector, 1, 0)
 
-    def initStatus(self, client):
+    def initStatus(self):
         # Add a quit button to the right - later add a red/green indicator to
         # display status of connectivity (like GNI).
         self.window = QWidget()
         button = QPushButton('Quit')
-        button.clicked.connect(lambda: self.close(client))
+        button.clicked.connect(lambda: self.close())
         self.glayout.addWidget(button, 1)
 
     def initCtrl(self):
@@ -236,23 +153,7 @@ class MTPviewer():
         self.ctrl = QWidget()
         self.tab.addTab(self.ctrl, "ctrl")
 
-    def close(self, client):
-        if client.sock:
-            client.sock.close()
-        self.app.quit()
-
-
-client = MTPclient()
-
-
-def main():
-
-    app = QApplication(sys.argv)
-
-    viewer = MTPviewer(client, app)
-
-    sys.exit(app.exec_())
-
-
-if __name__ == "__main__":
-    main()
+    def close(self):
+        """ Actions to take when Quit button is clicked """
+        self.client.close()  # Close UDP connection
+        self.app.quit()      # Close app
