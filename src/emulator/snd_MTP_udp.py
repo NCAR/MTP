@@ -1,5 +1,4 @@
 ###############################################################################
-#
 # This script uses the readMTP module to read in an MTP .RAW file, combine it
 # into an ASCII Packet suitable to sending around the plane, and sends it out
 # over UDP. This script is used to generate "fake" real-time data from a raw
@@ -14,7 +13,7 @@ import sys
 import time
 from optparse import OptionParser
 
-sys.path.append('../src')
+sys.path.append('../')
 from util.readmtp import readMTP
 
 
