@@ -11,7 +11,7 @@ import numpy
 import pyqtgraph as pg
 
 from PyQt5.QtWidgets import QGridLayout, QWidget, QTabWidget, \
-     QPushButton, QComboBox, QHBoxLayout
+        QPushButton, QComboBox, QHBoxLayout
 from PyQt5.QtCore import QSocketNotifier
 
 from viewer.MTPclient import MTPclient
@@ -29,7 +29,7 @@ class MTPviewer():
         self.initUI()
 
         self.readNotifier = QSocketNotifier(
-            self.client.getSocketFileDescriptor(), QSocketNotifier.Read)
+                self.client.getSocketFileDescriptor(), QSocketNotifier.Read)
         self.readNotifier.activated.connect(lambda: self.plotData())
 
     def plotData(self):
@@ -97,7 +97,7 @@ class MTPviewer():
         self.tab = QTabWidget()
         self.glayout.addWidget(self.tab, 0)
 
-        self.initCtrl()    # Create the layout for the "ctrl" tab
+        # self.initCtrl()  # Create the layout for the "ctrl" tab
         self.initView()    # Create the layout for the "view" tab
         self.initStatus()  # Init status column to the right
 

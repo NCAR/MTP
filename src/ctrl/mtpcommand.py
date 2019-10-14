@@ -112,7 +112,7 @@ class MTPcommand():
             # This first set of commands are firmware commands. The firmware
             # contains the actual command sent to the stepper motor.
             'version': 'V\r',         # Request the MTP Firmware Version. The
-                                      # firmware version is hardcoded in 
+                                      # firmware version is hardcoded in
                                       # MTPH_Control.C
             'status': 'S\r',          # Request the MTP Firmware Status
                                       # - Bit 0 = integrator busy
@@ -153,7 +153,7 @@ class MTPcommand():
 
             # VB6 sub nwtune();
             # 'tuneF': 'F ' + chan + '\r',
-            
+
             # From VB6 sub Init()
             'init': 'U/1f1j256V5000L5000h30m100R\r',  # initialize
 

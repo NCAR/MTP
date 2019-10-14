@@ -103,5 +103,4 @@ class MTPclient():
     def close(self):
         """ Close connection to UDP data stream """
         if self.sock:
-            print("Closing socket")
             self.sock.close()
