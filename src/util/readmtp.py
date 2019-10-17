@@ -85,6 +85,8 @@ class readMTP:
             if i > 31:  # Only keep the first 31 values; the rest are user vals
                 break
 
+        ascii_parms.close()
+
     def readRawScan(self, raw_data_file):
         """
         Read in a scan (a group of lines) from an MTP .RAW file and store them
