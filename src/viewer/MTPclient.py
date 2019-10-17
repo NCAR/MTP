@@ -35,6 +35,9 @@ class MTPclient():
         self.yvals = []
         (self.xvals, self.yvals) = self.initData()
 
+        # When the GUI starts, the IWG plot defaults to scan average pressure
+        # altitude vs time. User can then change to another var using the
+        # dropdown.
         self.xvar = 'TIME'
         self.yvar = 'SAPALT'
 
@@ -49,11 +52,18 @@ class MTPclient():
         return(self.xvals, self.yvals)
 
     def getSCNT(self):
+        """
+        Return the contents of the Bline, which contains:
+            MTP Scan Counts[Angle, Channel]
+        """
         vals = self.reader.getVar('Bline', 'SCNT')
         return (vals)
 
     def getXY(self):
-        """ Return the latest x and y values """
+        """
+        Return the latest x and y values. xvals and yvals contain the values
+        for the desired plotWidth and scanInterval.
+        """
         return (self.xvals, self.yvals)
 
     def connect(self):

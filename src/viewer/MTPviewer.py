@@ -7,17 +7,16 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
-import numpy
-import pyqtgraph as pg
-
-from PyQt5.QtWidgets import QGridLayout, QWidget, QTabWidget, \
-        QPushButton, QComboBox, QHBoxLayout
+from PyQt5.QtWidgets import QMainWindow, QGridLayout, QWidget, \
+        QPlainTextEdit, QFrame, QAction
 from PyQt5.QtCore import QSocketNotifier
 
 from viewer.MTPclient import MTPclient
+from viewer.plotScanTemp import ScanTemp
+from viewer.plotTimeseries import Timeseries
 
 
-class MTPviewer():
+class MTPviewer(QMainWindow):
 
     def __init__(self, app):
 
@@ -26,134 +25,153 @@ class MTPviewer():
         self.client = MTPclient()
         self.client.connect()
 
+        # The QMainWindow class provides a main application window
+        QMainWindow.__init__(self)
+
+        # Create the GUI
         self.initUI()
 
+        # When data appears on the socket, call plotData()
         self.readNotifier = QSocketNotifier(
                 self.client.getSocketFileDescriptor(), QSocketNotifier.Read)
         self.readNotifier.activated.connect(lambda: self.plotData())
 
-    def plotData(self):
-
-        self.client.readSocket()
-
-        self.plotDataxy()
-        self.plotDatascnt()
-
-        self.app.processEvents()
-
-    def plotDataxy(self):
-
-        (self.x, self.y) = self.client.getXY()
-        self.xy.clear()
-        self.xyplot = self.xy.plot()
-        self.xyplot.setData(self.x, self.y, connect="finite")
-
-    def plotDatascnt(self):
-        scnt = self.client.getSCNT()
-
-        # The scan counts are stored in the ads file as cnts[angle,channel],
-        # i.e. {a1c1,a1c2,a1c3,a2c1,...}. Processing requires, and the final
-        # data are output as {c1a1,c1a2,c1a3,c1a4,...}. Invert the array here.
-        scnt_inv = [numpy.nan]*30
-        NUM_SCAN_ANGLES = 10
-        NUM_CHANNELS = 3
-        for j in range(NUM_SCAN_ANGLES):
-            for i in range(NUM_CHANNELS):
-                scnt_inv[i*10+j] = int(scnt[j*3+i])
-
-        scan1 = scnt_inv[0:10]
-        scan2 = scnt_inv[10:20]
-        scan3 = scnt_inv[20:30]
-        angles = numpy.array(range(10))+1
-
-        # Scan Counts[Angle, Channel]
-        self.scnt.clear()
-        self.scnt.invertY(True)
-        plot2 = self.scnt.plot(pen=pg.mkPen('r'))
-        plot2.setData(scan1, angles, connect="finite")
-        plot2 = self.scnt.plot(pen=pg.mkPen('w'))
-        plot2.setData(scan2, angles, connect="finite")
-        plot2 = self.scnt.plot(pen=pg.mkPen('b'))
-        plot2.setData(scan3, angles, connect="finite")
-
-    def selectPlotVar(self, text):
-        self.xy.clear()
-        self.client.initData()
-        self.xy.setLabel('left', text)
-        self.client.yvar = text
-        return()
-
     def initUI(self):
+        """ Initialize the GUI UI """
+        # Set window title
+        self.setWindowTitle('MTP viewer')
 
-        # Define top-level widget to hold everything
-        self.glayout = QHBoxLayout()
-        self.MTPgui = QWidget()
-        self.MTPgui.setLayout(self.glayout)
-        self.MTPgui.setObjectName("MTPgui")
-        self.MTPgui.setWindowTitle('MTP viewer')
-        self.MTPgui.resize(1000, 600)
+        # Set the initial size of the window created. it is user resizeable.
+        self.resize(1200, 800)
 
-        # Add a tab widget to the upper left
-        self.tab = QTabWidget()
-        self.glayout.addWidget(self.tab, 0)
+        # Define central widget to hold everything
+        self.view = QWidget()
+        self.setCentralWidget(self.view)
 
-        # self.initCtrl()  # Create the layout for the "ctrl" tab
-        self.initView()    # Create the layout for the "view" tab
-        self.initStatus()  # Init status column to the right
+        # Create the layout for the viewer
+        self.initView()
 
-        self.MTPgui.show()
+        # Configure the menu bar
+        self.createMenuBar()
 
-        # Show the window even if data are not flowing
-        self.app.processEvents()
+    def createMenuBar(self):
+        """ Create the menu bar and add options and dropdowns """
+        # A Menu bar will show menus at the top of the QMainWindow
+        menubar = self.menuBar()
+
+        # Mac OS treats menubars differently. To get a similar outcome, we can
+        # add the following line: menubar.setNativeMenuBar(False).
+        menubar.setNativeMenuBar(False)
+
+        # Add a menu option to quit
+        quitButton = QAction('Quit', self)
+        quitButton.setShortcut('Ctrl+Q')
+        quitButton.setToolTip('Exit application')
+        quitButton.triggered.connect(self.close)
+        menubar.addAction(quitButton)
 
     def initView(self):
-        # Create the layout for the "view" tab
+        """ Initialize the central widget """
+        # Create the grid layout for the central widget. Assign the layout to
+        # the widget. The grid layout will hold multiple sub-windows and plots.
         self.layout = QGridLayout()
-        self.view = QWidget()
-        self.tab.addTab(self.view, "view")
         self.view.setLayout(self.layout)
 
-        # Create a window to hold our timeseries plot
-        w1layout = QGridLayout()
-        self.layout.addLayout(w1layout, 0, 1)
+        # Create the Engineering 1 display window
+        filedata = QPlainTextEdit()
+        filedata.setReadOnly(True)
+        self.layout.addWidget(filedata, 0, 0, 2, 1)
+        filedata.setFrameStyle(QFrame.Panel | QFrame.Sunken)
+        filedata.appendPlainText("Engineering 1 display")
 
-        win1 = pg.GraphicsWindow()
-        win1.setWindowTitle('Timeseries')
-        w1layout.addWidget(win1, 0, 0)
-        # Create empty space for the plot in the window and then
-        # create an empty plot
-        self.xy = win1.addPlot(bottom=self.client.xvar, left=self.client.yvar)
+        # Create the Engineering 2 display window
+        filedata = QPlainTextEdit()
+        filedata.setReadOnly(True)
+        self.layout.addWidget(filedata, 2, 0, 2, 1)
+        filedata.setFrameStyle(QFrame.Panel | QFrame.Sunken)
+        filedata.appendPlainText("Engineering 2 display")
 
-        # Create a window to hold our profile plot
-        win2 = pg.GraphicsWindow()
-        win2.setWindowTitle('Histo')
-        self.layout.addWidget(win2, 0, 0, 3, 1)
-        # Create empty space for the plot in the window and then
-        # create an empty plot
-        self.scnt = win2.addPlot(bottom='Counts', left='Angle')
+        # Create the Engineering 3 display window
+        filedata = QPlainTextEdit()
+        filedata.setReadOnly(True)
+        self.layout.addWidget(filedata, 4, 0, 2, 1)
+        filedata.setFrameStyle(QFrame.Panel | QFrame.Sunken)
+        filedata.appendPlainText("Engineering 3 display")
 
-        # Add a dropdown to select the variable to plot
-        varSelector = QComboBox()
-        for item in self.client.varlist:
-            varSelector.addItem(item)
+        # Create a project metadata group box
+        # metadata = QGroupBox("Project info")
+        metadata = QPlainTextEdit("Project info")
+        self.layout.addWidget(metadata, 0, 1, 1, 3)
 
-        varSelector.activated[str].connect(self.selectPlotVar)
-        w1layout.addWidget(varSelector, 1, 0)
+        # Create a box to hold the list of brightness temps
+        tb = QPlainTextEdit("Brightness Temps")
+        self.layout.addWidget(tb, 1, 1)
 
-    def initStatus(self):
-        # Add a quit button to the right - later add a red/green indicator to
-        # display status of connectivity (like GNI).
-        self.window = QWidget()
-        button = QPushButton('Quit')
-        button.clicked.connect(lambda: self.close())
-        self.glayout.addWidget(button, 1)
+        # Create our scan and temperature plot and add it to the layout
+        self.scantemp = ScanTemp()
+        self.layout.addWidget(self.scantemp.getWindow(), 1, 2)
 
-    def initCtrl(self):
-        # Create the layout for the "ctrl" tab
-        self.ctrl = QWidget()
-        self.tab.addTab(self.ctrl, "ctrl")
+        # Create a window to hold our timeseries plot and parameter selection
+        # dropdown menu
+        self.timeseries = Timeseries(self.client)
+        self.layout.addLayout(self.timeseries.getWindow(), 1, 3)
+
+        # Create a box to hold selected RCFs and controls
+        tb = QPlainTextEdit("Control panel")
+        self.layout.addWidget(tb, 2, 1, 1, 3)
+
+        # Create a File data display window
+        filedata = QPlainTextEdit()
+        filedata.setReadOnly(True)
+        self.layout.addWidget(filedata, 3, 1, 2, 3)
+        filedata.setFrameStyle(QFrame.Panel | QFrame.Sunken)
+        filedata.appendPlainText("MTP data block display")
+
+        # Temporarily insert some sample data to get an idea how it will
+        # look. Remove this when get data parsing coded.
+        filedata.appendPlainText("A 20140606 06:22:52 +03.98 00.25 +00.07 00.33 +03.18 0.01 268.08 00.11 -43.308 +0.009 +172.469 +0.000 +074146 +073392")
+        filedata.appendPlainText("B 018963 020184 019593 018971 020181 019593 018970 020170 019587 018982 020193 019589 018992 020223 019617 019001 020229 019623 018992 020208 019601 018972 020181 019572 018979 020166 019558 018977 020161 019554")
+        filedata.appendPlainText("M01: 2928 2321 2898 3082 1923 2921 2432 2944")
+        filedata.appendPlainText("M02: 2016 1394 2096 2202 2136 1508 4095 1558")
+        filedata.appendPlainText("Pt: 2177 13823 13811 10352 13315 13327 13304 14460")
+        filedata.appendPlainText("E 021506 022917 022752 019806 021164 020697")
+        # End temporary display block
+
+        # IWG record display window
+        iwg = QPlainTextEdit()
+        iwg.setReadOnly(True)
+        self.layout.addWidget(iwg, 5, 1, 1, 3)
+        iwg.setFrameStyle(QFrame.Panel | QFrame.Sunken)
+        # Temporarily insert some sample data to get an idea how it will
+        # look. Remove this when get data parsing coded.
+        iwg.appendPlainText("IWG1,20140606T062250,-43.3061,172.455,3281.97,,10508.5,,149.998,164.027,,0.502512,3.11066,283.283,281.732,-1.55388,3.46827,0.0652588,-0.258496,2.48881,-5.31801,-5.92311,7.77836,683.176,127.248,1010.48,14.6122,297.157,0.303804,104.277,,-72.1708,")
+        # End temporary display block
 
     def close(self):
         """ Actions to take when Quit button is clicked """
         self.client.close()  # Close UDP connection
         self.app.quit()      # Close app
+
+    def plotData(self):
+        """
+        Function to tell client to read latest data and to update all plots in
+        the GUI
+        """
+
+        # Ask client to read data from the UDP feed and save it to the data
+        # dictionary.
+        self.client.readSocket()
+
+        # Update the XY plot (the plot of IWG params vs time)
+        (x, y) = self.client.getXY()
+        self.timeseries.plotDataXY(x, y)
+
+        # Update Scan and Template Plot
+        # (NOTE: Currently only plots scan counts. Templates are TBD.
+        scnt = self.client.getSCNT()    # Get scan counts as fn(Angle, Channel)
+        self.scantemp.invertSCNT(scnt)  # Invert array so if fn(Channel, Angle)
+        self.scantemp.plotDataScnt()    # Update the scan count plot
+
+        # Process any events generated by the GUI so it stays reponsive to the
+        # user.
+        self.app.processEvents()

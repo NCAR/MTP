@@ -12,10 +12,16 @@ from viewer.MTPviewer import MTPviewer
 
 def main():
 
+    # Every GUI app must have exactly one instance of QApplication. The
+    # QApplication class manages the GUI application's control flow and
+    # main settings.
     app = QApplication(sys.argv)
 
-    MTPviewer(app)
+    # Instantiate the GUI
+    viewer = MTPviewer(app)
+    viewer.show()
 
+    # Run the application until the user closes it.
     sys.exit(app.exec_())
 
 
