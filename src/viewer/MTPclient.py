@@ -1,6 +1,6 @@
 ###############################################################################
-# This MTP client program runs on the user host, and receives the MTP data
-# packets from the UDP feed.
+# This MTP client program runs on the user host, and receives the MTP and IWG
+# data packets from the UDP feeds.
 #
 # Written in Python 3
 #
@@ -67,21 +67,28 @@ class MTPclient():
         return (self.xvals, self.yvals)
 
     def connect(self):
-        """ Connection to UDP data stream """
+        """ Connection to UDP data streams """
+        # Connect to MTP data stream
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind(("0.0.0.0", self.udp_read_port))
 
+        # Connect to IWG data stream
         self.sockI = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sockI.bind(("0.0.0.0", self.iwg1_port))
 
     def getSocketFileDescriptor(self):
-        """ Return the socket file descriptor """
+        """ Return the MTP socket file descriptor """
         return self.sock.fileno()
+
+    def getSocketFileDescriptorI(self):
+        """ Return the IWG socket file descriptor """
+        return self.sockI.fileno()
 
     def readSocket(self):
         """ Read data from the UDP feed and save it to the data dictionary """
-        # Listen for UDP packets
+        # Listen for MTP packets
         data = self.sock.recv(1024).decode()
+        # Listen for IWG packets
         dataI = self.sockI.recv(1024).decode()
 
         # Store data to data dictionary
@@ -111,6 +118,11 @@ class MTPclient():
             self.yvals.pop(0)
 
     def close(self):
-        """ Close connection to UDP data stream """
+        """ Close UDP socket connections """
+        # Close the connection to the MTP data stream
         if self.sock:
             self.sock.close()
+
+        # Close the connection to the IWG data stream
+        if self.sockI:
+            self.sockI.close()
