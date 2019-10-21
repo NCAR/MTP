@@ -79,7 +79,7 @@ class readMTP:
                 next
             else:
                 newVar = line.rstrip('\n')
-                self.rawscan['IWG1line']['data'][newVar] = \
+                self.rawscan['IWG1line']['values'][newVar] = \
                     {'val': numpy.nan, 'idx': i}
                 i = i + 1
             if i > 31:  # Only keep the first 31 values; the rest are user vals
@@ -99,30 +99,8 @@ class readMTP:
             if len(line) == 0:  # EOF
                 return(False)  # At EOF
 
-            # Loop through possible line types, match the line, and store it in
-            # the dictionary
-            for linetype in self.rawscan:
-                if 're' in self.rawscan[linetype]:
-                    m = re.match(self.rawscan[linetype]['re'], line)
-                    if (m):
-                        # Store data. Handle special case of date in A line
-                        if (linetype == 'Aline'):  # Reformat date/time
-                            self.rawscan[linetype]['date'] =  \
-                                m.group(1)+"T"+m.group(2)+m.group(3)+m.group(4)
-                            self.rawscan[linetype]['data'] = m.group(5)
-                        elif (linetype == 'IWG1line'):  # Reformat date/time
-                            self.rawscan[linetype]['asciiPacket'] = \
-                                line.rstrip('\n')
-                            self.rawscan[linetype]['date'] = m.group(0)
-                            self.rawscan[linetype]['data'] = \
-                                m.group(1).rstrip('\n')
-                        else:
-                            self.rawscan[linetype]['data'] = \
-                                m.group(2).rstrip('\n')
-                        # Mark found
-                        self.rawscan[linetype]['found'] = True
-                        # Exit matching loop
-                        break
+            # Store line to dictionary
+            self.parseLine(line)
 
             # Check if we have a complete scan (all linetypes have found = True
             foundall = True  # Init so can boolean & per rawscan line
@@ -139,6 +117,32 @@ class readMTP:
                     if 'found' in self.rawscan[linetype]:
                         self.rawscan[linetype]['found'] = False
                 return(True)  # Not at EOF
+
+    def parseLine(self, line):
+        # Loop through possible line types, match the line, and store it in
+        # the dictionary
+        for linetype in self.rawscan:
+            if 're' in self.rawscan[linetype]:
+                m = re.match(self.rawscan[linetype]['re'], line)
+                if (m):
+                    # Store data. Handle special case of date in A line
+                    if (linetype == 'Aline'):  # Reformat date/time
+                        self.rawscan[linetype]['date'] =  \
+                            m.group(1)+"T"+m.group(2)+m.group(3)+m.group(4)
+                        self.rawscan[linetype]['data'] = m.group(5)
+                    elif (linetype == 'IWG1line'):  # Reformat date/time
+                        self.rawscan[linetype]['asciiPacket'] = \
+                            line.rstrip('\n')
+                        self.rawscan[linetype]['date'] = m.group(0)
+                        self.rawscan[linetype]['data'] = \
+                            m.group(1).rstrip('\n')
+                    else:
+                        self.rawscan[linetype]['data'] = \
+                            m.group(2).rstrip('\n')
+                    # Mark found
+                    self.rawscan[linetype]['found'] = True
+                    # Exit matching loop
+                    return(True)
 
     def getIwgPacket(self):
         return(self.rawscan['IWG1line']['asciiPacket'])
@@ -190,17 +194,17 @@ class readMTP:
         m = re.match("(........)T(..)(..)(..)", values[1])
         if (m):
             # Save YYYYMMDD to variable DATE
-            self.rawscan['IWG1line']['data']['DATE']['val'] = m.group(1)
+            self.rawscan['IWG1line']['values']['DATE']['val'] = m.group(1)
             # Save seconds since midnight to variable TIME
-            self.rawscan['IWG1line']['data']['TIME']['val'] = \
+            self.rawscan['IWG1line']['values']['TIME']['val'] = \
                 int(m.group(2))*3600+int(m.group(3))*60+int(m.group(4))
 
         # Parse the rest of the line and assign variables to the data
         # dictionary
-        for key in self.rawscan['IWG1line']['data']:
+        for key in self.rawscan['IWG1line']['values']:
             if (key != 'DATE' and key != 'TIME'):
-                self.rawscan['IWG1line']['data'][key]['val'] = \
-                    values[int(self.rawscan['IWG1line']['data'][key]['idx'])]
+                self.rawscan['IWG1line']['values'][key]['val'] = \
+                    values[int(self.rawscan['IWG1line']['values'][key]['idx'])]
 
     # Parse an Ascii packet and store it's values in the data dictionary
     def parseAsciiPacket(self, UDPpacket):
@@ -213,9 +217,9 @@ class readMTP:
         m = re.match("(........)T(..)(..)(..)", values[1])
         if (m):
             # Save YYYYMMDD to variable DATE
-            self.rawscan['Aline']['data']['DATE']['val'] = m.group(1)
+            self.rawscan['Aline']['values']['DATE']['val'] = m.group(1)
             # Save seconds since midnight to variable TIME
-            self.rawscan['Aline']['data']['TIME']['val'] = \
+            self.rawscan['Aline']['values']['TIME']['val'] = \
                 int(m.group(2))*3600+int(m.group(3))*60+int(m.group(4))
 
         self.assignAvalues(values[2:16])
@@ -229,52 +233,49 @@ class readMTP:
     # Expects an array of values that are just the data from the Aline, i.e.
     # does not contain the "A yyyymmdd hh:mm:ss"
     def assignAvalues(self, values):
-        for key in self.rawscan['Aline']['data']:
+        for key in self.rawscan['Aline']['values']:
             if (key != 'DATE' and key != 'TIME'):
-                self.rawscan['Aline']['data'][key]['val'] = \
-                    values[int(self.rawscan['Aline']['data'][key]['idx'])]
+                self.rawscan['Aline']['values'][key]['val'] = \
+                    values[int(self.rawscan['Aline']['values'][key]['idx'])]
 
     # Parse the B line and assign to variables in the data dictionary
     def assignBvalues(self, values):
-        for key in self.rawscan['Bline']['data']:
-            self.rawscan['Bline']['data'][key]['val'] = values
+        for key in self.rawscan['Bline']['values']:
+            self.rawscan['Bline']['values'][key]['val'] = values
 
     # Parse the M01 line and assign to variables in the data dictionary
     def assignM01values(self, values):
-        for key in self.rawscan['M01line']['data']:
-            self.rawscan['M01line']['data'][key]['val'] = \
-                    values[int(self.rawscan['M01line']['data'][key]['idx'])]
+        for key in self.rawscan['M01line']['values']:
+            self.rawscan['M01line']['values'][key]['val'] = \
+                    values[int(self.rawscan['M01line']['values'][key]['idx'])]
 
     # Parse the M02 line and assign to variables in the data dictionary
     def assignM02values(self, values):
-        for key in self.rawscan['M02line']['data']:
-            self.rawscan['M02line']['data'][key]['val'] = \
-                    values[int(self.rawscan['M02line']['data'][key]['idx'])]
+        for key in self.rawscan['M02line']['values']:
+            self.rawscan['M02line']['values'][key]['val'] = \
+                    values[int(self.rawscan['M02line']['values'][key]['idx'])]
 
     # Parse the Pt line and assign to variables in the data dictionary
     def assignPtvalues(self, values):
-        for key in self.rawscan['Ptline']['data']:
-            self.rawscan['Ptline']['data'][key]['val'] = \
-                    values[int(self.rawscan['Ptline']['data'][key]['idx'])]
+        for key in self.rawscan['Ptline']['values']:
+            self.rawscan['Ptline']['values'][key]['val'] = \
+                    values[int(self.rawscan['Ptline']['values'][key]['idx'])]
 
     # Parse the E line and assign to variables in the data dictionary
     def assignEvalues(self, values):
-        for key in self.rawscan['Eline']['data']:
-            self.rawscan['Eline']['data'][key]['val'] = values
+        for key in self.rawscan['Eline']['values']:
+            self.rawscan['Eline']['values'][key]['val'] = values
 
     # Get the value of a variable from the data dictionary
     def getVar(self, linetype, varname):
-        return(self.rawscan[linetype]['data'][varname]['val'])
+        return(self.rawscan[linetype]['values'][varname]['val'])
 
     # Get the list of variable names that are in the dictionary
     def getVarList(self, linetype):
-        return(list(self.rawscan[linetype]['data']))
+        return(list(self.rawscan[linetype]['values']))
 
     # Get an array containing all measured values of a variable
     def getVarArray(self, linetype, varname):
-        print(self.flightData)
-        print(len(self.flightData))
-        print(range(len(self.flightData)))
         self.varArray = []
         for i in range(len(self.flightData)-1):
             self.varArray.append(float(self.flightData[i].getVar(linetype,

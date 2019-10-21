@@ -29,7 +29,8 @@ MTPrecord = {
         're': re.compile("^A (........) (..):(..):(..) (.*)"),
         'found': False,
         'date': "",
-        'data': {'DATE': {  # MTP Scan Date (YYYYMMDD)
+        'data': [],
+        'values': {'DATE': {  # MTP Scan Date (YYYYMMDD)
                   'val': numpy.nan},
                  'TIME': {  # MTP Scan Time (HHMMSS)
                   'val': numpy.nan},
@@ -69,7 +70,8 @@ MTPrecord = {
         'found': False,
         'date': "",
         'asciiPacket': "",
-        'data': {'DATE': {  # IWG1 packet Date (YYYYMMDD)
+        'data': [],
+        'values': {'DATE': {  # IWG1 packet Date (YYYYMMDD)
                   'val': numpy.nan},
                  'TIME': {  # IWG1 packet Time (HHMMSS)
                   'val': numpy.nan},
@@ -79,79 +81,84 @@ MTPrecord = {
     'Bline': {
         're': re.compile("(^B) (.*)"),
         'found': False,
-        'data': {'SCNT': {  # MTP Scan Counts[Angle,Channel]
+        'data': [],
+        'values': {'SCNT': {  # MTP Scan Counts[Angle,Channel]
                   'val': [numpy.nan]*30}
                  },
     },
     'M01line': {  # MTP Engineering Multiplxr
         're': re.compile("(^M01): (.*)"),
         'found': False,
-        'data': {'VM08CNTE': {  # Vm08 Counts
-                      'val': numpy.nan, 'idx': 0},
-                 'VVIDCNTE': {  # Vvid Counts
-                      'val': numpy.nan, 'idx': 1},
-                 'VP08CNTE': {  # Vp08 Counts
-                      'val': numpy.nan, 'idx': 2},
-                 'VMTRCNTE': {  # Vmtr Count
-                      'val': numpy.nan, 'idx': 3},
-                 'VSYNCNTE': {  # Vsyn Counts
-                      'val': numpy.nan, 'idx': 4},
-                 'VP15CNTE': {  # Vp15 Counts
-                      'val': numpy.nan, 'idx': 5},
-                 'VP05CNTE': {  # Vp05 Counts
-                      'val': numpy.nan, 'idx': 6},
-                 'VM15CNTE': {  # VM15 Counts
-                      'val': numpy.nan, 'idx': 7},
-                 },
+        'data': [],
+        'values': {'VM08CNTE': {  # Vm08 Counts
+                        'val': numpy.nan, 'idx': 0},
+                   'VVIDCNTE': {  # Vvid Counts
+                        'val': numpy.nan, 'idx': 1},
+                   'VP08CNTE': {  # Vp08 Counts
+                        'val': numpy.nan, 'idx': 2},
+                   'VMTRCNTE': {  # Vmtr Count
+                        'val': numpy.nan, 'idx': 3},
+                   'VSYNCNTE': {  # Vsyn Counts
+                        'val': numpy.nan, 'idx': 4},
+                   'VP15CNTE': {  # Vp15 Counts
+                        'val': numpy.nan, 'idx': 5},
+                   'VP05CNTE': {  # Vp05 Counts
+                        'val': numpy.nan, 'idx': 6},
+                   'VM15CNTE': {  # VM15 Counts
+                        'val': numpy.nan, 'idx': 7},
+                   },
     },
 
     'M02line': {  # MTP Engineering Multiplxr
         're': re.compile("(^M02): (.*)"),
         'found': False,
-        'data': {'ACCPCNTE': {  # Acceler Counts
-                      'val': numpy.nan, 'idx': 0},
-                 'TDATCNTE': {  # T Data Counts
-                      'val': numpy.nan, 'idx': 1},
-                 'TMTRCNTE': {  # T Motor Counts
-                      'val': numpy.nan, 'idx': 2},
-                 'TAIRCNTE': {  # T Pod Air Counts
-                      'val': numpy.nan, 'idx': 3},
-                 'TSMPCNTE': {  # T Scan Counts
-                      'val': numpy.nan, 'idx': 4},
-                 'TPSPCNTE': {  # T Power Supply Counts
-                      'val': numpy.nan, 'idx': 5},
-                  'TNCCNTE': {  # T N/C Counts
-                      'val': numpy.nan, 'idx': 6},
-                 'TSYNCNTE': {  # T Synth Counts
-                      'val': numpy.nan, 'idx': 7},
-                 },
+        'data': [],
+        'values': {'ACCPCNTE': {  # Acceler Counts
+                        'val': numpy.nan, 'idx': 0},
+                   'TDATCNTE': {  # T Data Counts
+                        'val': numpy.nan, 'idx': 1},
+                   'TMTRCNTE': {  # T Motor Counts
+                        'val': numpy.nan, 'idx': 2},
+                   'TAIRCNTE': {  # T Pod Air Counts
+                        'val': numpy.nan, 'idx': 3},
+                   'TSMPCNTE': {  # T Scan Counts
+                        'val': numpy.nan, 'idx': 4},
+                   'TPSPCNTE': {  # T Power Supply Counts
+                        'val': numpy.nan, 'idx': 5},
+                   'TNCCNTE': {  # T N/C Counts
+                        'val': numpy.nan, 'idx': 6},
+                   'TSYNCNTE': {  # T Synth Counts
+                        'val': numpy.nan, 'idx': 7},
+                   },
     },
     'Ptline': {  # MTP Platinum Multiplxr
         're': re.compile("(^Pt): (.*)"),
         'found': False,
-        'data': {'TR350CNTP': {  # R350 Counts
-                       'val': numpy.nan, 'idx': 0},
-                 'TTCNTRCNTP': {  # Target Center Temp Counts
-                       'val': numpy.nan, 'idx': 1},
-                 'TTEDGCNTP': {  # Target Edge Temp Counts
-                       'val': numpy.nan, 'idx': 2},
-                 'TWINCNTP': {  # Polyethelene Window Temp Counts
-                       'val': numpy.nan, 'idx': 3},
-                 'TMIXCNTP': {  # Mixer Temperature Counts
-                       'val': numpy.nan, 'idx': 4},
-                 'TAMPCNTP': {  # Amplifier Temp Counts
-                       'val': numpy.nan, 'idx': 5},
-                 'TNDCNTP': {  # Noise Diode Temp Counts
-                       'val': numpy.nan, 'idx': 6},
-                 'TR600CNTP': {  # R600 Counts
-                       'val': numpy.nan, 'idx': 7},
-                 },
+        'data': [],
+        'values': {'TR350CNTP': {  # R350 Counts
+                         'val': numpy.nan, 'idx': 0},
+                   'TTCNTRCNTP': {  # Target Center Temp Counts
+                         'val': numpy.nan, 'idx': 1},
+                   'TTEDGCNTP': {  # Target Edge Temp Counts
+                         'val': numpy.nan, 'idx': 2},
+                   'TWINCNTP': {  # Polyethelene Window Temp Counts
+                         'val': numpy.nan, 'idx': 3},
+                   'TMIXCNTP': {  # Mixer Temperature Counts
+                         'val': numpy.nan, 'idx': 4},
+                   'TAMPCNTP': {  # Amplifier Temp Counts
+                         'val': numpy.nan, 'idx': 5},
+                   'TNDCNTP': {  # Noise Diode Temp Counts
+                         'val': numpy.nan, 'idx': 6},
+                   'TR600CNTP': {  # R600 Counts
+                         'val': numpy.nan, 'idx': 7},
+                   },
     },
     'Eline': {
         're': re.compile("(^E) (.*)"),
         'found': False,
-        'data': {'TCNT': {  # MTP Target Counts[Target,Channel]
-                  'val': [numpy.nan]*6}
-                 },
+        'data': [],
+        'values': {'TCNT': {  # MTP Target Counts[Target,Channel]
+                    'val': [numpy.nan]*6}
+                   },
     },
 }
