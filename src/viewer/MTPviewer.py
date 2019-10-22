@@ -10,6 +10,7 @@
 from PyQt5.QtWidgets import QMainWindow, QGridLayout, QWidget, \
         QPlainTextEdit, QFrame, QAction
 from PyQt5.QtCore import QSocketNotifier
+from PyQt5.QtGui import QFontMetrics
 
 from viewer.MTPclient import MTPclient
 from viewer.plotScanTemp import ScanTemp
@@ -31,7 +32,7 @@ class MTPviewer(QMainWindow):
         # Create the GUI
         self.initUI()
 
-        # When data appears on the socket, call plotData()
+        # When data appears on the MTP socket, call plotData()
         self.readNotifier = QSocketNotifier(
                 self.client.getSocketFileDescriptor(), QSocketNotifier.Read)
         self.readNotifier.activated.connect(lambda: self.plotData())
@@ -64,11 +65,11 @@ class MTPviewer(QMainWindow):
         menubar.setNativeMenuBar(False)
 
         # Add a menu option to quit
-        quitButton = QAction('Quit', self)
-        quitButton.setShortcut('Ctrl+Q')
-        quitButton.setToolTip('Exit application')
-        quitButton.triggered.connect(self.close)
-        menubar.addAction(quitButton)
+        self.quitButton = QAction('Quit', self)
+        self.quitButton.setShortcut('Ctrl+Q')
+        self.quitButton.setToolTip('Exit application')
+        self.quitButton.triggered.connect(self.close)
+        menubar.addAction(self.quitButton)
 
     def initView(self):
         """ Initialize the central widget """
@@ -78,25 +79,33 @@ class MTPviewer(QMainWindow):
         self.view.setLayout(self.layout)
 
         # Create the Engineering 1 display window
-        filedata = QPlainTextEdit()
-        filedata.setReadOnly(True)
-        self.layout.addWidget(filedata, 0, 0, 2, 1)
-        filedata.setFrameStyle(QFrame.Panel | QFrame.Sunken)
-        filedata.appendPlainText("Engineering 1 display")
+        self.eng1 = QPlainTextEdit()
+        self.eng1.setReadOnly(True)
+        self.layout.addWidget(self.eng1, 0, 0, 2, 1)
+        self.eng1.setFrameStyle(QFrame.Panel | QFrame.Sunken)
+        header = "Channel  Counts  Ohms  Temp  "
+        self.eng1.setPlainText(header)
+        # Size the Eng 1 window to the width of the header text
+        font = self.eng1.document().defaultFont()  # using default Font
+        fontMetrics = QFontMetrics(font)           # QFontMetrics based on font
+        textSize = fontMetrics.size(0, header)     # Size of text in given font
+        textWidth = textSize.width() + 30          # constant may need tweaking
+        textHeight = textSize.height() + 30        # constant may need tweaking
+        self.eng1.setMinimumSize(textWidth, textHeight)  # Finally, set size
 
         # Create the Engineering 2 display window
-        filedata = QPlainTextEdit()
-        filedata.setReadOnly(True)
-        self.layout.addWidget(filedata, 2, 0, 2, 1)
-        filedata.setFrameStyle(QFrame.Panel | QFrame.Sunken)
-        filedata.appendPlainText("Engineering 2 display")
+        self.eng2 = QPlainTextEdit()
+        self.eng2.setReadOnly(True)
+        self.layout.addWidget(self.eng2, 2, 0, 2, 1)
+        self.eng2.setFrameStyle(QFrame.Panel | QFrame.Sunken)
+        self.eng2.appendPlainText("Engineering 2 display")
 
         # Create the Engineering 3 display window
-        filedata = QPlainTextEdit()
-        filedata.setReadOnly(True)
-        self.layout.addWidget(filedata, 4, 0, 2, 1)
-        filedata.setFrameStyle(QFrame.Panel | QFrame.Sunken)
-        filedata.appendPlainText("Engineering 3 display")
+        self.eng3 = QPlainTextEdit()
+        self.eng3.setReadOnly(True)
+        self.layout.addWidget(self.eng3, 4, 0, 2, 1)
+        self.eng3.setFrameStyle(QFrame.Panel | QFrame.Sunken)
+        self.eng3.appendPlainText("Engineering 3 display")
 
         # Create a project metadata group box
         # metadata = QGroupBox("Project info")
@@ -129,12 +138,12 @@ class MTPviewer(QMainWindow):
 
         # Temporarily insert some sample data to get an idea how it will
         # look. Remove this when get data parsing coded.
-        filedata.appendPlainText("A 20140606 06:22:52 +03.98 00.25 +00.07 00.33 +03.18 0.01 268.08 00.11 -43.308 +0.009 +172.469 +0.000 +074146 +073392")
-        filedata.appendPlainText("B 018963 020184 019593 018971 020181 019593 018970 020170 019587 018982 020193 019589 018992 020223 019617 019001 020229 019623 018992 020208 019601 018972 020181 019572 018979 020166 019558 018977 020161 019554")
-        filedata.appendPlainText("M01: 2928 2321 2898 3082 1923 2921 2432 2944")
-        filedata.appendPlainText("M02: 2016 1394 2096 2202 2136 1508 4095 1558")
-        filedata.appendPlainText("Pt: 2177 13823 13811 10352 13315 13327 13304 14460")
-        filedata.appendPlainText("E 021506 022917 022752 019806 021164 020697")
+        filedata.appendPlainText("A YYYYMMDD HH:MM:SS --- --- ---")
+        filedata.appendPlainText("B ------ ------ ------ ------ ------ ------")
+        filedata.appendPlainText("M01: ---- ---- ---- ---- ---- ---- ----")
+        filedata.appendPlainText("M02: ---- ---- ---- ---- ---- ---- ----")
+        filedata.appendPlainText("Pt: ---- ----- ----- ----- ----- -----")
+        filedata.appendPlainText("E ------ ------ ------ ------ ------ ------")
         # End temporary display block
 
         # IWG record display window
@@ -144,12 +153,12 @@ class MTPviewer(QMainWindow):
         iwg.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         # Temporarily insert some sample data to get an idea how it will
         # look. Remove this when get data parsing coded.
-        iwg.appendPlainText("IWG1,20140606T062250,-43.3061,172.455,3281.97,,10508.5,,149.998,164.027,,0.502512,3.11066,283.283,281.732,-1.55388,3.46827,0.0652588,-0.258496,2.48881,-5.31801,-5.92311,7.77836,683.176,127.248,1010.48,14.6122,297.157,0.303804,104.277,,-72.1708,")
+        iwg.appendPlainText("IWG1,YYYYMMDDTHHMMSS,-xx.xxxx,xxx.xxx,")
         # End temporary display block
 
     def close(self):
         """ Actions to take when Quit button is clicked """
-        self.client.close()  # Close UDP connection
+        self.client.close()  # Close UDP and IWG connections
         self.app.quit()      # Close app
 
     def plotData(self):
@@ -172,6 +181,17 @@ class MTPviewer(QMainWindow):
         self.scantemp.invertSCNT(scnt)  # Invert array so if fn(Channel, Angle)
         self.scantemp.plotDataScnt()    # Update the scan count plot
 
+        # Update the Engineering 1 box
+        self.writeEng1()
+
         # Process any events generated by the GUI so it stays reponsive to the
         # user.
         self.app.processEvents()
+
+    def writeEng1(self):
+        """
+        Function to take the parse Pt line data and populate the Engineering 1
+        display box
+        """
+        # Stub for where real processed data will be written out
+        self.eng1.appendPlainText("Rref ---  -----  ---  ---")
