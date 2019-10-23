@@ -136,21 +136,37 @@ MTPrecord = {
         'found': False,
         'data': [],
         'values': {'TR350CNTP': {  # R350 Counts
-                         'val': numpy.nan, 'idx': 0},
+                         'val': numpy.nan, 'idx': 0,
+                         'resistance': numpy.nan,  # Calculated resistance
+                         'temperature': numpy.nan},  # Calculated temperature
                    'TTCNTRCNTP': {  # Target Center Temp Counts
-                         'val': numpy.nan, 'idx': 1},
+                         'val': numpy.nan, 'idx': 1,
+                         'resistance': numpy.nan,  # Calculated resistance
+                         'temperature': numpy.nan},  # Calculated temperature
                    'TTEDGCNTP': {  # Target Edge Temp Counts
-                         'val': numpy.nan, 'idx': 2},
+                         'val': numpy.nan, 'idx': 2,
+                         'resistance': numpy.nan,  # Calculated resistance
+                         'temperature': numpy.nan},  # Calculated temperature
                    'TWINCNTP': {  # Polyethelene Window Temp Counts
-                         'val': numpy.nan, 'idx': 3},
+                         'val': numpy.nan, 'idx': 3,
+                         'resistance': numpy.nan,  # Calculated resistance
+                         'temperature': numpy.nan},  # Calculated temperature
                    'TMIXCNTP': {  # Mixer Temperature Counts
-                         'val': numpy.nan, 'idx': 4},
+                         'val': numpy.nan, 'idx': 4,
+                         'resistance': numpy.nan,  # Calculated resistance
+                         'temperature': numpy.nan},  # Calculated temperature
                    'TAMPCNTP': {  # Amplifier Temp Counts
-                         'val': numpy.nan, 'idx': 5},
+                         'val': numpy.nan, 'idx': 5,
+                         'resistance': numpy.nan,  # Calculated resistance
+                         'temperature': numpy.nan},  # Calculated temperature
                    'TNDCNTP': {  # Noise Diode Temp Counts
-                         'val': numpy.nan, 'idx': 6},
+                         'val': numpy.nan, 'idx': 6,
+                         'resistance': numpy.nan,  # Calculated resistance
+                         'temperature': numpy.nan},  # Calculated temperature
                    'TR600CNTP': {  # R600 Counts
-                         'val': numpy.nan, 'idx': 7},
+                         'val': numpy.nan, 'idx': 7,
+                         'resistance': numpy.nan,  # Calculated resistance
+                         'temperature': numpy.nan},  # Calculated temperature
                    },
     },
     'Eline': {
