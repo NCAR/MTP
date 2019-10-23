@@ -119,8 +119,10 @@ class readMTP:
                 return(True)  # Not at EOF
 
     def parseLine(self, line):
-        # Loop through possible line types, match the line, and store it in
-        # the dictionary
+        """
+        Loop through possible line types, match the line, and store it in
+        the dictionary
+        """
         for linetype in self.rawscan:
             if 're' in self.rawscan[linetype]:
                 m = re.match(self.rawscan[linetype]['re'], line)
@@ -145,13 +147,15 @@ class readMTP:
                     return(True)
 
     def getIwgPacket(self):
+        """  Return the IWG packet to the caller """
         return(self.rawscan['IWG1line']['asciiPacket'])
 
-    # Combine the separate lines from a raw scan into an Ascii packet
-    # (suitable for sending around the plane).
-    # Stores the Ascii packet in the dictionary.
-    # Also, returns the Ascii packet to the caller.
     def getAsciiPacket(self):
+        """
+        Combine the separate lines from a raw scan into an Ascii packet
+        (suitable for sending around the plane). Stores the Ascii packet in the
+        dictionary. Also, returns the Ascii packet to the caller.
+        """
         recNum = len(self.flightData)-1
         packet = []
         packet.append("MTP")
@@ -179,13 +183,15 @@ class readMTP:
         # Return the newly created packet
         return (UDPpacket)
 
-    # Save a UDP packet to the flightData array
     def writeFlightData(self, UDPpacket):
+        """ Save a UDP packet to the flightData array """
         recNum = len(self.flightData)-1
         self.flightData[recNum]['asciiPacket'] = UDPpacket
 
-    # Parse an IWG1 packet and store it's values in the data dictionary
     def parseIwgPacket(self, IWGpacket):
+        """
+        Parse an IWG1 packet and store it's values in the data dictionary
+        """
         separator = ','
         values = IWGpacket.split(separator)
 
@@ -206,8 +212,10 @@ class readMTP:
                 self.rawscan['IWG1line']['values'][key]['val'] = \
                     values[int(self.rawscan['IWG1line']['values'][key]['idx'])]
 
-    # Parse an Ascii packet and store it's values in the data dictionary
     def parseAsciiPacket(self, UDPpacket):
+        """
+        Parse an Ascii packet and store it's values in the data dictionary
+        """
         # Split string on commas
         separator = ','
         values = UDPpacket.split(separator)
@@ -229,60 +237,63 @@ class readMTP:
         self.assignPtvalues(values[62:70])
         self.assignEvalues(values[70:76])
 
-    # Parse the A line and assign to variables in the data dictionary
-    # Expects an array of values that are just the data from the Aline, i.e.
-    # does not contain the "A yyyymmdd hh:mm:ss"
     def assignAvalues(self, values):
+        """
+        Parse the A line and assign to variables in the data dictionary.
+        Expects an array of values that are just the data from the Aline, i.e.
+        does not contain the "A yyyymmdd hh:mm:ss"
+        """
         for key in self.rawscan['Aline']['values']:
             if (key != 'DATE' and key != 'TIME'):
                 self.rawscan['Aline']['values'][key]['val'] = \
                     values[int(self.rawscan['Aline']['values'][key]['idx'])]
 
-    # Parse the B line and assign to variables in the data dictionary
     def assignBvalues(self, values):
+        """ Parse the B line and assign to variables in the data dictionary """
         for key in self.rawscan['Bline']['values']:
             self.rawscan['Bline']['values'][key]['val'] = values
 
-    # Parse the M01 line and assign to variables in the data dictionary
     def assignM01values(self, values):
+        """
+        Parse the M01 line and assign to variables in the data dictionary
+        """
         for key in self.rawscan['M01line']['values']:
             self.rawscan['M01line']['values'][key]['val'] = \
                     values[int(self.rawscan['M01line']['values'][key]['idx'])]
 
-    # Parse the M02 line and assign to variables in the data dictionary
     def assignM02values(self, values):
+        """
+        Parse the M02 line and assign to variables in the data dictionary
+        """
         for key in self.rawscan['M02line']['values']:
             self.rawscan['M02line']['values'][key]['val'] = \
                     values[int(self.rawscan['M02line']['values'][key]['idx'])]
 
-    # Parse the Pt line and assign to variables in the data dictionary
     def assignPtvalues(self, values):
+        """
+        Parse the Pt line and assign to variables in the data dictionary
+        """
         for key in self.rawscan['Ptline']['values']:
             self.rawscan['Ptline']['values'][key]['val'] = \
                     values[int(self.rawscan['Ptline']['values'][key]['idx'])]
 
-    # Parse the E line and assign to variables in the data dictionary
     def assignEvalues(self, values):
+        """ Parse the E line and assign to variables in the data dictionary """
         for key in self.rawscan['Eline']['values']:
             self.rawscan['Eline']['values'][key]['val'] = values
 
-    # Get the value of a variable from the data dictionary
     def getVar(self, linetype, varname):
+        """ Get the value of a variable from the data dictionary """
         return(self.rawscan[linetype]['values'][varname]['val'])
 
-    # Get the list of variable names that are in the dictionary
     def getVarList(self, linetype):
+        """ Get the list of variable names that are in the dictionary """
         return(list(self.rawscan[linetype]['values']))
 
-    # Get an array containing all measured values of a variable
     def getVarArray(self, linetype, varname):
+        """ Get an array containing all measured values of a variable """
         self.varArray = []
         for i in range(len(self.flightData)-1):
             self.varArray.append(float(self.flightData[i].getVar(linetype,
                                                                  varname)))
         return(self.varArray)
-
-
-if __name__ == "__main__":
-    mtp = readMTP()
-    mtp.readRawScan()
