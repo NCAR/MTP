@@ -10,6 +10,7 @@ import socket
 import numpy
 from util.readmtp import readMTP
 from util.decodePt import decodePt
+from util.decodeM01 import decodeM01
 
 
 class MTPclient():
@@ -59,6 +60,13 @@ class MTPclient():
         """
         pt = decodePt(self.reader)
         pt.calcTemp()
+
+    def calcM01(self):
+        """
+        Calculate voltage that correspond to counts and save to MTP dictionary.
+        """
+        m01 = decodeM01(self.reader)
+        m01.calcVolts()
 
     def getSCNT(self):
         """

@@ -52,9 +52,7 @@ class TESTgui(unittest.TestCase):
         self.assertEqual(mtp.getVar('Ptline', 'TNDCNTP'), '13230')
         self.assertEqual(mtp.getVar('Ptline', 'TR600CNTP'), '14450')
 
-        # Then check that window displays correct values. It looks to me like
-        # the first Engineering window displays the contents of the Pt line
-        # This has not been written yet...
+        # Then check that window displays correct values.
         self.viewer.client.calcPt()
         self.viewer.writeEng1()
         self.assertEqual(self.viewer.eng1.toPlainText(),
@@ -75,37 +73,88 @@ class TESTgui(unittest.TestCase):
         # The second engineering window displays the M01 line
         # To start, window just shows the header: "Channel Counts  Volts"
         self.assertEqual(self.viewer.eng2.toPlainText(),
-                         "Channel  Counts  Volts")
+                         "Channel\tCounts  Volts")
 
         # Send an MTP packet to the parser and confirm it gets parsed
         # correctly.
-        line = "M01: 2928 2321 2898 3082 1923 2921 2432 2944"
+        line = "M01: 2929 2273 2899 3083 1929 2921 2433 2944"
         mtp = readMTP()
         mtp.parseLine(line)
         values = mtp.rawscan['M01line']['data'].split(' ')
         mtp.assignM01values(values)
-        self.assertEqual(mtp.getVar('M01line', 'VM08CNTE'), '2928')
+        self.assertEqual(mtp.getVar('M01line', 'VM08CNTE'), '2929')
+
+        # Then check the window display values
+        self.viewer.client.calcM01()
+        self.viewer.writeEng2()
+        self.maxDiff = None
+        self.assertEqual(self.viewer.eng2.toPlainText(),
+                         "Channel\tCounts  Volts\n" +
+                         "-8V  PS\t2929  -08.00V\n" +
+                         "Video V.\t2273  +02.27V\n" +
+                         "+8V  PS\t2899  +08.06V\n" +
+                         "+24V Step\t3083  +24.02V\n" +
+                         "+15V Syn\t1929  +15.03V\n" +
+                         "+15V PS\t2921  +14.90V\n" +
+                         "VCC  PS\t2433  +04.87V\n" +
+                         "-15V PS\t2944  -15.01V")
         self.viewer.close()
+
+#   def test_eng3(self):
+#       """ Test Engineering 3 display window shows what we expect """
+#       self.viewer = MTPviewer(self.app)
+        # The third engineering window displays the M02 line
+        # To start, window just shows the header: "Channel Counts  Value"
+#       self.assertEqual(self.viewer.eng3.toPlainText(),
+#                        "Channel\tCounts  Value")
+
+        # Send an MTP packet to the parser and confirm it gets parsed
+        # correctly.
+#       line = "M02: 2510 1277 1835 1994 1926 1497 4095 1491"
+#       mtp = readMTP()
+#       mtp.parseLine(line)
+#       values = mtp.rawscan['M02line']['data'].split(' ')
+#       mtp.assignM02values(values)
+#       self.assertEqual(mtp.getVar('M02line', 'ACCPCNTE'), '2510')
+
+        # Then check the window display values
+        # self.viewer.calcM02()  # Not written yet, so Value will fail below
+#       self.viewer.writeEng3()
+#       self.assertEqual(self.viewer.eng3.toPlainText(),
+#                        "Channel\tCounts  Value\n" +
+#                        "Acceler\t2510  -0.03 g\n" +
+#                        "T Data\t1277  +40.62 C\n" +
+#                        "T Motor\t1835  +26.43 C\n" +
+#                        "T Pod Air\t1994  +22.81 C\n" +
+#                        "T Scan\t1926  +24.35 C\n" +
+#                        "T Pwr Sup\t1497  +34.65 C\n" +
+#                        "T N/C\t4095  N/A\n" +
+#                        "T Synth\t1491  -34.80 C")
+#       self.viewer.close()
 
     def test_getResistance(self):
         """ Test that sending linetype other than Ptline fails """
         mtp = readMTP()
-        mtp.setResistance('Ptline', 'TR350CNTP', 350.00)
-        self.assertEqual(mtp.getResistance('Ptline', 'TR350CNTP'), 350.00)
+        mtp.setCalcVal('Ptline', 'TR350CNTP', 350.00, 'resistance')
+        self.assertEqual(mtp.getCalcVal('Ptline', 'TR350CNTP', 'resistance'),
+                         350.00)
         # check that resistance set to NAN for non Ptline
-        mtp.setResistance('M02line', 'ACCPCNTE', 2510)
-        check = numpy.isnan(mtp.getResistance('M02line', 'ACCPCNTE'))
+        mtp.setCalcVal('M02line', 'ACCPCNTE', 2510, 'resistance')
+        check = numpy.isnan(mtp.getCalcVal('M02line', 'ACCPCNTE',
+                                           'resistance'))
         self.assertTrue(check)
 
     def test_getTemperature(self):
         """ Test that sending linetype other than Ptline fails """
         mtp = readMTP()
         # check that temperature calculated correctly for other Ptline vars
-        mtp.setTemperature('Ptline', 'TTCNTRCNTP', 44.73)
-        self.assertEqual(mtp.getTemperature('Ptline', 'TTCNTRCNTP'), 44.73)
+        mtp.setCalcVal('Ptline', 'TTCNTRCNTP', 44.73, 'tempearture')
+        self.assertEqual("%5.2f" % mtp.getCalcVal('Ptline', 'TTCNTRCNTP',
+                                                  'temperature'), '44.73')
         # check that temperature set to NAN for non Ptline
-        mtp.setTemperature('M02line', 'ACCPCNTE', 2510)
-        check = numpy.isnan(mtp.getTemperature('M02line', 'ACCPCNTE'))
+        mtp.setCalcVal('M02line', 'ACCPCNTE', 2510, 'tempearture')
+        check = numpy.isnan(mtp.getCalcVal('M02line', 'ACCPCNTE',
+                                           'temperature'))
         self.assertTrue(check)
 
     # def ():
