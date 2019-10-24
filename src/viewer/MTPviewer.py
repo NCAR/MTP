@@ -43,7 +43,7 @@ class MTPviewer(QMainWindow):
         self.setWindowTitle('MTP viewer')
 
         # Set the initial size of the window created. it is user resizeable.
-        self.resize(1200, 800)
+        self.resize(800, 910)
 
         # Define central widget to hold everything
         self.view = QWidget()
@@ -94,7 +94,9 @@ class MTPviewer(QMainWindow):
         # Create the Engineering 1 display window
         self.eng1 = QPlainTextEdit()
         self.eng1.setReadOnly(True)
-        self.layout.addWidget(self.eng1, 0, 0, 2, 1)
+        self.eng1.setFixedHeight(200)
+        self.eng1.setDocumentTitle("Pt")
+        self.layout.addWidget(self.eng1, 9, 0, 1, 1)
         self.eng1.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.header_eng1 = "Channel\tCounts  Ohms  Temp  "
         self.eng1.setPlainText(self.header_eng1)
@@ -105,7 +107,7 @@ class MTPviewer(QMainWindow):
         # Create the Engineering 2 display window
         self.eng2 = QPlainTextEdit()
         self.eng2.setReadOnly(True)
-        self.layout.addWidget(self.eng2, 2, 0, 2, 1)
+        self.layout.addWidget(self.eng2, 9, 1, 1, 1)
         self.eng2.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.header_eng2 = "Channel  Counts  Volts"
         self.eng2.setPlainText(self.header_eng2)
@@ -116,7 +118,7 @@ class MTPviewer(QMainWindow):
         # Create the Engineering 3 display window
         self.eng3 = QPlainTextEdit()
         self.eng3.setReadOnly(True)
-        self.layout.addWidget(self.eng3, 4, 0, 2, 1)
+        self.layout.addWidget(self.eng3, 9, 2, 1, 1)
         self.eng3.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.header_eng3 = "Channel  Counts  Value  "
         self.eng3.appendPlainText(self.header_eng3)
@@ -127,29 +129,35 @@ class MTPviewer(QMainWindow):
         # Create a project metadata group box
         # metadata = QGroupBox("Project info")
         metadata = QPlainTextEdit("Project info")
-        self.layout.addWidget(metadata, 0, 1, 1, 3)
+        metadata.setFixedHeight(50)
+        self.layout.addWidget(metadata, 0, 0, 1, 3)
 
         # Create a box to hold the list of brightness temps
         tb = QPlainTextEdit("Brightness Temps")
-        self.layout.addWidget(tb, 1, 1)
+        tb.setFixedHeight(300)
+        self.layout.addWidget(tb, 1, 0)
 
         # Create our scan and temperature plot and add it to the layout
         self.scantemp = ScanTemp()
-        self.layout.addWidget(self.scantemp.getWindow(), 1, 2)
+        st = self.scantemp.getWindow()
+        st.setFixedHeight(300)
+        self.layout.addWidget(st, 1, 1)
 
         # Create a window to hold our timeseries plot and parameter selection
         # dropdown menu
         self.timeseries = Timeseries(self.client)
-        self.layout.addLayout(self.timeseries.getWindow(), 1, 3)
+        self.layout.addLayout(self.timeseries.getWindow(), 1, 2)
 
         # Create a box to hold selected RCFs and controls
         tb = QPlainTextEdit("Control panel")
-        self.layout.addWidget(tb, 2, 1, 1, 3)
+        tb.setFixedHeight(100)
+        self.layout.addWidget(tb, 2, 0, 1, 3)
 
         # Create a File data display window
         filedata = QPlainTextEdit()
         filedata.setReadOnly(True)
-        self.layout.addWidget(filedata, 3, 1, 2, 3)
+        filedata.setFixedHeight(150)
+        self.layout.addWidget(filedata, 3, 0, 5, 3)
         filedata.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         filedata.appendPlainText("MTP data block display")
 
@@ -166,7 +174,8 @@ class MTPviewer(QMainWindow):
         # IWG record display window
         iwg = QPlainTextEdit()
         iwg.setReadOnly(True)
-        self.layout.addWidget(iwg, 5, 1, 1, 3)
+        iwg.setFixedHeight(50)
+        self.layout.addWidget(iwg, 8, 0, 1, 3)
         iwg.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         # Temporarily insert some sample data to get an idea how it will
         # look. Remove this when get data parsing coded.
