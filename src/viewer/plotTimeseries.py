@@ -20,6 +20,7 @@ class Timeseries():
         self.client = client
 
         self.xy = pg.GraphicsWindow()
+        self.xy.setFixedHeight(260)
 
         # We need a grid layout inside our Graphics window to hold the plot
         # and dropdown.
@@ -29,6 +30,20 @@ class Timeseries():
         # Create an empty plot
         self.xy = self.xy.addPlot(bottom=self.client.xvar,
                                   left=self.client.yvar)
+
+        # Adjust the axis to take up less room
+        axis = self.xy.getAxis('left')
+        font = axis.font()
+        font.setPixelSize(10)
+        label_style = {'color': '#FFF', 'font-size': '10pt'}
+
+        self.xy.getAxis('left').tickFont = font
+        self.xy.getAxis('left').setWidth(32)
+        self.xy.setLabel('left', self.client.yvar, **label_style)
+
+        self.xy.getAxis('bottom').tickFont = font
+        self.xy.getAxis('bottom').setHeight(25)
+        self.xy.setLabel('bottom', self.client.xvar, **label_style)
 
         # Add a dropdown to select the variable to plot
         varSelector = QComboBox()

@@ -35,17 +35,27 @@ class ScanTemp():
         self.stp.scene().addItem(self.profile)
         self.profile.setYRange(0, 20, padding=0)
 
-        # STILL NEED TO FIGURE OUT HOW TO SET THE Yaxis LABEL FOR THE PROFILE
-        # PLOT.
-        # WANT THE VALUE ON THE Xaxis TO BE FROM THE PROFILE PLOT. SINCE THE
-        # TWO PLOTS HAVE DIFFERENT Xvalues, NOT SURE HOW TO OVERPLOT. MAYBE
-        # DON"T LINK THE X axis BELOW??
-        # NEED TO FIGURE OUT HOW TO SET THE Xaxis LABEL
-
         # Add a scan count PlotItem (right axis) with a Yrange of 10-0
-        self.scnt = self.stp.addPlot(title="Scan and Template Plot",
-                                     right='Scan Angle')
+        self.scnt = self.stp.addPlot(title="Scan and Template Plot")
         self.scnt.setYRange(10, 1, padding=0)
+
+        # Adjust the axis to take up less room
+        axis = self.scnt.getAxis('right')
+        font = axis.font()
+        font.setPixelSize(10)
+        label_style = {'color': '#FFF', 'font-size': '10pt'}
+
+        self.scnt.getAxis('right').tickFont = font
+        self.scnt.getAxis('right').setWidth(32)
+        self.scnt.setLabel('right', 'Scan Angle', **label_style)
+
+        self.scnt.getAxis('left').tickFont = font
+        self.scnt.getAxis('left').setWidth(32)
+        self.scnt.setLabel('left', 'Altitude', **label_style)
+
+        self.scnt.getAxis('bottom').tickFont = font
+        self.scnt.getAxis('bottom').setHeight(25)
+        self.scnt.setLabel('bottom', 'Counts', **label_style)
 
         # Invert the right Y axis so goes from 10 at bottom to 1 at top
         self.scnt.invertY(True)
