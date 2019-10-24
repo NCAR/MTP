@@ -91,21 +91,46 @@ MTPrecord = {
         'found': False,
         'data': [],
         'values': {'VM08CNTE': {  # Vm08 Counts
-                        'val': numpy.nan, 'idx': 0},
+                        'val': numpy.nan, 'idx': 0,
+                        'fact': -2.73,  # factors from decodeM01 in VB6
+                                        # used to convert counts to volts
+                        'volts': numpy.nan,  # Calculated voltage
+                        'name': "-8V  PS"},
                    'VVIDCNTE': {  # Vvid Counts
-                        'val': numpy.nan, 'idx': 1},
+                        'val': numpy.nan, 'idx': 1,
+                        'fact': 1,
+                        'volts': numpy.nan,  # Calculated voltage
+                        'name': "Video V."},
                    'VP08CNTE': {  # Vp08 Counts
-                        'val': numpy.nan, 'idx': 2},
+                        'val': numpy.nan, 'idx': 2,
+                        'fact': 2.78,
+                        'volts': numpy.nan,  # Calculated voltage
+                        'name': "+8V  PS"},
                    'VMTRCNTE': {  # Vmtr Count
-                        'val': numpy.nan, 'idx': 3},
+                        'val': numpy.nan, 'idx': 3,
+                        'fact': 7.79,
+                        'volts': numpy.nan,  # Calculated voltage
+                        'name': "+24V Step"},
                    'VSYNCNTE': {  # Vsyn Counts
-                        'val': numpy.nan, 'idx': 4},
+                        'val': numpy.nan, 'idx': 4,
+                        'fact': 7.79,
+                        'volts': numpy.nan,  # Calculated voltage
+                        'name': "+15V Syn"},
                    'VP15CNTE': {  # Vp15 Counts
-                        'val': numpy.nan, 'idx': 5},
+                        'val': numpy.nan, 'idx': 5,
+                        'fact': 5.1,
+                        'volts': numpy.nan,  # Calculated voltage
+                        'name': "+15V PS"},
                    'VP05CNTE': {  # Vp05 Counts
-                        'val': numpy.nan, 'idx': 6},
+                        'val': numpy.nan, 'idx': 6,
+                        'fact': 2,
+                        'volts': numpy.nan,  # Calculated voltage
+                        'name': "VCC  PS"},
                    'VM15CNTE': {  # VM15 Counts
-                        'val': numpy.nan, 'idx': 7},
+                        'val': numpy.nan, 'idx': 7,
+                        'fact': -5.1,
+                        'volts': numpy.nan,  # Calculated voltage
+                        'name': "-15V PS"},
                    },
     },
 
@@ -114,21 +139,29 @@ MTPrecord = {
         'found': False,
         'data': [],
         'values': {'ACCPCNTE': {  # Acceler Counts
-                        'val': numpy.nan, 'idx': 0},
+                        'val': numpy.nan, 'idx': 0,
+                        'name': "Acceler"},
                    'TDATCNTE': {  # T Data Counts
-                        'val': numpy.nan, 'idx': 1},
+                        'val': numpy.nan, 'idx': 1,
+                        'name': "T Data"},
                    'TMTRCNTE': {  # T Motor Counts
-                        'val': numpy.nan, 'idx': 2},
+                        'val': numpy.nan, 'idx': 2,
+                        'name': "T Motor"},
                    'TAIRCNTE': {  # T Pod Air Counts
-                        'val': numpy.nan, 'idx': 3},
+                        'val': numpy.nan, 'idx': 3,
+                        'name': "T Pod Air"},
                    'TSMPCNTE': {  # T Scan Counts
-                        'val': numpy.nan, 'idx': 4},
+                        'val': numpy.nan, 'idx': 4,
+                        'name': "T Scan"},
                    'TPSPCNTE': {  # T Power Supply Counts
-                        'val': numpy.nan, 'idx': 5},
+                        'val': numpy.nan, 'idx': 5,
+                        'name': "T Pwr Sup"},
                    'TNCCNTE': {  # T N/C Counts
-                        'val': numpy.nan, 'idx': 6},
+                        'val': numpy.nan, 'idx': 6,
+                        'name': "T N/C"},
                    'TSYNCNTE': {  # T Synth Counts
-                        'val': numpy.nan, 'idx': 7},
+                        'val': numpy.nan, 'idx': 7,
+                        'name': "T Synth"},
                    },
     },
     'Ptline': {  # MTP Platinum Multiplxr
