@@ -282,18 +282,66 @@ class readMTP:
         for key in self.rawscan['Eline']['values']:
             self.rawscan['Eline']['values'][key]['val'] = values
 
-    def getVar(self, linetype, varname):
+    def getVar(self, linetype, var):
         """ Get the value of a variable from the data dictionary """
-        return(self.rawscan[linetype]['values'][varname]['val'])
+        return(self.rawscan[linetype]['values'][var]['val'])
 
     def getVarList(self, linetype):
         """ Get the list of variable names that are in the dictionary """
         return(list(self.rawscan[linetype]['values']))
 
-    def getVarArray(self, linetype, varname):
+    def getVarArray(self, linetype, var):
         """ Get an array containing all measured values of a variable """
         self.varArray = []
         for i in range(len(self.flightData)-1):
             self.varArray.append(float(self.flightData[i].getVar(linetype,
-                                                                 varname)))
+                                                                 var)))
         return(self.varArray)
+
+    def setResistance(self, linetype, var, value):
+        """
+        Set the resistance for given var to value. Currently, only Pt lines
+        have a calculated resistance. All other line types are ignored.
+        """
+        if linetype == 'Ptline':
+            self.rawscan[linetype]['values'][var]['resistance'] = value
+        else:
+            print("linetype " + linetype + " doesn't have a resistance entry" +
+                  " in the MTP dictionary. Ignored.")
+
+    def getResistance(self, linetype, var):
+        """
+        Get the resistance for given var to value. Currently, only Pt lines
+        have a calculated resistance. All other line types are ignored.
+        """
+        if linetype == 'Ptline':
+            return(self.rawscan[linetype]['values'][var]['resistance'])
+        else:
+            return(numpy.nan)
+
+    def setTemperature(self, linetype, var, value):
+        """
+        Set the temperature for given var to value. Currently, only Pt lines
+        have a calculated temperature. All other line types are ignored.
+        """
+        if linetype == 'Ptline':
+            self.rawscan[linetype]['values'][var]['temperature'] = value
+        else:
+            print("linetype " + linetype + " doesn't have a temperature" +
+                  " entry in the MTP dictionaary. Ignored.")
+
+    def getTemperature(self, linetype, var):
+        """
+        Get the temperature for given var to value. Currently, only Pt lines
+        have a calculated temperature. All other line types are ignored.
+        """
+        if linetype == 'Ptline':
+            return(self.rawscan[linetype]['values'][var]['temperature'])
+        else:
+            return(numpy.nan)
+
+    def getName(self, linetype, var):
+        if linetype == 'Ptline':
+            return(self.rawscan[linetype]['values'][var]['name'])
+        else:
+            return(numpy.nan)

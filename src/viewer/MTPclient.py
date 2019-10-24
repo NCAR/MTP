@@ -9,6 +9,7 @@
 import socket
 import numpy
 from util.readmtp import readMTP
+from util.decodePt import decodePt
 
 
 class MTPclient():
@@ -50,6 +51,14 @@ class MTPclient():
         # Necessary to get data to scroll. Before get good data, plot NANs
         self.yvals = [numpy.nan]*self.plotWidth
         return(self.xvals, self.yvals)
+
+    def calcPt(self):
+        """
+        Calculate resistance and temperature
+        that correspond to counts and save to MTP dictionary.
+        """
+        pt = decodePt(self.reader)
+        pt.calcTemp()
 
     def getSCNT(self):
         """

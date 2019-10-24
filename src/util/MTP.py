@@ -137,36 +137,44 @@ MTPrecord = {
         'data': [],
         'values': {'TR350CNTP': {  # R350 Counts
                          'val': numpy.nan, 'idx': 0,
-                         'resistance': numpy.nan,  # Calculated resistance
-                         'temperature': numpy.nan},  # Calculated temperature
+                         'resistance': numpy.nan,   # Calculated resistance
+                         'temperature': numpy.nan,  # Calculated temperature
+                         'name': "Rref 350"},       # Name displayed in GUI
                    'TTCNTRCNTP': {  # Target Center Temp Counts
                          'val': numpy.nan, 'idx': 1,
-                         'resistance': numpy.nan,  # Calculated resistance
-                         'temperature': numpy.nan},  # Calculated temperature
+                         'resistance': numpy.nan,   # Calculated resistance
+                         'temperature': numpy.nan,  # Calculated temperature
+                         'name': "Target 1"},       # Name displayed in GUI
                    'TTEDGCNTP': {  # Target Edge Temp Counts
                          'val': numpy.nan, 'idx': 2,
-                         'resistance': numpy.nan,  # Calculated resistance
-                         'temperature': numpy.nan},  # Calculated temperature
+                         'resistance': numpy.nan,   # Calculated resistance
+                         'temperature': numpy.nan,  # Calculated temperature
+                         'name': "Target 2"},       # Name displayed in GUI
                    'TWINCNTP': {  # Polyethelene Window Temp Counts
                          'val': numpy.nan, 'idx': 3,
-                         'resistance': numpy.nan,  # Calculated resistance
-                         'temperature': numpy.nan},  # Calculated temperature
+                         'resistance': numpy.nan,   # Calculated resistance
+                         'temperature': numpy.nan,  # Calculated temperature
+                         'name': "Window"},         # Name displayed in GUI
                    'TMIXCNTP': {  # Mixer Temperature Counts
                          'val': numpy.nan, 'idx': 4,
-                         'resistance': numpy.nan,  # Calculated resistance
-                         'temperature': numpy.nan},  # Calculated temperature
+                         'resistance': numpy.nan,   # Calculated resistance
+                         'temperature': numpy.nan,  # Calculated temperature
+                         'name': "Mixer"},          # Name displayed in GUI
                    'TAMPCNTP': {  # Amplifier Temp Counts
                          'val': numpy.nan, 'idx': 5,
-                         'resistance': numpy.nan,  # Calculated resistance
-                         'temperature': numpy.nan},  # Calculated temperature
+                         'resistance': numpy.nan,   # Calculated resistance
+                         'temperature': numpy.nan,  # Calculated temperature
+                         'name': "Dblr Amp"},       # Name displayed in GUI
                    'TNDCNTP': {  # Noise Diode Temp Counts
                          'val': numpy.nan, 'idx': 6,
-                         'resistance': numpy.nan,  # Calculated resistance
-                         'temperature': numpy.nan},  # Calculated temperature
+                         'resistance': numpy.nan,   # Calculated resistance
+                         'temperature': numpy.nan,  # Calculated temperature
+                         'name': "Noise D."},       # Name displayed in GUI
                    'TR600CNTP': {  # R600 Counts
                          'val': numpy.nan, 'idx': 7,
-                         'resistance': numpy.nan,  # Calculated resistance
-                         'temperature': numpy.nan},  # Calculated temperature
+                         'resistance': numpy.nan,   # Calculated resistance
+                         'temperature': numpy.nan,  # Calculated temperature
+                         'name': "Rref 600"},       # Name displayed in GUI
                    },
     },
     'Eline': {
