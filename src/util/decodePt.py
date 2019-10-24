@@ -65,16 +65,16 @@ class decodePt():
             # R[i] = 350 + (Ct[i] - Ct[0]) / rslop
             R = 350 + (int(self.getCount(var)) -
                        int(self.getCount('TR350CNTP'))) / rslop
-            self.reader.setResistance('Ptline', var, R)
+            self.reader.setCalcVal('Ptline', var, R, 'resistance')
 
             # Temperature of each value from counts
             # T[i] = A + B * R[i] + C * R[i] ** 2 + D * R[i] ** 3
             T = A + B * R + C * R ** 2 + D * R ** 3
-            self.reader.setTemperature('Ptline', var, T)
+            self.reader.setCalcVal('Ptline', var, T, 'temperature')
 
         # From Visual Basic code. Not traced yet, so not implemented.
         # If WindowCal = True Then
         # txtTsky.Text = Format$(T(3), " +00.00; -00.00")
 
-    def getCount(self, varname):
-        return(self.reader.rawscan['Ptline']['values'][varname]['val'])
+    def getCount(self, var):
+        return(self.reader.rawscan['Ptline']['values'][var]['val'])
