@@ -93,13 +93,13 @@ class MTPviewer(QMainWindow):
 
         # Create the Engineering 1 display window
         self.eng1label = QLabel("Platinum Multiplxr (Pt)")
-        self.layout.addWidget(self.eng1label, 9, 0, 1, 1)
+        self.layout.addWidget(self.eng1label, 9, 0, 1, 3)
 
         self.eng1 = QPlainTextEdit()
         self.eng1.setReadOnly(True)
-        self.eng1.setFixedHeight(200)
+        self.eng1.setFixedHeight(300)
         self.eng1.setDocumentTitle("Pt")
-        self.layout.addWidget(self.eng1, 10, 0, 1, 1)
+        self.layout.addWidget(self.eng1, 10, 0, 1, 3)
         self.eng1.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.header_eng1 = "Channel\tCounts  Ohms  Temp  "
         self.eng1.setPlainText(self.header_eng1)
@@ -109,11 +109,11 @@ class MTPviewer(QMainWindow):
 
         # Create the Engineering 2 display window
         self.eng1label = QLabel("Engineering Multiplxr (M01)")
-        self.layout.addWidget(self.eng1label, 9, 1, 1, 1)
+        self.layout.addWidget(self.eng1label, 9, 3, 1, 3)
 
         self.eng2 = QPlainTextEdit()
         self.eng2.setReadOnly(True)
-        self.layout.addWidget(self.eng2, 10, 1, 1, 1)
+        self.layout.addWidget(self.eng2, 10, 3, 1, 3)
         self.eng2.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.header_eng2 = "Channel\tCounts  Volts"
         self.eng2.setPlainText(self.header_eng2)
@@ -123,11 +123,11 @@ class MTPviewer(QMainWindow):
 
         # Create the Engineering 3 display window
         self.eng1label = QLabel("Engineering Multiplxr (M02)")
-        self.layout.addWidget(self.eng1label, 9, 2, 1, 1)
+        self.layout.addWidget(self.eng1label, 9, 6, 1, 3)
 
         self.eng3 = QPlainTextEdit()
         self.eng3.setReadOnly(True)
-        self.layout.addWidget(self.eng3, 10, 2, 1, 1)
+        self.layout.addWidget(self.eng3, 10, 6, 1, 3)
         self.eng3.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.header_eng3 = "Channel\tCounts  Value"
         self.eng3.appendPlainText(self.header_eng3)
@@ -139,34 +139,35 @@ class MTPviewer(QMainWindow):
         # metadata = QGroupBox("Project info")
         metadata = QPlainTextEdit("Project info")
         metadata.setFixedHeight(30)
-        self.layout.addWidget(metadata, 0, 0, 1, 3)
+        self.layout.addWidget(metadata, 0, 0, 1, 9)
 
         # Create a box to hold the list of brightness temps
         tb = QPlainTextEdit("Brightness Temps")
         tb.setFixedHeight(300)
-        self.layout.addWidget(tb, 1, 0)
+        self.layout.addWidget(tb, 1, 0, 1, 2)
 
         # Create our scan and temperature plot and add it to the layout
         self.scantemp = ScanTemp()
         st = self.scantemp.getWindow()
         st.setFixedHeight(300)
-        self.layout.addWidget(st, 1, 1)
+        st.setFixedWidth(300)
+        self.layout.addWidget(st, 1, 2, 1, 3)
 
         # Create a window to hold our timeseries plot and parameter selection
         # dropdown menu
         self.timeseries = Timeseries(self.client)
-        self.layout.addLayout(self.timeseries.getWindow(), 1, 2)
+        self.layout.addLayout(self.timeseries.getWindow(), 1, 5, 1, 4)
 
         # Create a box to hold selected RCFs and controls
         tb = QPlainTextEdit("Control panel")
-        tb.setFixedHeight(100)
-        self.layout.addWidget(tb, 2, 0, 1, 3)
+        tb.setFixedHeight(50)
+        self.layout.addWidget(tb, 2, 0, 1, 9)
 
         # Create a File data display window
         filedata = QPlainTextEdit()
         filedata.setReadOnly(True)
         filedata.setFixedHeight(150)
-        self.layout.addWidget(filedata, 3, 0, 5, 3)
+        self.layout.addWidget(filedata, 3, 0, 5, 9)
         filedata.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         filedata.appendPlainText("MTP data block display")
 
@@ -183,8 +184,8 @@ class MTPviewer(QMainWindow):
         # IWG record display window
         iwg = QPlainTextEdit()
         iwg.setReadOnly(True)
-        iwg.setFixedHeight(50)
-        self.layout.addWidget(iwg, 8, 0, 1, 3)
+        iwg.setFixedHeight(40)
+        self.layout.addWidget(iwg, 8, 0, 1, 9)
         iwg.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         # Temporarily insert some sample data to get an idea how it will
         # look. Remove this when get data parsing coded.
