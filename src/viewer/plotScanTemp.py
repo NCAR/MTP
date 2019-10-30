@@ -35,8 +35,9 @@ class ScanTemp():
         # A canvas widget that displays the figure
         self.canvas = FigureCanvas(self.fig)
 
-        # Configure axis label and limits so looks like what expect even if data not flowing.
-        # When data is plotting, this is cleared and re-configured. See plotDataScnt()
+        # Configure axis label and limits so looks like what expect even if
+        # data not flowing. When data is plotting, this is cleared and
+        # re-configured. See plotDataScnt()
         self.configureAxis()
 
     def getWindow(self):
