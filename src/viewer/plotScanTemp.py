@@ -6,7 +6,9 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
 import numpy
-import pyqtgraph as pg
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt5agg import (
+       FigureCanvasQTAgg as FigureCanvas)
 
 
 class ScanTemp():
@@ -24,56 +26,19 @@ class ScanTemp():
         - Overplot GV altitude as horizontal white line.
         """
 
-        # Create a GraphicsWindow to hold this plot
-        self.stp = pg.GraphicsWindow()
+        # Create a figure instance to hold the plot
+        (self.fig, self.ax) = plt.subplots(constrained_layout=True)
 
-        # Create a ViewBox QGraphicsItem to hold the profile plot (left axis)
-        self.profile = pg.ViewBox()
+        # instantiate a right axis that shares the same x-axis
+        self.axR = self.ax.twinx()
 
-        # Add the profile plot to the graphics window scene with a Yrange of
-        # 0-20
-        self.stp.scene().addItem(self.profile)
-        self.profile.setYRange(0, 20, padding=0)
-
-        # Add a scan count PlotItem (right axis) with a Yrange of 10-0
-        self.scnt = self.stp.addPlot(title="Scan and Template Plot")
-        self.scnt.setYRange(10, 1, padding=0)
-
-        # Adjust the axis to take up less room
-        axis = self.scnt.getAxis('right')
-        font = axis.font()
-        font.setPixelSize(10)
-        label_style = {'color': '#FFF', 'font-size': '10pt'}
-
-        self.scnt.getAxis('right').tickFont = font
-        self.scnt.getAxis('right').setWidth(32)
-        self.scnt.setLabel('right', 'Scan Angle', **label_style)
-
-        self.scnt.getAxis('left').tickFont = font
-        self.scnt.getAxis('left').setWidth(32)
-        self.scnt.setLabel('left', 'Altitude', **label_style)
-
-        self.scnt.getAxis('bottom').tickFont = font
-        self.scnt.getAxis('bottom').setHeight(25)
-        self.scnt.setLabel('bottom', 'Counts', **label_style)
-
-        # Invert the right Y axis so goes from 10 at bottom to 1 at top
-        self.scnt.invertY(True)
-
-        # Allow X axis to be rescaled via mouse interaction, but not Y
-        self.scnt.setMouseEnabled(True, False)
-
-        # Link the left axis of the scan count plot to the profile QGraphics
-        # item.
-        self.scnt.getAxis('left').linkToView(self.profile)
-
-        # Link the X axis of both plots
-        self.profile.setXLink(self.scnt)
+        # A canvas widget that displays the figure
+        self.canvas = FigureCanvas(self.fig)
 
     def getWindow(self):
 
         # Return pointer to the graphics window
-        return(self.stp)
+        return(self.canvas)
 
     def invertSCNT(self, scnt):
         """
@@ -109,17 +74,25 @@ class ScanTemp():
         Plot scan counts vs channel in the self.scnt plot window
         """
 
-        # Clear the plot and invert the Y axis
-        self.scnt.clear()
-        self.scnt.invertY(True)
+        # Clear the plot of data, labels and formatting for the right axis
+        self.axR.clear()
 
-        # Plot the three channels: channel1 is red, channel2 is white, and
-        # channel 3 is blue
-        plot = self.scnt.plot(pen=pg.mkPen('r'))
-        plot.setData(self.getSCNT(1), self.getAngles(), connect="finite")
+        # Since clear removed the labels and formatting, have to add it back
+        # set limits and label for X axis
+        self.ax.set_xlabel('Counts')
+        self.ax.set_xlim(16000, 21000)
 
-        plot = self.scnt.plot(pen=pg.mkPen('w'))
-        plot.setData(self.getSCNT(2), self.getAngles(), connect="finite")
+        # set limits and label for left Y axis
+        self.ax.set_ylabel('Altitude')
+        self.ax.set_ylim(0, 20)
 
-        plot = self.scnt.plot(pen=pg.mkPen('b'))
-        plot.setData(self.getSCNT(3), self.getAngles(), connect="finite")
+        # set limits and label for right Y axis
+        self.axR.set_ylabel('Scan Angle')
+        self.axR.set_ylim(10, 1)  # Inverted Y axis 10 -> 1
+
+        # Plot the three channel counts on the right axis
+        # channel 1 is red, channel 2 is white, and channel 3 is blue
+        self.axR.plot(self.getSCNT(1), self.getAngles(), color='red')
+        self.axR.plot(self.getSCNT(2), self.getAngles(), color="grey")
+        self.axR.plot(self.getSCNT(3), self.getAngles(), color="blue")
+        self.canvas.draw()
