@@ -35,6 +35,10 @@ class ScanTemp():
         # A canvas widget that displays the figure
         self.canvas = FigureCanvas(self.fig)
 
+        # Configure axis label and limits so looks like what expect even if data not flowing.
+        # When data is plotting, this is cleared and re-configured. See plotDataScnt()
+        self.configureAxis()
+
     def getWindow(self):
 
         # Return pointer to the graphics window
@@ -69,15 +73,8 @@ class ScanTemp():
 
         return(angles)
 
-    def plotDataScnt(self):
-        """
-        Plot scan counts vs channel in the self.scnt plot window
-        """
-
-        # Clear the plot of data, labels and formatting for the right axis
-        self.axR.clear()
-
-        # Since clear removed the labels and formatting, have to add it back
+    def configureAxis(self):
+        """ Configure axis labels and limits, inc. invert right axis """
         # set limits and label for X axis
         self.ax.set_xlabel('Counts')
         self.ax.set_xlim(16000, 21000)
@@ -89,6 +86,17 @@ class ScanTemp():
         # set limits and label for right Y axis
         self.axR.set_ylabel('Scan Angle')
         self.axR.set_ylim(10, 1)  # Inverted Y axis 10 -> 1
+
+    def plotDataScnt(self):
+        """
+        Plot scan counts vs channel in the self.scnt plot window
+        """
+
+        # Clear the plot of data, labels and formatting for the right axis
+        self.axR.clear()
+
+        # Since clear removed the labels and formatting, have to add it back
+        self.configureAxis()
 
         # Plot the three channel counts on the right axis
         # channel 1 is red, channel 2 is white, and channel 3 is blue
