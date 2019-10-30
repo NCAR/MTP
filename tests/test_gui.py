@@ -25,11 +25,9 @@ from util.readmtp import readMTP
 
 class TESTgui(unittest.TestCase):
 
-    def setUp(self):
-        self.app = QApplication([])
-
     def test_eng1(self):
         """ Test Engineering 1 display window shows what we expect """
+        self.app = QApplication([])
         self.viewer = MTPviewer(self.app)
         # This first emgineering window shows the Pt line
         # To start, the window just shows "Channel  Counts  Ohms  Temp  "
@@ -66,9 +64,11 @@ class TESTgui(unittest.TestCase):
                          "Noise D.\t13230  575.17  +38.61\n" +
                          "Rref 600\t14450  600.00  ")
         self.viewer.close()
+        self.app.quit()
 
     def test_eng2(self):
         """ Test Engineering 2 display window shows what we expect """
+        self.app = QApplication([])
         self.viewer = MTPviewer(self.app)
         # The second engineering window displays the M01 line
         # To start, window just shows the header: "Channel Counts  Volts"
@@ -99,9 +99,11 @@ class TESTgui(unittest.TestCase):
                          "VCC  PS\t2433  +04.87V\n" +
                          "-15V PS\t2944  -15.01V")
         self.viewer.close()
+        self.app.quit()
 
 #   def test_eng3(self):
 #       """ Test Engineering 3 display window shows what we expect """
+#       self.app = QApplication([])
 #       self.viewer = MTPviewer(self.app)
         # The third engineering window displays the M02 line
         # To start, window just shows the header: "Channel Counts  Value"
@@ -131,6 +133,7 @@ class TESTgui(unittest.TestCase):
 #                        "T N/C\t4095  N/A\n" +
 #                        "T Synth\t1491  -34.80 C")
 #       self.viewer.close()
+#       self.app.quit()
 
     def test_getResistance(self):
         """ Test that sending linetype other than Ptline fails """
@@ -171,14 +174,16 @@ class TESTgui(unittest.TestCase):
     # self.stp as the parent of self.profile (I think) in plotScanTemp().
     # When running the main code, no errors occur. They only occur when running
     # these unit tests.
-#    def test_quit(self):
-#        self.viewer = MTPviewer(self.app)
-#        """ Test mouse click on 'Quit' in GUI Quit Menu """
+
+#   def test_quit(self):
+#       self.app = QApplication([])
+#       self.viewer = MTPviewer(self.app)
+#       """ Test mouse click on 'Quit' in GUI Quit Menu """
 
         # To start, socket should be open, so a call to fileno() should return
         # a socket value that is not failure (-1)
         # MTP socket
-#        self.assertNotEqual(self.viewer.client.getSocketFileDescriptor(), -1)
+#       self.assertNotEqual(self.viewer.client.getSocketFileDescriptor(), -1)
         # IWG socket
 #       self.assertNotEqual(self.viewer.client.getSocketFileDescriptorI(), -1)
 
@@ -195,6 +200,4 @@ class TESTgui(unittest.TestCase):
 
         # App should also be closed
 #       self.viewer.close()
-
-    def tearDown(self):
-        self.app.quit()
+#       self.app.quit()
