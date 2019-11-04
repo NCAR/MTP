@@ -1,7 +1,7 @@
 ###############################################################################
 # Routine to calculate Voltage(Volts) from MTP Engineering Multiplxr counts
 # (M01 line). The M01 line contains 8 values:
-# 'VM08CHTE'    # Vm08 Counts
+# 'VM08CNTE'    # Vm08 Counts
 # 'VVIDCNTE'    # Vvid Counts
 # 'VP08CNTE'    # Vp08 Counts
 # 'VMTRCNTE'    # Vmtr Counts
