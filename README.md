@@ -71,3 +71,20 @@ Information on operating the MTP, and other documentation, can be found on the (
  ```
 > python3 snd_MTP_udp.py
 ```
+
+## Developer Notes
+
+For complete documentation on each class/method, useful if you need to modify the code, use pydoc to extract embedded documentation from each file:
+
+```
+> cd src
+> python3 -m pydoc <filename>
+e.g. python3 -m pydoc lib/rwget.py
+```
+
+To manually run all unittests:
+
+```
+> cd src
+> python3 -m unittest discover -s ../tests -v
+```
