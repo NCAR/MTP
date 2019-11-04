@@ -25,6 +25,14 @@ The MTPviewer software currently uses the following versions of code:
  * pip3 install psycopg2
  * pip3 install pyqtgraph
  
+ ## To install on Windows10
+ 
+ * See installation instructions for RAOBget: https://github.com/NCAR/RAOBget
+ ```
+ * conda activate (if not already done)
+ * conda install -c conda-forge pyqtgraph
+ ```
+ 
 ## To operate the MTP from Windows10
 
  * Install the driver for the USOPTL4 USB to serial converter
@@ -42,7 +50,15 @@ Information on operating the MTP, and other documentation, can be found on the (
 ## To run this code:
  * Copy project ascii_parms file from proj dir to config/
  * cd src
- * python3 MTPviewer.py
+ * On Windows10:
+ ```
+ > conda activate (to get the base environment where libraries have been installed)
+ > C:\Users\lroot\Miniconda3\python.exe MTPviewer.py
+ ```
+ * On a MAC:
+ ```
+ > python3 MTPviewer.py
+ ```
 
 ## To run in test mode, generate fake "real-time" data by running
  * cd test
