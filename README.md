@@ -61,5 +61,13 @@ Information on operating the MTP, and other documentation, can be found on the (
  ```
 
 ## To run in test mode, generate fake "real-time" data by running
- * cd test
- * python3 snd_MTP_udp.py
+ * cd src/emulator
+ * On Windows10:
+ ```
+ > conda activate
+ > C:\Users\lroot\Miniconda3\python.exe snd_MTP_udp.py
+ ```
+ * On a MAC:
+ ```
+> python3 snd_MTP_udp.py
+```
