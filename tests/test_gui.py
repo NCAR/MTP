@@ -101,39 +101,39 @@ class TESTgui(unittest.TestCase):
         self.viewer.close()
         self.app.quit()
 
-#   def test_eng3(self):
-#       """ Test Engineering 3 display window shows what we expect """
-#       self.app = QApplication([])
-#       self.viewer = MTPviewer(self.app)
+    def test_eng3(self):
+        """ Test Engineering 3 display window shows what we expect """
+        self.app = QApplication([])
+        self.viewer = MTPviewer(self.app)
         # The third engineering window displays the M02 line
         # To start, window just shows the header: "Channel Counts  Value"
-#       self.assertEqual(self.viewer.eng3.toPlainText(),
-#                        "Channel\tCounts  Value")
+        self.assertEqual(self.viewer.eng3.toPlainText(),
+                         "Channel\tCounts  Value")
 
         # Send an MTP packet to the parser and confirm it gets parsed
         # correctly.
-#       line = "M02: 2510 1277 1835 1994 1926 1497 4095 1491"
-#       mtp = readMTP()
-#       mtp.parseLine(line)
-#       values = mtp.rawscan['M02line']['data'].split(' ')
-#       mtp.assignM02values(values)
-#       self.assertEqual(mtp.getVar('M02line', 'ACCPCNTE'), '2510')
+        line = "M02: 2510 1277 1835 1994 1926 1497 4095 1491"
+        mtp = readMTP()
+        mtp.parseLine(line)
+        values = mtp.rawscan['M02line']['data'].split(' ')
+        mtp.assignM02values(values)
+        self.assertEqual(mtp.getVar('M02line', 'ACCPCNTE'), '2510')
 
         # Then check the window display values
-        # self.viewer.calcM02()  # Not written yet, so Value will fail below
-#       self.viewer.writeEng3()
-#       self.assertEqual(self.viewer.eng3.toPlainText(),
-#                        "Channel\tCounts  Value\n" +
-#                        "Acceler\t2510  -0.03 g\n" +
-#                        "T Data\t1277  +40.62 C\n" +
-#                        "T Motor\t1835  +26.43 C\n" +
-#                        "T Pod Air\t1994  +22.81 C\n" +
-#                        "T Scan\t1926  +24.35 C\n" +
-#                        "T Pwr Sup\t1497  +34.65 C\n" +
-#                        "T N/C\t4095  N/A\n" +
-#                        "T Synth\t1491  -34.80 C")
-#       self.viewer.close()
-#       self.app.quit()
+        self.viewer.client.calcM02()
+        self.viewer.writeEng3()
+        self.assertEqual(self.viewer.eng3.toPlainText(),
+                         "Channel\tCounts  Value\n" +
+                         "Acceler\t2510  -00.03 g\n" +
+                         "T Data\t1277  +40.62 C\n" +
+                         "T Motor\t1835  +26.43 C\n" +
+                         "T Pod Air\t1994  +22.81 C\n" +
+                         "T Scan\t1926  +24.35 C\n" +
+                         "T Pwr Sup\t1497  +34.65 C\n" +
+                         "T N/C\t4095  N/A\n" +
+                         "T Synth\t1491  +34.80 C")
+        self.viewer.close()
+        self.app.quit()
 
     def test_getResistance(self):
         """ Test that sending linetype other than Ptline fails """
@@ -148,15 +148,19 @@ class TESTgui(unittest.TestCase):
         self.assertTrue(check)
 
     def test_getTemperature(self):
-        """ Test that sending linetype other than Ptline fails """
+        """ Test that sending linetype other than Ptline/M02line fails """
         mtp = readMTP()
         # check that temperature calculated correctly for other Ptline vars
-        mtp.setCalcVal('Ptline', 'TTCNTRCNTP', 44.73, 'tempearture')
+        mtp.setCalcVal('Ptline', 'TTCNTRCNTP', 44.73, 'temperature')
         self.assertEqual("%5.2f" % mtp.getCalcVal('Ptline', 'TTCNTRCNTP',
                                                   'temperature'), '44.73')
-        # check that temperature set to NAN for non Ptline
-        mtp.setCalcVal('M02line', 'ACCPCNTE', 2510, 'tempearture')
-        check = numpy.isnan(mtp.getCalcVal('M02line', 'ACCPCNTE',
+        # check that temperature calculated correctly for M02line vars
+        mtp.setCalcVal('M02line', 'ACCPCNTE', -0.03, 'temperature')
+        self.assertEqual("%5.2f" % mtp.getCalcVal('M02line', 'ACCPCNTE',
+                                                  'temperature'), '-0.03')
+        # check that temperature set to NAN for non Ptline/M02line
+        mtp.setCalcVal('M01line', 'VM15CNTE', -15.01, 'temperature')
+        check = numpy.isnan(mtp.getCalcVal('M01line', 'VM15CNTE',
                                            'temperature'))
         self.assertTrue(check)
 
