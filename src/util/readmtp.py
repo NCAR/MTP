@@ -307,6 +307,7 @@ class readMTP:
         # Only M01 lines have a calculated voltage
         if ((calctype == 'resistance' and linetype == 'Ptline') or
            (calctype == 'temperature' and linetype == 'Ptline') or
+           (calctype == 'temperature' and linetype == 'M02line') or
            (calctype == 'volts' and linetype == 'M01line')):
             self.rawscan[linetype]['values'][var][calctype] = value
         else:
@@ -322,6 +323,7 @@ class readMTP:
         # Only M01 lines have a calculated voltage
         if ((calctype == 'resistance' and linetype == 'Ptline') or
            (calctype == 'temperature' and linetype == 'Ptline') or
+           (calctype == 'temperature' and linetype == 'M02line') or
            (calctype == 'volts' and linetype == 'M01line')):
             return(self.rawscan[linetype]['values'][var][calctype])
         else:

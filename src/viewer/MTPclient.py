@@ -11,6 +11,7 @@ import numpy
 from util.readmtp import readMTP
 from util.decodePt import decodePt
 from util.decodeM01 import decodeM01
+from util.decodeM02 import decodeM02
 
 
 class MTPclient():
@@ -67,6 +68,14 @@ class MTPclient():
         """
         m01 = decodeM01(self.reader)
         m01.calcVolts()
+
+    def calcM02(self):
+        """
+        Calculate values from the counts to be displayed in the Engineering 3
+        box. Save to the MTP dictionary.
+        """
+        m02 = decodeM02(self.reader)
+        m02.calcVals()
 
     def getSCNT(self):
         """

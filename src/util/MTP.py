@@ -140,27 +140,35 @@ MTPrecord = {
         'data': [],
         'values': {'ACCPCNTE': {  # Acceler Counts
                         'val': numpy.nan, 'idx': 0,
+                        'temperature': numpy.nan,  # Calculated acceleration
                         'name': "Acceler"},
                    'TDATCNTE': {  # T Data Counts
                         'val': numpy.nan, 'idx': 1,
+                        'temperature': numpy.nan,  # Calculated temperature
                         'name': "T Data"},
                    'TMTRCNTE': {  # T Motor Counts
                         'val': numpy.nan, 'idx': 2,
+                        'temperature': numpy.nan,  # Calculated temperature
                         'name': "T Motor"},
                    'TAIRCNTE': {  # T Pod Air Counts
                         'val': numpy.nan, 'idx': 3,
+                        'temperature': numpy.nan,  # Calculated temperature
                         'name': "T Pod Air"},
                    'TSMPCNTE': {  # T Scan Counts
                         'val': numpy.nan, 'idx': 4,
+                        'temperature': numpy.nan,  # Calculated temperature
                         'name': "T Scan"},
                    'TPSPCNTE': {  # T Power Supply Counts
                         'val': numpy.nan, 'idx': 5,
+                        'temperature': numpy.nan,  # Calculated temperature
                         'name': "T Pwr Sup"},
                    'TNCCNTE': {  # T N/C Counts
                         'val': numpy.nan, 'idx': 6,
+                        'temperature': numpy.nan,  # Calculated temperature
                         'name': "T N/C"},
                    'TSYNCNTE': {  # T Synth Counts
                         'val': numpy.nan, 'idx': 7,
+                        'temperature': numpy.nan,  # Calculated temperature
                         'name': "T Synth"},
                    },
     },
