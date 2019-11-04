@@ -180,9 +180,9 @@ class TESTgui(unittest.TestCase):
     # these unit tests.
 
 #   def test_quit(self):
+#       """ Test mouse click on 'Quit' in GUI Quit Menu """
 #       self.app = QApplication([])
 #       self.viewer = MTPviewer(self.app)
-#       """ Test mouse click on 'Quit' in GUI Quit Menu """
 
         # To start, socket should be open, so a call to fileno() should return
         # a socket value that is not failure (-1)
