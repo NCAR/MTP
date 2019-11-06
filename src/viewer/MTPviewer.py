@@ -44,7 +44,7 @@ class MTPviewer(QMainWindow):
         self.setWindowTitle('MTP viewer')
 
         # Set the initial size of the window created. it is user resizeable.
-        self.resize(800, 870)
+        self.resize(800, 855)
 
         # Define central widget to hold everything
         self.view = QWidget()
@@ -262,7 +262,7 @@ class MTPviewer(QMainWindow):
         """
         Function to write the IWG line to IWG display box
         """
-        self.iwg.setPlainText(self.client.reader.getIwgPacket())
+        self.iwg.setPlainText(self.client.iwg.getIwgPacket())
 
     def writeEng1(self):
         """

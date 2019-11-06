@@ -43,7 +43,7 @@ class TESTgui(unittest.TestCase):
         # Send an MTP packet to the parser and confirm it gets parsed
         # correctly
         line = "Pt: 2165 13811 13820 03894 13415 13342 13230 14450"
-        mtp = readMTP(self.ascii_parms)
+        mtp = readMTP()
         mtp.parseLine(line)
         values = mtp.rawscan['Ptline']['data'].split(' ')
         mtp.assignPtvalues(values)
@@ -84,7 +84,7 @@ class TESTgui(unittest.TestCase):
         # Send an MTP packet to the parser and confirm it gets parsed
         # correctly.
         line = "M01: 2929 2273 2899 3083 1929 2921 2433 2944"
-        mtp = readMTP(self.ascii_parms)
+        mtp = readMTP()
         mtp.parseLine(line)
         values = mtp.rawscan['M01line']['data'].split(' ')
         mtp.assignM01values(values)
@@ -119,7 +119,7 @@ class TESTgui(unittest.TestCase):
         # Send an MTP packet to the parser and confirm it gets parsed
         # correctly.
         line = "M02: 2510 1277 1835 1994 1926 1497 4095 1491"
-        mtp = readMTP(self.ascii_parms)
+        mtp = readMTP()
         mtp.parseLine(line)
         values = mtp.rawscan['M02line']['data'].split(' ')
         mtp.assignM02values(values)
@@ -143,7 +143,7 @@ class TESTgui(unittest.TestCase):
 
     def test_getResistance(self):
         """ Test that sending linetype other than Ptline fails """
-        mtp = readMTP(self.ascii_parms)
+        mtp = readMTP()
         mtp.setCalcVal('Ptline', 'TR350CNTP', 350.00, 'resistance')
         self.assertEqual(mtp.getCalcVal('Ptline', 'TR350CNTP', 'resistance'),
                          350.00)
@@ -155,7 +155,7 @@ class TESTgui(unittest.TestCase):
 
     def test_getTemperature(self):
         """ Test that sending linetype other than Ptline/M02line fails """
-        mtp = readMTP(self.ascii_parms)
+        mtp = readMTP()
         # check that temperature calculated correctly for other Ptline vars
         mtp.setCalcVal('Ptline', 'TTCNTRCNTP', 44.73, 'temperature')
         self.assertEqual("%5.2f" % mtp.getCalcVal('Ptline', 'TTCNTRCNTP',

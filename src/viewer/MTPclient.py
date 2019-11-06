@@ -10,6 +10,7 @@ import os
 import socket
 import numpy
 from util.readmtp import readMTP
+from util.readiwg import readIWG
 from util.decodePt import decodePt
 from util.decodeM01 import decodeM01
 from util.decodeM02 import decodeM02
@@ -50,7 +51,14 @@ class MTPclient():
         self.yvar = 'SAPALT'
 
         # Instantiate an instance of an MTP reader
-        self.reader = readMTP(self.ascii_parms)
+        self.reader = readMTP()
+
+        # Instantiate an instance of an IWG reader. Have it point to the same
+        # MTP dictionary as the MTP reader
+        self.iwg = readIWG(self.ascii_parms, self.reader.getRawscan())
+
+        # Create a public list of the variables in the Aline. Used to plot
+        # timeseries of the variables.
         self.varlist = self.reader.getVarList('Aline')
 
     def initData(self):
@@ -123,8 +131,10 @@ class MTPclient():
         dataI = self.sockI.recv(1024).decode()
 
         # Store data to data dictionary
-        self.reader.parseAsciiPacket(data)
-        self.reader.parseIwgPacket(dataI)
+        self.reader.parseAsciiPacket(data)  # Store to values
+        self.reader.parseLine(data)   # Store to date and data
+        self.iwg.parseIwgPacket(dataI)   # Store to values
+        self.reader.parseLine(dataI)  # Store to date, data, and asciiPacket
 
         # Append new X value to end of list
         self.xvals.append(int(self.reader.getVar('Aline', self.xvar)))

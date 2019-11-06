@@ -16,6 +16,7 @@ from optparse import OptionParser
 
 sys.path.append('../')  # so can run this from inside emulator dir
 from util.readmtp import readMTP
+from util.readiwg import readIWG
 from lib.rootdir import getrootdir
 
 
@@ -46,7 +47,14 @@ def main(args):
     # starting with, in order, A, B, M01, M02, Pt, and E. Output as a single
     # comma separated UDP packet like that expected by nimbus.
     raw_data_file = open(options.rawfile, 'r')
-    reader = readMTP(ascii_parms)
+
+    # Instantiate an instance of an MTP reader
+    reader = readMTP()
+
+    # Instantiate an instance of an IWG reader. Have it point to the same
+    # MTP dictionary as the MTP reader
+    iwg = readIWG(ascii_parms, reader.getRawscan())
+
     haveData = True
 
     while haveData:
@@ -62,7 +70,7 @@ def main(args):
         if sock:
             sock.sendto(buffer.encode(), (udp_ip, udp_send_port))
 
-        buffer = reader.getIwgPacket()
+        buffer = iwg.getIwgPacket()
         print(buffer)
 
         # Send IWG ascii packet out over UDP
