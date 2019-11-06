@@ -77,6 +77,8 @@ MTPrecord = {
                   'val': numpy.nan},
                  'TIME': {  # IWG1 packet Time (HHMMSS) converted to secs
                   'val': numpy.nan},
+                 # Additional variables are created dynamically from list of
+                 # vars read from ascii_parms
                  },
     },
 
