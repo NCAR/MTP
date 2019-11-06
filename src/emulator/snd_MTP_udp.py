@@ -8,13 +8,15 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
+import os
 import socket
 import sys
 import time
 from optparse import OptionParser
 
-sys.path.append('../')
+sys.path.append('../')  # so can run this from inside emulator dir
 from util.readmtp import readMTP
+from lib.rootdir import getrootdir
 
 
 def main(args):
@@ -33,6 +35,9 @@ def main(args):
     # udp_read_port = 30106  # Communication to MTP; not used by this emulator
     udp_ip = "127.0.0.1"
 
+    # Location of default ascii_parms file
+    ascii_parms = os.path.join(getrootdir(), 'config/ascii_parms')
+
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
@@ -41,7 +46,7 @@ def main(args):
     # starting with, in order, A, B, M01, M02, Pt, and E. Output as a single
     # comma separated UDP packet like that expected by nimbus.
     raw_data_file = open(options.rawfile, 'r')
-    reader = readMTP()
+    reader = readMTP(ascii_parms)
     haveData = True
 
     while haveData:
@@ -55,15 +60,14 @@ def main(args):
 
         # Send MTP ascii packet out over UDP
         if sock:
-            bytes = sock.sendto(buffer.encode(), (udp_ip, udp_send_port))
-            # print(bytes)
+            sock.sendto(buffer.encode(), (udp_ip, udp_send_port))
 
         buffer = reader.getIwgPacket()
         print(buffer)
 
         # Send IWG ascii packet out over UDP
         if sock:
-            bytes = sock.sendto(buffer.encode(), (udp_ip, iwg1_port))
+            sock.sendto(buffer.encode(), (udp_ip, iwg1_port))
 
         # Wait before retrieve next scan, to emulate MTP 17 second gap between
         # scans. For testing, I am using 1 sec data so I don't have to wait as

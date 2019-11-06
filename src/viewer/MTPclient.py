@@ -6,12 +6,14 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
+import os
 import socket
 import numpy
 from util.readmtp import readMTP
 from util.decodePt import decodePt
 from util.decodeM01 import decodeM01
 from util.decodeM02 import decodeM02
+from lib.rootdir import getrootdir
 
 
 class MTPclient():
@@ -21,6 +23,9 @@ class MTPclient():
         self.udp_send_port = 32106  # from viewer to MTP
         self.udp_read_port = 32107  # from MTP to viewer
         self.iwg1_port = 7071       # IWG1 packets from GV
+
+        # Location of default ascii_parms file
+        self.ascii_parms = os.path.join(getrootdir(), 'config/ascii_parms')
 
         # Hack-y stuff to get plot to scroll. pyqtgraph must have a better way
         # that I haven't found yet.
@@ -45,7 +50,7 @@ class MTPclient():
         self.yvar = 'SAPALT'
 
         # Instantiate an instance of an MTP reader
-        self.reader = readMTP()
+        self.reader = readMTP(self.ascii_parms)
         self.varlist = self.reader.getVarList('Aline')
 
     def initData(self):

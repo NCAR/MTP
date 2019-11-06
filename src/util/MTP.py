@@ -73,7 +73,7 @@ MTPrecord = {
         'data': [],
         'values': {'DATE': {  # IWG1 packet Date (YYYYMMDD)
                   'val': numpy.nan},
-                 'TIME': {  # IWG1 packet Time (HHMMSS)
+                 'TIME': {  # IWG1 packet Time (HHMMSS) converted to secs
                   'val': numpy.nan},
                  },
     },

@@ -46,17 +46,15 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
-import os
 import re
 import numpy
 import copy
 from util.MTP import MTPrecord
-from lib.rootdir import getrootdir
 
 
 class readMTP:
 
-    def __init__(self):
+    def __init__(self, ascii_parms_file):
         self.rawscan = MTPrecord
         self.flightData = []
 
@@ -67,8 +65,25 @@ class readMTP:
         # project ascii_parms file has not been copied, overwriting the
         # default, the data plotted will be good, but the variable name labels
         # may not be right.
-        ascii_parms = open(os.path.join(getrootdir(), 'config/ascii_parms'),
-                           'r')
+        status = self.readAsciiParms(ascii_parms_file, self.rawscan)
+
+        # If did not successfully read ascii_parms file, exit.
+        if status is False:
+            exit(1)
+
+    def readAsciiParms(self, ascii_parms_file, rawscan):
+        try:
+            ascii_parms = open(ascii_parms_file, 'r')
+        except OSError as err:
+            print(err)
+            print("Copy ascii_parms for project into config/ dir in order to" +
+                  " parse IWG packet correctly then rerun code.")
+            return(False)
+        except Exception:
+            print("Unexpected error occurred while trying to open " +
+                  "ascii_parms file")
+            return(False)
+
         i = 2  # index of each variable in IWG1 line (after dateTtime)
         while True:
             line = ascii_parms.readline()
@@ -79,13 +94,14 @@ class readMTP:
                 next
             else:
                 newVar = line.rstrip('\n')
-                self.rawscan['IWG1line']['values'][newVar] = \
+                rawscan['IWG1line']['values'][newVar] = \
                     {'val': numpy.nan, 'idx': i}
                 i = i + 1
-            if i > 31:  # Only keep the first 31 values; the rest are user vals
+            if i > 32:  # Only keep the first 31 values; the rest are user vals
                 break
 
         ascii_parms.close()
+        return(True)
 
     def readRawScan(self, raw_data_file):
         """
@@ -135,9 +151,9 @@ class readMTP:
                     elif (linetype == 'IWG1line'):  # Reformat date/time
                         self.rawscan[linetype]['asciiPacket'] = \
                             line.rstrip('\n')
-                        self.rawscan[linetype]['date'] = m.group(0)
+                        self.rawscan[linetype]['date'] = m.group(1)
                         self.rawscan[linetype]['data'] = \
-                            m.group(1).rstrip('\n')
+                            m.group(2).rstrip('\n')
                     else:
                         self.rawscan[linetype]['data'] = \
                             m.group(2).rstrip('\n')
@@ -194,6 +210,9 @@ class readMTP:
         """
         separator = ','
         values = IWGpacket.split(separator)
+
+        # Save the IWG packet to the data dictionary
+        self.parseLine(IWGpacket)
 
         # values[0] contains the packet identifier, in this case 'IWG1' so skip
         # values[1] contains the datetime, i.e. yyyymmddThhMMss
