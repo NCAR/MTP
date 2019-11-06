@@ -28,11 +28,13 @@ MTPrecord = {
         # Regular expressions to match the various scan lines
         're': re.compile("^A (........) (..):(..):(..) (.*)"),
         'found': False,
-        'date': "",
-        'data': [],
+        'date': "",  # YYYYMMDDTHHMMSS
+        'data': [],  # A string containing the data values after date/time
         'values': {'DATE': {  # MTP Scan Date (YYYYMMDD)
                   'val': numpy.nan},
-                 'TIME': {  # MTP Scan Time (HHMMSS)
+                 'timestr': {  # MTP Scan Time (HHMMSS)
+                  'val': numpy.nan},
+                 'TIME': {  # MTP Scan Time (HHMMSS) converted to secs
                   'val': numpy.nan},
                  'SAPITCH': {  # MTP Scan Avg Pitch (degree)
                   'val': numpy.nan, 'idx': 0},
