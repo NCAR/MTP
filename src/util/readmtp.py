@@ -55,7 +55,10 @@ from util.MTP import MTPrecord
 class readMTP:
 
     def __init__(self, ascii_parms_file):
-        self.rawscan = MTPrecord
+        self.rawscan = MTPrecord  # Instantiate dictionary to hold the MTP data
+
+        # An array of MTP data dictionaries - used to display a single variable
+        # across time.
         self.flightData = []
 
         # Because the specific variables sent via the IWG packet can change per
@@ -166,10 +169,18 @@ class readMTP:
         """  Return the IWG packet to the caller """
         return(self.rawscan['IWG1line']['asciiPacket'])
 
+    def getAline(self):
+        """ Return the A line to the caller """
+        # Create the Aline
+        Aline = "A " + self.rawscan['Aline']['values']['DATE']['val'] + " " + \
+                self.rawscan['Aline']['values']['timestr']['val'] + " " + \
+                self.rawscan['Aline']['data']
+        return(Aline)
+
     def getAsciiPacket(self):
         """
         Combine the separate lines from a raw scan into an Ascii packet
-        (suitable for sending around the plane). Stores the Ascii packet in the
+        (suitable for UDP-ing around the plane). Stores the Ascii packet in the
         dictionary. Also, returns the Ascii packet to the caller.
         """
         recNum = len(self.flightData)-1
@@ -183,6 +194,16 @@ class readMTP:
         packet.append(self.flightData[recNum]['Ptline']['data'])
         packet.append(self.flightData[recNum]['Eline']['data'])
 
+        UDPpacket = self.joinPacket(packet)
+
+        # Store the new packet in our dictionary.
+        # self.flightData[recNum]['asciiPacket'] = UDPpacket
+        self.writeFlightData(UDPpacket)
+
+        # Return the newly created packet
+        return (UDPpacket)
+
+    def joinPacket(self, packet):
         # Turn our packet into a comma separated string, and return it
         # But since the individual data strings are space separated, split
         # string on spaces and rejoin with commas
@@ -192,12 +213,32 @@ class readMTP:
         separator = ','
         UDPpacket = separator.join(values)
 
-        # Store the new packet in our dictionary.
-        # self.flightData[recNum]['asciiPacket'] = UDPpacket
-        self.writeFlightData(UDPpacket)
+        return(UDPpacket)
 
-        # Return the newly created packet
-        return (UDPpacket)
+    def createAdata(self):
+        """
+        Create an A data line from the values in the dictionary. This is useful
+        when all we have access to is the UDP'd Ascii packet and we want to
+        recreate the records as stored by the VB code for past projects.
+        """
+        # According to documentation for the Python standard library
+        # [https://docs.python.org/3/library/stdtypes.html#typesmapping
+        # accessed Nov 6, 2019], as of version 3.7, "Dictionary order is
+        # guaranteed to be insertion order. This behavior was an implementation
+        # detail of CPython from 3.6.". This function takes advantage of this
+        # guarantee and just loops over the Aline values in the dictionary to
+        # regenrate the Aline. If the values are returned in other than
+        # insertion order, then the vars in the Aline won't be in the order
+        # sent out by the MTP and the A line will be incorrect.
+        packet = []
+        for key in self.rawscan['Aline']['values']:
+            if (key != 'DATE' and key != 'TIME' and key != 'timestr'):
+                packet.append(self.rawscan['Aline']['values'][key]['val'])
+        separator = ' '
+        Adata = separator.join(packet)  # Join the components into a string
+
+        # Save the generated a line to the dictionary
+        self.rawscan['Aline']['data'] = Adata
 
     def writeFlightData(self, UDPpacket):
         """ Save a UDP packet to the flightData array """
@@ -245,6 +286,9 @@ class readMTP:
         if (m):
             # Save YYYYMMDD to variable DATE
             self.rawscan['Aline']['values']['DATE']['val'] = m.group(1)
+            # Save HHMMSS to variable TIME
+            self.rawscan['Aline']['values']['timestr']['val'] = \
+                m.group(2)+m.group(3)+m.group(4)
             # Save seconds since midnight to variable TIME
             self.rawscan['Aline']['values']['TIME']['val'] = \
                 int(m.group(2))*3600+int(m.group(3))*60+int(m.group(4))
@@ -263,7 +307,7 @@ class readMTP:
         does not contain the "A yyyymmdd hh:mm:ss"
         """
         for key in self.rawscan['Aline']['values']:
-            if (key != 'DATE' and key != 'TIME'):
+            if (key != 'DATE' and key != 'TIME' and key != 'timestr'):
                 self.rawscan['Aline']['values'][key]['val'] = \
                     values[int(self.rawscan['Aline']['values'][key]['idx'])]
 
