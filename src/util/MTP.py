@@ -226,6 +226,9 @@ MTPrecord = {
         're': re.compile("(^E) (.*)"),
         'found': False,
         'data': [],
+        # The vector of counts produced by the MTP target. This vector is of
+        # length 6 - three per channel for the noise diode turned on (stored as
+        # the first three values) and three for it turned off (the next 3).
         'values': {'TCNT': {  # MTP Target Counts[Target,Channel]
                     'val': [numpy.nan]*6}
                    },
