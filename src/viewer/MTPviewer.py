@@ -144,13 +144,13 @@ class MTPviewer(QMainWindow):
 
         # Create a box to hold the list of brightness temps
         tb = QPlainTextEdit("Brightness Temps")
-        tb.setFixedHeight(300)
+        tb.setFixedHeight(285)
         self.layout.addWidget(tb, 1, 0, 1, 2)
 
         # Create our scan and temperature plot and add it to the layout
         self.scantemp = ScanTemp()
         st = self.scantemp.getWindow()
-        st.setFixedHeight(300)
+        st.setFixedHeight(285)
         st.setFixedWidth(300)
         self.layout.addWidget(st, 1, 2, 1, 3)
 
@@ -167,7 +167,7 @@ class MTPviewer(QMainWindow):
         # Create a File data display window
         self.filedata = QPlainTextEdit()
         self.filedata.setReadOnly(True)
-        self.filedata.setFixedHeight(140)
+        self.filedata.setFixedHeight(155)
         self.layout.addWidget(self.filedata, 3, 0, 5, 9)
         self.filedata.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.filedata.appendPlainText("MTP data block display")
@@ -257,6 +257,16 @@ class MTPviewer(QMainWindow):
         self.filedata.setPlainText("MTP data block display")
         self.client.reader.createAdata()  # Create the A data string
         self.filedata.appendPlainText(self.client.reader.getAline())
+        self.client.reader.createBdata()  # Create the B data string
+        self.filedata.appendPlainText(self.client.reader.getBline())
+        self.client.reader.createM01data()  # Create the M01 data string
+        self.filedata.appendPlainText(self.client.reader.getM01line())
+        self.client.reader.createM02data()  # Create the M02 data string
+        self.filedata.appendPlainText(self.client.reader.getM02line())
+        self.client.reader.createPtdata()  # Create the Pt data string
+        self.filedata.appendPlainText(self.client.reader.getPtline())
+        self.client.reader.createEdata()  # Create the E data string
+        self.filedata.appendPlainText(self.client.reader.getEline())
 
     def writeIWG(self):
         """

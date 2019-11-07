@@ -132,6 +132,36 @@ class readMTP:
                 self.rawscan['Aline']['data']
         return(Aline)
 
+    def getBline(self):
+        """ Return the B line to the caller """
+        # Create the Bline
+        Bline = "B " + self.rawscan['Bline']['data']
+        return(Bline)
+
+    def getM01line(self):
+        """ Return the M01 line to the caller """
+        # Create the M01line
+        M01line = "M01: " + self.rawscan['M01line']['data']
+        return(M01line)
+
+    def getM02line(self):
+        """ Return the M02 line to the caller """
+        # Create the M02line
+        M02line = "M02: " + self.rawscan['M02line']['data']
+        return(M02line)
+
+    def getPtline(self):
+        """ Return the Pt line to the caller """
+        # Create the Ptline
+        Ptline = "Pt: " + self.rawscan['Ptline']['data']
+        return(Ptline)
+
+    def getEline(self):
+        """ Return the E line to the caller """
+        # Create the Eline
+        Eline = "E " + self.rawscan['Eline']['data']
+        return(Eline)
+
     def getAsciiPacket(self):
         """
         Combine the separate lines from a raw scan into an Ascii packet
@@ -192,6 +222,60 @@ class readMTP:
 
         # Save the generated a line to the dictionary
         self.rawscan['Aline']['data'] = Adata
+
+    def createBdata(self):
+        """
+        Create a B data line from the values in the dictionary and store
+        it to the dictionary
+        """
+        separator = ' '
+        self.rawscan['Bline']['data'] = \
+            separator.join(self.rawscan['Bline']['values']['SCNT']['val'])
+
+    def createM01data(self):
+        """
+        Create a M01 data line from the values in the dictionary and store
+        it to the dictionary
+        """
+        packet = []
+        for key in self.rawscan['M01line']['values']:
+            packet.append(self.rawscan['M01line']['values'][key]['val'])
+        separator = ' '
+        M01data = separator.join(packet)
+        self.rawscan['M01line']['data'] = M01data
+
+    def createM02data(self):
+        """
+        Create a M02 data line from the values in the dictionary and store
+        it to the dictionary
+        """
+        packet = []
+        for key in self.rawscan['M02line']['values']:
+            packet.append(self.rawscan['M02line']['values'][key]['val'])
+        separator = ' '
+        M02data = separator.join(packet)
+        self.rawscan['M02line']['data'] = M02data
+
+    def createPtdata(self):
+        """
+        Create a Pt data line from the values in the dictionary and store
+        it to the dictionary
+        """
+        packet = []
+        for key in self.rawscan['Ptline']['values']:
+            packet.append(self.rawscan['Ptline']['values'][key]['val'])
+        separator = ' '
+        Ptdata = separator.join(packet)
+        self.rawscan['Ptline']['data'] = Ptdata
+
+    def createEdata(self):
+        """
+        Create a E data line from the values in the dictionary and store
+        it to the dictionary
+        """
+        separator = ' '
+        self.rawscan['Eline']['data'] = \
+            separator.join(self.rawscan['Eline']['values']['TCNT']['val'])
 
     def writeFlightData(self, UDPpacket):
         """ Save a UDP packet to the flightData array """
