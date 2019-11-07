@@ -124,6 +124,10 @@ class readMTP:
                     # Exit matching loop
                     return(True)
 
+    def getDate(self):
+        """ Return the date of the current A line record """
+        return(self.rawscan['Aline']['values']['DATE']['val'])
+
     def getAline(self):
         """ Return the A line to the caller """
         # Create the Aline
