@@ -138,21 +138,19 @@ class readMTP:
         (suitable for UDP-ing around the plane). Stores the Ascii packet in the
         dictionary. Also, returns the Ascii packet to the caller.
         """
-        recNum = len(self.flightData)-1
         packet = []
         packet.append("MTP")
-        packet.append(self.flightData[recNum]['Aline']['date'])  # Date & Time
-        packet.append(self.flightData[recNum]['Aline']['data'])  # A line rest
-        packet.append(self.flightData[recNum]['Bline']['data'])
-        packet.append(self.flightData[recNum]['M01line']['data'])
-        packet.append(self.flightData[recNum]['M02line']['data'])
-        packet.append(self.flightData[recNum]['Ptline']['data'])
-        packet.append(self.flightData[recNum]['Eline']['data'])
+        packet.append(self.rawscan['Aline']['date'])  # Date & Time
+        packet.append(self.rawscan['Aline']['data'])  # A line rest
+        packet.append(self.rawscan['Bline']['data'])
+        packet.append(self.rawscan['M01line']['data'])
+        packet.append(self.rawscan['M02line']['data'])
+        packet.append(self.rawscan['Ptline']['data'])
+        packet.append(self.rawscan['Eline']['data'])
 
         UDPpacket = self.joinPacket(packet)
 
         # Store the new packet in our dictionary.
-        # self.flightData[recNum]['asciiPacket'] = UDPpacket
         self.writeFlightData(UDPpacket)
 
         # Return the newly created packet
@@ -164,7 +162,7 @@ class readMTP:
         # string on spaces and rejoin with commas
         separator = ' '
         line = separator.join(packet)  # Join the components into a string
-        values = line.split(separator)         # Split string on spaces
+        values = line.split()          # Split string on one or more spaces
         separator = ','
         UDPpacket = separator.join(values)
 
@@ -197,8 +195,7 @@ class readMTP:
 
     def writeFlightData(self, UDPpacket):
         """ Save a UDP packet to the flightData array """
-        recNum = len(self.flightData)-1
-        self.flightData[recNum]['asciiPacket'] = UDPpacket
+        self.rawscan['asciiPacket'] = UDPpacket
 
     def parseAsciiPacket(self, UDPpacket):
         """
@@ -216,7 +213,7 @@ class readMTP:
             self.rawscan['Aline']['values']['DATE']['val'] = m.group(1)
             # Save HHMMSS to variable TIME
             self.rawscan['Aline']['values']['timestr']['val'] = \
-                m.group(2)+m.group(3)+m.group(4)
+                m.group(2)+":"+m.group(3)+":"+m.group(4)
             # Save seconds since midnight to variable TIME
             self.rawscan['Aline']['values']['TIME']['val'] = \
                 int(m.group(2))*3600+int(m.group(3))*60+int(m.group(4))
