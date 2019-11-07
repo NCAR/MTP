@@ -1,7 +1,9 @@
 ###############################################################################
-# readMTP-specific unit tests
+# readMTP-specific unit tests. Note that some tests have been split off into
+# other test files for clarity
 #
 # To run these tests:
+#     cd src/
 #     python3 -m unittest discover -s ../tests -v
 #
 # To increase debugging info (i.e. if trying to figure out test_quit issues,
@@ -15,106 +17,52 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
-import os
 import unittest
 from util.readmtp import readMTP
-from util.MTP import MTPrecord
-from lib.rootdir import getrootdir
 
 
 class TESTreadmtp(unittest.TestCase):
+
     def setUp(self):
-        # Location of default ascii_parms file
-        self.ascii_parms = os.path.join(getrootdir(), 'config/ascii_parms')
+        self.udp = "MTP,20140606T062418,+06.49,00.19,-00.79,00.87,+04.00," + \
+            "0.06,263.32,00.48,-43.290,+0.005,+172.296,+0.051,+074684," + \
+            "+073904,018089,019327,018696,018110,019321,018704,018113," + \
+            "019326,018702,018130,019356,018716,018159,019377,018744," + \
+            "018174,019392,018756,018178,019394,018758,018197,019397," + \
+            "018757,018211,019404,018763,018228,019419,018774,2928," + \
+            "2228,2898,3082,1930,2923,2431,2944,2002,1345,2069,2239," + \
+            "2166,1506,4095,1533,2175,13808,13811,10259,13368,13416," + \
+            "13310,14460,020890,022318,022138,019200,020582,020097"
+        self.Aline = "A 20140606 06:24:18 +06.49 00.19 -00.79 00.87 +04.00" + \
+            " 0.06 263.32 00.48 -43.290 +0.005 +172.296 +0.051 +074684 " + \
+            "+073904"
+        self.Bline = "B 018089 019327 018696 018110 019321 018704 018113 " + \
+            "019326 018702 018130 019356 018716 018159 019377 018744 " + \
+            "018174 019392 018756 018178 019394 018758 018197 019397 " + \
+            "018757 018211 019404 018763 018228 019419 018774"
+        self.M01line = "M01: 2928 2228 2898 3082 1930 2923 2431 2944"
+        self.M02line = "M02: 2002 1345 2069 2239 2166 1506 4095 1533"
+        self.Ptline = "Pt: 2175 13808 13811 10259 13368 13416 13310 14460"
+        self.Eline = "E 020890 022318 022138 019200 020582 020097"
 
-    def test_udp(self):
-        """ Test that when readUDP, lines are saved to dictionary correctly """
+    def test_getAsciiPacket(self):
+        """
+        Test the AsciiPacket (MTP packet to be UDPd around the plane) is formed
+        correctly
+        """
+        mtp = readMTP()
+        mtp.parseLine(self.Aline)
+        mtp.parseLine(self.Bline)
+        mtp.parseLine(self.M01line)
+        mtp.parseLine(self.M02line)
+        mtp.parseLine(self.Ptline)
+        mtp.parseLine(self.Eline)
+        UDPpacket = mtp.getAsciiPacket()
+        self.assertEqual(self.udp, UDPpacket)
 
-    def test_IWG(self):
-        """ Test the IWG line parses as expected """
-        # Test that code finds ascii_parms file or exits with useful error
-        mtp = readMTP(self.ascii_parms)
-        self.rawscan = MTPrecord
-        status = mtp.readAsciiParms("nonexistentFile", self.rawscan)
-        self.assertFalse(status)
-
-        # Test that return correct IWG line
-        iwg = "IWG1,20140606T062250,-43.3061,172.455,3281.97,,10508.5,," + \
-              "149.998,164.027,,0.502512,3.11066,283.283,281.732,-1.55388," + \
-              "3.46827,0.0652588,-0.258496,2.48881,-5.31801,-5.92311," + \
-              "7.77836,683.176,127.248,1010.48,14.6122,297.157,0.303804," + \
-              "104.277,,-72.1708,"
-        mtp.parseLine(iwg)
-        iwg2 = mtp.getIwgPacket()
-        self.assertEqual(iwg, iwg2)
-
-        # Test that parse correctly (this tests assumes the default ascii_parms
-        # file in config/ascii_parms
-        mtp.parseIwgPacket(iwg)
-        self.assertEqual(self.rawscan['IWG1line']['date'], '20140606T062250')
-        self.assertEqual(self.rawscan['IWG1line']['values']['DATE']['val'],
-                         '20140606')
-        self.assertEqual(self.rawscan['IWG1line']['values']['TIME']['val'],
-                         6 * 3600 + 22 * 60 + 50)
-        self.assertEqual(self.rawscan['IWG1line']['values']['GGLAT']['val'],
-                         '-43.3061')
-        self.assertEqual(self.rawscan['IWG1line']['values']['GGLON']['val'],
-                         '172.455')
-        self.assertEqual(self.rawscan['IWG1line']['values']['GGALT']['val'],
-                         '3281.97')
-        self.assertEqual(self.rawscan['IWG1line']['values']['NAVAIL']['val'],
-                         '')
-        self.assertEqual(self.rawscan['IWG1line']['values']['PALTF']['val'],
-                         '10508.5')
-        self.assertEqual(self.rawscan['IWG1line']['values']['HGM232']['val'],
-                         '')
-        self.assertEqual(self.rawscan['IWG1line']['values']['GSF']['val'],
-                         '149.998')
-        self.assertEqual(self.rawscan['IWG1line']['values']['TASX']['val'],
-                         '164.027')
-        self.assertEqual(self.rawscan['IWG1line']['values']['IAS']['val'],
-                         '')
-        self.assertEqual(self.rawscan['IWG1line']['values']['MACH_A']['val'],
-                         '0.502512')
-        self.assertEqual(self.rawscan['IWG1line']['values']['VSPD']['val'],
-                         '3.11066')
-        self.assertEqual(self.rawscan['IWG1line']['values']['THDG']['val'],
-                         '283.283')
-        self.assertEqual(self.rawscan['IWG1line']['values']['TKAT']['val'],
-                         '281.732')
-        self.assertEqual(self.rawscan['IWG1line']['values']['DRFTA']['val'],
-                         '-1.55388')
-        self.assertEqual(self.rawscan['IWG1line']['values']['PITCH']['val'],
-                         '3.46827')
-        self.assertEqual(self.rawscan['IWG1line']['values']['ROLL']['val'],
-                         '0.0652588')
-        self.assertEqual(self.rawscan['IWG1line']['values']['SSLIP']['val'],
-                         '-0.258496')
-        self.assertEqual(self.rawscan['IWG1line']['values']['ATTACK']['val'],
-                         '2.48881')
-        self.assertEqual(self.rawscan['IWG1line']['values']['ATX']['val'],
-                         '-5.31801')
-        self.assertEqual(self.rawscan['IWG1line']['values']['DPXC']['val'],
-                         '-5.92311')
-        self.assertEqual(self.rawscan['IWG1line']['values']['RTX']['val'],
-                         '7.77836')
-        self.assertEqual(self.rawscan['IWG1line']['values']['PSXC']['val'],
-                         '683.176')
-        self.assertEqual(self.rawscan['IWG1line']['values']['QCXC']['val'],
-                         '127.248')
-        self.assertEqual(self.rawscan['IWG1line']['values']['PCAB']['val'],
-                         '1010.48')
-        self.assertEqual(self.rawscan['IWG1line']['values']['WSC']['val'],
-                         '14.6122')
-        self.assertEqual(self.rawscan['IWG1line']['values']['WDC']['val'],
-                         '297.157')
-        self.assertEqual(self.rawscan['IWG1line']['values']['WIC']['val'],
-                         '0.303804')
-        self.assertEqual(self.rawscan['IWG1line']['values']['SOLZE']['val'],
-                         '104.277')
-        self.assertEqual(self.rawscan['IWG1line']['values']['Solar_El_AC']
-                         ['val'], '')
-        self.assertEqual(self.rawscan['IWG1line']['values']['SOLAZ']['val'],
-                         '-72.1708')
-        self.assertEqual(self.rawscan['IWG1line']['values']['Sun_Az_AC']
-                         ['val'], '')
+    def test_createAline(self):
+        """ Test that Aline is rebuilt correctly """
+        mtp = readMTP()
+        mtp.parseAsciiPacket(self.udp)
+        mtp.createAdata()
+        self.assertEqual(mtp.getAline(), self.Aline)
