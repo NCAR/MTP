@@ -8,7 +8,7 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
 from PyQt5.QtWidgets import QMainWindow, QGridLayout, QWidget, \
-        QPlainTextEdit, QFrame, QAction, QLabel
+        QPlainTextEdit, QFrame, QAction, QLabel, QPushButton
 from PyQt5.QtCore import QSocketNotifier
 from PyQt5.QtGui import QFontMetrics, QFont
 
@@ -165,13 +165,13 @@ class MTPviewer(QMainWindow):
 
         # Create a box to hold the list of brightness temps
         tb = QPlainTextEdit("Brightness Temps")
-        tb.setFixedHeight(285)
+        tb.setFixedHeight(265)
         self.layout.addWidget(tb, 1, 0, 1, 2)
 
         # Create our scan and temperature plot and add it to the layout
         self.scantemp = ScanTemp()
         st = self.scantemp.getWindow()
-        st.setFixedHeight(285)
+        st.setFixedHeight(265)
         st.setFixedWidth(300)
         self.layout.addWidget(st, 1, 2, 1, 3)
 
@@ -181,15 +181,47 @@ class MTPviewer(QMainWindow):
         # self.layout.addLayout(self.timeseries.getWindow(), 1, 5, 1, 4)
 
         # Create a box to hold selected RCFs and controls
-        tb = QPlainTextEdit("Control panel")
-        tb.setFixedHeight(50)
-        self.layout.addWidget(tb, 2, 0, 1, 9)
+        self.layout.addWidget(QLabel("IWG port"), 2, 0, 1, 1)
+        iwgport = QPlainTextEdit("Port#")
+        iwgport.setFixedHeight(25)
+        self.layout.addWidget(iwgport, 2, 1, 1, 1)
+
+        self.layout.addWidget(QLabel("UDP read port"), 3, 0, 1, 1)
+        iwgport = QPlainTextEdit("Port#")
+        iwgport.setFixedHeight(25)
+        self.layout.addWidget(iwgport, 3, 1, 1, 1)
+
+        back = QPushButton("BACK")
+        back.setFixedHeight(25)
+        back.setFixedWidth(75)
+        self.layout.addWidget(back, 2, 2, 1, 1)
+
+        self.layout.addWidget(QLabel("<- Nav ->"), 2, 3, 1, 1)
+
+        fwd = QPushButton("FWD")
+        fwd.setFixedHeight(25)
+        fwd.setFixedWidth(75)
+        self.layout.addWidget(fwd, 2, 4, 1, 1)
+
+        self.layout.addWidget(QLabel("RCF1"), 2, 5, 1, 1)
+        RCF1 = QPlainTextEdit("RCF1#")
+        RCF1.setFixedHeight(25)
+        self.layout.addWidget(RCF1, 2, 6, 1, 1)
+
+        self.layout.addWidget(QLabel("RCF2"), 3, 5, 1, 1)
+        RCF1 = QPlainTextEdit("RCF2#")
+        RCF1.setFixedHeight(25)
+        self.layout.addWidget(RCF1, 3, 6, 1, 1)
+
+        bad = QPushButton("Mark Bad Scan")
+        bad.setFixedHeight(25)
+        self.layout.addWidget(bad, 2, 7, 1, 1)
 
         # Create a File data display window
         self.filedata = QPlainTextEdit()
         self.filedata.setReadOnly(True)
         self.filedata.setFixedHeight(155)
-        self.layout.addWidget(self.filedata, 3, 0, 5, 9)
+        self.layout.addWidget(self.filedata, 4, 0, 4, 9)
         self.filedata.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.filedata.appendPlainText("MTP data block display")
 
