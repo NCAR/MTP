@@ -4,7 +4,8 @@
 # Takes an Ascii Packet received from the UDP feed and tests that lines are
 # saved to the MTP dictionary correctly
 #
-# To run these tests: #     cd src/
+# To run these tests:
+#     cd src/
 #     python3 -m unittest discover -s ../tests -v
 #
 # To increase debugging info (i.e. if trying to figure out test_quit issues,
