@@ -8,7 +8,7 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
 from PyQt5.QtWidgets import QMainWindow, QGridLayout, QWidget, \
-        QPlainTextEdit, QFrame, QAction, QLabel, QPushButton
+        QPlainTextEdit, QFrame, QAction, QLabel, QPushButton, QGroupBox
 from PyQt5.QtCore import QSocketNotifier
 from PyQt5.QtGui import QFontMetrics, QFont
 
@@ -84,6 +84,13 @@ class MTPviewer(QMainWindow):
         textWidth = textSize.width() + 60       # constant may need tweaking
         textHeight = textSize.height()
         windowID.setMinimumSize(textWidth, textHeight)  # Finally, set size
+
+    def createTBcell(self, grid, chan, ang):
+        cell = QPlainTextEdit("Ang " + str(ang+1))
+        cell.setFixedHeight(25)
+        if (ang+1 == 6):
+            cell.setStyleSheet("QPlainTextEdit {background-color: lightgreen}")
+        grid.addWidget(cell, ang+2, chan-1, 1, 1)
 
     def initView(self):
         """ Initialize the central widget """
@@ -163,16 +170,40 @@ class MTPviewer(QMainWindow):
         self.layout.addWidget(metadata, 0, 8, 1, 1)
 
         # Create a box to hold the list of brightness temps
-        tb = QPlainTextEdit("Brightness Temps")
-        tb.setFixedHeight(285)
-        self.layout.addWidget(tb, 1, 0, 1, 2)
+        box = QGroupBox()
+        box.setFixedHeight(275)
+        self.layout.addWidget(box, 1, 0, 1, 3)
+        grid = QGridLayout()
+
+        ch1 = QLabel("Channel 1")
+        ch1.setStyleSheet("QLabel { color: red }")
+        ch1.setFixedHeight(25)
+        grid.addWidget(ch1, 1, 0)
+        for ang in range(10):
+            self.createTBcell(grid, 1, ang)
+
+        ch2 = QLabel("Channel 2")
+        ch2.setStyleSheet("QLabel { color: grey }")
+        ch2.setFixedHeight(25)
+        grid.addWidget(ch2, 1, 1)
+        for ang in range(10):
+            self.createTBcell(grid, 2, ang)
+
+        ch3 = QLabel("Channel 3")
+        ch3.setStyleSheet("QLabel { color: blue }")
+        ch3.setFixedHeight(25)
+        grid.addWidget(ch3, 1, 2)
+        for ang in range(10):
+            self.createTBcell(grid, 3, ang)
+
+        box.setLayout(grid)
 
         # Create our scan and temperature plot and add it to the layout
         self.scantemp = ScanTemp()
         st = self.scantemp.getWindow()
-        st.setFixedHeight(285)
+        st.setFixedHeight(275)
         st.setFixedWidth(300)
-        self.layout.addWidget(st, 1, 2, 1, 3)
+        self.layout.addWidget(st, 1, 3, 1, 3)
 
         # Create a window to hold our timeseries plot and parameter selection
         # dropdown menu
