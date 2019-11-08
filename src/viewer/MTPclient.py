@@ -67,6 +67,12 @@ class MTPclient():
         self.yvals = [numpy.nan]*self.plotWidth
         return(self.xvals, self.yvals)
 
+    def getIWGport(self):
+        return(self.iwg1_port)
+
+    def getUDPport(self):
+        return(self.udp_read_port)
+
     def calcPt(self):
         """
         Calculate resistance and temperature

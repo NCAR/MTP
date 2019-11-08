@@ -140,11 +140,13 @@ class MTPviewer(QMainWindow):
         self.layout.addWidget(QLabel("Project"), 0, 0, 1, 1)
         metadata = QPlainTextEdit("Project name")
         metadata.setFixedHeight(25)
+        metadata.setReadOnly(True)
         self.layout.addWidget(metadata, 0, 1, 1, 2)
 
         self.layout.addWidget(QLabel("FltNo"), 0, 3, 1, 1)
         metadata = QPlainTextEdit("Fltno")
         metadata.setFixedHeight(25)
+        metadata.setReadOnly(True)
         self.layout.addWidget(metadata, 0, 4, 1, 1)
 
         self.layout.addWidget(QLabel("Date"), 0, 5, 1, 1)
@@ -155,23 +157,20 @@ class MTPviewer(QMainWindow):
 
         metadata = QLabel("Connected")
         self.layout.addWidget(metadata, 0, 7, 1, 1)
-        #onColor = QColor(0, 250, 0)
-        #offColor = QColor(220, 220, 220)
         metadata = QLabel("(TBD)")
         metadata.setStyleSheet("QLabel { color: green }")
         metadata.setFixedHeight(25)
         self.layout.addWidget(metadata, 0, 8, 1, 1)
-        # Connected (red/green)
 
         # Create a box to hold the list of brightness temps
         tb = QPlainTextEdit("Brightness Temps")
-        tb.setFixedHeight(265)
+        tb.setFixedHeight(285)
         self.layout.addWidget(tb, 1, 0, 1, 2)
 
         # Create our scan and temperature plot and add it to the layout
         self.scantemp = ScanTemp()
         st = self.scantemp.getWindow()
-        st.setFixedHeight(265)
+        st.setFixedHeight(285)
         st.setFixedWidth(300)
         self.layout.addWidget(st, 1, 2, 1, 3)
 
@@ -182,14 +181,16 @@ class MTPviewer(QMainWindow):
 
         # Create a box to hold selected RCFs and controls
         self.layout.addWidget(QLabel("IWG port"), 2, 0, 1, 1)
-        iwgport = QPlainTextEdit("Port#")
+        iwgport = QPlainTextEdit(str(self.client.getIWGport()))
         iwgport.setFixedHeight(25)
+        iwgport.setReadOnly(True)
         self.layout.addWidget(iwgport, 2, 1, 1, 1)
 
         self.layout.addWidget(QLabel("UDP read port"), 3, 0, 1, 1)
-        iwgport = QPlainTextEdit("Port#")
-        iwgport.setFixedHeight(25)
-        self.layout.addWidget(iwgport, 3, 1, 1, 1)
+        udpport = QPlainTextEdit(str(self.client.getUDPport()))
+        udpport.setFixedHeight(25)
+        udpport.setReadOnly(True)
+        self.layout.addWidget(udpport, 3, 1, 1, 1)
 
         back = QPushButton("BACK")
         back.setFixedHeight(25)
@@ -206,12 +207,14 @@ class MTPviewer(QMainWindow):
         self.layout.addWidget(QLabel("RCF1"), 2, 5, 1, 1)
         RCF1 = QPlainTextEdit("RCF1#")
         RCF1.setFixedHeight(25)
+        RCF1.setReadOnly(True)
         self.layout.addWidget(RCF1, 2, 6, 1, 1)
 
         self.layout.addWidget(QLabel("RCF2"), 3, 5, 1, 1)
-        RCF1 = QPlainTextEdit("RCF2#")
-        RCF1.setFixedHeight(25)
-        self.layout.addWidget(RCF1, 3, 6, 1, 1)
+        RCF2 = QPlainTextEdit("RCF2#")
+        RCF2.setFixedHeight(25)
+        RCF2.setReadOnly(True)
+        self.layout.addWidget(RCF2, 3, 6, 1, 1)
 
         bad = QPushButton("Mark Bad Scan")
         bad.setFixedHeight(25)
@@ -220,7 +223,7 @@ class MTPviewer(QMainWindow):
         # Create a File data display window
         self.filedata = QPlainTextEdit()
         self.filedata.setReadOnly(True)
-        self.filedata.setFixedHeight(155)
+        self.filedata.setFixedHeight(140)
         self.layout.addWidget(self.filedata, 4, 0, 4, 9)
         self.filedata.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.filedata.appendPlainText("MTP data block display")
@@ -314,7 +317,7 @@ class MTPviewer(QMainWindow):
         packet so have to regenerate the data strings before can create the
         data lines.
         """
-        self.filedata.setPlainText("MTP data block display")
+        self.filedata.appendPlainText("")  # Space between records
         self.client.reader.createAdata()  # Create the A data string
         self.filedata.appendPlainText(self.client.reader.getAline())
         self.client.reader.createBdata()  # Create the B data string
