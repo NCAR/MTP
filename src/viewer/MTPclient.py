@@ -105,6 +105,12 @@ class MTPclient():
         vals = self.reader.getVar('Bline', 'SCNT')
         return (vals)
 
+    def getTB(self):
+        """
+        Return the calculated brightness temperatures from the Bline
+        """
+        return(self.reader.getCalcVal('Bline', 'SCNT', 'tb'))
+
     def calcTB(self):
         """
         Calculate the Brightness Temperature that corresponds to the scan
