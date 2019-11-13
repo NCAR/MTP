@@ -397,7 +397,8 @@ class readMTP:
         # Only Pt lines have a calculated resistance.
         # Only Pt lines have a calculated temperature
         # Only M01 lines have a calculated voltage
-        if ((calctype == 'resistance' and linetype == 'Ptline') or
+        if ((calctype == 'tb' and linetype == 'Bline') or
+           (calctype == 'resistance' and linetype == 'Ptline') or
            (calctype == 'temperature' and linetype == 'Ptline') or
            (calctype == 'temperature' and linetype == 'M02line') or
            (calctype == 'volts' and linetype == 'M01line')):
