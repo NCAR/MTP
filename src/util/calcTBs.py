@@ -8,6 +8,7 @@
 ###############################################################################
 import numpy
 
+
 class BrightnessTemperature():
 
     def __init__(self, reader):
@@ -22,7 +23,7 @@ class BrightnessTemperature():
         # From DEEPWAVE RF01 post-processing (so can compare with nimbus and
         # VB6 results to confirm these calcs are OK)
         self.GOF = 40.6
-        self.GEC = [[19.87, 0.1], [23.1, 0.1],[26.05, 0.1]]
+        self.GEC = [[19.87, 0.1], [23.1, 0.1], [26.05, 0.1]]
 
         # From CSET
         # self.GOF = 42
@@ -45,20 +46,21 @@ class BrightnessTemperature():
         # MTP Scan Counts[Angle, Channel]
         self.scnt = reader.rawscan['Bline']['values']['SCNT']['val']
 
-
 #   def calcTB(self):
 #       """
 #       Calculation from real-time code. Looks to me like this just calculates
 #       a running average of brightness temperatures in the forward direction.
+#       THIS IS PSEUDO-CODE. HOLDING ON TO IT FOR NOW SO I CAN COMPARE TO OTHER
+#       CALCS I STILL NEED TO CODE.
 #       """
 #       # Tdefl = Window Temperature minus average of target center and edge
 #       # temperatures
-#       Tdefl = TPt3 - (TPt1 + TPt2) / 2 
+#       Tdefl = TPt3 - (TPt1 + TPt2) / 2
 
 #       for i in range(0, 3):  # For each channel
 #           # count deflection is the target counts with the Noise diode off
 #           # minus the scan count for this angle in the forward direction
-#           cdeflect = ['Eline']['values']['TCNT'][i+3] - 
+#           cdeflect = ['Eline']['values']['TCNT'][i+3] -
 #               ['Bline']['values']['SCNT'][i*10 + 5]
 
 #           # This average is over the length of the flight
@@ -90,12 +92,13 @@ class BrightnessTemperature():
         for i in range(0, self.channels):
             self.Geqn[i] = self.GEC[i][0] + \
                            (self.Tifa - self.GOF) * self.GEC[i][1]
-            if ((self.Geqn[i] < self.GeqnMin) or (self.Geqn[i] > self.GeqnMax)):
+            # Mask out gains that are too big or too small
+            if (self.Geqn[i] < self.GeqnMin) or (self.Geqn[i] > self.GeqnMax):
                 self.Geqn[i] = numpy.nan
 
             CHor = int(self.scnt[i + self.LocHor*3])
 
             for j in range(0, 10):
-                C = int(self.scnt[i + j*3]) # MTP Scan Counts[Angle, Channel]
+                C = int(self.scnt[i + j*3])  # MTP Scan Counts[Angle, Channel]
                 tb = float(self.OAT) + (C - CHor) / self.Geqn[i]
                 reader.rawscan['Bline']['values']['SCNT']['tb'][i + j*3] = tb
