@@ -87,7 +87,8 @@ MTPrecord = {
         'found': False,
         'data': [],
         'values': {'SCNT': {  # MTP Scan Counts[Angle,Channel]
-                  'val': [numpy.nan]*30}
+                  'val': [numpy.nan]*30,
+                  'tb': [numpy.nan]*30}  # Calculated Brightness Temperatures
                  },
     },
     'M01line': {  # MTP Engineering Multiplxr
