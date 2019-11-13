@@ -109,9 +109,21 @@ class MTPclient():
         """
         Calculate the Brightness Temperature that corresponds to the scan
         counts in the B line, and save to the MTP dictionary.
+        Requires TMIXCNTP temperature (which was called Tifa in the VB code),
+        SAAT (called OAT - outside air temperature in the VB6 code) , and the
+        MTP Scan Counts[Angle, Channel] (SCNT) array from the Bline.
         """
-        tb = BrightnessTemperature(self.reader)
-        tb.GainCalculation(self.reader)
+        rawscan = self.reader.getRawscan()
+        Tifa = rawscan['Ptline']['values']['TMIXCNTP']['temperature']
+        OAT = rawscan['Aline']['values']['SAAT']['val']
+        scnt = rawscan['Bline']['values']['SCNT']['val']
+
+        tb = BrightnessTemperature()
+
+        # Calculate the brightness temperatures for the latest scan counts
+        # and save them back to the MTP data dictionary.
+        rawscan['Bline']['values']['SCNT']['tb'] = \
+            tb.TBcalculationRT(Tifa, OAT, scnt)
 
     def getXY(self):
         """

@@ -11,14 +11,20 @@ import numpy
 
 class BrightnessTemperature():
 
-    def __init__(self, reader):
+    def __init__(self):
         """
         The constants GOF and GEC don't change in real-time mode. To initialize
         a new project, the user copies a flight config from a previous project.
         Until that is implemented, hardcode the constants here.
         """
         self.channels = 3  # Number of channels
+        self.angles = 10   # Number of angles
+        self.LocHor = 5  # index starts at zero
+        self.GeqnMin = 10
+        self.GeqnMax = 40
+
         self.Geqn = [None] * self.channels
+        self.tb = [None] * self.channels * self.angles
 
         # From DEEPWAVE RF01 post-processing (so can compare with nimbus and
         # VB6 results to confirm these calcs are OK)
@@ -34,17 +40,6 @@ class BrightnessTemperature():
         # print(self.GEC[0][1])  # GEC[12 = -0.2  # Channel 1
         # print(self.GEC[1][1])  # GEC[22 = -0.2  # Channel 2
         # print(self.GEC[2][1])  # GEC[32 = -0.3  # Channel 3
-
-        self.LocHor = 5  # index starts at zero
-        self.GeqnMin = 10
-        self.GeqnMax = 40
-
-        self.Tifa = \
-            reader.rawscan['Ptline']['values']['TMIXCNTP']['temperature']
-        self.OAT = \
-            reader.rawscan['Aline']['values']['SAAT']['val']
-        # MTP Scan Counts[Angle, Channel]
-        self.scnt = reader.rawscan['Bline']['values']['SCNT']['val']
 
 #   def calcTB(self):
 #       """
@@ -81,24 +76,28 @@ class BrightnessTemperature():
 #           # gain.
 #           Tb(i) = TBaseTarget + (cdeflect / rgain)
 
-    def GainCalculation(self, reader):
+    def TBcalculationRT(self, Tifa, OAT, scnt):
         """
+        Real-Time Brightness Temperature Calculations
+
         Calibrate the MTP scans using the gain equation constants GOF and GEC.
         When the MTP instrument completes a scan of the atmosphere the scan
         counts are converted to Brightness Temperatures using this routine.
-        This routine combines the routines TBalculation(), GainCalculation()
-        and GainGE() from the real-time MTPbin code.
+        This routine combines the routines TBcalculation(), GainCalculation()
+        and GainGE() from the real-time MTPbin code:
+        MTP-VB6/MTP_realtime/VB6/VBP/Main/MOAP/MTPbin.frm
         """
         for i in range(0, self.channels):
             self.Geqn[i] = self.GEC[i][0] + \
-                           (self.Tifa - self.GOF) * self.GEC[i][1]
+                           (Tifa - self.GOF) * self.GEC[i][1]
             # Mask out gains that are too big or too small
             if (self.Geqn[i] < self.GeqnMin) or (self.Geqn[i] > self.GeqnMax):
                 self.Geqn[i] = numpy.nan
 
-            CHor = int(self.scnt[i + self.LocHor*3])
+            CHor = int(scnt[i + self.LocHor*3])
 
             for j in range(0, 10):
-                C = int(self.scnt[i + j*3])  # MTP Scan Counts[Angle, Channel]
-                tb = float(self.OAT) + (C - CHor) / self.Geqn[i]
-                reader.rawscan['Bline']['values']['SCNT']['tb'][i + j*3] = tb
+                C = int(scnt[i + j*3])  # MTP Scan Counts[Angle, Channel]
+                self.tb[i + j*3] = float(OAT) + (C - CHor) / self.Geqn[i]
+
+        return(self.tb)
