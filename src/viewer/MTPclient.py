@@ -107,8 +107,8 @@ class MTPclient():
 
     def calcTB(self):
         """
-        Calculate the Brightness Temperature that corresponds to the scan counts
-        in the B line, and save to the MTP dictionary.
+        Calculate the Brightness Temperature that corresponds to the scan
+        counts in the B line, and save to the MTP dictionary.
         """
         tb = BrightnessTemperature(self.reader)
         tb.GainCalculation(self.reader)

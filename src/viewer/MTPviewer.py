@@ -95,9 +95,10 @@ class MTPviewer(QMainWindow):
         return(cell)
 
     def writeTB(self, cell):
+        reader = self.client.reader
         for i in range(0, 3):
             for j in range(0, 10):
-                tb = self.client.reader.rawscan['Bline']['values']['SCNT']['tb'][i + j*3]
+                tb = reader.rawscan['Bline']['values']['SCNT']['tb'][i + j*3]
                 cell[i][j].setPlainText(str(tb))
 
     def initView(self):
