@@ -14,6 +14,7 @@ from util.readiwg import readIWG
 from util.decodePt import decodePt
 from util.decodeM01 import decodeM01
 from util.decodeM02 import decodeM02
+from util.calcTBs import BrightnessTemperature
 from lib.rootdir import getrootdir
 
 
@@ -103,6 +104,14 @@ class MTPclient():
         """
         vals = self.reader.getVar('Bline', 'SCNT')
         return (vals)
+
+    def calcTB(self):
+        """
+        Calculate the Brightness Temperature that corresponds to the scan counts
+        in the B line, and save to the MTP dictionary.
+        """
+        tb = BrightnessTemperature(self.reader)
+        tb.GainCalculation(self.reader)
 
     def getXY(self):
         """
