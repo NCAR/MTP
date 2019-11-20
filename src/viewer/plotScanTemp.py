@@ -59,10 +59,10 @@ class ScanTemp():
                 # The scan counts are passed in as a string, so convert them
                 # to integers. The scan brightness temperatures come in as
                 # float so leave them.
-                if (isinstance(scnt[j*3+i], str)):
-                    scnt_inv[i*10+j] = int(scnt[j*3+i])
+                if (isinstance(scnt[j*NUM_CHANNELS+i], str)):
+                    scnt_inv[i*NUM_SCAN_ANGLES+j] = int(scnt[j*NUM_CHANNELS+i])
                 else:
-                    scnt_inv[i*10+j] = scnt[j*3+i]
+                    scnt_inv[i*NUM_SCAN_ANGLES+j] = scnt[j*NUM_CHANNELS+i]
         return(scnt_inv)
 
     def getAngles(self):
