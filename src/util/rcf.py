@@ -1,0 +1,318 @@
+###############################################################################
+# This class provides for reading in an RCF, storing and providing access to
+# its data.
+#
+# Retrieval Coefficient Files (RCFs) are currently written by the VB program
+# RCCalc which takes RAOB data and converts it into Templates that describe
+# what that RAOB profile would look like to the MTP instrument if the
+# instrument was used to measure the atmosphere described by the profile.
+#
+# Since the profile would appear differently to the MTP depending upon
+# the altitude at which the instrument was performing the measurement, the
+# RCF files have multiple flight levels containing expected brightness
+# temperatures (observables), associated rms values and the retrieval
+# coefficients that would allow one to convert from the brightness
+# temperatures to the profile temperatures.
+#
+# Translation from VB6 to CPP by Tom Baltzer 2015 - most comments from this
+# version (http://svn.eol.ucar.edu/websvn/listing.php?repname=raf&path=%2Ftrunk
+# %2Finstruments%2Fmtp%2Fsrc%2Fmtpbin%2F&#a816c0189d88386950eb4da700bf32166
+#
+# Translation from CPP to Python by Janine Aquino
+#
+# Written in Python 3
+#
+# Copyright University Corporation for Atmospheric Research 2019
+# VB6 and Algorithm Copyright MJ Mahoney, NASA Jet Propulsion Laboratory
+###############################################################################
+import os
+import struct
+from util.rcf_structs import RCF_HDR, RCF_FL
+
+
+class RetrievalCoefficientFile():
+
+    def __init__(self, Filename):
+        self._RCFHdr = RCF_HDR
+        self._RCFFileName = Filename
+
+        # Extract the RCFId from the full file path.
+        self._RCFId = os.path.splitext(os.path.basename(self._RCFFileName))[0]
+
+        self.openRCF()  # Open the RCF file
+        self.getRCF()  # Read in header
+
+        # Sanity check that header read is working
+        if not self.testFlightLevelsKm():
+            print("Major failure, exiting")
+            exit(1)
+
+        self.NUM_BRT_TEMPS = self._RCFHdr['Nlo'] * self._RCFHdr['Nel']
+        self.NUM_RETR_LVLS = self._RCFHdr['Nret']
+
+        # Read in each of the flight levels
+        self._RCFFl = []  # Array of dictionaries to hold the flight levels
+        for i in range(self._RCFHdr['NFL']):  # NFL is always 13
+            self._RCFFl.append(RCF_FL.copy())
+            self.get_FL(i)
+
+    def openRCF(self):
+        # Open the RCF file as binary
+        try:
+            self.rcf = open(self._RCFFileName, "rb")
+        except Exception:
+            print("Unable to open file " + self._RCFFileName)
+            return(False)
+
+    def getRCF(self):
+        """
+        Unpack the binary values into the RCF_HDR dictionary
+        A type of 'H' is unsigned short, 'f' is float
+        """
+        self._RCFHdr['RCformat'] = struct.unpack('H', self.rcf.read(2))[0]
+        # Tom never figured out how to decode CreationDateTime. So read bytes
+        # into struct and let them sit.
+        self._RCFHdr['CreationDateTime'] = self.rcf.read(8)
+        self._RCFHdr['RAOBfilename'] = self.rcf.read(80).decode()
+        self._RCFHdr['RCfilename'] = self.rcf.read(80).decode()
+        self._RCFHdr['RAOBcount'] = struct.unpack('H', self.rcf.read(2))[0]
+        self._RCFHdr['LR1'] = struct.unpack('f', self.rcf.read(4))[0]
+        self._RCFHdr['zLRb'] = struct.unpack('f', self.rcf.read(4))[0]
+        self._RCFHdr['LR2'] = struct.unpack('f', self.rcf.read(4))[0]
+        self._RCFHdr['RecordStep'] = struct.unpack('f', self.rcf.read(4))[0]
+        self._RCFHdr['RAOBmin'] = struct.unpack('f', self.rcf.read(4))[0]
+        self._RCFHdr['ExcessTamplitude'] = \
+            struct.unpack('f', self.rcf.read(4))[0]
+        # Number of observables
+        self._RCFHdr['Nobs'] = struct.unpack('H', self.rcf.read(2))[0]
+        # Number of retrieval levels (Nret)
+        self._RCFHdr['Nret'] = struct.unpack('H', self.rcf.read(2))[0]
+        # Array of retrieval offset levels wrt flight level
+        for i in range(self._RCFHdr['Nret']):
+            self._RCFHdr['dZ'].append(struct.unpack('f', self.rcf.read(4))[0])
+        # Number of flight levels (NFL)
+        self._RCFHdr['NFL'] = struct.unpack('H', self.rcf.read(2))[0]
+        # Array of flight levels (Km)
+        for i in range(20):
+            self._RCFHdr['Zr'].append(struct.unpack('f', self.rcf.read(4))[0])
+        # Number of LO channels
+        self._RCFHdr['Nlo'] = struct.unpack('H', self.rcf.read(2))[0]
+        # LO frequencies (GHz)
+        for i in range(self._RCFHdr['Nlo']):
+            self._RCFHdr['LO'].append(struct.unpack('f', self.rcf.read(4))[0])
+        # Scan mirror elevation angles
+        self._RCFHdr['Nel'] = struct.unpack('H', self.rcf.read(2))[0]
+        for i in range(self._RCFHdr['Nel']):
+            self._RCFHdr['El'].append(struct.unpack('f', self.rcf.read(4))[0])
+        # IF frequency offsets (GHz)
+        self._RCFHdr['Nif'] = struct.unpack('H', self.rcf.read(2))[0]
+        for i in range(48):
+            self._RCFHdr['IFoff'].append(struct.unpack('f',
+                                                       self.rcf.read(4))[0])
+        for i in range(48):
+            self._RCFHdr['IFwt'].append(struct.unpack('f',
+                                                      self.rcf.read(4))[0])
+        # Spare
+        self._RCFHdr['Spare'] = struct.unpack('f'*130, self.rcf.read(4*130))
+        self._RCFHdr['SURC'] = self.rcf.read(4).decode()
+        for i in range(3):
+            self._RCFHdr['CHnLSBloss'].append(
+                struct.unpack('f', self.rcf.read(4))[0])
+        self._RCFHdr['RAOBbias'] = struct.unpack('f', self.rcf.read(4))[0]
+        self._RCFHdr['CH1LSBloss'] = struct.unpack('f', self.rcf.read(4))[0]
+        for i in range(15*3*10):
+            self._RCFHdr['SmatrixN1'].append(
+                struct.unpack('f', self.rcf.read(4))[0])
+        for i in range(15*3*10):
+            self._RCFHdr['SmatrixN2'].append(
+                struct.unpack('f', self.rcf.read(4))[0])
+
+    def get_FL(self, lvl):
+        """
+        lvl is the index of the flight level
+
+        Because I am copying the dictionary from the previous flight level to
+        create this level, I need to clear it before appending new data.
+        """
+        self._RCFFl[lvl]['sBP'] = struct.unpack('f', self.rcf.read(4))[0]
+
+        self._RCFFl[lvl]['sOBrms'] = []
+        for i in range(self.NUM_BRT_TEMPS):
+            self._RCFFl[lvl]['sOBrms'].append(
+                struct.unpack('f', self.rcf.read(4))[0])
+
+        self._RCFFl[lvl]['sOBav'] = []
+        for i in range(self.NUM_BRT_TEMPS):
+            self._RCFFl[lvl]['sOBav'].append(
+                struct.unpack('f', self.rcf.read(4))[0])
+
+        self._RCFFl[lvl]['sBPrl'] = []
+        for i in range(self.NUM_RETR_LVLS):
+            self._RCFFl[lvl]['sBPrl'].append(
+                struct.unpack('f', self.rcf.read(4))[0])
+
+        self._RCFFl[lvl]['sRTav'] = []
+        for i in range(self.NUM_RETR_LVLS):
+            self._RCFFl[lvl]['sRTav'].append(
+                struct.unpack('f', self.rcf.read(4))[0])
+
+        self._RCFFl[lvl]['sRMSa'] = []
+        for i in range(self.NUM_RETR_LVLS):
+            self._RCFFl[lvl]['sRMSa'].append(
+                struct.unpack('f', self.rcf.read(4))[0])
+
+        self._RCFFl[lvl]['sRMSe'] = []
+        for i in range(self.NUM_RETR_LVLS):
+            self._RCFFl[lvl]['sRMSe'].append(
+                struct.unpack('f', self.rcf.read(4))[0])
+
+        self._RCFFl[lvl]['Src'] = []
+        for i in range(self.NUM_BRT_TEMPS * self.NUM_RETR_LVLS):
+            self._RCFFl[lvl]['Src'].append(
+                struct.unpack('f', self.rcf.read(4))[0])
+
+        self._RCFFl[lvl]['Spare'] = []
+        for i in range(67):
+            self._RCFFl[lvl]['Spare'].append(
+                struct.unpack('f', self.rcf.read(4))[0])
+
+        # Convert Retrieval coefficients from column major storage
+        temp = self._RCFFl[lvl]['Src'].copy()
+        for j in range(self.NUM_BRT_TEMPS):
+            for i in range(self.NUM_RETR_LVLS):
+                self._RCFFl[lvl]['Src'][i*self.NUM_BRT_TEMPS + j] = \
+                    temp[j*self.NUM_RETR_LVLS + i]
+
+    def getId(self):
+        """ Return a string containing the RCF ID """
+        return(self._RCFId)
+
+    def getFileName(self):
+        """ Return a string containing the name of the RCF file """
+        return(self._RCFFileName)
+
+    def getRCF_HDR(self):
+        """
+        When using getRCF_HDR, be advised that char arrays have no endstring!
+        """
+        return(self._RCFHdr)
+
+    def getFL_RC_Vec(self):
+        return(self._RCFFl)
+
+    def getRCAvgWt(self, PAltKm):
+        """
+        Get the weighted average Retrieval Coefficient Set
+        PAltKm  = pressure altitude in KM at which to weight the elements
+        of the set: the observables and rmms vectors as well as the retrieval
+        coefficient matrices from flight levels above and below PAltKm are
+        averaged with a weight factor based on nearness of PAltkm to the
+        pressure altitude of the flight level as described in the RCF header.
+        """
+        RcSetAvWt = RCF_FL.copy()
+        # print(RcSetAvWt)  # I want this to be empty at this point
+
+        # First check to see if PAltKm is outside the range of Flight Level
+        # PAltKms
+        #  - if so then the weighted average observable will be the average
+        #    observable associated with the flight level whose PAltKm is
+        #    closest. Assumption is that the Flight Level Retrieval Coefficient
+        #    Set vector is stored in increasing Palt (decreasing aircraft
+        #    altitude). Zr contains the most common aircraft flight levels
+
+        # If aircraft level is above highest flight level
+        if PAltKm >= self._RCFHdr['Zr'][0]:
+            for i in range(self.NUM_BRT_TEMPS):
+                RcSetAvWt['sOBav'][i] = self._RCFFl[0]['sOBav'][i]
+                RcSetAvWt['sOBrms'][i] = self._RCFFl[0]['sOBrms'][i]
+                for j in range(self.NUM_RETR_LVLS):
+                    RcSetAvWt['Src'][j][i] = self._RCFFl[0]['Src'][j][i]
+            return RcSetAvWt
+
+        # If aircraft level is below lowest flight level
+        if (PAltKm <= self._RCFHdr['Zr'][self._RCFHdr['NFL']-1]):
+            for i in range(self.NUM_BRT_TEMPS):
+                RcSetAvWt['sOBav'][i] = \
+                    self._RCFFl[self._RCFHdr['NFL']-1]['sOBav'][i]
+                RcSetAvWt['sOBrms'][i] = \
+                    self._RCFFl[self._RCFHdr['NFL']-1]['sOBrms'][i]
+                for j in range(self.NUM_RETR_LVLS):
+                    RcSetAvWt['Src'][j][i] = \
+                        self._RCFFl[self._RCFHdr['NFL']-1]['Src'][j][i]
+            return RcSetAvWt
+
+        # Find two Flight Level Sets that are above and below the PAltKm
+        # provided.  Calculate the weight for averaging and identify the RC
+        # sets.
+        BotWt = 0.0
+        i = 0
+        for it in range(self._RCFHdr['NFL']):
+            if (PAltKm <= self._RCFHdr['Zr'][i] and
+                    PAltKm >= self._RCFHdr['Zr'][i+1]):
+                BotWt = 1.0 - ((PAltKm - self._RCFHdr['Zr'][i + 1]) /
+                               (self._RCFHdr['Zr'][i] -
+                                self._RCFHdr['Zr'][i + 1]))
+                Topit = self._RCFFl[it].copy()
+                Botit = self._RCFFl[it + 1].copy()
+            i += 1
+        TopWt = 1.0 - BotWt
+
+        # Calculate the Weighted averages
+        RcSetAvWt['sBP'] = Botit['sBP'] * BotWt + Topit['sBP'] * TopWt
+        for j in range(self.NUM_RETR_LVLS):
+            RcSetAvWt['sBPrl'].append(
+                Botit['sBPrl'][j] * BotWt + Topit['sBPrl'][j] * TopWt)
+            RcSetAvWt['sRTav'].append(
+                Botit['sRTav'][j]*BotWt + Topit['sRTav'][j] * TopWt)
+            RcSetAvWt['sRMSa'].append(
+                Botit['sRMSa'][j]*BotWt + Topit['sRMSa'][j] * TopWt)
+            RcSetAvWt['sRMSe'].append(
+                Botit['sRMSe'][j]*BotWt + Topit['sRMSe'][j] * TopWt)
+
+        for i in range(self.NUM_BRT_TEMPS):
+            RcSetAvWt['sOBrms'].append(
+                Botit['sOBrms'][i] * BotWt + Topit['sOBrms'][i] * TopWt)
+            RcSetAvWt['sOBav'].append(
+                Botit['sOBav'][i] * BotWt + Topit['sOBav'][i] * TopWt)
+
+        for j in range(self.NUM_RETR_LVLS):
+            for i in range(self.NUM_BRT_TEMPS):
+                RcSetAvWt['Src'].append(
+                    Botit['Src'][j * self.NUM_BRT_TEMPS + i] * BotWt +
+                    Topit['Src'][j * self.NUM_BRT_TEMPS + i] * TopWt)
+
+        return RcSetAvWt
+
+    def testFlightLevelsKm(self):
+        """
+        Test that Flight Levels (KM) are as expected. I believe Tom added this
+        to confirm header read looks reasonable. Leave it in as a sanity check.
+
+        FlightLevels is a vector of floating point values indicating the km
+        above sea level of each flight level in the retrieval coefficient file.
+        Flight levels should be ordered in decreasing altitude.
+
+        Len is the length of the FlightLevels vector. Len should always be 13.
+
+        Returns true if levels successfully set, false if not.
+        """
+        Len = 13
+        if (Len != self._RCFHdr['NFL']):
+            print("In testFlightLevelsKm for RCFID: " + self.getId())
+            print("ERROR:Number of flight levels input:" + Len + " is not " +
+                  "equal to number in RCF:" + self._RCFHdr['NFL'])
+            return(False)
+
+        for i in range(Len):
+            if ((i+1 < Len) and
+                    (self._RCFHdr['Zr'][i] <= self._RCFHdr['Zr'][i+1])):
+                print("In testFlightLevelsKm for RCFID: " + self.getId())
+                print("ERROR: Flight Levels are not in decreasing altitude")
+                return(False)
+
+        return(True)
+
+
+if __name__ == "__main__":
+    filename = "/Users/janine/dev/projects/CSET/MTP/RCF/NRCKA068.RCF"
+    rcf = RetrievalCoefficientFile(filename)
