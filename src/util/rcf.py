@@ -56,6 +56,8 @@ class RetrievalCoefficientFile():
             self._RCFFl.append(RCF_FL.copy())
             self.get_FL(i)
 
+        self.closeRCF()
+
     def openRCF(self):
         # Open the RCF file as binary
         try:
@@ -63,6 +65,10 @@ class RetrievalCoefficientFile():
         except Exception:
             print("Unable to open file " + self._RCFFileName)
             return(False)
+
+    def closeRCF(self):
+        # Close the RCF file
+        self.rcf.close()
 
     def getRCF(self):
         """
@@ -222,23 +228,41 @@ class RetrievalCoefficientFile():
 
         # If aircraft level is above highest flight level
         if PAltKm >= self._RCFHdr['Zr'][0]:
+            RcSetAvWt['sBP'] = self._RCFFl[0]['sBP']
+            for j in range(self.NUM_RETR_LVLS):
+                RcSetAvWt['sBPrl'][j] = self._RCFFl[0]['sBPrl'][j]
+                RcSetAvWt['sRTav'][j] = self._RCFFl[0]['sRTav'][j]
+                RcSetAvWt['sRMSa'][j] = self._RCFFl[0]['sRMSa'][j]
+                RcSetAvWt['sRMSe'][j] = self._RCFFl[0]['sRMSe'][j]
             for i in range(self.NUM_BRT_TEMPS):
                 RcSetAvWt['sOBav'][i] = self._RCFFl[0]['sOBav'][i]
                 RcSetAvWt['sOBrms'][i] = self._RCFFl[0]['sOBrms'][i]
                 for j in range(self.NUM_RETR_LVLS):
-                    RcSetAvWt['Src'][j][i] = self._RCFFl[0]['Src'][j][i]
+                    RcSetAvWt['Src'][j * self.NUM_BRT_TEMPS + i] = \
+                        self._RCFFl[0]['Src'][j * self.NUM_BRT_TEMPS + i]
             return RcSetAvWt
 
         # If aircraft level is below lowest flight level
         if (PAltKm <= self._RCFHdr['Zr'][self._RCFHdr['NFL']-1]):
+            RcSetAvWt['sBP'] = self._RCFFl[self._RCFHdr['NFL']-1]['sBP']
+            for j in range(self.NUM_RETR_LVLS):
+                RcSetAvWt['sBPrl'][j] = \
+                    self._RCFFl[self._RCFHdr['NFL']-1]['sBPrl'][j]
+                RcSetAvWt['sRTav'][j] = \
+                    self._RCFFl[self._RCFHdr['NFL']-1]['sRTav'][j]
+                RcSetAvWt['sRMSa'][j] = \
+                    self._RCFFl[self._RCFHdr['NFL']-1]['sRMSa'][j]
+                RcSetAvWt['sRMSe'][j] = \
+                    self._RCFFl[self._RCFHdr['NFL']-1]['sRMSe'][j]
             for i in range(self.NUM_BRT_TEMPS):
                 RcSetAvWt['sOBav'][i] = \
                     self._RCFFl[self._RCFHdr['NFL']-1]['sOBav'][i]
                 RcSetAvWt['sOBrms'][i] = \
                     self._RCFFl[self._RCFHdr['NFL']-1]['sOBrms'][i]
                 for j in range(self.NUM_RETR_LVLS):
-                    RcSetAvWt['Src'][j][i] = \
-                        self._RCFFl[self._RCFHdr['NFL']-1]['Src'][j][i]
+                    RcSetAvWt['Src'][j * self.NUM_BRT_TEMPS + i] = \
+                        self._RCFFl[self._RCFHdr['NFL']-1]['Src'] \
+                        [j * self.NUM_BRT_TEMPS + i]
             return RcSetAvWt
 
         # Find two Flight Level Sets that are above and below the PAltKm
@@ -285,24 +309,26 @@ class RetrievalCoefficientFile():
 
     def testFlightLevelsKm(self):
         """
-        Test that Flight Levels (KM) are as expected. I believe Tom added this
-        to confirm header read looks reasonable. Leave it in as a sanity check.
+        Test that Flight Levels (KM) are as expected.
 
         FlightLevels is a vector of floating point values indicating the km
         above sea level of each flight level in the retrieval coefficient file.
         Flight levels should be ordered in decreasing altitude.
 
-        Len is the length of the FlightLevels vector. Len should always be 13.
+        Len is the length of the FlightLevels list. Len should always be 13.
 
         Returns true if levels successfully set, false if not.
         """
         Len = 13
+
+        # Test that len of the flight levels list is as expected.
         if (Len != self._RCFHdr['NFL']):
             print("In testFlightLevelsKm for RCFID: " + self.getId())
             print("ERROR:Number of flight levels input:" + Len + " is not " +
                   "equal to number in RCF:" + self._RCFHdr['NFL'])
             return(False)
 
+        # Test that the flight levels are in decreasing order
         for i in range(Len):
             if ((i+1 < Len) and
                     (self._RCFHdr['Zr'][i] <= self._RCFHdr['Zr'][i+1])):

@@ -64,17 +64,18 @@ class TESTrcf(unittest.TestCase):
         PAltKm = 15
         RcSetAvWt = self.rcf.getRCAvgWt(PAltKm)
 
-        # Add assert statements here to test PAltKm >= self._RCFHdr['Zr'][0]
-        # in getRCAvgWt
+        # Weighted average observable should be observable closest to PAltKm,
+        # so self._RCFFl[0]
+        self.assertEqual('%.2f' % RcSetAvWt['sBP'], '165.10')
 
     def testGetRCAvgWtHigh(self):
         # Test flight level below range in RCF file
         PAltKm = -1
         RcSetAvWt = self.rcf.getRCAvgWt(PAltKm)
 
-        # Add assert statements here to test PAltKm <= 
-        #                          self._RCFHdr['Zr'][self._RCFHdr['NFL']-1]
-        # in getRCAvgWt
+        # Weighted average observable should be observable closest to PAltKm,
+        # so self._RCFFl[self._RCFHdr['NFL']-]
+        self.assertEqual('%.2f' % RcSetAvWt['sBP'], '1013.24')
 
     def testGetRCAvgWt(self):
         # Set a flight level to calculate at for testing purposes.
