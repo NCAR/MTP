@@ -2,7 +2,8 @@
 # Test util/calcTBs.py
 #
 # Takes counts from the Bline, SAAT from the Aline, the temperature calculated
-# from TMIXCNTP in the Ptline, and calculates brightness temperature from the counts.
+# from TMIXCNTP in the Ptline, and calculates brightness temperature from the
+# counts.
 #
 # To run these tests:
 #     cd src/
@@ -19,7 +20,6 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
-import os
 import unittest
 from util.readmtp import readMTP
 from util.decodePt import decodePt
@@ -70,4 +70,5 @@ class TESTcalcTBs(unittest.TestCase):
               '263.8409', '263.5894', '266.0464', '264.4921', '264.0127']
         for i in range(30):
             self.assertEqual(
-                "%8.4f" % self.rawscan['Bline']['values']['SCNT']['tb'][i], tb[i])
+                "%8.4f" % self.rawscan['Bline']['values']['SCNT']['tb'][i],
+                tb[i])

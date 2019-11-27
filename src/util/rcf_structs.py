@@ -60,3 +60,11 @@ RCF_FL = {
     'Src': [],     # 33 retrieval levels, 30 observables
     'Spare': [],
     }
+
+RC_Set_4Retrieval = {
+    # Structure for returning needed information for performing a retrieval
+    'RCFFileName': "",
+    'RCFId': "",
+    'SumLnProb': 0.0,
+    'FL_RCs': RCF_FL,
+}

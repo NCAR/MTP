@@ -27,19 +27,23 @@
 ###############################################################################
 import os
 import struct
+import inspect
 from util.rcf_structs import RCF_HDR, RCF_FL
 
 
 class RetrievalCoefficientFile():
 
     def __init__(self, Filename):
+        """ Constructor """
         self._RCFHdr = RCF_HDR
         self._RCFFileName = Filename
 
         # Extract the RCFId from the full file path.
         self._RCFId = os.path.splitext(os.path.basename(self._RCFFileName))[0]
 
-        self.openRCF()  # Open the RCF file
+        if not self.openRCF():  # Open the RCF file
+            return(None)  # If can't open RCF file, proceed no further
+
         self.getRCF()  # Read in header
 
         # Sanity check that header read is working
@@ -56,19 +60,29 @@ class RetrievalCoefficientFile():
             self._RCFFl.append(RCF_FL.copy())
             self.get_FL(i)
 
+    def __del__(self):
+        """ Destructor """
         self.closeRCF()
 
     def openRCF(self):
-        # Open the RCF file as binary
+        """ Open the RCF file as binary """
         try:
             self.rcf = open(self._RCFFileName, "rb")
+            return(True)
         except Exception:
             print("Unable to open file " + self._RCFFileName)
             return(False)
 
     def closeRCF(self):
-        # Close the RCF file
-        self.rcf.close()
+        """ If RCF file is open, close it """
+        try:
+            self.rcf.close()
+        except Exception:
+            return()
+
+    def getNUM_BRT_TEMPS(self):
+        """ Return the number of brightness temperatures from this RCF file """
+        return(self.NUM_BRT_TEMPS)
 
     def getRCF(self):
         """
@@ -261,8 +275,9 @@ class RetrievalCoefficientFile():
                     self._RCFFl[self._RCFHdr['NFL']-1]['sOBrms'][i]
                 for j in range(self.NUM_RETR_LVLS):
                     RcSetAvWt['Src'][j * self.NUM_BRT_TEMPS + i] = \
-                        self._RCFFl[self._RCFHdr['NFL']-1]['Src'] \
-                        [j * self.NUM_BRT_TEMPS + i]
+                        self._RCFFl[self._RCFHdr['NFL']-1]['Src'][j * self.
+                                                                  NUM_BRT_TEMPS
+                                                                  + i]
             return RcSetAvWt
 
         # Find two Flight Level Sets that are above and below the PAltKm
@@ -307,7 +322,7 @@ class RetrievalCoefficientFile():
 
         return RcSetAvWt
 
-    def testFlightLevelsKm(self):
+    def testFlightLevelsKm(self, FlightLevels=[], Len=13):
         """
         Test that Flight Levels (KM) are as expected.
 
@@ -319,12 +334,12 @@ class RetrievalCoefficientFile():
 
         Returns true if levels successfully set, false if not.
         """
-        Len = 13
 
         # Test that len of the flight levels list is as expected.
         if (Len != self._RCFHdr['NFL']):
-            print("In testFlightLevelsKm for RCFID: " + self.getId())
-            print("ERROR:Number of flight levels input:" + Len + " is not " +
+            print("In " + inspect.stack()[0][3] + "for RCFID: " +
+                  self.getId())
+            print("ERROR: Number of flight levels input:" + Len + " is not " +
                   "equal to number in RCF:" + self._RCFHdr['NFL'])
             return(False)
 
@@ -332,9 +347,21 @@ class RetrievalCoefficientFile():
         for i in range(Len):
             if ((i+1 < Len) and
                     (self._RCFHdr['Zr'][i] <= self._RCFHdr['Zr'][i+1])):
-                print("In testFlightLevelsKm for RCFID: " + self.getId())
+                print("In " + inspect.stack()[0][3] + "for RCFID: " +
+                      self.getId())
                 print("ERROR: Flight Levels are not in decreasing altitude")
                 return(False)
+
+        # Add test for flight levels of current rcf equal to flight levels
+        # passed in to this fn. This is used by rcf_set to confirm all RCFs in
+        # a set have the same flight levels.
+        if len(FlightLevels) != 0:
+            for i in range(Len):
+                if self._RCFHdr['Zr'][i] != FlightLevels[i]:
+                    print("In " + inspect.stack()[0][3] + "for RCFID: " +
+                          self.getId())
+                    print("ERROR: Flight Levels are not as expected")
+                    return(False)
 
         return(True)
 
