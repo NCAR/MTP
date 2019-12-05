@@ -34,15 +34,15 @@ from util.rcf import RetrievalCoefficientFile
 
 class RetrievalCoefficientFileSet():
 
-    def __init__(self, Directory, filelist):
+    def __init__(self, Directory, filelist=""):
         """
         Instantiate an RCF file set
 
         Directory is directory name containing the RCF files to be
         pulled into the set.
 
-        filelist is a list of requested RCF files. Used to limit RCF files
-        available for "best match" to a subset of those available in the
+        filelist is an optional list of requested RCF files. Used to limit RCF
+        files available for "best match" to a subset of those available in the
         Directory.
         """
         self._RCFs = []  # Array of RCF files
