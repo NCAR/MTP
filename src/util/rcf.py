@@ -26,6 +26,7 @@
 # VB6 and Algorithm Copyright MJ Mahoney, NASA Jet Propulsion Laboratory
 ###############################################################################
 import os
+import copy
 import struct
 import inspect
 from util.rcf_structs import RCF_HDR, RCF_FL
@@ -57,7 +58,7 @@ class RetrievalCoefficientFile():
         # Read in each of the flight levels
         self._RCFFl = []  # Array of dictionaries to hold the flight levels
         for i in range(self._RCFHdr['NFL']):  # NFL is always 13
-            self._RCFFl.append(RCF_FL.copy())
+            self._RCFFl.append(copy.deepcopy(RCF_FL))
             self.get_FL(i)
 
     def __del__(self):
@@ -83,6 +84,10 @@ class RetrievalCoefficientFile():
     def getNUM_BRT_TEMPS(self):
         """ Return the number of brightness temperatures from this RCF file """
         return(self.NUM_BRT_TEMPS)
+
+    def getNUM_RETR_LVLS(self):
+        """ Return the number of retrieval levels from this RCF file """
+        return(self.NUM_RETR_LVLS)
 
     def getRCF(self):
         """
@@ -229,8 +234,8 @@ class RetrievalCoefficientFile():
         averaged with a weight factor based on nearness of PAltkm to the
         pressure altitude of the flight level as described in the RCF header.
         """
-        RcSetAvWt = RCF_FL.copy()
-        # print(RcSetAvWt)  # I want this to be empty at this point
+        RcSetAvWt = copy.deepcopy(RCF_FL)
+        # print(RcSetAvWt['Src'])  # I want this to be empty at this point
 
         # First check to see if PAltKm is outside the range of Flight Level
         # PAltKms
@@ -244,40 +249,40 @@ class RetrievalCoefficientFile():
         if PAltKm >= self._RCFHdr['Zr'][0]:
             RcSetAvWt['sBP'] = self._RCFFl[0]['sBP']
             for j in range(self.NUM_RETR_LVLS):
-                RcSetAvWt['sBPrl'][j] = self._RCFFl[0]['sBPrl'][j]
-                RcSetAvWt['sRTav'][j] = self._RCFFl[0]['sRTav'][j]
-                RcSetAvWt['sRMSa'][j] = self._RCFFl[0]['sRMSa'][j]
-                RcSetAvWt['sRMSe'][j] = self._RCFFl[0]['sRMSe'][j]
+                RcSetAvWt['sBPrl'].append(self._RCFFl[0]['sBPrl'][j])
+                RcSetAvWt['sRTav'].append(self._RCFFl[0]['sRTav'][j])
+                RcSetAvWt['sRMSa'].append(self._RCFFl[0]['sRMSa'][j])
+                RcSetAvWt['sRMSe'].append(self._RCFFl[0]['sRMSe'][j])
             for i in range(self.NUM_BRT_TEMPS):
-                RcSetAvWt['sOBav'][i] = self._RCFFl[0]['sOBav'][i]
-                RcSetAvWt['sOBrms'][i] = self._RCFFl[0]['sOBrms'][i]
+                RcSetAvWt['sOBav'].append(self._RCFFl[0]['sOBav'][i])
+                RcSetAvWt['sOBrms'].append(self._RCFFl[0]['sOBrms'][i])
                 for j in range(self.NUM_RETR_LVLS):
-                    RcSetAvWt['Src'][j * self.NUM_BRT_TEMPS + i] = \
-                        self._RCFFl[0]['Src'][j * self.NUM_BRT_TEMPS + i]
+                    RcSetAvWt['Src'].append(
+                        self._RCFFl[0]['Src'][j * self.NUM_BRT_TEMPS + i])
             return RcSetAvWt
 
         # If aircraft level is below lowest flight level
         if (PAltKm <= self._RCFHdr['Zr'][self._RCFHdr['NFL']-1]):
             RcSetAvWt['sBP'] = self._RCFFl[self._RCFHdr['NFL']-1]['sBP']
             for j in range(self.NUM_RETR_LVLS):
-                RcSetAvWt['sBPrl'][j] = \
-                    self._RCFFl[self._RCFHdr['NFL']-1]['sBPrl'][j]
-                RcSetAvWt['sRTav'][j] = \
-                    self._RCFFl[self._RCFHdr['NFL']-1]['sRTav'][j]
-                RcSetAvWt['sRMSa'][j] = \
-                    self._RCFFl[self._RCFHdr['NFL']-1]['sRMSa'][j]
-                RcSetAvWt['sRMSe'][j] = \
-                    self._RCFFl[self._RCFHdr['NFL']-1]['sRMSe'][j]
+                RcSetAvWt['sBPrl'].append(
+                    self._RCFFl[self._RCFHdr['NFL']-1]['sBPrl'][j])
+                RcSetAvWt['sRTav'].append(
+                    self._RCFFl[self._RCFHdr['NFL']-1]['sRTav'][j])
+                RcSetAvWt['sRMSa'].append(
+                    self._RCFFl[self._RCFHdr['NFL']-1]['sRMSa'][j])
+                RcSetAvWt['sRMSe'].append(
+                    self._RCFFl[self._RCFHdr['NFL']-1]['sRMSe'][j])
             for i in range(self.NUM_BRT_TEMPS):
-                RcSetAvWt['sOBav'][i] = \
-                    self._RCFFl[self._RCFHdr['NFL']-1]['sOBav'][i]
-                RcSetAvWt['sOBrms'][i] = \
-                    self._RCFFl[self._RCFHdr['NFL']-1]['sOBrms'][i]
+                RcSetAvWt['sOBav'].append(
+                    self._RCFFl[self._RCFHdr['NFL']-1]['sOBav'][i])
+                RcSetAvWt['sOBrms'].append(
+                    self._RCFFl[self._RCFHdr['NFL']-1]['sOBrms'][i])
                 for j in range(self.NUM_RETR_LVLS):
-                    RcSetAvWt['Src'][j * self.NUM_BRT_TEMPS + i] = \
+                    RcSetAvWt['Src'].append(
                         self._RCFFl[self._RCFHdr['NFL']-1]['Src'][j * self.
                                                                   NUM_BRT_TEMPS
-                                                                  + i]
+                                                                  + i])
             return RcSetAvWt
 
         # Find two Flight Level Sets that are above and below the PAltKm
@@ -291,8 +296,8 @@ class RetrievalCoefficientFile():
                 BotWt = 1.0 - ((PAltKm - self._RCFHdr['Zr'][i + 1]) /
                                (self._RCFHdr['Zr'][i] -
                                 self._RCFHdr['Zr'][i + 1]))
-                Topit = self._RCFFl[it].copy()
-                Botit = self._RCFFl[it + 1].copy()
+                Topit = self._RCFFl[it]
+                Botit = self._RCFFl[it + 1]
             i += 1
         TopWt = 1.0 - BotWt
 

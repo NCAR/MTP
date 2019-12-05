@@ -145,6 +145,8 @@ class TESTrcf(unittest.TestCase):
         for i in range(self.rcf.NUM_RETR_LVLS):
             self.assertEqual('%.4f' % RcSetAvWt['sRMSe'][i], sRMSe[i])
 
+        self.assertEqual(len(RcSetAvWt['Src']), 990)
+
         RCwt = ['-2.93269', '-3.39398', '-0.83616', '0.61555', '1.57267',
                 '4.27800', '1.71693', '-12.47249', '-15.71872', '60.75449',
                 '-0.81487', '0.20774', '0.63355', '0.78408', '1.49153',

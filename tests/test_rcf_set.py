@@ -2,17 +2,7 @@
 # Test util/rcf_set.py
 #
 # This program is designed to test the RetrievalCoefficientFileSet class
-# to assure that it's performing as expected.  The current output file:
-# rcf_set_test.out has been vetted to assure that it has correct information
-# resulting from the tests this program peforms.
-#
-# Usage:
-#   rcf_set_test > rcf_set_test.new
-#   diff rcf_set_test.out rcf_set_test.new
-#
-# There should be no differences found.  If differences are found then
-# something has affected the functionality of the class and should be
-# investigated and resolved.
+# to assure that it's performing as expected.
 #
 # This test uses CSET RCF file NRCKA068.RCF as a test input file.
 #
@@ -96,7 +86,8 @@ class TESTrcfSet(unittest.TestCase):
         self.assertEqual(BestWtdRCSet['RCFFileName'],
                          self.Directory + "/NRCKA068.RCF")
         self.assertEqual(BestWtdRCSet['RCFId'], 'NRCKA068')
-        self.assertEqual('%7.5f' % BestWtdRCSet['SumLnProb'], '9.37714')
+        self.assertEqual('%7.5f' % BestWtdRCSet['SumLnProb'], '0.36811')
         self.assertEqual('%6.2f' % BestWtdRCSet['FL_RCs']['sBP'], '346.27')
         self.assertEqual('%7.5f' % BestWtdRCSet['FL_RCs']['Src'][0],
-                         '-0.47426')
+                         '-1.63965')
+        self.assertEqual(len(BestWtdRCSet['FL_RCs']['Src']), 990)
