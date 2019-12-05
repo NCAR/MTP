@@ -66,5 +66,10 @@ RC_Set_4Retrieval = {
     'RCFFileName': "",
     'RCFId': "",
     'SumLnProb': 0.0,
-    'FL_RCs': RCF_FL,
+    'FL_RCs': "",  # Will hold an RCF_FL dictionary
+}
+
+AtmosphericTemperatureProfile = {
+    'Temperatures': [],  # Physical temperature
+    'Altitudes': [],
 }
