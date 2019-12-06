@@ -124,6 +124,10 @@ class readMTP:
                     # Exit matching loop
                     return(True)
 
+    def getACAlt(self):
+        """ Return the aircraft alititude (km) from the Aline """
+        return(self.rawscan['Aline']['values']['SAPALT']['val'])
+
     def getDate(self):
         """ Return the date of the current A line record """
         return(self.rawscan['Aline']['values']['DATE']['val'])
