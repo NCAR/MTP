@@ -39,11 +39,10 @@ class Retriever():
         """
         self.rcf_set = RetrievalCoefficientFileSet(Directory)
         self.ATP = AtmosphericTemperatureProfile
-        self.PressureAlts = []
 
-    def retrieve(self, ScanBTs, ACAltKm):
+    def getRCSet(self, ScanBTs, ACAltKm):
         """
-        Retrieve function.  Obtain the Physical temperature profile from a scan
+        Get the gest weighter RC Set that matches this scan
 
         ScanBTs is an array of floating point values indicating the brightness
         temperature values in Degrees Kelvin from the scan.  The first 10
@@ -53,8 +52,26 @@ class Retriever():
 
         ACAltKm is the floating point altitude of the aircraft in km
         """
-        BestWtdRCSet = self.rcf_set.getBestWeightedRCSet(ScanBTs, ACAltKm, 0.0)
+        # Find the best template to match the scanned brightness temperatures
+        return(self.rcf_set.getBestWeightedRCSet(ScanBTs, ACAltKm, 0.0))
 
+    def retrieve(self, ScanBTs, BestWtdRCSet):
+        """
+        Retrieve function.  Obtain the Physical temperature profile from a scan
+
+        ScanBTs is an array of floating point values indicating the brightness
+        temperature values in Degrees Kelvin from the scan.  The first 10
+        values are for channel 1 at each of the scan angles (highest angle to
+        lowest angle), the second 10 are for channel 2 and the third 10 are for
+        channel 3.
+
+        """
+        # Clear the Temperature/Altitude profile
+        self.ATP['Temperatures'] = []
+        self.PressureAlts = []
+        self.ATP['Altitudes'] = []
+
+        # Calculate the physical temperature profile
         self.NUM_RETR_LVLS = self.rcf_set._RCFs[0].getNUM_RETR_LVLS()
         for l in range(self.NUM_RETR_LVLS):
             Temperature = BestWtdRCSet['FL_RCs']['sRTav'][l]
