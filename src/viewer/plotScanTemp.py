@@ -26,6 +26,9 @@ class ScanTemp():
         - Overplot GV altitude as horizontal white line.
         """
 
+        self.tbxlimL = 200  # Left x-limit for TB plot
+        self.tbxlimR = 270  # Right x-limit for TB plot
+
         # Create a figure instance to hold the plot
         (self.fig, self.ax) = plt.subplots(constrained_layout=True)
 
@@ -126,7 +129,7 @@ class ScanTemp():
 
         # set limits and label for X axis specific to counts
         self.ax.set_xlabel('Brightness Temperature')
-        self.ax.set_xlim(205, 275)
+        self.ax.set_xlim(self.tbxlimL, self.tbxlimR)
 
         # Plot the three channel counts on the right axis
         # channel 1 is red, channel 2 is white, and channel 3 is blue
@@ -137,3 +140,14 @@ class ScanTemp():
         self.axR.plot(tb[10:20], self.getAngles(), color="grey")
         self.axR.plot(tb[20:30], self.getAngles(), color="blue")
         self.canvas.draw()
+
+    def plotTemplate(self, template):
+        self.axR.plot(template[0:10], self.getAngles(), color='pink')
+        self.axR.plot(template[10:20], self.getAngles(), color='lightgrey')
+        self.axR.plot(template[20:30], self.getAngles(), color='lightblue')
+        self.canvas.draw()
+
+    def plotACALT(self, ACAltKm):
+        self.ax.clear()
+        self.ax.hlines(float(ACAltKm), self.tbxlimL-10, self.tbxlimR+10,
+                       color='black')
