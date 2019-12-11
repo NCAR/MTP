@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# This python dictionary stores the content of a single MTP record
+# This python dictionary stores the content of a single raw MTP record
 #
 # A <date> <time> SAPITCH SRPITCH SAROLL SRROLL SAPALT SRPALT SAAT SRAT SALAT
 #         SRLAT SALON SRLON SMCMD SMENC
