@@ -2,6 +2,7 @@
 # Dictionaries to hold  Retrieval Coefficient File (RCF) data for the Microwave
 # Temperature Profiler (MTP).
 ###############################################################################
+import numpy
 
 RCF_HDR = {
     # Dictionary to hold the header record. Note:  For some reason the Header
@@ -50,7 +51,9 @@ RCF_FL = {
     # 0-9 with element 0 being the highest scan angle and element 9 the lowest
     # scan angle.  Similarly, channel 2 will be found in elements 10-19 and
     # channel 3 will be in elements 20-29.
-    'sBP': 0.0,    # Flight level pressure altitude (hPa)
+    'sBP': numpy.nan,    # Flight level pressure altitude (hPa)
+    'RCFALT1Index': numpy.nan,  # Index of flight level set above aircraft alt
+    'RCFALT2Index': numpy.nan,  # Index of flight level set below aircraft alt
     'sOBrms': [],  # 1-sigma apriori observable errors
     'sOBav': [],   # Archive Average observables
     'sBPrl': [],   # Pressure at retrieval levels
@@ -65,11 +68,7 @@ RC_Set_4Retrieval = {
     # Structure for returning needed information for performing a retrieval
     'RCFFileName': "",
     'RCFId': "",
-    'SumLnProb': 0.0,
+    'SumLnProb': numpy.nan,
+    'RCFIndex': numpy.nan,
     'FL_RCs': "",  # Will hold an RCF_FL dictionary
-}
-
-AtmosphericTemperatureProfile = {
-    'Temperatures': [],  # Physical temperature
-    'Altitudes': [],
 }
