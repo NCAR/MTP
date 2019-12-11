@@ -36,7 +36,7 @@ class TESTrcfSet(unittest.TestCase):
 
     def testInit(self):
         """ Test initialization with a bogus directory and empty filelist """
-        self.rcf = RetrievalCoefficientFileSet("../", [])
+        self.rcf = RetrievalCoefficientFileSet()
 
         # Test error handling for setting of flight levels on uninitialized
         # set fails
@@ -46,7 +46,8 @@ class TESTrcfSet(unittest.TestCase):
         """ Make sure get expected RCFs """
         # Initialize with a valid RCF directory and empty filelist so get
         # everything
-        self.rcf = RetrievalCoefficientFileSet(self.Directory, [])
+        self.rcf = RetrievalCoefficientFileSet()
+        self.rcf.getRCFs(self.Directory)
 
         # Iterate over found RCF files - currently only have one RCF in test
         # dir so can put asserts inside loop (-:
@@ -73,7 +74,8 @@ class TESTrcfSet(unittest.TestCase):
         """
         # Initialize with a valid RCF directory and empty filelist so get
         # everything
-        self.rcf = RetrievalCoefficientFileSet(self.Directory, [])
+        self.rcf = RetrievalCoefficientFileSet()
+        self.rcf.getRCFs(self.Directory)
 
         # Verify correct selected RCF
         ACAltKm = 8.206
