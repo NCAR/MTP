@@ -18,6 +18,7 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
+import numpy
 import unittest
 from util.retriever import Retriever
 
@@ -40,14 +41,42 @@ class TESTretriever(unittest.TestCase):
                         246.79, 248.06, 248.893, 249.608, 250.679, 251.433]
         self.ACAltKm = 8.206
 
+    def test_getRCSet(self):
+        """ Test creation of a functioning retrieval_coefficient_fileset """
+        Rtr = Retriever(self.RCFdir)
+        BestWtdRcSet = Rtr.getRCSet(self.scanBTs, self.ACAltKm)
+
+        # Test that BestWtdRcSet returns as expected with spot checks
+        self.assertEqual(BestWtdRcSet['RCFFileName'],
+                         '../tests/test_data/NRCKA068.RCF')
+
+        self.assertEqual(BestWtdRcSet['RCFId'], 'NRCKA068')
+        self.assertEqual('%8.6f' % BestWtdRcSet['SumLnProb'], '0.368112')
+        self.assertEqual(BestWtdRcSet['RCFIndex'], 0)
+        self.assertEqual('%6.2f' % BestWtdRcSet['FL_RCs']['sBP'], '346.27')
+        self.assertEqual('%7.5f' % BestWtdRcSet['FL_RCs']['Src'][0], '-1.63965')
+        self.assertEqual(BestWtdRcSet['FL_RCs']['Spare'], [])
+        self.assertEqual(BestWtdRcSet['FL_RCs']['RCFALT1Index'], 12)  # Topit
+        self.assertEqual(BestWtdRcSet['FL_RCs']['RCFALT2Index'], 13)  # Botit
+
+        # Test that if acaltkm is missing or negative, getRCSet returns False
+        ACAltKm = numpy.nan
+        BestWtdRcSet = Rtr.getRCSet(self.scanBTs, ACAltKm)
+        self.assertEqual(BestWtdRcSet, False)
+
+        ACAltKm = -1
+        BestWtdRcSet = Rtr.getRCSet(self.scanBTs, ACAltKm)
+        self.assertEqual(BestWtdRcSet, False)
+
     def test_retriever(self):
         # Put together a functioning retrieval_coefficient_fileset
         Rtr = Retriever(self.RCFdir)
+        BestWtdRcSet = Rtr.getRCSet(self.scanBTs, self.ACAltKm)
 
         # Validate that the function for selecting an RCF (template) from the
         # set is still functioning properly.  Provide a couple of scan values
         # and verify that the correct RCF is selected.
-        self.ATP = Rtr.retrieve(self.scanBTs, self.ACAltKm)
+        self.ATP = Rtr.retrieve(self.scanBTs, BestWtdRcSet)
 
         CSETtemperatures = [302.876, 306.119, 299.146, 287.682, 277.022,
                             269.615, 263.658, 260.455, 257.541, 255.615,
