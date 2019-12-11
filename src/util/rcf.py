@@ -302,8 +302,8 @@ class RetrievalCoefficientFile():
         TopWt = 1.0 - BotWt
 
         # Save the indices of the flight level sets used in averages
-        RcSetAvWt['RCFALT1Index'] = Botit
-        RcSetAvWt['RCFALT2Index'] = Topit
+        RcSetAvWt['RCFALT1Index'] = it  # index of Topit
+        RcSetAvWt['RCFALT2Index'] = it + 1  # index of Botit
 
         # Calculate the Weighted averages
         RcSetAvWt['sBP'] = Botit['sBP'] * BotWt + Topit['sBP'] * TopWt
