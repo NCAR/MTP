@@ -34,7 +34,7 @@ from util.rcf import RetrievalCoefficientFile
 
 class RetrievalCoefficientFileSet():
 
-    def __init__(self, Directory, filelist=""):
+    def __init__(self):
         """
         Instantiate an RCF file set
 
@@ -47,9 +47,7 @@ class RetrievalCoefficientFileSet():
         """
         self._RCFs = []  # Array of RCF files
 
-        self.getRCFs(Directory, filelist)
-
-    def getRCFs(self, Directory, filelist):
+    def getRCFs(self, Directory, filelist=""):
         """ Get a list of available RCF files in the Directory """
         i = 0
         # Iterate over files in a directory
@@ -64,19 +62,25 @@ class RetrievalCoefficientFileSet():
                 #  Only include files that are in the requested filelist
                 #  If filelist is empty, then get everything.
                 if (len(filelist) == 0):
-                    print("Found RCF file:" + filename + "  with ID:" +
-                          self._RCFs[i].getId())
+                    # print("Found RCF file:" + filename + "  with ID:" +
+                    #       self._RCFs[i].getId())
                     i += 1
                 else:
                     for j in range(len(filelist)):
                         if (filelist[j] == self._RCFs[i].getId()):
-                            print("Found RCF file:" + filename + "  with ID:" +
-                                  self._RCFs[i].getId())
+                            # print("Found RCF file:" + filename +
+                            # "  with ID:" + self._RCFs[i].getId())
                             found = 1
                     if found:
                         i += 1
                     else:
                         self._RCFs.pop()
+
+        # Test if got complete fileset
+        if ((len(self._RCFs) == len(filelist)) or (len(filelist) == 0)):
+            return(True)  # Success
+        else:
+            return(False)  # Failed to make a fileset
 
     def getRCFVector(self):
         """ Return a list of available RCF files """
