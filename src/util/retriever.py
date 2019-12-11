@@ -28,7 +28,7 @@
 import numpy
 import math
 from util.rcf_set import RetrievalCoefficientFileSet
-from util.rcf_structs import AtmosphericTemperatureProfile
+from util.profile_structs import AtmosphericTemperatureProfile
 
 
 class Retriever():
@@ -37,7 +37,9 @@ class Retriever():
         """
         Directory is directory name containing the RCF files to be used.
         """
-        self.rcf_set = RetrievalCoefficientFileSet(Directory)
+        self.Directory = Directory
+
+        self.rcf_set = RetrievalCoefficientFileSet()
         self.ATP = AtmosphericTemperatureProfile
 
     def getRCSet(self, ScanBTs, ACAltKm):
@@ -52,8 +54,18 @@ class Retriever():
 
         ACAltKm is the floating point altitude of the aircraft in km
         """
-        # Find the best template to match the scanned brightness temperatures
-        return(self.rcf_set.getBestWeightedRCSet(ScanBTs, ACAltKm, 0.0))
+        # If PALT is missing or negative, can't calculate altc, tempc, rcfidx,
+        # rfalt1idx, etc. Return False
+        if (numpy.isnan(ACAltKm) or ACAltKm < 0):
+            return(False)
+
+        # Create a file set
+        if (self.rcf_set.getRCFs(self.Directory)):
+            # If fileset created successfully, find the best template to match
+            # the scanned brightness temperatures
+            return(self.rcf_set.getBestWeightedRCSet(ScanBTs, ACAltKm, 0.0))
+        else:
+            return(False)  # Did not successfully create a file set
 
     def retrieve(self, ScanBTs, BestWtdRCSet):
         """
@@ -84,15 +96,44 @@ class Retriever():
                                   + j] * BtDiff)
             self.ATP['Temperatures'].append(Temperature)
 
+        # Copy all elements from the returned vector to ATP['Altitudes']
         self.ATP['Altitudes'] = self.Pressure2Km(self.PressureAlts)
 
+        # Index of best RCF file for this profile
+        self.ATP['RCFIndex'] = BestWtdRCSet['RCFIndex']
+        # Index of flight level below aircraft Altitude
+        self.ATP['RCFALT1Index'] = BestWtdRCSet['FL_RCs']['RCFALT1Index']
+        # Index of flight level above aircraft Altitude
+        self.ATP['RCFALT2Index'] = BestWtdRCSet['FL_RCs']['RCFALT2Index']
+        # Meridional Region Index: quality of match
+        self.ATP['RCFMRIndex'] = BestWtdRCSet['SumLnProb']
+
         # Any Temperature with Altitude <= 0 is not valid (nor is altitude)
+        # If Temperature is NAN (regardless of Alt, set Alt to NAN. Do this
+        # so code will output same number of Temperature and Altitude records.
         for l in range(self.NUM_RETR_LVLS):
-            if (self.ATP['Altitudes'][l] <= 0):
+            if (self.ATP['Altitudes'][l] <= 0 or numpy.isnan(
+                    self.ATP['Temperatures'][l])):
                 self.ATP['Altitudes'][l] = numpy.nan
                 self.ATP['Temperatures'][l] = numpy.nan
 
         return(self.ATP)
+
+    def checkMissing(self, ATP):
+        """
+        Check if all the temperatures are missing. If they are, then we will
+        need to set all the derived parameters to missing.
+        """
+        nMissMTP = 0  # Initialize
+        for i in range(self.NUM_RETR_LVLS):
+            if (numpy.isnan(self.ATP['Temperatures'][i])):
+                nMissMTP += 1
+
+        if (nMissMTP == self.NUM_RETR_LVLS):
+            # All temperatures are missing
+            return(True)
+        else:
+            return(False)
 
     def Pressure2Km(self, Pressures):
         """
