@@ -15,6 +15,9 @@ from util.decodePt import decodePt
 from util.decodeM01 import decodeM01
 from util.decodeM02 import decodeM02
 from util.calcTBs import BrightnessTemperature
+from util.retriever import Retriever
+from util.tropopause import Tropopause
+from util.profile_structs import TropopauseRecord
 from lib.rootdir import getrootdir
 
 
@@ -28,6 +31,18 @@ class MTPclient():
 
         # Location of default ascii_parms file
         self.ascii_parms = os.path.join(getrootdir(), 'config/ascii_parms')
+
+        # FOR TESTING, set location of RCFdir to test dir
+        self.RCFdir = os.path.join(getrootdir(), 'tests/test_data')
+
+        # Check if RCFdir exists. If not, don't create Profile plot but let
+        # real-time code continue
+        if not os.path.isdir(self.RCFdir):
+            # Launch a file selector for user to select correct RCFdir
+            return(False)
+
+        # instantiate an RCF retriever
+        self.retriever = Retriever(self.RCFdir)
 
         # Hack-y stuff to get plot to scroll. pyqtgraph must have a better way
         # that I haven't found yet.
@@ -49,7 +64,7 @@ class MTPclient():
         # altitude vs time. User can then change to another var using the
         # dropdown.
         self.xvar = 'TIME'
-        self.yvar = 'SAPALT'
+        self.yvar = 'SAPALT'  # km
 
         # Instantiate an instance of an MTP reader
         self.reader = readMTP()
@@ -121,7 +136,7 @@ class MTPclient():
         """
         rawscan = self.reader.getRawscan()
         Tifa = rawscan['Ptline']['values']['TMIXCNTP']['temperature']
-        OAT = rawscan['Aline']['values']['SAAT']['val']
+        OAT = rawscan['Aline']['values']['SAAT']['val']  # Kelvin
         scnt = rawscan['Bline']['values']['SCNT']['val']
 
         tb = BrightnessTemperature()
@@ -130,6 +145,82 @@ class MTPclient():
         # and save them back to the MTP data dictionary.
         rawscan['Bline']['values']['SCNT']['tb'] = \
             tb.TBcalculationRT(Tifa, OAT, scnt)
+
+    def getTemplate(self, tbi):
+        """
+        Get the template brightness temperatures that best fit current scan
+
+        BestWtdRCSet will be False if acaltkm is missing or negative
+        """
+        rawscan = self.reader.getRawscan()
+        acaltkm = float(rawscan['Aline']['values']['SAPALT']['val'])  # km
+        BestWtdRCSet = self.retriever.getRCSet(tbi, acaltkm)
+        return(BestWtdRCSet)
+
+    def getProfile(self, tbi, BestWtdRCSet):
+        """
+        Convert brightness temperatures to atmospheric temperature profiles
+        by performing an inverse calculation of the radiative transfer model.
+        Requires as input Retrieval Coefficient Files (RCFs). RCF files are
+        templates that describe what a given RAOB profile would look like to
+        the MTP instrument if the instrument were used to measure the
+        atmosphere described by the profile. The weighted averaged retrieval
+        coefficients from the RCF that best matches the current scan at the
+        scan flight altitude are calculated.
+
+        When the MTP instrument completes a scan of the atmosphere the scan
+        counts are converted to Brightness Temperatures (in calcTBs.py). Using
+        these, the "best match" RCF is found and it's corresponding Retrieval
+        Coefficients are used to determine the atmospheric temperature profile.
+        """
+
+        # If have a best template (i.e. BestWtdRCSet is not False)
+        if (BestWtdRCSet):
+            ATP = self.retriever.retrieve(tbi, BestWtdRCSet)
+
+            # Add dict to hold first tropopause to array of trops
+            ATP['trop'].append(TropopauseRecord.copy())
+
+            # Instantiate a tropopause class
+            NUM_RETR_LVLS = self.retriever.rcf_set._RCFs[0].getNUM_RETR_LVLS()
+            trop = Tropopause(ATP, NUM_RETR_LVLS)
+            startTropIndex = 0
+
+            #  Check if all the temperatures are missing. In this case, set all
+            # derived params to NAN.
+            if self.retriever.checkMissing(ATP):
+                ATP['RCFIndex'] = numpy.nan
+                ATP['RCFALT1Index'] = numpy.nan
+                ATP['RCFALT2Index'] = numpy.nan
+                ATP['RCFMRIndex'] = numpy.nan
+
+                # Also set first (and only) tropopause to NAN
+                ATP['trop'][0]['idx'] = numpy.nan
+                ATP['trop'][0]['altc'] = numpy.nan
+                ATP['trop'][0]['tempc'] = numpy.nan
+
+            else:
+                # Found a good MTP scan. RCF indices were set in the
+                # retrieve function above so just need to calculate
+                # tropopauses
+                [ATP['trop'][0]['idx'], ATP['trop'][0]['altc'],
+                 ATP['trop'][0]['tempc']] = trop.findTropopause(startTropIndex)
+
+                # If found a tropopause, look for a second one
+                if not numpy.isnan(ATP['trop'][0]['idx']):
+                    # Add a dict to hold a second tropopause
+                    ATP['trop'].append(TropopauseRecord.copy())
+
+                    # findTropopause call will modify startTropIndex to be
+                    # index of level to start looking for 2nd trop.
+                    [ATP['trop'][1]['idx'], ATP['trop'][1]['altc'],
+                     ATP['trop'][1]['tempc']] = \
+                        trop.findTropopause(startTropIndex)
+
+            return(True)
+
+        else:
+            return(False)  # Could not create a profile from this scan
 
     def getXY(self):
         """
