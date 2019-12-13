@@ -14,6 +14,7 @@ from PyQt5.QtGui import QFontMetrics, QFont
 
 from viewer.MTPclient import MTPclient
 from viewer.plotScanTemp import ScanTemp
+from viewer.plotProfile import Profile
 # from viewer.plotTimeseries import Timeseries
 import numpy
 
@@ -219,6 +220,13 @@ class MTPviewer(QMainWindow):
         # self.timeseries = Timeseries(self.client)
         # self.layout.addLayout(self.timeseries.getWindow(), 1, 5, 1, 4)
 
+        # Create a profile plot and add it to the layout
+        self.profile = Profile()
+        profile = self.profile.getWindow()
+        profile.setFixedHeight(275)
+        profile.setFixedWidth(260)
+        self.layout.addWidget(profile, 1, 6, 1, 3)
+
         # Create a box to hold selected RCFs and controls
         self.layout.addWidget(QLabel("IWG port"), 2, 0, 1, 1)
         iwgport = QPlainTextEdit(str(self.client.getIWGport()))
@@ -371,10 +379,8 @@ class MTPviewer(QMainWindow):
         # What is the magenta line on the scan and template plot?
 
         # Plot the physical temperature profile - TBD
-        # if (ATP):  # If successfully create a profile from this scan
-        #  print(ATP['Temperatures'])
-        #  print(ATP['Altitudes'])
-        #  print("\n")
+        if (ATP):  # If successfully create a profile from this scan
+            self.profile.plotProfile(ATP['Temperatures'], ATP['Altitudes'])
 
         # Plot the tropopause (dotted line)
 
