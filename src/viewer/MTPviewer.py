@@ -343,18 +343,20 @@ class MTPviewer(QMainWindow):
         self.writeTB(self.cell)
         # Invert the brightness temperature to column major storage
         tb = self.client.getTB()
-        tbi = self.scantemp.invertSCNT(tb)
+        tbi = self.client.invertArray(tb)
 
         # Get the template brightness temperatures that best correspond to scan
         # brightness temperatures
-        BestWtdRCSet = self.client.getTemplate(tbi)
+        rawscan = self.client.reader.getRawscan()
+        acaltkm = float(rawscan['Aline']['values']['SAPALT']['val'])  # km
+        BestWtdRCSet = self.client.getTemplate(acaltkm, tbi)
 
         # Get the physical temperature profile (and find tropopause)
         ATP = self.client.getProfile(tbi, BestWtdRCSet)
 
         # Plot scan counts - used during development
         # scnt = self.client.getSCNT()  # Get scan counts as fn(Angle, Channel)
-        # scnti = self.scantemp.invertSCNT(scnt)  #Invert so fn(Channel, Angle)
+        # scnti = self.client.invertArray(scnt)  #Invert so fn(Channel, Angle)
         # self.scantemp.plotDataScnt(scnti)    # Update the scan count plot
 
         # Plot scan brightness temperatures

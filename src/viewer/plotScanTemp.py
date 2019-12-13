@@ -48,26 +48,6 @@ class ScanTemp():
         # Return pointer to the graphics window
         return(self.canvas)
 
-    def invertSCNT(self, scnt):
-        """
-        The scan counts are stored in the ads file as cnts[angle,channel],
-        i.e. {a1c1,a1c2,a1c3,a2c1,...}. Processing requires, and the final
-        data are output as {c1a1,c1a2,c1a3,c1a4,...}. Invert the array here.
-        """
-        scnt_inv = [numpy.nan]*30
-        NUM_SCAN_ANGLES = 10
-        NUM_CHANNELS = 3
-        for j in range(NUM_SCAN_ANGLES):
-            for i in range(NUM_CHANNELS):
-                # The scan counts are passed in as a string, so convert them
-                # to integers. The scan brightness temperatures come in as
-                # float so leave them.
-                if (isinstance(scnt[j*NUM_CHANNELS+i], str)):
-                    scnt_inv[i*NUM_SCAN_ANGLES+j] = int(scnt[j*NUM_CHANNELS+i])
-                else:
-                    scnt_inv[i*NUM_SCAN_ANGLES+j] = scnt[j*NUM_CHANNELS+i]
-        return(scnt_inv)
-
     def getAngles(self):
         """ Create an array of the angles corresponding to each SCNT value """
         angles = numpy.array(range(10))+1

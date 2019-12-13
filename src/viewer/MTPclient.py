@@ -25,9 +25,14 @@ class MTPclient():
 
     def __init__(self):
 
+        # All of this needs to be put in a config file and read in
         self.udp_send_port = 32106  # from viewer to MTP
         self.udp_read_port = 32107  # from MTP to viewer
         self.iwg1_port = 7071       # IWG1 packets from GV
+
+        # Config for current MTP setup
+        self.NUM_SCAN_ANGLES = 10  # Number of scan angles being read
+        self.NUM_CHANNELS = 3  # Number of channels being read
 
         # Location of default ascii_parms file
         self.ascii_parms = os.path.join(getrootdir(), 'config/ascii_parms')
@@ -146,14 +151,35 @@ class MTPclient():
         rawscan['Bline']['values']['SCNT']['tb'] = \
             tb.TBcalculationRT(Tifa, OAT, scnt)
 
-    def getTemplate(self, tbi):
+    def invertArray(self, array):
+        """
+        SCNT values are stored in MTP raw data file (in the Bline) as
+        cnts[angle, channel], i.e. {a1c1,a1c2,a1c3,a2c1,...}. SCNT values and
+        calculated brightness temperatures are stored in the MTPrecord
+        dictionaryi Bline as fn[angle, channel]. Some processing steps require,
+        and the final data are output as {c1a1,c1a2,c1a3,c1a4,...}.
+        This function inverts the array[angle, channel] passed to it.
+        """
+        array_inv = [numpy.nan]*(self.NUM_SCAN_ANGLES * self.NUM_CHANNELS)
+        for j in range(self.NUM_SCAN_ANGLES):
+            for i in range(self.NUM_CHANNELS):
+                # The scan counts are passed in as a string, so convert them
+                # to integers. The scan brightness temperatures come in as
+                # float so leave them.
+                if (isinstance(array[j*self.NUM_CHANNELS+i], str)):
+                    array_inv[i*self.NUM_SCAN_ANGLES+j] = \
+                        int(array[j*self.NUM_CHANNELS+i])
+                else:
+                    array_inv[i*self.NUM_SCAN_ANGLES+j] = \
+                        array[j*self.NUM_CHANNELS+i]
+        return(array_inv)
+
+    def getTemplate(self, acaltkm, tbi):
         """
         Get the template brightness temperatures that best fit current scan
 
         BestWtdRCSet will be False if acaltkm is missing or negative
         """
-        rawscan = self.reader.getRawscan()
-        acaltkm = float(rawscan['Aline']['values']['SAPALT']['val'])  # km
         BestWtdRCSet = self.retriever.getRCSet(tbi, acaltkm)
         return(BestWtdRCSet)
 
@@ -203,7 +229,7 @@ class MTPclient():
                 # Found a good MTP scan. RCF indices were set in the
                 # retrieve function above so just need to calculate
                 # tropopauses
-                [ATP['trop'][0]['idx'], ATP['trop'][0]['altc'],
+                [startTropIndex, ATP['trop'][0]['idx'], ATP['trop'][0]['altc'],
                  ATP['trop'][0]['tempc']] = trop.findTropopause(startTropIndex)
 
                 # If found a tropopause, look for a second one
@@ -211,13 +237,12 @@ class MTPclient():
                     # Add a dict to hold a second tropopause
                     ATP['trop'].append(TropopauseRecord.copy())
 
-                    # findTropopause call will modify startTropIndex to be
-                    # index of level to start looking for 2nd trop.
-                    [ATP['trop'][1]['idx'], ATP['trop'][1]['altc'],
-                     ATP['trop'][1]['tempc']] = \
+                    # Start at previous index
+                    [startTropIndex, ATP['trop'][1]['idx'],
+                     ATP['trop'][1]['altc'], ATP['trop'][1]['tempc']] = \
                         trop.findTropopause(startTropIndex)
 
-            return(True)
+            return(ATP)
 
         else:
             return(False)  # Could not create a profile from this scan
