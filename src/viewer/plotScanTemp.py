@@ -58,7 +58,7 @@ class ScanTemp():
         """ Configure axis labels and limits, inc. invert right axis """
 
         # set limits and label for left Y axis
-        self.ax.set_ylabel('Altitude')
+        self.ax.set_ylabel('Altitude (km)')
         self.ax.set_ylim(0, 20)
 
         # set limits and label for right Y axis
@@ -108,7 +108,7 @@ class ScanTemp():
         self.configureAxis()
 
         # set limits and label for X axis specific to counts
-        self.ax.set_xlabel('Brightness Temperature')
+        self.ax.set_xlabel('Brightness Temperature (K)')
         self.ax.set_xlim(self.tbxlimL, self.tbxlimR)
 
         # Plot the three channel counts on the right axis
