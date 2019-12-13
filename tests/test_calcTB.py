@@ -57,6 +57,7 @@ class TESTcalcTBs(unittest.TestCase):
             tb.TBcalculationRT(Tifa, OAT, scnt)
 
     def testTBcalculationRT(self):
+        """ Test that brightness temperatures are calculated correctly """
         # These numbers are taken from an early run of this script, so this
         # test is for consistency (i.e. warn me if they change). I haven't
         # been able to test if the numbers are right yet, although they are

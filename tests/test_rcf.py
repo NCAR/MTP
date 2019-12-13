@@ -37,18 +37,20 @@ class TESTrcf(unittest.TestCase):
         self.RCFFl = self.rcf.getFL_RC_Vec()
 
     def testRCFId(self):
-        # Test that the RCF Id is accurately parsed from the filename
+        """ Test that the RCF Id is accurately parsed from the filename """
         self.assertEqual(self.rcf.getId(), "NRCKA068")
 
     def testOpen(self):
+        """ Test that path to RCF file exists """
         self.assertTrue(self.filename, "../tests/test_data/NRCKA068.RCF")
         self.assertTrue(os.path.exists(self.filename))
 
     def testBadOpen(self):
-        # Test initialization with a bogus directory
+        """ Test initialization with a bogus directory """
         self.rcf = RetrievalCoefficientFile("../")
 
     def testHeader(self):
+        """ Test that header read in correctly """
         self.assertEqual(self.RCFHdr['RAOBcount'], 189)
         self.assertEqual(self.RCFHdr['NFL'], self.numFlightLevels)
         self.assertEqual(self.RCFHdr['SURC'], 'CAN1')
@@ -56,7 +58,7 @@ class TESTrcf(unittest.TestCase):
                          self.flightLevelsKm[0:self.numFlightLevels])
 
     def testPALT(self):
-        # Test pressure altitudes at each flight level
+        """ Test pressure altitudes at each flight level """
         PALT = ['165.10', '193.30', '285.23', '355.99', '471.81', '540.19',
                 '657.64', '746.82', '794.95', '845.55', '898.74', '954.60',
                 '1013.24']
@@ -64,7 +66,7 @@ class TESTrcf(unittest.TestCase):
             self.assertEqual('%.2f' % self.RCFFl[i]['sBP'], PALT[i])
 
     def testGetRCAvgWtLow(self):
-        # Test flight level above range in RCF file
+        """ Test flight level above range in RCF file """
         PAltKm = 15
         RcSetAvWt = self.rcf.getRCAvgWt(PAltKm)
 
@@ -73,7 +75,7 @@ class TESTrcf(unittest.TestCase):
         self.assertEqual('%.2f' % RcSetAvWt['sBP'], '165.10')
 
     def testGetRCAvgWtHigh(self):
-        # Test flight level below range in RCF file
+        """ Test flight level below range in RCF file """
         PAltKm = -1
         RcSetAvWt = self.rcf.getRCAvgWt(PAltKm)
 
@@ -82,6 +84,7 @@ class TESTrcf(unittest.TestCase):
         self.assertEqual('%.2f' % RcSetAvWt['sBP'], '1013.24')
 
     def testGetRCAvgWt(self):
+        """ Test calculation of RCAvgWt """
         # Set a flight level to calculate at for testing purposes.
         # PAltKm is the pressure alititude of the aircraft in KM from the
         # iwg packet

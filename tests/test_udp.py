@@ -44,6 +44,7 @@ class TESTparseAsciiPacket(unittest.TestCase):
         mtp.parseAsciiPacket(udp)
 
     def testAline(self):
+        """ Test Aline saved to MTP dictionary correctly """
         self.assertEqual(self.rawscan['Aline']['values']['DATE']['val'],
                          '20140606')
         self.assertEqual(self.rawscan['Aline']['values']['timestr']['val'],
@@ -80,6 +81,7 @@ class TESTparseAsciiPacket(unittest.TestCase):
                          '+073904')
 
     def testBline(self):
+        """ Test Bline saved to MTP dictionary correctly """
         self.assertEqual(self.rawscan['Bline']['values']['SCNT']['val'][0],
                          '018089')
         self.assertEqual(self.rawscan['Bline']['values']['SCNT']['val'][1],
@@ -142,6 +144,7 @@ class TESTparseAsciiPacket(unittest.TestCase):
                          '018774')
 
     def testM01line(self):
+        """ Test M01line saved to MTP dictionary correctly """
         self.assertEqual(self.rawscan['M01line']['values']['VM08CNTE']['val'],
                          '2928')
         self.assertEqual(self.rawscan['M01line']['values']['VVIDCNTE']['val'],
@@ -160,6 +163,7 @@ class TESTparseAsciiPacket(unittest.TestCase):
                          '2944')
 
     def testM02line(self):
+        """ Test M02line saved to MTP dictionary correctly """
         self.assertEqual(self.rawscan['M02line']['values']['ACCPCNTE']['val'],
                          '2002')
         self.assertEqual(self.rawscan['M02line']['values']['TDATCNTE']['val'],
@@ -178,6 +182,7 @@ class TESTparseAsciiPacket(unittest.TestCase):
                          '1533')
 
     def testPtline(self):
+        """ Test Ptline saved to MTP dictionary correctly """
         self.assertEqual(self.rawscan['Ptline']['values']['TR350CNTP']['val'],
                          '2175')
         self.assertEqual(self.rawscan['Ptline']['values']['TTCNTRCNTP']['val'],
@@ -196,6 +201,7 @@ class TESTparseAsciiPacket(unittest.TestCase):
                          '14460')
 
     def testEline(self):
+        """ Test Eline saved to MTP dictionary correctly """
         self.assertEqual(self.rawscan['Eline']['values']['TCNT']['val'][0],
                          '020890')
         self.assertEqual(self.rawscan['Eline']['values']['TCNT']['val'][1],

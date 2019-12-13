@@ -48,9 +48,8 @@ class TESTreadmtp(unittest.TestCase):
         self.mtp = readMTP()
 
     def test_getAsciiPacket(self):
-        """
-        Test the AsciiPacket (MTP packet to be UDPd around the plane) is formed
-        correctly
+        """ Test the AsciiPacket (MTP packet to be UDPd around the plane)
+        is formed correctly
         """
         self.mtp.parseLine(self.Aline)
         self.mtp.parseLine(self.Bline)

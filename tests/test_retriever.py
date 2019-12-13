@@ -54,7 +54,8 @@ class TESTretriever(unittest.TestCase):
         self.assertEqual('%8.6f' % BestWtdRcSet['SumLnProb'], '0.368112')
         self.assertEqual(BestWtdRcSet['RCFIndex'], 0)
         self.assertEqual('%6.2f' % BestWtdRcSet['FL_RCs']['sBP'], '346.27')
-        self.assertEqual('%7.5f' % BestWtdRcSet['FL_RCs']['Src'][0], '-1.63965')
+        self.assertEqual('%7.5f' % BestWtdRcSet['FL_RCs']['Src'][0],
+                         '-1.63965')
         self.assertEqual(BestWtdRcSet['FL_RCs']['Spare'], [])
         self.assertEqual(BestWtdRcSet['FL_RCs']['RCFALT1Index'], 12)  # Topit
         self.assertEqual(BestWtdRcSet['FL_RCs']['RCFALT2Index'], 13)  # Botit
@@ -69,6 +70,7 @@ class TESTretriever(unittest.TestCase):
         self.assertEqual(BestWtdRcSet, False)
 
     def test_retriever(self):
+        """ Validate retrieved profile """
         # Put together a functioning retrieval_coefficient_fileset
         Rtr = Retriever(self.RCFdir)
         BestWtdRcSet = Rtr.getRCSet(self.scanBTs, self.ACAltKm)

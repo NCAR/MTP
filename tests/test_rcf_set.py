@@ -67,8 +67,7 @@ class TESTrcfSet(unittest.TestCase):
                                                    self.numFlightLevels))
 
     def testgetBestWeightedRCSet(self):
-        """
-        Validate the function for selecting an RCF (template) from the set
+        """ Validate the function for selecting an RCF (template) from the set
         Provide scan values to getVestWeightedRCSet and verify that the
         correct RCF is selected
         """
