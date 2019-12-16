@@ -253,10 +253,10 @@ class MTPviewer(QMainWindow):
         self.layout.addWidget(fwd, 2, 4, 1, 1)
 
         self.layout.addWidget(QLabel("RCF1"), 2, 5, 1, 1)
-        RCF1 = QPlainTextEdit("RCF1#")
-        RCF1.setFixedHeight(25)
-        RCF1.setReadOnly(True)
-        self.layout.addWidget(RCF1, 2, 6, 1, 1)
+        self.RCF1 = QPlainTextEdit("RCF1#")
+        self.RCF1.setFixedHeight(25)
+        self.RCF1.setReadOnly(True)
+        self.layout.addWidget(self.RCF1, 2, 6, 1, 1)
 
         self.layout.addWidget(QLabel("RCF2"), 3, 5, 1, 1)
         RCF2 = QPlainTextEdit("RCF2#")
@@ -358,6 +358,9 @@ class MTPviewer(QMainWindow):
         rawscan = self.client.reader.getRawscan()
         acaltkm = float(rawscan['Aline']['values']['SAPALT']['val'])  # km
         BestWtdRCSet = self.client.getTemplate(acaltkm, tbi)
+        # Does RCF file always start with NRC? I think it stands for:
+        # "Ncar gv RCf file"
+        self.RCF1.setPlainText(BestWtdRCSet['RCFId'].replace('NRC', ''))
 
         # Get the physical temperature profile (and find tropopause)
         ATP = self.client.getProfile(tbi, BestWtdRCSet)
