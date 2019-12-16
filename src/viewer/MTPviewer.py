@@ -27,6 +27,7 @@ class MTPviewer(QMainWindow):
         self.cell = [[numpy.nan for j in range(10)] for i in range(3)]
 
         self.client = MTPclient()
+        self.client.initRetriever()
         self.client.connect()
 
         # The QMainWindow class provides a main application window

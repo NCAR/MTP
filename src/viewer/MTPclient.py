@@ -37,17 +37,14 @@ class MTPclient():
         # Location of default ascii_parms file
         self.ascii_parms = os.path.join(getrootdir(), 'config/ascii_parms')
 
-        # FOR TESTING, set location of RCFdir to test dir
-        self.RCFdir = os.path.join(getrootdir(), 'tests/test_data')
+        # Set location of RCFdir to config/RCF
+        self.RCFdir = os.path.join(getrootdir(), 'config/RCF')
 
         # Check if RCFdir exists. If not, don't create Profile plot but let
         # real-time code continue
         if not os.path.isdir(self.RCFdir):
             # Launch a file selector for user to select correct RCFdir
             return(False)
-
-        # instantiate an RCF retriever
-        self.retriever = Retriever(self.RCFdir)
 
         # Hack-y stuff to get plot to scroll. pyqtgraph must have a better way
         # that I haven't found yet.
@@ -81,6 +78,13 @@ class MTPclient():
         # Create a public list of the variables in the Aline. Used to plot
         # timeseries of the variables.
         self.varlist = self.reader.getVarList('Aline')
+
+    def initRetriever(self):
+        """ instantiate an RCF retriever """
+        self.retriever = Retriever(self.RCFdir)
+
+    def setRCFdir(self, Dir):
+        self.RCFdir = os.path.join(getrootdir(), Dir)
 
     def initData(self):
         self.xvals = [0]*self.plotWidth    # Current X values being plotted

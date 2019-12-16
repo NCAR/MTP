@@ -26,6 +26,12 @@ class TESTMTPclient(unittest.TestCase):
     def setUp(self):
         self.client = MTPclient()
 
+        # Set RCF dir to test dir
+        self.client.setRCFdir('tests/test_data')
+
+        # Now initialize the retriever (requires correct RCFdir)
+        self.client.initRetriever()
+
         self.tb = [259.0284, 260.4983, 261.0111, 260.0887, 260.2379,
                    261.3189, 260.2401, 260.4549, 261.2420, 261.0985,
                    261.7572, 261.7807, 262.5627, 262.6688, 262.8582,
