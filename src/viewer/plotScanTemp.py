@@ -65,6 +65,14 @@ class ScanTemp():
         self.axR.set_ylabel('Scan Angle')
         self.axR.set_ylim(10, 1)  # Inverted Y axis 10 -> 1
 
+    def clear(self):
+        """ Clear the plot of data, labels and formatting for both axes """
+        self.ax.clear()
+        self.axR.clear()
+
+        # Since clear removed the labels and formatting, have to add it back
+        self.configureAxis()
+
     def plotDataScnt(self, scnt_inv):
         """
         Plot scan counts vs channel in the self.scnt plot window
@@ -75,13 +83,6 @@ class ScanTemp():
 
         As of Nov 13, 2019, this function is not called.
         """
-
-        # Clear the plot of data, labels and formatting for the right axis
-        self.axR.clear()
-
-        # Since clear removed the labels and formatting, have to add it back
-        self.configureAxis()
-
         # set limits and label for X axis specific to counts
         self.ax.set_xlabel('Counts')
         self.ax.set_xlim(16000, 21000)
@@ -100,13 +101,6 @@ class ScanTemp():
         """
         Plot brightness temperature vs channel in the self.scnt plot window
         """
-
-        # Clear the plot of data, labels and formatting for the right axis
-        self.axR.clear()
-
-        # Since clear removed the labels and formatting, have to add it back
-        self.configureAxis()
-
         # set limits and label for X axis specific to counts
         self.ax.set_xlabel('Brightness Temperature (K)')
         self.ax.set_xlim(self.tbxlimL, self.tbxlimR)
@@ -119,15 +113,16 @@ class ScanTemp():
         self.axR.plot(tb[0:10], self.getAngles(), color='red')
         self.axR.plot(tb[10:20], self.getAngles(), color="grey")
         self.axR.plot(tb[20:30], self.getAngles(), color="blue")
-        self.canvas.draw()
 
     def plotTemplate(self, template):
+        """ Plot brightness temperature vs channel from the template """
         self.axR.plot(template[0:10], self.getAngles(), color='pink')
         self.axR.plot(template[10:20], self.getAngles(), color='lightgrey')
         self.axR.plot(template[20:30], self.getAngles(), color='lightblue')
-        self.canvas.draw()
 
     def plotACALT(self, ACAltKm):
-        self.ax.clear()
         self.ax.hlines(float(ACAltKm), self.tbxlimL-10, self.tbxlimR+10,
                        color='black')
+
+    def draw(self):
+        self.canvas.draw()
