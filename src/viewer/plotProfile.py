@@ -8,6 +8,7 @@
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import (
        FigureCanvasQTAgg as FigureCanvas)
+from matplotlib.ticker import (MultipleLocator)
 
 
 class Profile():
@@ -46,6 +47,7 @@ class Profile():
         # set limits and label for left Y axis (km)
         self.ax.set_ylabel('Altitude (km)')
         self.ax.set_ylim(0, 28)
+        self.ax.yaxis.set_major_locator(MultipleLocator(2))
 
         # add right axis with altitude in kft 28km = 91.86kft)
         self.axR.set_ylabel('Altitude (kft)')
@@ -66,10 +68,15 @@ class Profile():
         # set limits and label for X axis specific to profile
         self.ax.set_xlabel('Temperature (K)')
         self.ax.set_xlim(self.tbxlimL, self.tbxlimR)
+        self.ax.xaxis.set_minor_locator(MultipleLocator(5))
 
         # Plot the temperature on the left axis
         self.ax.plot(temperature, altitude, marker='o', markersize=2,
                      color='#FFE433')
+
+        # Add a faint grid behind the plot
+        self.ax.tick_params(which='minor', color='grey')
+        self.ax.grid(which='both', color='lightgrey', linestyle='dotted')
 
     def plotACALT(self, SAAT, ACAltKm):
         """ Plot the aircraft altitude on the left axis """
