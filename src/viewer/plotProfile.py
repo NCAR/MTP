@@ -49,24 +49,33 @@ class Profile():
 
         # add right axis with altitude in kft 28km = 91.86kft)
         self.axR.set_ylabel('Altitude (kft)')
-        self.axR.set_ylim(0, 91.86) 
+        self.axR.set_ylim(0, 91.86)
+
+    def clear(self):
+        """ Clear the plot of data, labels and formatting for both axes """
+        self.ax.clear()
+        self.axR.clear()
+
+        # Since clear removed the labels and formatting, have to add it back
+        self.configureAxis()
 
     def plotProfile(self, temperature, altitude):
         """
         Plot profile vs temperature in the self.profile plot window
         """
-
-        # Clear the plot of data, labels and formatting for the left axis
-        self.ax.clear()
-
-        # Since clear removed the labels and formatting, have to add it back
-        self.configureAxis()
-
-        # set limits and label for X axis specific to counts
+        # set limits and label for X axis specific to profile
         self.ax.set_xlabel('Temperature (K)')
         self.ax.set_xlim(self.tbxlimL, self.tbxlimR)
 
         # Plot the temperature on the left axis
         self.ax.plot(temperature, altitude, marker='o', markersize=2,
                      color='#FFE433')
+
+    def plotACALT(self, SAAT, ACAltKm):
+        """ Plot the aircraft altitude on the left axis """
+        self.ax.plot([float(SAAT)-10, float(SAAT)+10],
+                     [float(ACAltKm), float(ACAltKm)],
+                     color='black')
+
+    def draw(self):
         self.canvas.draw()
