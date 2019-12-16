@@ -26,9 +26,6 @@ class ScanTemp():
         - Overplot GV altitude as horizontal white line.
         """
 
-        self.tbxlimL = 200  # Left x-limit for TB plot
-        self.tbxlimR = 270  # Right x-limit for TB plot
-
         # Create a figure instance to hold the plot
         (self.fig, self.ax) = plt.subplots(constrained_layout=True)
 
@@ -103,10 +100,10 @@ class ScanTemp():
     def plotTB(self, tb):
         """
         Plot brightness temperature vs channel in the self.scnt plot window
+        Plot will be autoscaled
         """
         # set limits and label for X axis specific to counts
         self.ax.set_xlabel('Brightness Temperature (K)')
-        self.ax.set_xlim(self.tbxlimL, self.tbxlimR)
 
         # Plot the three channel counts on the right axis
         # channel 1 is red, channel 2 is white, and channel 3 is blue
@@ -118,18 +115,34 @@ class ScanTemp():
         self.axR.plot(tb[20:30], self.getAngles(), color="blue")
 
     def plotTemplate(self, template):
-        """ Plot brightness temperature vs channel from the template """
+        """
+        Plot brightness temperature vs channel from the template. Plot will be
+        autoscaled
+        """
         self.axR.plot(template[0:10], self.getAngles(), color='pink')
         self.axR.plot(template[10:20], self.getAngles(), color='lightgrey')
         self.axR.plot(template[20:30], self.getAngles(), color='lightblue')
 
-    def plotACALT(self, ACAltKm):
-        """ Plot aircraft altitude in black. Corresponds to left axis """
-        self.ax.hlines(float(ACAltKm), self.tbxlimL-10, self.tbxlimR+10,
-                       color='black')
+    def minTemp(self, tb, template):
+        """
+        Get the minimum temperature from the union of tb and temperature scans.
+        Used for auto-scaling plots
+        """
+        return(min(tb + template))
 
-    def plotHorizScan(self):
-        self.axR.plot([self.tbxlimL-10, self.tbxlimR+10], [6, 6], color='grey')
+    def maxTemp(self, tb, template):
+        """
+        Get the maximum temperature from the union of tb and temperature scans.
+        Used for auto-scaling plots
+        """
+        return(max(tb + template))
+
+    def plotACALT(self, ACAltKm, xmin, xmax):
+        """ Plot aircraft altitude in black. Corresponds to left axis """
+        self.ax.hlines(float(ACAltKm), xmin, xmax, color='black')
+
+    def plotHorizScan(self, xmin, xmax):
+        self.axR.plot([xmin, xmax], [6, 6], color='grey')
 
     def draw(self):
         self.canvas.draw()

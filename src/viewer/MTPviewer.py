@@ -377,11 +377,15 @@ class MTPviewer(QMainWindow):
         # Plot the template brightness temperatures
         self.scantemp.plotTemplate(BestWtdRCSet['FL_RCs']['sOBav'])
 
-        # Plot a line for the horizontal scan (grey line)
-        self.scantemp.plotHorizScan()
+        # Get min and max x values, used for auto-scaling horizontal lines
+        xmin = self.scantemp.minTemp(tbi, BestWtdRCSet['FL_RCs']['sOBav'])
+        xmax = self.scantemp.maxTemp(tbi, BestWtdRCSet['FL_RCs']['sOBav'])
 
-        # Plot the aircraft altitude (black line)
-        self.scantemp.plotACALT(self.client.reader.getACAlt())
+        # Plot a line for the horizontal scan (grey line) to autoscaled width
+        self.scantemp.plotHorizScan(xmin, xmax)
+
+        # Plot the aircraft altitude (black line) to autoscaled width
+        self.scantemp.plotACALT(self.client.reader.getACAlt(), xmin, xmax)
 
         # Draw the plots
         self.scantemp.draw()
