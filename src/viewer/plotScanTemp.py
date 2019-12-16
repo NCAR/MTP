@@ -63,6 +63,9 @@ class ScanTemp():
 
         # set limits and label for right Y axis
         self.axR.set_ylabel('Scan Angle')
+        self.axR.yaxis.label.set_color('grey')
+        self.axR.spines['right'].set_color('grey')
+        self.axR.tick_params(axis='y', colors='grey')
         self.axR.set_ylim(10, 1)  # Inverted Y axis 10 -> 1
 
     def clear(self):
@@ -121,8 +124,12 @@ class ScanTemp():
         self.axR.plot(template[20:30], self.getAngles(), color='lightblue')
 
     def plotACALT(self, ACAltKm):
+        """ Plot aircraft altitude in black. Corresponds to left axis """
         self.ax.hlines(float(ACAltKm), self.tbxlimL-10, self.tbxlimR+10,
                        color='black')
+
+    def plotHorizScan(self):
+        self.axR.plot([self.tbxlimL-10, self.tbxlimR+10], [6, 6], color='grey')
 
     def draw(self):
         self.canvas.draw()

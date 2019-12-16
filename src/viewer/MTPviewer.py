@@ -377,6 +377,9 @@ class MTPviewer(QMainWindow):
         # Plot the template brightness temperatures
         self.scantemp.plotTemplate(BestWtdRCSet['FL_RCs']['sOBav'])
 
+        # Plot a line for the horizontal scan (grey line)
+        self.scantemp.plotHorizScan()
+
         # Plot the aircraft altitude (black line)
         self.scantemp.plotACALT(self.client.reader.getACAlt())
 
