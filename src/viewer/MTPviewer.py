@@ -412,6 +412,8 @@ class MTPviewer(QMainWindow):
                                self.client.reader.getACAlt())
 
         # Plot the tropopause (dotted line)
+        for i in range(len(ATP['trop'])):
+            self.profile.plotTropopause(ATP['trop'][i])
 
         # Draw the plots
         self.profile.draw()

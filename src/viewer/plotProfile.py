@@ -84,5 +84,10 @@ class Profile():
                      [float(ACAltKm), float(ACAltKm)],
                      color='black')
 
+    def plotTropopause(self, trop):
+        """ Plot the tropopause on the left axis """
+        self.ax.hlines(float(trop['altc']), self.tbxlimL, self.tbxlimR,
+                       color='grey', linestyle='dashed')
+
     def draw(self):
         self.canvas.draw()
