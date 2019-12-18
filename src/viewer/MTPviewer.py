@@ -9,7 +9,7 @@
 ###############################################################################
 from PyQt5.QtWidgets import QMainWindow, QGridLayout, QWidget, \
         QPlainTextEdit, QFrame, QAction, QLabel, QPushButton, QGroupBox
-from PyQt5.QtCore import QSocketNotifier
+from PyQt5.QtCore import QSocketNotifier, Qt
 from PyQt5.QtGui import QFontMetrics, QFont
 
 from viewer.MTPclient import MTPclient
@@ -91,6 +91,7 @@ class MTPviewer(QMainWindow):
     def createTBcell(self, grid, chan, ang):
         cell = QPlainTextEdit("Ang " + str(ang+1))
         cell.setFixedHeight(25)
+        cell.setReadOnly(True)
         if (ang+1 == 6):
             cell.setStyleSheet("QPlainTextEdit {background-color: lightgreen}")
         grid.addWidget(cell, ang+2, chan-1, 1, 1)
@@ -101,7 +102,7 @@ class MTPviewer(QMainWindow):
         for i in range(0, 3):
             for j in range(0, 10):
                 tb = reader.rawscan['Bline']['values']['SCNT']['tb'][i + j*3]
-                cell[i][j].setPlainText(str(tb))
+                cell[i][j].setPlainText('%6.2f' % tb)
 
     def initView(self):
         """ Initialize the central widget """
@@ -112,13 +113,13 @@ class MTPviewer(QMainWindow):
 
         # Create the Engineering 1 display window
         eng1label = QLabel("Platinum Multiplxr (Pt)")
-        self.layout.addWidget(eng1label, 9, 0, 1, 3)
+        self.layout.addWidget(eng1label, 9, 0, 1, 2)
 
         self.eng1 = QPlainTextEdit()
         self.eng1.setReadOnly(True)
         self.eng1.setFixedHeight(300)
         self.eng1.setDocumentTitle("Pt")
-        self.layout.addWidget(self.eng1, 10, 0, 1, 3)
+        self.layout.addWidget(self.eng1, 10, 0, 1, 2)
         self.eng1.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.header_eng1 = "Channel\tCounts  Ohms  Temp  "
         self.eng1.setPlainText(self.header_eng1)
@@ -128,11 +129,11 @@ class MTPviewer(QMainWindow):
 
         # Create the Engineering 2 display window
         eng2label = QLabel("Engineering Multiplxr (M01)")
-        self.layout.addWidget(eng2label, 9, 3, 1, 2)
+        self.layout.addWidget(eng2label, 9, 2, 1, 3)
 
         self.eng2 = QPlainTextEdit()
         self.eng2.setReadOnly(True)
-        self.layout.addWidget(self.eng2, 10, 3, 1, 2)
+        self.layout.addWidget(self.eng2, 10, 2, 1, 3)
         self.eng2.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.header_eng2 = "Channel\tCounts  Volts"
         self.eng2.setPlainText(self.header_eng2)
@@ -142,11 +143,11 @@ class MTPviewer(QMainWindow):
 
         # Create the Engineering 3 display window
         eng3label = QLabel("Engineering Multiplxr (M02)")
-        self.layout.addWidget(eng3label, 9, 5, 1, 4)
+        self.layout.addWidget(eng3label, 9, 5, 1, 3)
 
         self.eng3 = QPlainTextEdit()
         self.eng3.setReadOnly(True)
-        self.layout.addWidget(self.eng3, 10, 5, 1, 4)
+        self.layout.addWidget(self.eng3, 10, 5, 1, 3)
         self.eng3.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.header_eng3 = "Channel\tCounts  Value"
         self.eng3.appendPlainText(self.header_eng3)
@@ -159,31 +160,31 @@ class MTPviewer(QMainWindow):
         metadata = QPlainTextEdit("Project name")
         metadata.setFixedHeight(25)
         metadata.setReadOnly(True)
-        self.layout.addWidget(metadata, 0, 1, 1, 2)
+        self.layout.addWidget(metadata, 0, 1, 1, 1)
 
-        self.layout.addWidget(QLabel("FltNo"), 0, 3, 1, 1)
+        self.layout.addWidget(QLabel("FltNo"), 0, 2, 1, 1)
         metadata = QPlainTextEdit("Fltno")
         metadata.setFixedHeight(25)
         metadata.setReadOnly(True)
-        self.layout.addWidget(metadata, 0, 4, 1, 1)
+        self.layout.addWidget(metadata, 0, 3, 1, 1)
 
-        self.layout.addWidget(QLabel("Date"), 0, 5, 1, 1)
+        self.layout.addWidget(QLabel("Date"), 0, 4, 1, 1)
         self.date = QPlainTextEdit("Date")
         self.date.setFixedHeight(25)
         self.date.setReadOnly(True)
-        self.layout.addWidget(self.date, 0, 6, 1, 1)
+        self.layout.addWidget(self.date, 0, 5, 1, 1)
 
         metadata = QLabel("Connected")
-        self.layout.addWidget(metadata, 0, 7, 1, 1)
+        self.layout.addWidget(metadata, 0, 6, 1, 1)
         metadata = QLabel("(TBD)")
         metadata.setStyleSheet("QLabel { color: green }")
         metadata.setFixedHeight(25)
-        self.layout.addWidget(metadata, 0, 8, 1, 1)
+        self.layout.addWidget(metadata, 0, 7, 1, 1)
 
         # Create a box to hold the list of brightness temps
         box = QGroupBox()
         box.setFixedHeight(275)
-        self.layout.addWidget(box, 1, 0, 1, 3)
+        self.layout.addWidget(box, 1, 0, 1, 2)
         grid = QGridLayout()
 
         ch1 = QLabel("Channel 1")
@@ -213,8 +214,8 @@ class MTPviewer(QMainWindow):
         self.scantemp = ScanTemp()
         st = self.scantemp.getWindow()
         st.setFixedHeight(275)
-        st.setFixedWidth(300)
-        self.layout.addWidget(st, 1, 3, 1, 3)
+        st.setFixedWidth(280)
+        self.layout.addWidget(st, 1, 2, 1, 3)
 
         # Create a window to hold our timeseries plot and parameter selection
         # dropdown menu
@@ -225,8 +226,8 @@ class MTPviewer(QMainWindow):
         self.profile = Profile()
         profile = self.profile.getWindow()
         profile.setFixedHeight(275)
-        profile.setFixedWidth(260)
-        self.layout.addWidget(profile, 1, 6, 1, 3)
+        profile.setFixedWidth(300)
+        self.layout.addWidget(profile, 1, 5, 1, 3)
 
         # Create a box to hold selected RCFs and controls
         self.layout.addWidget(QLabel("IWG port"), 2, 0, 1, 1)
@@ -235,7 +236,7 @@ class MTPviewer(QMainWindow):
         iwgport.setReadOnly(True)
         self.layout.addWidget(iwgport, 2, 1, 1, 1)
 
-        self.layout.addWidget(QLabel("UDP read port"), 3, 0, 1, 1)
+        self.layout.addWidget(QLabel("UDP port"), 3, 0, 1, 1)
         udpport = QPlainTextEdit(str(self.client.getUDPport()))
         udpport.setFixedHeight(25)
         udpport.setReadOnly(True)
@@ -246,7 +247,9 @@ class MTPviewer(QMainWindow):
         back.setFixedWidth(75)
         self.layout.addWidget(back, 2, 2, 1, 1)
 
-        self.layout.addWidget(QLabel("<- Nav ->"), 2, 3, 1, 1)
+        nav = QLabel("<- Nav ->")
+        self.layout.addWidget(nav, 2, 3, 1, 1)
+        nav.setAlignment(Qt.AlignCenter)
 
         fwd = QPushButton("FWD")
         fwd.setFixedHeight(25)
@@ -273,7 +276,7 @@ class MTPviewer(QMainWindow):
         self.filedata = QPlainTextEdit()
         self.filedata.setReadOnly(True)
         self.filedata.setFixedHeight(140)
-        self.layout.addWidget(self.filedata, 4, 0, 4, 9)
+        self.layout.addWidget(self.filedata, 4, 0, 4, 8)
         self.filedata.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.filedata.appendPlainText("MTP data block display")
 
@@ -295,7 +298,7 @@ class MTPviewer(QMainWindow):
         self.iwg = QPlainTextEdit()
         self.iwg.setReadOnly(True)
         self.iwg.setFixedHeight(60)
-        self.layout.addWidget(self.iwg, 8, 0, 1, 9)
+        self.layout.addWidget(self.iwg, 8, 0, 1, 8)
         self.iwg.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         # Temporarily insert some sample data to get an idea how it will
         # look. Remove this when get data parsing coded.
