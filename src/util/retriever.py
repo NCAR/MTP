@@ -42,6 +42,12 @@ class Retriever():
         self.rcf_set = RetrievalCoefficientFileSet()
         self.ATP = AtmosphericTemperatureProfile
 
+        # Create a file set - this should only be called once - move to init?
+        try:
+            self.rcf_set.getRCFs(self.Directory)
+        except Exception:
+            raise
+
     def getRCSet(self, ScanBTs, ACAltKm):
         """
         Get the gest weighter RC Set that matches this scan
@@ -58,12 +64,6 @@ class Retriever():
         # rfalt1idx, etc. Return False
         if (numpy.isnan(ACAltKm) or ACAltKm < 0):
             return(False)
-
-        # Create a file set
-        try:
-            self.rcf_set.getRCFs(self.Directory)
-        except Exception:
-            raise
 
         # If fileset created successfully, find the best template to match
         # the scanned brightness temperatures
