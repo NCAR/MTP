@@ -44,7 +44,9 @@ class MTPclient():
         # real-time code continue
         if not os.path.isdir(self.RCFdir):
             # Launch a file selector for user to select correct RCFdir
-            return(False)
+            # Temporarily...
+            print("RCF dir " + self.RCFdir + " doesn't exist. Quitting.")
+            exit(1)
 
         # Hack-y stuff to get plot to scroll. pyqtgraph must have a better way
         # that I haven't found yet.
@@ -184,7 +186,11 @@ class MTPclient():
 
         BestWtdRCSet will be False if acaltkm is missing or negative
         """
-        BestWtdRCSet = self.retriever.getRCSet(tbi, acaltkm)
+        try:
+            BestWtdRCSet = self.retriever.getRCSet(tbi, acaltkm)
+        except Exception:
+            raise
+
         return(BestWtdRCSet)
 
     def getProfile(self, tbi, BestWtdRCSet):

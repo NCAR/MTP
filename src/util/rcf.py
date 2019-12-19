@@ -42,8 +42,11 @@ class RetrievalCoefficientFile():
         # Extract the RCFId from the full file path.
         self._RCFId = os.path.splitext(os.path.basename(self._RCFFileName))[0]
 
-        if not self.openRCF():  # Open the RCF file
-            return(None)  # If can't open RCF file, proceed no further
+        # Open the RCF file
+        try:
+            self.openRCF()  # Open the RCF file
+        except Exception:
+            raise  # Pass error back up to calling function
 
         self.getRCF()  # Read in header
 
@@ -61,25 +64,23 @@ class RetrievalCoefficientFile():
             self._RCFFl.append(copy.deepcopy(RCF_FL))
             self.get_FL(i)
 
-    def __del__(self):
-        """ Destructor """
         self.closeRCF()
 
     def openRCF(self):
         """ Open the RCF file as binary """
         try:
             self.rcf = open(self._RCFFileName, "rb")
-            return(True)
         except Exception:
-            print("Unable to open file " + self._RCFFileName)
-            return(False)
+            raise  # Unable to open file. Pass err back up to calling function
 
     def closeRCF(self):
         """ If RCF file is open, close it """
         try:
             self.rcf.close()
-        except Exception:
-            return()
+        except Exception as err:
+            print(err)
+            print("Unable to close file " + self._RCFFileName)
+            return(False)
 
     def getNUM_BRT_TEMPS(self):
         """ Return the number of brightness temperatures from this RCF file """

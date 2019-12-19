@@ -56,8 +56,14 @@ class RetrievalCoefficientFileSet():
             # Ignore directories and files that don't have .RCF extension
             if (os.path.isfile(Directory + "/" + filename) and
                filename.endswith(".RCF")):
-                self._RCFs.append(RetrievalCoefficientFile(Directory + "/" +
-                                                           filename))
+                try:
+                    rcf = RetrievalCoefficientFile(Directory + "/" + filename)
+                except Exception:
+                    # Error opening RCF file. Failure to make fileset
+                    raise
+
+                # If success making fileset, append to list of RCFs
+                self._RCFs.append(rcf)
 
                 #  Only include files that are in the requested filelist
                 #  If filelist is empty, then get everything.

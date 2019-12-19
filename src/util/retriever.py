@@ -60,12 +60,14 @@ class Retriever():
             return(False)
 
         # Create a file set
-        if (self.rcf_set.getRCFs(self.Directory)):
-            # If fileset created successfully, find the best template to match
-            # the scanned brightness temperatures
-            return(self.rcf_set.getBestWeightedRCSet(ScanBTs, ACAltKm, 0.0))
-        else:
-            return(False)  # Did not successfully create a file set
+        try:
+            self.rcf_set.getRCFs(self.Directory)
+        except Exception:
+            raise
+
+        # If fileset created successfully, find the best template to match
+        # the scanned brightness temperatures
+        return(self.rcf_set.getBestWeightedRCSet(ScanBTs, ACAltKm, 0.0))
 
     def retrieve(self, ScanBTs, BestWtdRCSet):
         """

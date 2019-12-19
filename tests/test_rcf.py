@@ -47,7 +47,8 @@ class TESTrcf(unittest.TestCase):
 
     def testBadOpen(self):
         """ Test initialization with a bogus directory """
-        self.rcf = RetrievalCoefficientFile("../")
+        with self.assertRaises(IsADirectoryError):
+            RetrievalCoefficientFile("../")
 
     def testHeader(self):
         """ Test that header read in correctly """
