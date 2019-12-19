@@ -8,7 +8,8 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
 from PyQt5.QtWidgets import QMainWindow, QGridLayout, QWidget, \
-        QPlainTextEdit, QFrame, QAction, QLabel, QPushButton, QGroupBox
+        QPlainTextEdit, QFrame, QAction, QLabel, QPushButton, QGroupBox, \
+        QMessageBox
 from PyQt5.QtCore import QSocketNotifier, Qt
 from PyQt5.QtGui import QFontMetrics, QFont
 
@@ -25,6 +26,8 @@ class MTPviewer(QMainWindow):
 
         self.app = app
         self.cell = [[numpy.nan for j in range(10)] for i in range(3)]
+
+        self.clicked = False  # Only show error msg once
 
         self.client = MTPclient()
         self.client.initRetriever()
@@ -357,31 +360,41 @@ class MTPviewer(QMainWindow):
         tb = self.client.getTB()
         tbi = self.client.invertArray(tb)
 
+        # ---------- Populate scan and template plot ----------
+        # Do this before begin retrieval so that if retrieval fails, use can
+        # still see that counts are being collected by instrument
+
+        # Clear the scan and template plot canvas in prep for new plots
+        self.scantemp.clear()
+
+        # Plot scan brightness temperatures.
+        self.scantemp.plotTB(tbi)
+        self.scantemp.draw()
+
+        # ---------- Perform retrieval ----------
         # Get the template brightness temperatures that best correspond to scan
         # brightness temperatures
         rawscan = self.client.reader.getRawscan()
         acaltkm = float(rawscan['Aline']['values']['SAPALT']['val'])  # km
-        BestWtdRCSet = self.client.getTemplate(acaltkm, tbi)
+        try:
+            BestWtdRCSet = self.client.getTemplate(acaltkm, tbi)
+        except Exception as err:
+            if not self.clicked:
+                QMessageBox.warning(self, '',
+                                    "Could not perform retrieval --" +
+                                    str(err) + "\nClick OK to stop " +
+                                    "seeing this message ", QMessageBox.Ok)
+                # Do not get to this point until user clicks OK
+                self.clicked = True  # Only show error once
+
+            return()  # If retrieval failed, go no further
+
+        # ---------- Retrieval succeeded ----------
         # Does RCF file always start with NRC? I think it stands for:
         # "Ncar gv RCf file"
         self.RCF1.setPlainText(BestWtdRCSet['RCFId'].replace('NRC', ''))
 
-        # Get the physical temperature profile (and find tropopause)
-        ATP = self.client.getProfile(tbi, BestWtdRCSet)
-
-        # ---------- Populate scan and template plot ----------
-        # Clear the canvas in prep for new plots
-        self.scantemp.clear()
-
-        # Plot scan counts - used during development
-        # scnt = self.client.getSCNT()  # Get scan counts as fn(Angle, Channel)
-        # scnti = self.client.invertArray(scnt)  #Invert so fn(Channel, Angle)
-        # self.scantemp.plotDataScnt(scnti)    # Update the scan count plot
-
-        # Plot scan brightness temperatures
-        self.scantemp.plotTB(tbi)
-
-        # Plot the template brightness temperatures
+        # Plot the template brightness temperatures on the scan and temp plot
         self.scantemp.plotTemplate(BestWtdRCSet['FL_RCs']['sOBav'])
 
         # Get min and max x values, used for auto-scaling horizontal lines
@@ -397,7 +410,8 @@ class MTPviewer(QMainWindow):
         # Draw the plots
         self.scantemp.draw()
 
-        # What is the magenta line on the scan and template plot?
+        # Get the physical temperature profile (and find tropopause)
+        ATP = self.client.getProfile(tbi, BestWtdRCSet)
 
         # ---------- Populate profile plot ----------
         # Clear the canvas in prep for new plots
