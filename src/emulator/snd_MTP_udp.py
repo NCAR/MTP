@@ -37,7 +37,7 @@ def main(args):
     udp_ip = "127.0.0.1"
 
     # Location of default ascii_parms file
-    ascii_parms = os.path.join(getrootdir(), 'config/ascii_parms')
+    ascii_parms = os.path.join(getrootdir(), 'config', 'ascii_parms')
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

@@ -35,10 +35,10 @@ class MTPclient():
         self.NUM_CHANNELS = 3  # Number of channels being read
 
         # Location of default ascii_parms file
-        self.ascii_parms = os.path.join(getrootdir(), 'config/ascii_parms')
+        self.ascii_parms = os.path.join(getrootdir(), 'config', 'ascii_parms')
 
         # Set location of RCFdir to config/RCF
-        self.RCFdir = os.path.join(getrootdir(), 'config/RCF')
+        self.RCFdir = os.path.join(getrootdir(), 'config', 'RCF')
 
         # Check if RCFdir exists. If not, don't create Profile plot but let
         # real-time code continue
