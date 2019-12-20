@@ -5,6 +5,14 @@
 import numpy
 
 
+# Dictionary to hold info on a single tropopause. We use an array of these
+# dictionaries in the code to store all the tropopauses
+TropopauseRecord = {
+    'idx': numpy.nan,   # The level (in the temperature profile) of the trop
+    'altc': numpy.nan,  # The altitude of the found tropopause
+    'tempc': numpy.nan  # The temperature of the found tropopause
+}
+
 AtmosphericTemperatureProfile = {
     'Temperatures': [],  # Physical temperature
     'Altitudes': [],
@@ -15,13 +23,5 @@ AtmosphericTemperatureProfile = {
     'RCFMRIndex':  numpy.nan,  # Meridional Region Index: Quality of match
                                # between measured Brightness Temperture (TB)
                                # and TB from template
-    'trop': [],  # Array of tropopauses for this profile
-}
-
-# Dictionary to hold info on a single tropopause. We use an array of these
-# dictionaries in the code to store all the tropopauses
-TropopauseRecord = {
-    'idx': numpy.nan,   # The level (in the temperature profile) of the trop
-    'altc': numpy.nan,  # The altitude of the found tropopause
-    'tempc': numpy.nan  # The temperature of the found tropopause
+    'trop': [TropopauseRecord, TropopauseRecord],  # Array of 2 tropopauses
 }

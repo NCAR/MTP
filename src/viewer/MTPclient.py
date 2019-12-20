@@ -17,7 +17,6 @@ from util.decodeM02 import decodeM02
 from util.calcTBs import BrightnessTemperature
 from util.retriever import Retriever
 from util.tropopause import Tropopause
-from util.profile_structs import TropopauseRecord
 from lib.rootdir import getrootdir
 
 
@@ -214,9 +213,6 @@ class MTPclient():
         if (BestWtdRCSet):
             ATP = self.retriever.retrieve(tbi, BestWtdRCSet)
 
-            # Add dict to hold first tropopause to array of trops
-            ATP['trop'].append(TropopauseRecord.copy())
-
             # Instantiate a tropopause class
             NUM_RETR_LVLS = self.retriever.rcf_set._RCFs[0].getNUM_RETR_LVLS()
             trop = Tropopause(ATP, NUM_RETR_LVLS)
@@ -244,9 +240,6 @@ class MTPclient():
 
                 # If found a tropopause, look for a second one
                 if not numpy.isnan(ATP['trop'][0]['idx']):
-                    # Add a dict to hold a second tropopause
-                    ATP['trop'].append(TropopauseRecord.copy())
-
                     # Start at previous index
                     [startTropIndex, ATP['trop'][1]['idx'],
                      ATP['trop'][1]['altc'], ATP['trop'][1]['tempc']] = \
