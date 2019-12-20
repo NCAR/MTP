@@ -3,6 +3,7 @@
 # Temperature Profiler (MTP).
 ###############################################################################
 import numpy
+import copy
 
 
 # Dictionary to hold info on a single tropopause. We use an array of these
@@ -23,5 +24,6 @@ AtmosphericTemperatureProfile = {
     'RCFMRIndex':  numpy.nan,  # Meridional Region Index: Quality of match
                                # between measured Brightness Temperture (TB)
                                # and TB from template
-    'trop': [TropopauseRecord, TropopauseRecord],  # Array of 2 tropopauses
+    'trop': [copy.deepcopy(TropopauseRecord),
+             copy.deepcopy(TropopauseRecord)],  # Array of 2 tropopauses
 }
