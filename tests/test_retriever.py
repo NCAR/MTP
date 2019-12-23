@@ -44,9 +44,13 @@ class TESTretriever(unittest.TestCase):
     def test_getRCSet(self):
         """ Test creation of a functioning retrieval_coefficient_fileset """
         Rtr = Retriever(self.RCFdir)
-        BestWtdRcSet = Rtr.getRCSet(self.scanBTs, self.ACAltKm)
+
+        # Instantiating retriever calls getRCFs which reads RCFs in from
+        # RCFdir. There is only one RCF in the test_data dir, so...
+        self.assertEqual(len(Rtr.rcf_set._RCFs), 1)
 
         # Test that BestWtdRcSet returns as expected with spot checks
+        BestWtdRcSet = Rtr.getRCSet(self.scanBTs, self.ACAltKm)
         self.assertEqual(BestWtdRcSet['RCFFileName'],
                          '../tests/test_data/NRCKA068.RCF')
 
@@ -68,6 +72,9 @@ class TESTretriever(unittest.TestCase):
         ACAltKm = -1
         BestWtdRcSet = Rtr.getRCSet(self.scanBTs, ACAltKm)
         self.assertEqual(BestWtdRcSet, False)
+
+        # Should only read in the RCF dir once, so check than len still just 1
+        self.assertEqual(len(Rtr.rcf_set._RCFs), 1)
 
     def test_retriever(self):
         """ Validate retrieved profile """
@@ -102,3 +109,6 @@ class TESTretriever(unittest.TestCase):
         for i in range(len(CSETaltitudes)):
             self.assertEqual('%7.4f' % self.ATP['Altitudes'][i],
                              '%7.4f' % CSETaltitudes[i])
+
+        # Should only read in the RCF dir once, so check than len still just 1
+        self.assertEqual(len(Rtr.rcf_set._RCFs), 1)

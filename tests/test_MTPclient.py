@@ -95,3 +95,9 @@ class TESTMTPclient(unittest.TestCase):
 
         self.assertEqual(ATP['Temperatures'], tempc)
         self.assertEqual(ATP['Altitudes'], altc)
+        self.assertEqual(len(ATP['trop']), 2)
+
+        # Call getProfile again and make overwrites ATP['trop'] so length still
+        # 2 and not 4
+        ATP = self.client.getProfile(tbi, BestWtdRCSet)
+        self.assertEqual(len(ATP['trop']), 2)
