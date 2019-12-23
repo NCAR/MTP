@@ -39,6 +39,8 @@ class Tropopause():
         self.NUM_RETR_LVLS = NUM_RETR_LVLS
         self.tempc = ATP['Temperatures']
         self.altc = ATP['Altitudes']
+        # The referenceLapseRate is also hardcoded in MTPviewer.py
+        self.referenceLapseRate = -2  # -2K/km; beginning of a tropopause
 
         # Constants used in tropopause calculations
         self.referenceLayerThickness = 2  # 2km
@@ -157,11 +159,11 @@ class Tropopause():
         Output:
             altBot - altitude of lowest layer to loop for next tropopause
         """
-        referenceLapseRate = -3  # -3K/km; end of a tropopause
+        endLapseRate = -3  # -3K/km; end of a tropopause
         altBot = self.altc[LT]
-        LRavg = 0  # Initialize to something greater than referenceLapseRate
+        LRavg = 0  # Initialize to something greater than endLapseRate
 
-        while (LRavg > referenceLapseRate):
+        while (LRavg > endLapseRate):
             # Find alt at bottom and top of layer we are testing
             altTop = altBot + self.referenceLayerThickness
 
@@ -245,7 +247,6 @@ class Tropopause():
         # Find the next tropopause (could be the first)
         # referenceLapseRate is the cutoff lapse rate that indicates a
         # transition has been found.
-        referenceLapseRate = -2  # -2K/km; beginning of a tropopause
         while not foundTrop:
             # Starting with first measurement above 500mb, find the index (LT)
             # of the lowest level at which the linear lapse rate (LRavg)
@@ -253,7 +254,7 @@ class Tropopause():
             # tropopause that meets the first part of the WMO criteria.
             # LRavg is the average lapse rate over the reference layer
             [LRavg, LT] = self.linearLapseRate(startidx, LT,
-                                               referenceLapseRate)
+                                               self.referenceLapseRate)
             if (numpy.isnan(LRavg)):  # no tropopause found
                 startidx = LT
                 return(startidx, numpy.nan, numpy.nan, numpy.nan)
@@ -285,7 +286,7 @@ class Tropopause():
                     startidx = LT
                     return(startidx, numpy.nan, numpy.nan, numpy.nan)
 
-                if (LRavg < referenceLapseRate):
+                if (LRavg < self.referenceLapseRate):
                     continue
 
                 # Now check that lapse rate is less than 2K/km from LT to *any*
@@ -300,7 +301,7 @@ class Tropopause():
             # If so, found tropopause. If not, failed WMO criteria and still
             # haven't found tropopause. Try again with lowest possible
             # tropopause ht set to current level (startidx).
-            if (LRavg >= referenceLapseRate):
+            if (LRavg >= self.referenceLapseRate):
                 foundTrop = 1  # exit while loop
 
         # if we get here, we met all the criteria. Zt1 and TT1 are the altitude
