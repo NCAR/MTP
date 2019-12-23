@@ -417,7 +417,7 @@ class MTPviewer(QMainWindow):
         # Clear the canvas in prep for new plots
         self.profile.clear()
 
-        # Plot the physical temperature profile - TBD
+        # Plot the physical temperature profile
         if (ATP):  # If successfully create a profile from this scan
             self.profile.plotProfile(ATP['Temperatures'], ATP['Altitudes'])
 
@@ -428,6 +428,12 @@ class MTPviewer(QMainWindow):
         # Plot the tropopause (dotted line)
         for i in range(len(ATP['trop'])):
             self.profile.plotTropopause(ATP['trop'][i])
+
+        # Plot the adiabatic lapse rate
+        # diagonal dashed line, fixed slope anchored to ambient temperature
+        # point of first tropopause
+        referenceLapseRate = -2  # This is also hardcoded in tropopause.py
+        self.profile.plotLapseRate(ATP['trop'][0], referenceLapseRate)
 
         # Draw the plots
         self.profile.draw()

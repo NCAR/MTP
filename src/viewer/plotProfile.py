@@ -87,7 +87,18 @@ class Profile():
     def plotTropopause(self, trop):
         """ Plot the tropopause on the left axis """
         self.ax.hlines(float(trop['altc']), self.tbxlimL, self.tbxlimR,
-                       color='grey', linestyle='dashed')
+                       color='lightgrey', linestyle='dashed')
+
+    def plotLapseRate(self, trop, lapseRate):
+        """
+        Plot a 2K/km adiabatic lapse rate as a diagonal dashed line with a
+        fixed slope anchored to the ambient temperature point on the profile
+        """
+        self.ax.plot([float(trop['tempc']),
+                      float(trop['tempc']) + -1 * float(trop['altc'] *
+                      lapseRate)],
+                     [float(trop['altc']), 0], color='lightgrey',
+                     linestyle='dashed')
 
     def draw(self):
         self.canvas.draw()
