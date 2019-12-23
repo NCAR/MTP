@@ -280,6 +280,16 @@ class MTPviewer(QMainWindow):
         bad.setFixedHeight(25)
         self.layout.addWidget(bad, 2, 7, 1, 1)
 
+        mrilabel = QLabel("MRI")
+        mrilabel.setToolTip("Meridional Region Index: Quality of match " +
+                            "between measured Brightness Temperture (TB) and" +
+                            "TB from template")
+        self.layout.addWidget(mrilabel, 3, 2, 1, 1)
+        self.MRI = QPlainTextEdit("MRI")
+        self.MRI.setFixedHeight(25)
+        self.MRI.setReadOnly(True)
+        self.layout.addWidget(self.MRI, 3, 3, 1, 1)
+
         # Create a File data display window
         self.filedata = QPlainTextEdit()
         self.filedata.setReadOnly(True)
@@ -388,6 +398,9 @@ class MTPviewer(QMainWindow):
         # Does RCF file always start with NRC? I think it stands for:
         # "Ncar gv RCf file"
         self.RCF1.setPlainText(BestWtdRCSet['RCFId'].replace('NRC', ''))
+
+        # Display MRI
+        self.MRI.setPlainText('%.3f' % (ATP['RCFMRIndex']))
 
         # Plot the template brightness temperatures on the scan and temp plot
         self.scantemp.plotTemplate(BestWtdRCSet['FL_RCs']['sOBav'])
