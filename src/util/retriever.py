@@ -42,7 +42,7 @@ class Retriever():
         self.rcf_set = RetrievalCoefficientFileSet()
         self.ATP = AtmosphericTemperatureProfile
 
-        # Create a file set - this should only be called once - move to init?
+        # Create a file set - this should only be called once at init
         try:
             self.rcf_set.getRCFs(self.Directory)
         except Exception:
