@@ -408,6 +408,11 @@ class MTPviewer(QMainWindow):
         # ---------- Populate profile plot ----------
         # Clear the canvas in prep for new plots
         self.profile.clear()
+        self.profile.configure()  # Layout the profile plot
+
+        # Plot the profile from the template
+        self.profile.plotTemplate((BestWtdRCSet['FL_RCs']['sRTav']),
+                                  ATP['Altitudes'])
 
         # Plot the physical temperature profile
         if (ATP):  # If successfully create a profile from this scan

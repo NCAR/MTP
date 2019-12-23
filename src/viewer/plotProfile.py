@@ -61,22 +61,32 @@ class Profile():
         # Since clear removed the labels and formatting, have to add it back
         self.configureAxis()
 
-    def plotProfile(self, temperature, altitude):
+    def configure(self):
         """
-        Plot profile vs temperature in the self.profile plot window
+        Layout the plot axis and range
         """
         # set limits and label for X axis specific to profile
         self.ax.set_xlabel('Temperature (K)')
         self.ax.set_xlim(self.tbxlimL, self.tbxlimR)
         self.ax.xaxis.set_minor_locator(MultipleLocator(5))
 
+        # Add a faint grid behind the plot
+        self.ax.tick_params(which='minor', color='grey')
+        self.ax.grid(which='both', color='lightgrey', linestyle='dotted')
+
+    def plotProfile(self, temperature, altitude):
+        """
+        Plot profile vs temperature in the self.profile plot window
+        """
         # Plot the temperature on the left axis
         self.ax.plot(temperature, altitude, marker='o', markersize=2,
                      color='#FFE433')
 
-        # Add a faint grid behind the plot
-        self.ax.tick_params(which='minor', color='grey')
-        self.ax.grid(which='both', color='lightgrey', linestyle='dotted')
+    def plotTemplate(self, temperature, altitude):
+        """
+        Plot template profile vs temperature in the plot window
+        """
+        self.ax.plot(temperature, altitude, color='lightgrey')
 
     def plotACALT(self, SAAT, ACAltKm):
         """ Plot the aircraft altitude on the left axis """
