@@ -36,7 +36,7 @@ class RetrievalCoefficientFile():
 
     def __init__(self, Filename):
         """ Constructor """
-        self._RCFHdr = RCF_HDR
+        self._RCFHdr = copy.deepcopy(RCF_HDR)
         self._RCFFileName = Filename
 
         # Extract the RCFId from the full file path.
