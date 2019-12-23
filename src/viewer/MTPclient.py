@@ -99,6 +99,35 @@ class MTPclient():
     def getUDPport(self):
         return(self.udp_read_port)
 
+    def doCalcs(self):
+        """ Perform calculations on latest scan """
+        self.calcPt()  # Calculate resistance and temperatures from the Pt line
+        self.calcM01()  # Calculate the voltage from the M01 line
+        self.calcM02()  # Calculate the values from the M02 line
+
+        # Calculate the brightness temperature from the Bline.
+        # Uses the temperature from the Pt line so must be called after
+        # calcPt()
+        self.calcTB()
+
+        # Invert the brightness temperature to column major storage
+        tb = self.getTB()
+        tbi = self.invertArray(tb)
+
+        return(tbi)
+
+    def doRetrieval(self, tbi):
+        """ Perform retrieval """
+        # Get the template brightness temperatures that best correspond to scan
+        # brightness temperatures
+        rawscan = self.reader.getRawscan()
+        acaltkm = float(rawscan['Aline']['values']['SAPALT']['val'])  # km
+        try:
+            BestWtdRCSet = self.getTemplate(acaltkm, tbi)
+            return(BestWtdRCSet)
+        except Exception:
+            raise
+
     def calcPt(self):
         """
         Calculate resistance and temperature

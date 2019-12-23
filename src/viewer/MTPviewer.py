@@ -92,6 +92,10 @@ class MTPviewer(QMainWindow):
         windowID.setMinimumSize(textWidth, textHeight)  # Finally, set size
 
     def createTBcell(self, grid, chan, ang):
+        """
+        Create a grid to display the brightness temperatures for the current
+        scan
+        """
         cell = QPlainTextEdit("Ang " + str(ang+1))
         cell.setFixedHeight(25)
         cell.setReadOnly(True)
@@ -101,6 +105,7 @@ class MTPviewer(QMainWindow):
         return(cell)
 
     def writeTB(self, cell):
+        """ Display the brightness temperatures in the GUI """
         reader = self.client.reader
         for i in range(0, 3):
             for j in range(0, 10):
@@ -318,10 +323,23 @@ class MTPviewer(QMainWindow):
         Function to tell client to read latest data and to update all plots in
         the GUI.
         """
-
         # Ask client to read data from the UDP feed and save it to the data
         # dictionary.
         self.client.readSocket()
+
+        # Perform line calculations on latest scan
+        tbi = self.client.doCalcs()
+
+        try:
+            BestWtdRCSet = self.client.doRetrieval(tbi)  # Perform retrieval
+        except Exception as err:
+            if not self.clicked:
+                QMessageBox.warning(self, '',
+                                    "Could not perform retrieval --" +
+                                    str(err) + "\nClick OK to stop " +
+                                    "seeing this message ", QMessageBox.Ok)
+                # Do not get to this point until user clicks OK
+                self.clicked = True  # Only show error once
 
         # Display date of latest record
         self.writeDate()
@@ -336,29 +354,17 @@ class MTPviewer(QMainWindow):
         # Display the latest IWG packet
         self.writeIWG()
 
-        # Calculate the resistance and temperatures from the Pt line
-        self.client.calcPt()
         # Update the Engineering 1 box with Pt calculated values
         self.writeEng1()
 
-        # Calculate the voltage from the M01 line
-        self.client.calcM01()
         # Update the Engineering 2 box with M01 calculated values
         self.writeEng2()
 
-        # Calculate the values from the M02 line
-        self.client.calcM02()
         # Update the Engineering 3 box with the M02 calculated values
         self.writeEng3()
 
-        # Calculate the brightness temperature from the Bline.
-        # Uses the temperature from the Pt line so must be called after
-        # calcPt()
-        self.client.calcTB()
+        # Display the brightness temperatures in text format
         self.writeTB(self.cell)
-        # Invert the brightness temperature to column major storage
-        tb = self.client.getTB()
-        tbi = self.client.invertArray(tb)
 
         # ---------- Populate scan and template plot ----------
         # Do this before begin retrieval so that if retrieval fails, use can
@@ -371,25 +377,14 @@ class MTPviewer(QMainWindow):
         self.scantemp.plotTB(tbi)
         self.scantemp.draw()
 
-        # ---------- Perform retrieval ----------
-        # Get the template brightness temperatures that best correspond to scan
-        # brightness temperatures
-        rawscan = self.client.reader.getRawscan()
-        acaltkm = float(rawscan['Aline']['values']['SAPALT']['val'])  # km
-        try:
-            BestWtdRCSet = self.client.getTemplate(acaltkm, tbi)
-        except Exception as err:
-            if not self.clicked:
-                QMessageBox.warning(self, '',
-                                    "Could not perform retrieval --" +
-                                    str(err) + "\nClick OK to stop " +
-                                    "seeing this message ", QMessageBox.Ok)
-                # Do not get to this point until user clicks OK
-                self.clicked = True  # Only show error once
-
-            return()  # If retrieval failed, go no further
+        # If retrieval failed, go no further
+        if not (BestWtdRCSet):
+            return()
 
         # ---------- Retrieval succeeded ----------
+        # Get the physical temperature profile (and find tropopause)
+        ATP = self.client.getProfile(tbi, BestWtdRCSet)
+
         # Does RCF file always start with NRC? I think it stands for:
         # "Ncar gv RCf file"
         self.RCF1.setPlainText(BestWtdRCSet['RCFId'].replace('NRC', ''))
@@ -409,9 +404,6 @@ class MTPviewer(QMainWindow):
 
         # Draw the plots
         self.scantemp.draw()
-
-        # Get the physical temperature profile (and find tropopause)
-        ATP = self.client.getProfile(tbi, BestWtdRCSet)
 
         # ---------- Populate profile plot ----------
         # Clear the canvas in prep for new plots
