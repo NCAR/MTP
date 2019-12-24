@@ -336,6 +336,7 @@ class MTPviewer(QMainWindow):
         # Ask client to read data from the UDP feed and save it to the data
         # dictionary.
         self.client.readSocket()
+        # self.client.updateXY()
 
         # Perform line calculations on latest scan
         tbi = self.client.doCalcs()
