@@ -557,17 +557,25 @@ class MTPviewer(QMainWindow):
             # and read in as the string ''
             if (val == ''):
                 val = "%10s" % ' '
-                deg = '  '
+                degstr = '  '
             elif numpy.isnan(deg):
                 val = "%04d" % int(val)
-                deg = 'N/A'
+                degstr = 'N/A'
             else:
                 val = "%04d" % int(val)
-                if var == 'ACCPCNTE':  # Set units to g
-                    deg = "%+06.2f g" % deg
+                # If Tsynth goes over 50, warn user by changing bkgnd to red
+                if (var == 'TSYNCNTE' and deg > 50.0):
+                    fmt = self.eng3.currentCharFormat()
+                    fmt.setBackground(Qt.red)
+                    self.eng3.setCurrentCharFormat(fmt)
+                if var == 'ACCPCNTE':  # Set units of Acceler to g
+                    degstr = "%+06.2f g" % deg
                 else:
-                    deg = "%+06.2f C" % deg
+                    degstr = "%+06.2f C" % deg
 
-            self.eng3.appendPlainText(name + "\t" + val + "  " + deg)
-
-            # If Tsynth is > 50, change text color to red - to be coded
+            self.eng3.appendPlainText(name + "\t" + val + "  " + degstr)
+            # Only change the Tsynth line, rest should remain on white
+            if (var == 'TSYNCNTE' and deg > 50.0):
+                fmt = self.eng3.currentCharFormat()
+                fmt.setBackground(Qt.white)
+                self.eng3.setCurrentCharFormat(fmt)
