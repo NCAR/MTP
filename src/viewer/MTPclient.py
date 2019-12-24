@@ -18,26 +18,17 @@ from util.calcTBs import BrightnessTemperature
 from util.retriever import Retriever
 from util.tropopause import Tropopause
 from lib.rootdir import getrootdir
+from lib.config import config
 
 
 class MTPclient():
 
     def __init__(self):
 
-        # All of this needs to be put in a config file and read in
-        self.udp_send_port = 32106  # from viewer to MTP
-        self.udp_read_port = 32107  # from MTP to viewer
-        self.iwg1_port = 7071       # IWG1 packets from GV
+        # Set config file name - should be passed in on command line
+        self.config = os.path.join(getrootdir(), 'config', 'proj.yml')
 
-        # Config for current MTP setup
-        self.NUM_SCAN_ANGLES = 10  # Number of scan angles being read
-        self.NUM_CHANNELS = 3  # Number of channels being read
-
-        # Location of default ascii_parms file
-        self.ascii_parms = os.path.join(getrootdir(), 'config', 'ascii_parms')
-
-        # Set location of RCFdir to config/RCF
-        self.RCFdir = os.path.join(getrootdir(), 'config', 'RCF')
+        self.readConfig(self.config)
 
         # Check if RCFdir exists. If not, don't create Profile plot but let
         # real-time code continue
@@ -79,6 +70,38 @@ class MTPclient():
         # Create a public list of the variables in the Aline. Used to plot
         # timeseries of the variables.
         # self.varlist = self.reader.getVarList('Aline')
+
+    def readConfig(self, filename):
+        # Read config from config file
+        configfile = config()
+        configfile.read(filename)
+        # udp_send_port is port from viewer to MTP
+        self.udp_send_port = configfile.getInt('udp_send_port')
+        # udp_read_port is from MTP to viewer
+        self.udp_read_port = configfile.getInt('udp_read_port')
+        # port to receive IWG1 packets from GV
+        self.iwg1_port = configfile.getInt('iwg1_port')
+
+        # Config for current MTP setup
+        # Number of scan angles being read
+        self.NUM_SCAN_ANGLES = configfile.getInt('NUM_SCAN_ANGLES')
+        # Number of channels being read
+        self.NUM_CHANNELS = configfile.getInt('NUM_CHANNELS')
+
+        # Location of ascii_parms file
+        self.ascii_parms = configfile.getPath('ascii_parms')
+        # Location of RCF dir
+        self.RCFdir = configfile.getPath('RCFdir')
+
+        # Project-specific parameters
+        self.project = configfile.getVal('project')
+        self.fltno = configfile.getVal('fltno')
+
+    def getProj(self):
+        return(self.project)
+
+    def getFltno(self):
+        return(self.fltno)
 
     def initRetriever(self):
         """ instantiate an RCF retriever """

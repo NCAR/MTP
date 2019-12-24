@@ -168,13 +168,13 @@ class MTPviewer(QMainWindow):
 
         # Create project metadata fields for first row of GUI
         self.layout.addWidget(QLabel("Project"), 0, 0, 1, 1)
-        metadata = QPlainTextEdit("Project name")
+        metadata = QPlainTextEdit(self.client.getProj())
         metadata.setFixedHeight(25)
         metadata.setReadOnly(True)
         self.layout.addWidget(metadata, 0, 1, 1, 1)
 
         self.layout.addWidget(QLabel("FltNo"), 0, 2, 1, 1)
-        metadata = QPlainTextEdit("Fltno")
+        metadata = QPlainTextEdit(self.client.getFltno())
         metadata.setFixedHeight(25)
         metadata.setReadOnly(True)
         self.layout.addWidget(metadata, 0, 3, 1, 1)
