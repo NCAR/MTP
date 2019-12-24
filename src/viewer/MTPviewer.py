@@ -151,6 +151,9 @@ class MTPviewer(QMainWindow):
 
         # Create the Engineering 3 display window
         eng3label = QLabel("Engineering Multiplxr (M02)")
+        eng3label.setStyleSheet("""QToolTip {background-color: lightyellow}""")
+        eng3label.setToolTip("If T Synth goes over 50, turn off MTP to avoid" +
+                             " damage due to overheating")
         self.layout.addWidget(eng3label, 9, 5, 1, 3)
 
         self.eng3 = QPlainTextEdit()
@@ -281,6 +284,7 @@ class MTPviewer(QMainWindow):
         self.layout.addWidget(bad, 2, 7, 1, 1)
 
         mrilabel = QLabel("MRI")
+        mrilabel.setStyleSheet("""QToolTip {background-color: lightyellow}""")
         mrilabel.setToolTip("Meridional Region Index: Quality of match " +
                             "between measured Brightness Temperture (TB) and" +
                             "TB from template")
