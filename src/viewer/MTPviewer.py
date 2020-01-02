@@ -228,11 +228,6 @@ class MTPviewer(QMainWindow):
         st.setFixedWidth(280)
         self.layout.addWidget(st, 1, 2, 1, 3)
 
-        # Create a window to hold our timeseries plot and parameter selection
-        # dropdown menu
-        # self.timeseries = Timeseries(self.client)
-        # self.layout.addLayout(self.timeseries.getWindow(), 1, 5, 1, 4)
-
         # Create a profile plot and add it to the layout
         self.profile = Profile()
         profile = self.profile.getWindow()
@@ -340,7 +335,6 @@ class MTPviewer(QMainWindow):
         # Ask client to read data from the UDP feed and save it to the data
         # dictionary.
         self.client.readSocket()
-        # self.client.updateXY()
 
         # Perform line calculations on latest scan
         tbi = self.client.doCalcs()
@@ -358,10 +352,6 @@ class MTPviewer(QMainWindow):
 
         # Display date of latest record
         self.writeDate()
-
-        # Update the XY plot (the plot of IWG params vs time)
-        # (x, y) = self.client.getXY()
-        # self.timeseries.plotDataXY(x, y)
 
         # Display the latest data in the MTP data block display
         self.writeData()
