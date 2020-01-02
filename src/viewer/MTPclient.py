@@ -270,12 +270,13 @@ class MTPclient():
         else:
             return(False)  # Could not create a profile from this scan
 
-    def connect(self):
+    def connectMTP(self):
         """ Connection to UDP data streams """
         # Connect to MTP data stream
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind(("0.0.0.0", self.udp_read_port))
 
+    def connectIWG(self):
         # Connect to IWG data stream
         self.sockI = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sockI.bind(("0.0.0.0", self.iwg1_port))
@@ -288,18 +289,22 @@ class MTPclient():
         """ Return the IWG socket file descriptor """
         return self.sockI.fileno()
 
+    def readSocketI(self):
+        # Listen for IWG packets
+        dataI = self.sockI.recv(1024).decode()
+
+        # Store IWG record to data dictionary
+        self.iwg.parseIwgPacket(dataI)   # Store to values
+        self.reader.parseLine(dataI)  # Store to date, data, and asciiPacket
+
     def readSocket(self):
         """ Read data from the UDP feed and save it to the data dictionary """
         # Listen for MTP packets
         data = self.sock.recv(1024).decode()
-        # Listen for IWG packets
-        dataI = self.sockI.recv(1024).decode()
 
         # Store data to data dictionary
         self.reader.parseAsciiPacket(data)  # Store to values
         self.reader.parseLine(data)   # Store to date and data
-        self.iwg.parseIwgPacket(dataI)   # Store to values
-        self.reader.parseLine(dataI)  # Store to date, data, and asciiPacket
 
     def close(self):
         """ Close UDP socket connections """
@@ -307,6 +312,7 @@ class MTPclient():
         if self.sock:
             self.sock.close()
 
+    def closeI(self):
         # Close the connection to the IWG data stream
         if self.sockI:
             self.sockI.close()

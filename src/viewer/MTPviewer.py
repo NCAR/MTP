@@ -31,7 +31,8 @@ class MTPviewer(QMainWindow):
 
         self.client = MTPclient()
         self.client.initRetriever()
-        self.client.connect()
+        self.client.connectMTP()
+        self.client.connectIWG()
 
         # The QMainWindow class provides a main application window
         QMainWindow.__init__(self)
@@ -43,6 +44,11 @@ class MTPviewer(QMainWindow):
         self.readNotifier = QSocketNotifier(
                 self.client.getSocketFileDescriptor(), QSocketNotifier.Read)
         self.readNotifier.activated.connect(lambda: self.plotData())
+
+        # When data appears on the IWG socket, call readIWG()
+        self.readNotifierI = QSocketNotifier(
+                self.client.getSocketFileDescriptorI(), QSocketNotifier.Read)
+        self.readNotifierI.activated.connect(lambda: self.readIWG())
 
     def initUI(self):
         """ Initialize the GUI UI """
@@ -324,8 +330,16 @@ class MTPviewer(QMainWindow):
 
     def close(self):
         """ Actions to take when Quit button is clicked """
-        self.client.close()  # Close UDP and IWG connections
+        self.client.close()  # Close UDP connection
+        self.client.closeI()  # Close IWG connection
         self.app.quit()      # Close app
+
+    def readIWG(self):
+        """ Tell client to read latest IWG record """
+        self.client.readSocketI()
+
+        # Display the latest IWG packet
+        self.writeIWG()
 
     def plotData(self):
         """
@@ -355,9 +369,6 @@ class MTPviewer(QMainWindow):
 
         # Display the latest data in the MTP data block display
         self.writeData()
-
-        # Display the latest IWG packet
-        self.writeIWG()
 
         # Update the Engineering 1 box with Pt calculated values
         self.writeEng1()
