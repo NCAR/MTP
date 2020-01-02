@@ -31,7 +31,7 @@ def main(args):
     (options, args) = parser.parse_args(args)
 
     # Configure UDP ports
-    iwg1_port = 7071       # IWG1 packets from GV
+    #iwg1_port = 7071       # IWG1 packets from GV
     udp_send_port = 32107  # Communication from MTP
     # udp_read_port = 30106  # Communication to MTP; not used by this emulator
     udp_ip = "127.0.0.1"
@@ -70,17 +70,17 @@ def main(args):
         if sock:
             sock.sendto(buffer.encode(), (udp_ip, udp_send_port))
 
-        buffer = iwg.getIwgPacket()
-        print(buffer)
+        #buffer = iwg.getIwgPacket()
+        #print(buffer)
 
         # Send IWG ascii packet out over UDP
-        if sock:
-            sock.sendto(buffer.encode(), (udp_ip, iwg1_port))
+        #if sock:
+        #    sock.sendto(buffer.encode(), (udp_ip, iwg1_port))
 
         # Wait before retrieve next scan, to emulate MTP 17 second gap between
         # scans. For testing, I am using 1 sec data so I don't have to wait as
         # long.
-        time.sleep(1)  # Sleep for 1 second
+        time.sleep(17)  # Sleep for 17 second - average time between MTP scans
 
     raw_data_file.close()
 
