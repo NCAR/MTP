@@ -11,35 +11,33 @@ import numpy
 
 class BrightnessTemperature():
 
-    def __init__(self):
+    def __init__(self, configfile):
         """
         The constants GOF and GEC don't change in real-time mode. To initialize
-        a new project, the user copies a flight config from a previous project.
-        Until that is implemented, hardcode the constants here.
+        a new project, copy the latest values from the previous project to this
+        project's config file.
         """
-        self.channels = 3  # Number of channels
-        self.angles = 10   # Number of angles
-        self.LocHor = 5  # index starts at zero
-        self.GeqnMin = 10
-        self.GeqnMax = 40
+        # Number of channels
+        self.channels = configfile.getInt('NUM_CHANNELS')
+
+        # Number of scan angles
+        self.angles = configfile.getInt('NUM_SCAN_ANGLES')
+
+        # Scan Angle Index of horizontal scan. Index starts at 0
+        self.LocHor = configfile.getInt('LOC_HOR')
+
+        # Minimum acceptable Gain
+        self.GeqnMin = configfile.getInt('GeqnMin')
+        # Maximum acceptable Gain
+        self.GeqnMax = configfile.getInt('GeqnMax')
 
         self.Geqn = [None] * self.channels
         self.tb = [None] * self.channels * self.angles
 
         # From DEEPWAVE RF01 post-processing (so can compare with nimbus and
         # VB6 results to confirm these calcs are OK)
-        self.GOF = 40.6
-        self.GEC = [[19.87, 0.1], [23.1, 0.1], [26.05, 0.1]]
-
-        # From CSET
-        # self.GOF = 42
-        # self.GEC = [[19.43, 0.2], [22.44, 0.2],[25.29, 0.2]]
-        # print(self.GEC[0][0])  # GEC[11 = 19.43  # Channel 1
-        # print(self.GEC[1][0])  # GEC[21 = 22.44  # Channel 2
-        # print(self.GEC[2][0])  # GEC[31 = 25.29  # Channel 3
-        # print(self.GEC[0][1])  # GEC[12 = -0.2  # Channel 1
-        # print(self.GEC[1][1])  # GEC[22 = -0.2  # Channel 2
-        # print(self.GEC[2][1])  # GEC[32 = -0.3  # Channel 3
+        self.GOF = float(configfile.getVal('GOF'))
+        self.GEC = configfile.getVal('GEC')
 
 #   def calcTB(self):
 #       """
@@ -88,8 +86,8 @@ class BrightnessTemperature():
         MTP-VB6/MTP_realtime/VB6/VBP/Main/MOAP/MTPbin.frm
         """
         for i in range(0, self.channels):
-            self.Geqn[i] = self.GEC[i][0] + \
-                           (Tifa - self.GOF) * self.GEC[i][1]
+            self.Geqn[i] = float(self.GEC[i][0]) + \
+                           (Tifa - self.GOF) * float(self.GEC[i][1])
             # Mask out gains that are too big or too small
             if (self.Geqn[i] < self.GeqnMin) or (self.Geqn[i] > self.GeqnMax):
                 self.Geqn[i] = numpy.nan

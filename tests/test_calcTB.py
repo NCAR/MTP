@@ -20,6 +20,9 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
+import os
+from lib.rootdir import getrootdir
+from lib.config import config
 import unittest
 from util.readmtp import readMTP
 from util.decodePt import decodePt
@@ -51,8 +54,13 @@ class TESTcalcTBs(unittest.TestCase):
         OAT = self.rawscan['Aline']['values']['SAAT']['val']
         scnt = self.rawscan['Bline']['values']['SCNT']['val']
 
+        # Read gain constants from the config file
+        self.config = os.path.join(getrootdir(), 'config', 'proj.yml')
+        configfile = config()
+        configfile.read(self.config)
+
         # Calculate the brightness temperatures
-        tb = BrightnessTemperature()
+        tb = BrightnessTemperature(configfile)
         self.rawscan['Bline']['values']['SCNT']['tb'] = \
             tb.TBcalculationRT(Tifa, OAT, scnt)
 
