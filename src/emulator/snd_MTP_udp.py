@@ -8,7 +8,7 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
-import os
+# import os
 import socket
 import sys
 import time
@@ -16,8 +16,8 @@ from optparse import OptionParser
 
 sys.path.append('../')  # so can run this from inside emulator dir
 from util.readmtp import readMTP
-from util.readiwg import readIWG
-from lib.rootdir import getrootdir
+# from util.readiwg import readIWG
+# from lib.rootdir import getrootdir
 
 
 def main(args):
@@ -31,13 +31,13 @@ def main(args):
     (options, args) = parser.parse_args(args)
 
     # Configure UDP ports
-    #iwg1_port = 7071       # IWG1 packets from GV
+    # iwg1_port = 7071       # IWG1 packets from GV
     udp_send_port = 32107  # Communication from MTP
     # udp_read_port = 30106  # Communication to MTP; not used by this emulator
     udp_ip = "127.0.0.1"
 
     # Location of default ascii_parms file
-    ascii_parms = os.path.join(getrootdir(), 'config', 'ascii_parms')
+    # ascii_parms = os.path.join(getrootdir(), 'config', 'ascii_parms')
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -53,7 +53,7 @@ def main(args):
 
     # Instantiate an instance of an IWG reader. Have it point to the same
     # MTP dictionary as the MTP reader
-    iwg = readIWG(ascii_parms, reader.getRawscan())
+    # iwg = readIWG(ascii_parms, reader.getRawscan())
 
     haveData = True
 
@@ -70,12 +70,12 @@ def main(args):
         if sock:
             sock.sendto(buffer.encode(), (udp_ip, udp_send_port))
 
-        #buffer = iwg.getIwgPacket()
-        #print(buffer)
+        # buffer = iwg.getIwgPacket()
+        # print(buffer)
 
         # Send IWG ascii packet out over UDP
-        #if sock:
-        #    sock.sendto(buffer.encode(), (udp_ip, iwg1_port))
+        # if sock:
+        #     sock.sendto(buffer.encode(), (udp_ip, iwg1_port))
 
         # Wait before retrieve next scan, to emulate MTP 17 second gap between
         # scans. For testing, I am using 1 sec data so I don't have to wait as
