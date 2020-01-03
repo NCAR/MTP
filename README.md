@@ -30,7 +30,6 @@ The MTPviewer software currently uses the following versions of code:
  * See installation instructions for RAOBget: https://github.com/NCAR/RAOBget
  ```
  * conda activate (if not already done)
- * conda install -c conda-forge pyqtgraph
  ```
  
 ## To operate the MTP from Windows10
@@ -66,10 +65,13 @@ Information on operating the MTP, and other documentation, can be found on the (
  ```
  > conda activate
  > C:\Users\lroot\Miniconda3\python.exe snd_MTP_udp.py
+    > Make sure snd_MTP_udp is sending both IWG and MTP packets since I have yet to get c version of nc2iwg1 to build on Windows 10. Waiting for Taylor's python version...
+
  ```
  * On a MAC:
  ```
 > python3 snd_MTP_udp.py
+> ./snd_IWG.sh  (need to install and build aircraft_nc_utils)
 ```
 
 ## Developer Notes
