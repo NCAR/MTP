@@ -23,14 +23,11 @@ The MTPviewer software currently uses the following versions of code:
  * python3 -m pip install PyQt5
  * pip3 install pyserial
  * pip3 install psycopg2
- * pip3 install pyqtgraph
  
  ## To install on Windows10
  
  * See installation instructions for RAOBget: https://github.com/NCAR/RAOBget
- ```
- * conda activate (if not already done)
- ```
+ * Copy bat files from windows10 dir to Desktop
  
 ## To operate the MTP from Windows10
 
@@ -51,8 +48,10 @@ Information on operating the MTP, and other documentation, can be found on the (
  * cd src
  * On Windows10:
  ```
- > conda activate (to get the base environment where libraries have been installed)
- > C:\Users\lroot\Miniconda3\python.exe MTPviewer.py
+ * click on MTPviewer icon on the desktop. If this is not available:
+     > conda activate (to get the base environment where libraries have been installed)
+     > C:\Users\lroot\Miniconda3\python.exe MTPviewer.py
+
  ```
  * On a MAC:
  ```
@@ -63,9 +62,10 @@ Information on operating the MTP, and other documentation, can be found on the (
  * cd src/emulator
  * On Windows10:
  ```
- > conda activate
- > C:\Users\lroot\Miniconda3\python.exe snd_MTP_udp.py
-    > Make sure snd_MTP_udp is sending both IWG and MTP packets since I have yet to get c version of nc2iwg1 to build on Windows 10. Waiting for Taylor's python version...
+ * Click on MTPemulator icon on the desktop. If this is not available:
+    > conda activate
+    > C:\Users\lroot\Miniconda3\python.exe snd_MTP_udp.py
+ * Make sure snd_MTP_udp is sending both IWG and MTP packets since I have yet to get c version of nc2iwg1 to build on Windows 10. Waiting for Taylor's python version...
 
  ```
  * On a MAC:
