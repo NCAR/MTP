@@ -28,7 +28,7 @@ class MTPclient():
         # Set config file name - should be passed in on command line
         self.config = os.path.join(getrootdir(), 'config', 'proj.yml')
 
-        self.readConfig(self.config)
+        self.configfile = self.readConfig(self.config)
 
         # Check if RCFdir exists. If not, don't create Profile plot but let
         # real-time code continue
@@ -42,13 +42,16 @@ class MTPclient():
         self.reader = readMTP()
 
         # Instantiate an instance of an IWG reader. Have it point to the same
-        # MTP dictionary as the MTP reader
-        self.iwg = readIWG(self.ascii_parms, self.reader.getRawscan())
+        # MTP dictionary as the MTP reader. Requires the location of the
+        # ascii_parms file.
+        self.iwg = readIWG(self.configfile.getPath('ascii_parms'),
+                           self.reader.getRawscan())
 
     def readConfig(self, filename):
         # Read config from config file
         configfile = config()
         configfile.read(filename)
+
         # udp_send_port is port from viewer to MTP
         self.udp_send_port = configfile.getInt('udp_send_port')
         # udp_read_port is from MTP to viewer
@@ -62,20 +65,18 @@ class MTPclient():
         # Number of channels being read
         self.NUM_CHANNELS = configfile.getInt('NUM_CHANNELS')
 
-        # Location of ascii_parms file
-        self.ascii_parms = configfile.getPath('ascii_parms')
         # Location of RCF dir
         self.RCFdir = configfile.getPath('RCFdir')
 
-        # Project-specific parameters
-        self.project = configfile.getVal('project')
-        self.fltno = configfile.getVal('fltno')
+        return(configfile)
 
     def getProj(self):
-        return(self.project)
+        """ Return the project name of the current project from config file """
+        return(self.configfile.getVal('project'))
 
     def getFltno(self):
-        return(self.fltno)
+        """ Return the flight number of the current flight from config file """
+        return(self.configfile.getVal('fltno'))
 
     def initRetriever(self):
         """ instantiate an RCF retriever """
@@ -169,7 +170,7 @@ class MTPclient():
         OAT = rawscan['Aline']['values']['SAAT']['val']  # Kelvin
         scnt = rawscan['Bline']['values']['SCNT']['val']
 
-        tb = BrightnessTemperature()
+        tb = BrightnessTemperature(self.configfile)
 
         # Calculate the brightness temperatures for the latest scan counts
         # and save them back to the MTP data dictionary.
