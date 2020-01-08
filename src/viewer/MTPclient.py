@@ -6,6 +6,7 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
+import re
 import os
 import socket
 import numpy
@@ -83,6 +84,7 @@ class MTPclient():
         self.retriever = Retriever(self.RCFdir)
 
     def setRCFdir(self, Dir):
+        """ Only used during testing """
         self.RCFdir = os.path.join(getrootdir(), Dir)
 
     def getIWGport(self):
