@@ -8,9 +8,19 @@
 import sys
 from PyQt5.QtWidgets import QApplication
 from viewer.MTPviewer import MTPviewer
+from viewer.MTPclient import MTPclient
 
 
 def main():
+
+    # Instantiate an MTP controller
+    client = MTPclient()
+
+    # Process command line arguments
+    args = client.get_args()
+
+    # Read in config file and set up MTP controller
+    client.config(args.config)
 
     # Every GUI app must have exactly one instance of QApplication. The
     # QApplication class manages the GUI application's control flow and
@@ -18,7 +28,7 @@ def main():
     app = QApplication(sys.argv)
 
     # Instantiate the GUI
-    viewer = MTPviewer(app)
+    viewer = MTPviewer(client, app)
     viewer.show()
 
     # Run the application until the user closes it.
