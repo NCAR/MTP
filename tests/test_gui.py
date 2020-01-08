@@ -21,6 +21,7 @@ import numpy
 from PyQt5.QtWidgets import QApplication
 
 from viewer.MTPviewer import MTPviewer
+from viewer.MTPclient import MTPclient
 from util.readmtp import readMTP
 from lib.rootdir import getrootdir
 
@@ -29,12 +30,15 @@ class TESTgui(unittest.TestCase):
 
     def setUp(self):
         # Location of default ascii_parms file
-        self.ascii_parms = os.path.join(getrootdir(), 'config/ascii_parms')
+        self.ascii_parms = os.path.join(getrootdir(), 'config', 'ascii_parms')
+        self.configfile = os.path.join(getrootdir(), 'config', 'proj.yml')
 
     def test_eng1(self):
         """ Test Engineering 1 display window shows what we expect """
         self.app = QApplication([])
-        self.viewer = MTPviewer(self.app)
+        self.client = MTPclient()
+        self.client.config(self.configfile)
+        self.viewer = MTPviewer(self.client, self.app)
         # This first emgineering window shows the Pt line
         # To start, the window just shows "Channel  Counts  Ohms  Temp  "
         self.assertEqual(self.viewer.eng1.toPlainText(),
@@ -75,7 +79,9 @@ class TESTgui(unittest.TestCase):
     def test_eng2(self):
         """ Test Engineering 2 display window shows what we expect """
         self.app = QApplication([])
-        self.viewer = MTPviewer(self.app)
+        self.client = MTPclient()
+        self.client.config(self.configfile)
+        self.viewer = MTPviewer(self.client, self.app)
         # The second engineering window displays the M01 line
         # To start, window just shows the header: "Channel Counts  Volts"
         self.assertEqual(self.viewer.eng2.toPlainText(),
@@ -110,7 +116,9 @@ class TESTgui(unittest.TestCase):
     def test_eng3(self):
         """ Test Engineering 3 display window shows what we expect """
         self.app = QApplication([])
-        self.viewer = MTPviewer(self.app)
+        self.client = MTPclient()
+        self.client.config(self.configfile)
+        self.viewer = MTPviewer(self.client, self.app)
         # The third engineering window displays the M02 line
         # To start, window just shows the header: "Channel Counts  Value"
         self.assertEqual(self.viewer.eng3.toPlainText(),
@@ -188,7 +196,9 @@ class TESTgui(unittest.TestCase):
 #   def test_quit(self):
 #       """ Test mouse click on 'Quit' in GUI Quit Menu """
 #       self.app = QApplication([])
-#       self.viewer = MTPviewer(self.app)
+#       self.client = MTPclient()
+#       self.client.config(self.configfile)
+#       self.viewer = MTPviewer(self.client, self.app)
 
         # To start, socket should be open, so a call to fileno() should return
         # a socket value that is not failure (-1)

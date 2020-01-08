@@ -16,15 +16,24 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
+import os
 import unittest
 import numpy
 from viewer.MTPclient import MTPclient
+from lib.rootdir import getrootdir
 
 
 class TESTMTPclient(unittest.TestCase):
 
     def setUp(self):
+
+        # Instantiate and MTP controller
         self.client = MTPclient()
+
+        # Read the config file. Gets path to RCF dir
+        self.client.readConfig(os.path.join(getrootdir(), 'config', 'proj.yml'))
+        self.client.checkRCF()
+        self.client.initIWG()
 
         # Set RCF dir to test dir
         self.client.setRCFdir('tests/test_data')
