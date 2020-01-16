@@ -8,6 +8,7 @@
 ###############################################################################
 import re
 import numpy
+from Qlogger.messageHandler import QLogger as logger
 
 
 class readIWG:
@@ -15,6 +16,10 @@ class readIWG:
     def __init__(self, ascii_parms_file, rawscan):
 
         self.rawscan = rawscan
+        self.ascii_parms_file = ascii_parms_file
+        # Flag to indicate when parseIwgPacket has thrown an error.
+        self.ERROR_FLAG = False
+
         # Because the specific variables sent via the IWG packet can change per
         # project, read the variable names from the project ascii_parms file,
         # which has been copied to the config/ subdir. This will allow all
@@ -67,8 +72,13 @@ class readIWG:
 
     def parseIwgPacket(self, IWGpacket):
         """
-        Parse an IWG1 packet and store it's values in the data dictionary
+        Parse an IWG1 packet and store it's values in the data dictionary. If
+        this function throw an error, don't parse any more packets that arrive.
+        Ignore them when self.ERROR_FLAG = True
         """
+        if self.ERROR_FLAG == True:
+            return(False)  # Did not succeed in reading IWG packet
+
         separator = ','
         values = IWGpacket.split(separator)
 
@@ -82,9 +92,24 @@ class readIWG:
             self.rawscan['IWG1line']['values']['TIME']['val'] = \
                 int(m.group(2))*3600+int(m.group(3))*60+int(m.group(4))
 
+        # If length of values read in from ascii_parms file doesn't match
+        # length of IWG1 packet received, warn user. len below includes date
+        # and time.
+        if len(self.rawscan['IWG1line']['values']) != len(values):
+            self.ERROR_FLAG = True
+            logger.printmsg("ERROR", "IWG packet being received on UDP feed " +
+                  "has a different number of values (" + str(len(values)) +
+                  ") than listed in ascii_parms file (" +
+                  str(len(self.rawscan['IWG1line']['values'])) +
+                  ") in config dir " + self.ascii_parms_file + ". Should be" +
+                  " 33.")
+            exit(1)
+
         # Parse the rest of the line and assign variables to the data
         # dictionary
         for key in self.rawscan['IWG1line']['values']:
             if (key != 'DATE' and key != 'TIME'):
                 self.rawscan['IWG1line']['values'][key]['val'] = \
                     values[int(self.rawscan['IWG1line']['values'][key]['idx'])]
+
+        return(True)  # Successful parse of IWG packet

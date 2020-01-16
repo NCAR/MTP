@@ -350,8 +350,9 @@ class MTPclient():
         dataI = self.sockI.recv(1024).decode()
 
         # Store IWG record to data dictionary
-        self.iwg.parseIwgPacket(dataI)   # Store to values
-        self.reader.parseLine(dataI)  # Store to date, data, and asciiPacket
+        status = self.iwg.parseIwgPacket(dataI)   # Store to values
+        if status == True:  # Successful parse if IWG packet
+            self.reader.parseLine(dataI)  # Store to date, data, & asciiPacket
 
     def readSocket(self):
         """ Read data from the UDP feed and save it to the data dictionary """
