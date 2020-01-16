@@ -9,6 +9,7 @@
 import os
 import socket
 import numpy
+import logging
 import argparse
 from util.readmtp import readMTP
 from util.readiwg import readIWG
@@ -54,6 +55,13 @@ class MTPclient():
             default=os.path.join(getrootdir(), 'config', 'proj.yml'),
             help='File containing project-specific MTP configuration info. ' +
             'Defaults to config/proj.yml in code checkout for testing')
+        parser.add_argument(
+            '--debug', dest='loglevel', action='store_const',
+            const=logging.DEBUG, default=logging.INFO,
+            help="Show debug log messages")
+        parser.add_argument(
+            '--logmod', type=str, default=None, help="Limit logging to " +
+            "given module")
         args = parser.parse_args()
 
         return(args)
