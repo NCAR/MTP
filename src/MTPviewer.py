@@ -9,6 +9,7 @@ import sys
 from PyQt5.QtWidgets import QApplication
 from viewer.MTPviewer import MTPviewer
 from viewer.MTPclient import MTPclient
+from Qlogger.messageHandler import QLogger as logger
 
 
 def main():
@@ -18,6 +19,10 @@ def main():
 
     # Process command line arguments
     args = client.get_args()
+
+    # Configure logging
+    stream = sys.stdout
+    logger.initLogger(stream, args.loglevel, args.logmod)
 
     # Read in config file and set up MTP controller
     client.config(args.config)

@@ -10,6 +10,7 @@ import re
 import numpy
 import yaml
 from lib.rootdir import getrootdir
+from Qlogger.messageHandler import QLogger as logger
 
 
 class config():
@@ -24,8 +25,8 @@ class config():
             infile = open(yamlfile)
             self.projConfig = yaml.load(infile, Loader=yaml.BaseLoader)
             infile.close()
-            # for key, value in self.projConfig.items():
-            #     printmsg(self.log, key + ": " + str(value))
+            for key, value in self.projConfig.items():
+                logger.printmsg("DEBUG", key + ": " + str(value))
 
     def getVal(self, key):
         """ Get value for given key in the yaml file """
@@ -40,7 +41,8 @@ class config():
         if val.isdigit():
             return(int(val))
         else:
-            print(" Error in config file - " + key + " should be an integer")
+            logger.printmsg("ERROR", "Error in config file - " + key +
+                            " should be an integer")
             exit()
 
     def getPath(self, key):

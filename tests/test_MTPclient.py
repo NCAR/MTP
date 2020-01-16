@@ -27,11 +27,14 @@ class TESTMTPclient(unittest.TestCase):
 
     def setUp(self):
 
+        os.environ["TEST_FLAG"] = "true"
+
         # Instantiate and MTP controller
         self.client = MTPclient()
 
         # Read the config file. Gets path to RCF dir
-        self.client.readConfig(os.path.join(getrootdir(), 'config', 'proj.yml'))
+        self.client.readConfig(os.path.join(getrootdir(),
+                               'config', 'proj.yml'))
         self.client.checkRCF()
         self.client.initIWG()
 
@@ -110,3 +113,7 @@ class TESTMTPclient(unittest.TestCase):
         # 2 and not 4
         ATP = self.client.getProfile(tbi, BestWtdRCSet)
         self.assertEqual(len(ATP['trop']), 2)
+
+    def tearDown(self):
+        if "TEST_FLAG" in os.environ:
+            del os.environ['TEST_FLAG']
