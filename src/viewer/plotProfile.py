@@ -21,6 +21,7 @@ class Profile():
 
         self.tbxlimL = 180  # Left x-limit for profile plot
         self.tbxlimR = 300  # Right x-limit for profile plot
+        self.maxAltkm = 30  # The maximum altitude to plot
 
         # Create a figure instance to hold the plot
         (self.fig, self.ax) = plt.subplots(constrained_layout=True)
@@ -46,12 +47,12 @@ class Profile():
 
         # set limits and label for left Y axis (km)
         self.ax.set_ylabel('Altitude (km)')
-        self.ax.set_ylim(0, 28)
+        self.ax.set_ylim(0, self.maxAltkm)
         self.ax.yaxis.set_major_locator(MultipleLocator(2))
 
         # add right axis with altitude in kft 28km = 91.86kft)
         self.axR.set_ylabel('Altitude (kft)')
-        self.axR.set_ylim(0, 91.86)
+        self.axR.set_ylim(0, self.maxAltkm * 3.28084)
 
     def clear(self):
         """ Clear the plot of data, labels and formatting for both axes """
