@@ -76,7 +76,7 @@ class readIWG:
         this function throw an error, don't parse any more packets that arrive.
         Ignore them when self.ERROR_FLAG = True
         """
-        if self.ERROR_FLAG == True:
+        if self.ERROR_FLAG is True:
             return(False)  # Did not succeed in reading IWG packet
 
         separator = ','
@@ -98,11 +98,12 @@ class readIWG:
         if len(self.rawscan['IWG1line']['values']) != len(values):
             self.ERROR_FLAG = True
             logger.printmsg("ERROR", "IWG packet being received on UDP feed " +
-                  "has a different number of values (" + str(len(values)) +
-                  ") than listed in ascii_parms file (" +
-                  str(len(self.rawscan['IWG1line']['values'])) +
-                  ") in config dir " + self.ascii_parms_file + ". Should be" +
-                  " 33.")
+                            "has a different number of values (" +
+                            str(len(values)) + ") than listed in ascii_parms" +
+                            " file (" +
+                            str(len(self.rawscan['IWG1line']['values'])) +
+                            ") in config dir " + self.ascii_parms_file +
+                            ". Should be 33.")
             exit(1)
 
         # Parse the rest of the line and assign variables to the data
