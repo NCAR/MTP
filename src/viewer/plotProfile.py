@@ -21,7 +21,7 @@ class Profile():
 
         self.tbxlimL = 180  # Left x-limit for profile plot
         self.tbxlimR = 300  # Right x-limit for profile plot
-        self.maxAltkm = 30  # The maximum altitude to plot
+        self.maxAltkm = 32  # The maximum altitude to plot
 
         # Create a figure instance to hold the plot
         (self.fig, self.ax) = plt.subplots(constrained_layout=True)

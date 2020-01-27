@@ -9,7 +9,7 @@ import numpy
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import (
        FigureCanvasQTAgg as FigureCanvas)
-from matplotlib.ticker import (MultipleLocator)
+from matplotlib.ticker import MultipleLocator
 from matplotlib.colors import BoundaryNorm
 from matplotlib.ticker import MaxNLocator
 from PyQt5.QtWidgets import QMainWindow, QGridLayout, QWidget
@@ -23,7 +23,7 @@ class Curtain(QMainWindow):
         consists of altitude vs temperature
         """
 
-        self.maxAltkm = 30  # The maximum altitude to plot
+        self.maxAltkm = 32  # The maximum altitude to plot
 
         super(Curtain, self).__init__(parent)
         self.initUI()
@@ -36,6 +36,16 @@ class Curtain(QMainWindow):
 
         # Create a 1-D array of times (to label X-axis)
         self.time = []
+
+        # Create a 1-D array of ACALT
+        self.actime = []
+        self.acalt = []
+
+        # Create 1-D array of first tropopause (use time from ACALT)
+        self.trop = []
+
+        # Create 1-D array of MRI indicator (quality of fit)
+        self.mri = []
 
         # Indicate first time calling plot
         self.first = True
@@ -84,22 +94,33 @@ class Curtain(QMainWindow):
         """ Configure axis labels and limits """
 
         # set limits and label for left Y axis (km)
-        self.ax.set_ylabel('Altitude (km)')
-        self.ax.set_ylim(0, self.maxAltkm)
-        self.ax.yaxis.set_major_locator(MultipleLocator(5))  # Does this work?
+        self.ax.set_ylabel('Pressure Altitude (km)')
+        self.ax.set_ylim(0.0, self.maxAltkm)
+        self.ax.yaxis.set_major_locator(MultipleLocator(5))
+        self.ax.set_yticklabels(numpy.arange(-5, self.maxAltkm, 5))
 
         # add right axis with altitude in kft 28km = 91.86kft)
         self.axR.set_ylabel('Altitude (kft)')
         self.axR.set_ylim(0, self.maxAltkm * 3.28084)
 
-        self.ax.set_xlabel('Time (hr)')
-        self.ax.xaxis.set_minor_locator(MultipleLocator(2))
+        # Add plot title
+        self.ax.set_title('Temperature (K)')
+
+        # Add X-axis
+        self.ax.set_xlabel('Universal Time (hr)')
 
         self.cmap = plt.get_cmap('jet')  # Set the color scale
 
         # Label X-axis with time, not plot number.
         levels = MaxNLocator(nbins=33).tick_values(200, 300)
         self.norm = BoundaryNorm(levels, ncolors=self.cmap.N, clip=True)
+
+    def clear(self):
+        # Clear the plot of data, labels and formatting.
+        self.ax.clear()
+        self.axR.clear()
+        # Add back the labels and formatting
+        self.configureAxis()
 
     def plotCurtain(self, time, temperature, altitude):
         """
@@ -110,11 +131,6 @@ class Curtain(QMainWindow):
           altitude - array of altitudes of scan
           temperature - array of temperatures of scan
         """
-        # Clear the plot of data, labels and formatting.
-        self.ax.clear()
-        self.axR.clear()
-        # Add back the labels and formatting
-        self.configureAxis()
 
         # Build 2-D array of altitudes
         # Convert nans in alt to zero, so when temperature is nan, will plot
@@ -139,33 +155,42 @@ class Curtain(QMainWindow):
 
         # Plot the temperature as a color mesh. Time on X-axis. Altitude on
         # Y-axis. Have to invert temperature array to match.
-        im = self.ax.pcolormesh(self.time, self.alt, numpy.transpose(self.data),
-                                cmap=self.cmap, norm=self.norm)
+        im = self.ax.pcolormesh(self.time, self.alt,
+                                numpy.transpose(self.data), cmap=self.cmap,
+                                norm=self.norm, axes=self.ax)
 
         # Only use the QuadMesh object to create the legend the first time
         if self.first:
             self.fig.colorbar(im, ax=self.ax)  # Add a legend
-            self.ax.set_title('Temperature (K)')
             self.first = False
-            #self.ax.set_xlim(self.time[0], self.time[0]+8)
 
-        # Invert label
-        # Plot froze up - entire GUI froze up. Fix that.
-        # Other requirements:
-        # https://docs.google.com/spreadsheets/d/12L2Nhr1QroweEAh1BjZO37TcdNnZffr18AaKtAFtobk/edit#gid=0
+    def plotACALT(self, time, ACAltKm):
+        """ Plot the aircraft altitude on the left axis """
+        self.actime.append(time/3600.0)
+        self.acalt.append(float(ACAltKm))
+        self.ax.plot(self.actime, self.acalt, color='black')
 
-#   def plotACALT(self, SAAT, ACAltKm):
-#       """ Plot the aircraft altitude on the left axis """
-#       self.ax.plot([float(SAAT)-10, float(SAAT)+10],
-#                    [float(ACAltKm), float(ACAltKm)],
-#                    color='black')
+    def plotTropopause(self, trop):
+        """ Plot the tropopause on the left axis """
+        self.trop.append(trop['altc'])
+        self.ax.plot(self.actime, self.trop, color='white')
 
-#   def plotTropopause(self, trop):
-#       """ Plot the tropopause on the left axis """
-#       self.ax.hlines(float(trop['altc']), self.tbxlimL, self.tbxlimR,
-#                      color='lightgrey', linestyle='dashed')
+    def plotMRI(self, mri):
+        """
+        Plot the MRI. MRI (data quality metric) ranges from .1-.2ish - plotted
+        on pressure altitude scale. MRI is BestWtdRCSet['SumLnProb'])
+        """
+        self.mri.append(mri)
+        self.ax.vlines(self.actime, 0, self.mri, color='black')
 
-#   Plot the MRI. MRI (data quality metric) ranges from 1-2ish - plotted on pressure altitude scale
-#   "Eliminate “bad” scans (the white lines in the plot) - What criteria to identify a scan as bad? mtpbin editref"
+#   def markBadScan(self):  # TBD
+#       """
+#       Mark “bad” scans so we skip plotting them (or maybe just overwrite with
+#       a while line after plotting). Bad scans are the vertical white lines in
+#       the curtain plot. What criteria to identify a scan as bad? mtpbin
+#       editref; CalculateArrayMAfast() in MTPbin.frm looks promising - boxcar
+#       averaging on sky counts
+#       """
+
     def draw(self):
         self.canvas.draw()
