@@ -112,7 +112,7 @@ class MTPcommand():
             # This first set of commands are firmware commands. The firmware
             # contains the actual command sent to the stepper motor.
             'version': 'V\r',         # Request the MTP Firmware Version. The
-                                      # firmware version is hardcoded in
+                                      # firmware version is hardcoded in 
                                       # MTPH_Control.C
             'status': 'S\r',          # Request the MTP Firmware Status
                                       # - Bit 0 = integrator busy
@@ -149,11 +149,17 @@ class MTPcommand():
             # decimal always required.
             # operate with "C" mode ( New SNP-1216 Synthesizers in 'C' mode )
             # This won't work because chan is not defined. Just a placeholder
+            # 
+
+            # Have switch in storePacket called tuneMode that stores either C or F
+            # to switch between these
+            # must be a manual switch, can't find anything that would copy the 
+            # tuneF or tuneC functions to tune (actually called) in vb6
             # 'tuneC': 'C ' + chan + '\r',
 
             # VB6 sub nwtune();
             # 'tuneF': 'F ' + chan + '\r',
-
+            
             # From VB6 sub Init()
             'init': 'U/1f1j256V5000L5000h30m100R\r',  # initialize
 
@@ -172,8 +178,9 @@ class MTPcommand():
             # From VB6 sub moveScan(). Move the MTP Nsteps.
             # This syntax won't work because Nsteps is not defined - just a
             # placeholder.
-            # 'move_fwd': 'U/1J0P' + Nsteps + 'J3R\r',  # If Nsteps >= 0
-            # 'move_bak': 'U/1J0D' + Nsteps + 'J3R\r',  # If Nsteps < 0
+            'move_fwd_front': 'U/1J0P', # + Nsteps + 'J3R\r',  # If Nsteps >= 0
+            'move_bak_front': 'U/1J0D', #+ Nsteps + 'J3R\r',  # If Nsteps < 0
+            'move_end': 'j3R\r',
         }
 
         self.command = command_list  # dictionary to hold all MTP commands
