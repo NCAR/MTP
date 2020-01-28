@@ -1,0 +1,22 @@
+WARNING:root:warning
+DEBUG:root:initConfig
+DEBUG:root:init ui done
+DEBUG:root:1 : main loop
+INFO:lib.serialQt:COM6 is open
+DEBUG:lib.serialQt:serial port sending command b'S\r'
+DEBUG:root:main loop
+^CWARNING:root:warning
+DEBUG:root:initConfig
+DEBUG:root:init ui done
+DEBUG:root:1 : main loop
+INFO:lib.serialQt:COM6 is open
+DEBUG:lib.serialQt:serial port sending command b'S\r'
+DEBUG:root:main loop
+^CWARNING:root:warning
+DEBUG:root:initConfig
+DEBUG:root:init ui done
+DEBUG:root:1 : main loop
+INFO:lib.serialQt:COM6 is open
+DEBUG:lib.serialQt:serial port sending command b'S\r'
+DEBUG:root:main loop
+^C
