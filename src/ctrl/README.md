@@ -7,6 +7,19 @@ To launch the MTP control program in windows10 on eol-ale:
  * login to eol-ale as lroot
  * Bring up an xterm
  * cd to MTP\src\ctrl
+
+Depending on which platform python3 is installed on:
+
+
 ```
- > python MTPctrl.py
+
+[comment]: #  > python MTPctrl.py
+
+[comment]: #  > python3 MTPctrl.py
+
+python view.py 
+python3 view.py
+
 ```
+
+
