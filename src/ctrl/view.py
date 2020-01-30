@@ -579,7 +579,7 @@ class controlWindow(QWidget):
 
 if __name__ == '__main__':
     #    signal.signal(signal.SIGINT, ctrl_c)
-    logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',filename="MTPCtrl.log",level=logging.DEBUG)
+    logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',filename="MTPCtrl.log",level=logging.ERROR)
     logger = logging.getLogger(__name__)
     logging.warning("warning")
     app = QApplication(sys.argv)
