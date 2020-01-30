@@ -80,6 +80,7 @@ class StorePacket():
             'bDone': False, # flag to signal donness in Bline
             'Nsteps': 0,
             'currentClkStep':0, 
+            'targetClkStep':0, 
 
         }
 

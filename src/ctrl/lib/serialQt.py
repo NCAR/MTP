@@ -138,6 +138,24 @@ class SerialInit(object):
             # logging.debug(self.buf[5:6])
             if self.buf[5:6] is b'\xff':
                 logging.debug("got a read scan or a read encode")
+            elif self.parent.packetStore.getData("switchControl") is "blIne":
+                logging.debug("should be in Bline, recieved a step return, switch control set properlu")
+                if self.parent.packetStore.getData("calledFrom") is "blIne":
+                    logging.debug("Bline, recieved a step return, called from set properly")
+                    if self.buf is b'Step:\xff/0@\r\n':
+                        logging.debug("should be in Bline, meaning we've gotten to the angle we want to sample")
+                        # change logic to do integrate.
+                        self.parent.packetStore.setData("bSwitch", False )
+                        # change currentClk step
+                        self.parent.packetStore.setData("currentClkStep", self.parent.packetStore.getData("targetClkStep"))
+
+                    elif self.buf is b'Step:\xff/0C\r\n':
+                        logging.debug("want to continue sending the current request")
+                    else:
+                        logging.debug(" this is the infinite loop case, need to set currentClk step? recieve 'Step:\r\n' ")
+                        self.parent.packetStore.setData("currentClkStep", self.parent.packetStore.getData("targetClkStep"))
+                        # do an integrate and move on?
+                        self.parent.packetStore.setData("bSwitch",False)
             elif self.mode is "init" and self.switchControl is "initScan":
                 '''
                 if self.parent.packetStore.getData("homeSwitch"):
@@ -177,8 +195,10 @@ class SerialInit(object):
                         logger.debug("home: 3rd home command skipped: scan mode")
 
                     elif self.parent.packetStore.getData("calledFrom") is "Bline":
+                        # resetting to take more measurements for next angle Bline
+                        self.parent.packetStore.setData("bSwitch", True)
                         # if returning to Bline :
-                        self.parent.packetStore.setData("switchControl", "Bline")
+                        self.parent.packetStore.setData("switchControl", "blIne")
                         self.parent.packetStore.setData("echoCommand", False)
                         logger.debug("home: 3rd home command skipped: scan mode")
                     else:
@@ -204,6 +224,7 @@ class SerialInit(object):
                         logger.debug("scan: 3rd home command skipped: scan mode")
             else:
                 logging.debug("Don't care about return status here")
+                logging.debug(self.parent.packetStore.getData("switchControl"))
 
         elif switchSubstring == str.encode("00"):
             # catch return of home 1, "00000J3R"
@@ -346,12 +367,27 @@ class SerialInit(object):
                     # logic switching will help
                     logging.debug(self.parent.packetStore.getData("Eline"))
 
-                elif self.parent.packetStore.getData("calledFrom") is "Bline":
+                elif self.parent.packetStore.getData("calledFrom") is "blIne":
                     #temp = PyQt5.QtCore.QByteArray(str.encode(" "))
                     #temp.append(self.buf[4:9]) # add the spaces
-                    self.parent.packetStore.appendData("Bline", self.buf[4:10])
+                    logging.debug("bline integrate, got R")
+                    data = self.buf[4:10] 
+                    data.append(str.encode(" "))
+                    self.parent.packetStore.appendData("Bline", data)
                     logging.debug(self.parent.packetStore.getData("Bline"))
+                    # Reset blIne logic - no: in bline:
+                    '''
+                    self.i = self.parent.packetStore.getData("angleI")
+                    if self.i < 12:
+                        logging.debug("recieving logic: angleI value(2-11): %s", str(self.i))
+                        self.parent.packetStore.setData("angleI", self.i +1)
+                    else:
+                        #stop logic
+                        self.parent.packetStore.setData("bDone", True)
+                    '''
+                    # Reset integrate logic
                     self.parent.packetStore.setData("count2Flag", False)
+                    logging.debug(self.parent.packetStore.getData("count2Flag"))
                     self.parent.packetStore.setData("tuneSwitch", True)
                     self.parent.packetStore.setData("currentFrequency", self.parent.packetStore.getData("integrateSwitch"))
                 else: 
