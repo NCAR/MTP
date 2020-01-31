@@ -350,8 +350,8 @@ class SerialInit(object):
                     # perhaps wherever the append space functionality is
                     # should be moved
                     data = self.buf[4:10] 
-                    # ensures that there is at least one space between each value
-                    # though non repeated values will then have 2
+                    # initial space after E added when eline is initialized
+                    # could reverse this, if end space causes issues
                     data.append(str.encode(" "))
                     #logger.debug(self.buf[4:10])
                     #logger.debug(data)
