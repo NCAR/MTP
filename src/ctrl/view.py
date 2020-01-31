@@ -399,9 +399,14 @@ class controlWindow(QWidget):
         painter.end()
 
     def initConfig(self):
-        #check for config file
-        #reload config
+        # check for config file
+        # reload config
         #    - calculate MAM
+        # initializes the saveData file
+
+        with open("MTP_data.txt", "ab") as datafile:
+                # this will be rewritten each time the program restarts
+                datafile.write(str.encode("Instrument on " + time.strftime("%X") + " " + time.strftime("%m-%d-%y")))
         logging.debug("initConfig")
 
     def cycle(self):

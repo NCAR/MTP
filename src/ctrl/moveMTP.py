@@ -161,6 +161,8 @@ class moveMTP():
             if self.parent.packetStore.getData("integrateSwitch") is "done":
                 # Check if we continue to cycling
                 if self.parent.packetStore.getData("doneCycle"):
+                    logging.debug("Eline, doneCycle true")
+                    self.parent.packetStore.setData("isNoiseZero", False)
 
                     if self.parent.packetStore.getData("isCycling"):
                         self.parent.probeStatusLED.setPixmap(self.parent.ICON_GREEN_LED.scaled(40,40))
@@ -173,6 +175,8 @@ class moveMTP():
                         self.parent.scanStatusLED.setPixmap(self.parent.ICON_GREEN_LED.scaled(40,40))
                         self.parent.packetStore.setData("switchControl", "Aline")
                         logging.debug("ending init stage - should go into save/stop cycle here")
+                        # Stop 
+                        self.parent.cycleTimer.stop()
                         # or if we set green light on status
                         # scan button to ready
                         # and init button to re-init
@@ -182,6 +186,7 @@ class moveMTP():
                 self.parent.packetStore.setData('integrateSwitch', 55.51)
                 # next time in here we finish
                 self.parent.packetStore.setData('doneCycle', True)
+                self.parent.packetStore.setData("isNoiseZero", True)
 
             if self.parent.packetStore.getData("isNoiseZero"):
                 # check that noise is 0, if not set it to that
@@ -339,7 +344,7 @@ class moveMTP():
         # (aka testing on the ground)
         # those will be set to 1 in goAngle
         # but not adjusted for Aline
-        aline = aline + " " + str(self.parent.packetStore.getData("pitchAvg"))
+        aline = aline + " " + str(self.parent.packetStore.getData("pitchavg"))
         aline = aline + " " + str(self.parent.packetStore.getData("pitchrms"))
         aline = aline + " " + str(self.parent.packetStore.getData("rollavg"))
         aline = aline + " " + str(self.parent.packetStore.getData("rollrms"))
@@ -499,18 +504,14 @@ class moveMTP():
         with open("MTP_data.txt", "ab") as datafile:
             # may need to .append instead of +
             datafile.write(str.encode(self.aline))
-            datafile.write(str.encode('\n'))
             datafile.write(self.iwg)
-            datafile.write(str.encode('\n'))
             datafile.write(self.bline)
-            datafile.write(str.encode('\n'))
             datafile.write(self.m01)
-            datafile.write(str.encode('\n'))
             datafile.write(self.m02)
-            datafile.write(str.encode('\n'))
             datafile.write(self.pt)
-            datafile.write(str.encode('\n'))
             datafile.write(self.eline)
+            datafile.write(str.encode('\n'))
+            # this \n doesn't leave the ^M's
             datafile.write(str.encode('\n'))
         # the send Data should have the repress b' data ' 
         # additions that python adds
