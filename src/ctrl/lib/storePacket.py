@@ -27,12 +27,12 @@ class StorePacket():
             'oat':[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
             'lat':[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
             'lon':[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-            'pitchAvg':[1,0], # Array containing average of 
-            'rollAvg':[1,0],  # last 15 seconds array
-            'ZpAvg':[1,0],    # and the root mean square error
-            'oatAvg':[1,0],   # default is 1 to not zero out
-            'latAvg':[1,0],   # goAngle calculation from pitch
-            'lonAvg':[1,0] ,  # and roll avg's
+            'pitchavg':[1,0], # Array containing average of 
+            'rollavg':[1,0],  # last 15 seconds array
+            'Zpavg':[1,0],    # and the root mean square error
+            'oatavg':[1,0],   # default is 1 to not zero out
+            'latavg':[1,0],   # goAngle calculation from pitch
+            'lonavg':[1,0] ,  # and roll avg's
             # except not really, pitchavg/pitchrms added as
             # temp vars from udp averageVal
             # but we do need this in here if there is no iwg packet
