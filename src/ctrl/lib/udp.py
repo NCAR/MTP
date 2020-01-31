@@ -32,7 +32,8 @@ class doUDP(object):
 
         # initialize the reader
         self.sock_read = QUdpSocket()
-        self.sock_read.bind(self.udp_ip, self.udp_read_port)
+        # share the iwg packet port 
+        self.sock_read.bind(self.udp_ip, self.udp_read_port,QUdpSocket.ReuseAddressHint)
         # apparently this init is called each time anything in
         # the class is, causing it to flash between green and yellow
         #self.parent.receivingUDPLED.setPixmap(self.parent.ICON_YELLOW_LED.scaled(40,40))
