@@ -87,7 +87,7 @@ class moveMTP():
         # make cycle timer sleep longer?
         # cycle timer should make this irrelevant
         # time.sleep(0.4) # to add up to the 0.7 of movWait in vb6
-        self.parent.app.processEvents
+        self.parent.app.processEvents()
 
 
 
@@ -135,7 +135,9 @@ class moveMTP():
 
     def m01(self):
         # send command M1
+        logging.debug("in m01")
         self.parent.serialPort.sendCommand(str.encode(self.parent.commandDict.getCommand("read_M1")))
+        logging.debug("in m01")
         self.parent.app.processEvents()
         logging.debug("sending m01")
 
@@ -161,7 +163,7 @@ class moveMTP():
             if self.parent.packetStore.getData("integrateSwitch") is "done":
                 # Check if we continue to cycling
                 if self.parent.packetStore.getData("doneCycle"):
-                    logging.debug("Eline, doneCycle true")
+                    #logging.debug("Eline, doneCycle true")
                     self.parent.packetStore.setData("isNoiseZero", False)
 
                     if self.parent.packetStore.getData("isCycling"):
@@ -174,7 +176,7 @@ class moveMTP():
                         self.parent.probeStatusLED.setPixmap(self.parent.ICON_GREEN_LED.scaled(40,40))
                         self.parent.scanStatusLED.setPixmap(self.parent.ICON_GREEN_LED.scaled(40,40))
                         self.parent.packetStore.setData("switchControl", "Aline")
-                        logging.debug("ending init stage - should go into save/stop cycle here")
+                        #logging.debug("ending init stage - should go into save/stop cycle here")
                         # Stop 
                         self.parent.cycleTimer.stop()
                         # or if we set green light on status
@@ -194,11 +196,11 @@ class moveMTP():
                 # dictionary value has default of -1
                 if self.parent.packetStore.getData("noise") == str.encode("ND:00\r\n"):
                     # do integrate
-                    logging.debug("do integrate on noise 0")
+                    #logging.debug("do integrate on noise 0")
                     self.integrate()
                 else:
                     self.parent.serialPort.sendCommand(str.encode(self.parent.commandDict.getCommand("noise0")))
-                    logging.debug("sending set noise 0, second of noise commands")
+                    #logging.debug("sending set noise 0, second of noise commands")
 
 
 
@@ -208,12 +210,12 @@ class moveMTP():
                 # First do the integrate with noise 1, then noise 0
                 
                 if self.parent.packetStore.getData("noise") == str.encode("ND:01\r\n"):
-                    logging.debug("do integrate on noise 1")
+                    #logging.debug("do integrate on noise 1")
                     self.integrate()
                 else: 
                     self.parent.serialPort.sendCommand(str.encode(self.parent.commandDict.getCommand("noise1")))
-                    logging.debug("sending set noise 1, first of noise commands")
-                    logging.debug("encoding check: noise: %s, encoder: %s", self.parent.packetStore.getData("noise"), str.encode("N :01"))
+                    #logging.debug("sending set noise 1, first of noise commands")
+                    #logging.debug("encoding check: noise: %s, encoder: %s", self.parent.packetStore.getData("noise"), str.encode("N :01"))
 
 
 
@@ -234,6 +236,7 @@ class moveMTP():
             self.eline = QtCore.QByteArray(str.encode("E "))
             self.parent.packetStore.setData("Eline", self.eline)
             self.parent.packetStore.setData('currentFrequency', 55.51)
+            self.parent.packetStore.setData("doneCycle", False)
 
             self.parent.packetStore.setData("integrateData", "")
 
@@ -252,7 +255,7 @@ class moveMTP():
         if self.parent.packetStore.getData("count2Flag"):
             # for each frequency, but after I has been recorded:
             self.parent.packetStore.setData("count2Flag", False)
-            logging.debug("calling count 2, integrating a second time to get past I response to R response (with actual data) (r\r\n) ")
+            #logging.debug("calling count 2, integrating a second time to get past I response to R response (with actual data) (r\r\n) ")
             # Add space between counts
             # self.eline = QtCore.QByteArray(str.encode(" "))
             ########logic bug
@@ -261,39 +264,39 @@ class moveMTP():
             self.parent.serialPort.sendCommand(str.encode(self.parent.commandDict.getCommand("count2")))
         elif self.parent.packetStore.getData("currentFrequency") == 55.51:
             if self.parent.packetStore.getData("tuneSwitch"):
-                logging.debug("tune first frequency")
+                # logging.debug("tune first frequency")
                 self.tune(55.51)
             else:
                 self.parent.serialPort.sendCommand(str.encode(self.parent.commandDict.getCommand("count")))
                 self.parent.packetStore.setData("integrateSwitch", 56.65)
                 integrateSwitch = self.parent.packetStore.getData("integrateSwitch")
-                logging.debug("count on first frequency, integrateSwitch = %s", integrateSwitch)
-            logging.debug("frequency 55.51")
+                # logging.debug("count on first frequency, integrateSwitch = %s", integrateSwitch)
+            # logging.debug("frequency 55.51")
 
 
         elif self.parent.packetStore.getData("currentFrequency") == 56.65:
-            logging.debug("frequency 56.65")
+            # logging.debug("frequency 56.65")
             if self.parent.packetStore.getData("tuneSwitch"):
-                logging.debug("tune second frequency")
+                #logging.debug("tune second frequency")
                 self.tune(56.65)
             else:
                 self.parent.serialPort.sendCommand(str.encode(self.parent.commandDict.getCommand("count")))
                 self.parent.packetStore.setData("integrateSwitch", 58.8)
-                logging.debug("count on second frequency")
+                # logging.debug("count on second frequency")
 
         elif self.parent.packetStore.getData("currentFrequency") == 58.8:
-            logging.debug("frequency 58.8")
+            # logging.debug("frequency 58.8")
             if self.parent.packetStore.getData("tuneSwitch"):
-                logging.debug("tune third frequency")
+                # logging.debug("tune third frequency")
                 self.tune(58.8)
             else:
                 self.parent.packetStore.setData("integrateSwitch", 'done')
                 self.parent.serialPort.sendCommand(str.encode(self.parent.commandDict.getCommand("count")))
-                logging.debug("count on second frequency")
+                # logging.debug("count on second frequency")
         else: 
-            logging.error("unknown frequency in integrate function")
-            logging.error(self.parent.packetStore.getData("currentFrequency"))
-            logging.error(self.parent.packetStore.getData("count2Flag"))
+            #logging.error("unknown frequency in integrate function")
+            #logging.error(self.parent.packetStore.getData("currentFrequency"))
+            #logging.error(self.parent.packetStore.getData("count2Flag"))
             self.parent.packetStore.setData("integrateSwitch", 'done')
 
 
@@ -302,11 +305,11 @@ class moveMTP():
 
 
     def tune(self, fghz):
-        self.parent.app.processEvents
+        self.parent.app.processEvents()
         # fghz is frequency in gigahertz
         fby4 = (1000 * fghz)/4 #MHz
         chan = fby4/0.5  # convert to SNP channel (integer) 0.5 MHz = step size
-        logging.debug("tune: chan = %s", chan)
+        #logging.debug("tune: chan = %s", chan)
         
         # either 'C' or 'F' set in packetStore
         # F mode formatting #####.# instead of cmode formatting #####
@@ -316,7 +319,7 @@ class moveMTP():
 
         mode = 'C'
         self.parent.serialPort.sendCommand(str.encode(str(mode) + '{:.5}'.format(str(chan)) +"\r")) # \n added by encode I believe
-        logging.debug("Tuning: currently using mode C as that's what's called in vb6")
+        #logging.debug("Tuning: currently using mode C as that's what's called in vb6")
         # no official response, just echos
         # and echos that are indistinguishable from each other
         # eg: echo when buffer is sending to probe is same 
@@ -334,17 +337,17 @@ class moveMTP():
         # add current iwg values to running average, 
         # send that out instead of instant values 
         # made in goAngle for packetStore.savePacket/sendUDP
-        t = time.localtime();
 
-        #yyyymmdd hhmmss
-        self.currentDate =  "%s%s%s %s%s%s" %( str(t[0]), str(t[1]), str(t[2]), str(t[3]), str(t[4]), str(t[5]))
-        aline = "A " + self.currentDate
+        # yyyymmdd hhmmss in udp feed
+        # yyyymmdd hh:mm:ss in save feed
+        # self.currentDate =  "%s%s%s %s%s%s" %( str(t[0]), str(t[1]), str(t[2]), str(t[3]), str(t[4]), str(t[5]))
+        # aline = "A " + self.currentDate
         # Note that if iwg is sending, but pitch and roll are
         # not defined, they will be set to NAN
         # (aka testing on the ground)
         # those will be set to 1 in goAngle
         # but not adjusted for Aline
-        aline = aline + " " + str(self.parent.packetStore.getData("pitchavg"))
+        aline = " " + str(self.parent.packetStore.getData("pitchavg"))
         aline = aline + " " + str(self.parent.packetStore.getData("pitchrms"))
         aline = aline + " " + str(self.parent.packetStore.getData("rollavg"))
         aline = aline + " " + str(self.parent.packetStore.getData("rollrms"))
@@ -359,7 +362,7 @@ class moveMTP():
         aline = aline + " " + str(self.parent.packetStore.getData("scanCount"))
         aline = aline + " " + str(self.parent.packetStore.getData("encoderCount"))
         self.parent.packetStore.setData("Aline", aline)
-        logging.info(aline)
+        #logging.info(aline)
         '''
         self.pitch_Frame = pitchI # from getIWG 16, deg
         self.roll_Frame = rollI # from get IWG 17, deg
@@ -404,12 +407,12 @@ class moveMTP():
         # anglI increases on receipt of done from integratge
         # self.parent.app.processEvents
         self.i = self.parent.packetStore.getData("angleI") # angle index
-        logging.debug("bline %f" , self.i)
+        #logging.debug("bline %f" , self.i)
 
         if self.i == 0:
             # first time in loop
             # do housekeeping
-            logging.debug("bline housekeeping")
+            #logging.debug("bline housekeeping")
             self.parent.packetStore.setData("bSwitch", True)
             self.parent.packetStore.setData("bDone", False)
             self.parent.packetStore.setData("calledFrom", 'blIne')
@@ -422,7 +425,7 @@ class moveMTP():
             # Because we don't have a call to the serial port 
             self.parent.cycleTimer.start()
         elif self.i <= self.parent.packetStore.getData("Nangle")+1:
-            logging.debug(self.parent.packetStore.getData("Nangle"))
+            #logging.debug(self.parent.packetStore.getData("Nangle"))
             
             if self.parent.packetStore.getData("bSwitch"):
                 # start true, set to false in goAngle so we only do that once per
@@ -431,10 +434,10 @@ class moveMTP():
                 # Here is where we do or do not implement the alternate
                 # calculations for correcting the pointing angle
                 self.i = self.parent.packetStore.getData("angleI")
-                logging.debug("calling goAngle aka getAngle with %s", self.parent.packetStore.getArray("El. Angles", self.i))
+                #logging.debug("calling goAngle aka getAngle with %s", self.parent.packetStore.getArray("El. Angles", self.i))
                 self.getAngle(self.parent.packetStore.getArray("El. Angles", self.i))
             else:
-                logging.debug("calling b integrate")
+                #logging.debug("calling b integrate")
                 self.integrateSwitch = self.parent.packetStore.getData("integrateSwitch")
                 if self.integrateSwitch is "done":
                     # may want to put the angleI stuff here instead of 
@@ -444,24 +447,24 @@ class moveMTP():
                     # anglI ++
                     # removed from recieving logic: angleI value
                     if self.i < 12:
-                        logging.debug("angleI value (2-11): %s", str(self.i))
+                        #logging.debug("angleI value (2-11): %s", str(self.i))
                         self.parent.packetStore.setData("angleI", self.i +1)
                         # Reset integrate in Bline
                         self.parent.packetStore.setData("currentFrequency", 55.51)
                         self.parent.packetStore.setData("integrateSwitch", 55.51)
                         #bug with integrate switch overwriting last done?
-                        logging.debug("resetting integrateSwitch, currentFrequency")
+                        #logging.debug("resetting integrateSwitch, currentFrequency")
                         
                 self.integrate()
         else: 
             # stop/reset logic:
             # should only happen after i = 12
-            logging.debug("setting final done, Bline")
+            #logging.debug("setting final done, Bline")
             self.parent.packetStore.setData("bDone", True)
             # self.parent.packetStore.setData("angleI", 2)
-            logging.debug("reset logic for bline") 
+            #logging.debug("reset logic for bline") 
         if self.parent.packetStore.getData("bDone"):
-            logging.debug("bDone is true")
+            #logging.debug("bDone is true")
             # final housekeeping
             # reset logic for blIne
             self.parent.packetStore.setData("angleI", 0)
@@ -469,9 +472,9 @@ class moveMTP():
             self.saveData()
             logging.info("data Saved")
             # self.sendData()
-            logging.info("data sent UDP: port ")
+            #logging.info("data sent UDP: port ")
             self.parent.packetStore.setData("bDone", False)
-            self.parent.packetStore.setData("switchControl", "Eline")
+            self.parent.packetStore.setData("switchControl", "m01")
             # Because we don't have a call to the serial port 
             self.parent.cycleTimer.start()
         else:
@@ -479,7 +482,7 @@ class moveMTP():
 
 
             
-        logging.debug("blIne End")
+        #logging.debug("blIne End")
 
     def saveData(self):
         logging.debug("saving Data to file")
@@ -487,28 +490,36 @@ class moveMTP():
         self.udpArray =  QtCore.QByteArray(str.encode(""))
         # store everything locally
         self.aline = self.parent.packetStore.getData('Aline')
-        self.udpArray.append(self.aline)
+        t = time.localtime();
+        # yyyymmdd hhmmss in udp feed for backwards compatability
+        # yyyymmdd hh:mm:ss in save feed
+        self.currentDateUDP =  "%s%s%s %s%s%s" %( str(t[0]), str(t[1]), str(t[2]), str(t[3]), str(t[4]), str(t[5]))
+        self.currentDateSave =  "%s%s%s %s:%s:%s" %( str(t[0]), str(t[1]), str(t[2]), str(t[3]), str(t[4]), str(t[5]))
+        # aline = "A " + self.currentDate
+        self.udpArray.append("A " + self.currentDateUDP + " " + self.aline)
         self.iwg = self.parent.packetStore.getData('IWG')
         self.udpArray.append(self.iwg)
         self.bline = self.parent.packetStore.getData('Bline')
         self.udpArray.append(self.bline)
-        self.m01 = self.parent.packetStore.getData('M01')
-        self.udpArray.append(self.m01)
-        self.m02 = self.parent.packetStore.getData('M02')
-        self.udpArray.append(self.m02)
-        self.pt = self.parent.packetStore.getData('Pt')
-        self.udpArray.append(self.pt)
+        m01 = self.parent.packetStore.getData('M01')
+        self.udpArray.append(m01)
+        m02 = self.parent.packetStore.getData('M02')
+        self.udpArray.append(m02)
+        pt = self.parent.packetStore.getData('Pt')
+        self.udpArray.append(pt)
         self.eline = self.parent.packetStore.getData('Eline')
         self.udpArray.append(self.eline)
         # open file in append binary mode
         with open("MTP_data.txt", "ab") as datafile:
             # may need to .append instead of +
-            datafile.write(str.encode(self.aline))
+            datafile.write(str.encode("A " + self.currentDateSave + " " + self.aline))
+            datafile.write(str.encode('\n'))
             datafile.write(self.iwg)
             datafile.write(self.bline)
-            datafile.write(self.m01)
-            datafile.write(self.m02)
-            datafile.write(self.pt)
+            datafile.write(str.encode('\n'))
+            datafile.write(m01)
+            datafile.write(m02)
+            datafile.write(pt)
             datafile.write(self.eline)
             datafile.write(str.encode('\n'))
             # this \n doesn't leave the ^M's
@@ -524,23 +535,23 @@ class moveMTP():
     def getAngle(self, targetEl):
         # changed from goAngle because editor says that would be overriding something
         # though I can't find what or where that would be
-        logging.debug("moveMTP goAngle/getAngle called, targetEl: %s", targetEl)
+        # logging.debug("moveMTP goAngle/getAngle called, targetEl: %s", targetEl)
         self.zel = self.parent.packetStore.getArray("El. Angles", 1) # current array has total number in array at zero, zenith/fiduciary (?) at 1 and actual angles after that. 
-        logging.debug("Zel to be added to targetEl: %s", self.zel)
+        # logging.debug("Zel to be added to targetEl: %s", self.zel)
         if self.parent.packetStore.getData("pitchCorrect"):
             logging.info("Correcting Pitch")
             # targetClkAngle = self.configMam()
         else:
-            logging.debug("Using instantanious MAM")
+            logging.info("Using instantanious MAM")
             self.targetClkAngle = self.zel + targetEl
 
         self.sD = self.parent.packetStore.getData("stepsDegree") 
-        logging.debug("stepDeg: %s", self.sD)
+        #logging.debug("stepDeg: %s", self.sD)
         self.targetClkStep = self.targetClkAngle * self.sD
-        logging.debug("targetClkStep: %s", self.targetClkStep)
+        #logging.debug("targetClkStep: %s", self.targetClkStep)
 
         self.currentClkStep = self.parent.packetStore.getData("currentClkStep")
-        logging.debug("currentClkStep: %s", self.currentClkStep)
+        #logging.debug("currentClkStep: %s", self.currentClkStep)
         self.parent.packetStore.setData("Nsteps", self.targetClkStep - self.parent.packetStore.getData("currentClkStep"))
         # nsteps check here
         
@@ -551,7 +562,7 @@ class moveMTP():
         # drop everything after the decimal point:
         self.nstepSplit = str(self.nstep).split('.')
         self.nstep = self.nstepSplit[0]
-        logging.debug(" strip nstp of everything after (and including) the decimal point: %s", self.nstepSplit[0])
+        #logging.debug(" strip nstp of everything after (and including) the decimal point: %s", self.nstepSplit[0])
         if self.nstep[0] is '-':
             self.nstepSplit = str(self.nstep).split('-')
             self.nstep = self.nstepSplit[1].rjust(6,'0')
@@ -563,9 +574,9 @@ class moveMTP():
         # pad with zeros if necessary to get to 6 numerical values
 
         # preceeded with a + or -
-        logging.debug("unrounded: %s, rounded nstep value to 0, does this get rid of '.' ?: 6.0f", str(self.nstep)) 
+        #logging.debug("unrounded: %s, rounded nstep value to 0, does this get rid of '.' ?: 6.0f", str(self.nstep)) 
         if self.nstep is 0.0:
-            logging.debug(" moving 0 steps, nstep calculation turned to 0")
+            logging.error(" moving 0 steps, nstep calculation turned to 0")
             # suspect this occurs when pitch/roll/z are 0
             # need to have a catch case when above are nan's
 
