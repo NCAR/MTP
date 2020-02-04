@@ -241,12 +241,13 @@ class SerialInit(object):
             # check self.buf[1:3] actually is substring we want
             if self.buf[1:4] == str.encode("01:"):
                 data = self.decodeLine()
-                self.parent.packetStore.setData("M01", self.buf.data())
+                # self.parent.packetStore.setData("M01", self.buf.data())
+                self.parent.packetStore.setData("M01", data)
                 logger.debug("received m01")
                 self.parent.packetStore.setData("switchControl", "m02")
             else: 
                 data = self.decodeLine()
-                self.parent.packetStore.setData("M02", self.buf.data())
+                self.parent.packetStore.setData("M02", data)
                 logger.debug("received m02")
                 logger.debug("buff[1,4]: %s    str.encode(): %s", self.buf[1:4], "01:")
                 self.parent.packetStore.setData("switchControl", "pt")
@@ -272,7 +273,7 @@ class SerialInit(object):
             # or initSwitch = true
         elif switchSubstring == str.encode("Pt"):
                 data = self.decodeLine()
-                self.parent.packetStore.setData("Pt", self.buf)
+                self.parent.packetStore.setData("Pt", data)
                 logger.debug("received Pt")
                 self.parent.packetStore.setData("switchControl", "Eline")
 
