@@ -78,6 +78,12 @@ class doUDP(object):
         # Stores data in packetStore
         self.parent.packetStore.setData("IWG", self.data)
 
+        # Writes to iwg file
+        with open("IWG.txt", a) as iwgFile:
+            iwgFile.write(self.data)
+
+        iwgFile.close()
+
         # changes the recieved iwg buffer of type QNetworkDatagram
         # into something more accessable:
         self.data = str(self.data).split(',')
