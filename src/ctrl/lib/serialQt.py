@@ -240,11 +240,13 @@ class SerialInit(object):
             # self.buf.decode("ascii")
             # check self.buf[1:3] actually is substring we want
             if self.buf[1:4] == str.encode("01:"):
-                self.parent.packetStore.setData("M01", self.buf)
+                data = self.decodeLine()
+                self.parent.packetStore.setData("M01", self.buf.data())
                 logger.debug("received m01")
                 self.parent.packetStore.setData("switchControl", "m02")
             else: 
-                self.parent.packetStore.setData("M02", self.buf)
+                data = self.decodeLine()
+                self.parent.packetStore.setData("M02", self.buf.data())
                 logger.debug("received m02")
                 logger.debug("buff[1,4]: %s    str.encode(): %s", self.buf[1:4], "01:")
                 self.parent.packetStore.setData("switchControl", "pt")
@@ -269,6 +271,7 @@ class SerialInit(object):
             # set matchWord: next
             # or initSwitch = true
         elif switchSubstring == str.encode("Pt"):
+                data = self.decodeLine()
                 self.parent.packetStore.setData("Pt", self.buf)
                 logger.debug("received Pt")
                 self.parent.packetStore.setData("switchControl", "Eline")
@@ -350,9 +353,13 @@ class SerialInit(object):
                     # perhaps wherever the append space functionality is
                     # should be moved
                     data = self.buf[4:10] 
+                    # data = data.data().decode()
+                    # convert to normal string from binary string
+                    # then convert the hex to decimal
+                    data = str(int(data.data().decode('ascii'), 16))
                     # initial space after E added when eline is initialized
                     # could reverse this, if end space causes issues
-                    data.append(str.encode(" "))
+                    data = data + " "
                     #logger.debug(self.buf[4:10])
                     #logger.debug(data)
                     self.iSwitch = self.parent.packetStore.getData("integrateSwitch")
@@ -372,7 +379,10 @@ class SerialInit(object):
                     #temp.append(self.buf[4:9]) # add the spaces
                     logging.debug("bline integrate, got R")
                     data = self.buf[4:10] 
-                    data.append(str.encode(" "))
+                    data = str(int(data.data().decode('ascii'), 16))
+                    data = data + " "
+                    #data = int(data.decode('ascii'), 16)
+                    #data.append(" ")
                     self.parent.packetStore.appendData("Bline", data)
                     logging.debug(self.parent.packetStore.getData("Bline"))
                     # Reset blIne logic - no: in bline:
@@ -414,6 +424,33 @@ class SerialInit(object):
             message += byte.decode("utf-8")
         logger.debug("read data: " + message.rstrip())
         return(message.rstrip())
+    
+    def decodeLine(self):
+        # decode M01, m02, Pt
+        # translates from binary string into ascii
+        # and loops over hex values recieved from probe 
+        # changing them to decimal
+        logging.debug('decode')
+        data = self.buf.data().decode()
+        data = data.split(' ')
+        # print(self.buf.decode('ascii'))
+        #data = data.split(' ')
+        for i in data:
+            print(i)
+            #print(str(i))
+            tmp = i.split(':')
+            if len(tmp) > 1:
+                # reset the dataArray with first equal
+                stringData = str(tmp[0]) + ": " + str(int(str(tmp[1]),16)) + " "
+                #dataArray.append(str(int(str(tmp[1]).decode('ascii'),16)))
+                #dataArray.append(str.encode(' '))
+            else:
+                if i == '\r\n':
+                    stringData + '\r\n'
+                else:
+                    stringData = stringData + str(int(i,16)) + ' '
+        return stringData
+
 
     def close(self):
         self.serialPort.close()
