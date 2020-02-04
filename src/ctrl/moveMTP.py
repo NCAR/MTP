@@ -489,8 +489,8 @@ class moveMTP():
         # clear udp string
         self.udpArray =  QtCore.QByteArray(str.encode(""))
         # store everything locally
-        self.aline = self.parent.packetStore.getData('Aline')
-        t = time.localtime();
+        aline = self.parent.packetStore.getData('Aline')
+        t = time.gmtime();
         # yyyymmdd hhmmss in udp feed for backwards compatability
         # yyyymmdd hh:mm:ss in save feed
         self.currentDateUDP =  "%s%s%s %s%s%s" %( str(t[0]), str(t[1]), str(t[2]), str(t[3]), str(t[4]), str(t[5]))
