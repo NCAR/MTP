@@ -137,7 +137,7 @@ class doUDP(object):
         # Sometimes IWG packet doesn't fill out values
         # check if roll/pitch is zero in goAngle
         if latestValue is '':
-            latestValue = float("nan")
+            latestValue = float(0) # try and figure out nan value instead
         if name == "Zp":
             latestValue = float(latestValue)/3280.8 # ft/km value from vb6
         elif name is "oat":
@@ -197,6 +197,9 @@ class doUDP(object):
         # logging.debug("rms: %f   , avg: %f",  rms, avg)
         # logging.debug(name + "avg")
         # saves avg and rms in nameAvg and nameRMS
+        # truncate values to third decimal place
+        avg = int(avg*1000)/1000.0
+        rms = int(avg * 1000)/1000.0
         self.parent.packetStore.setData(str(name) +'avg', avg)
         self.parent.packetStore.setData(str(name) +'rms', rms)
         
