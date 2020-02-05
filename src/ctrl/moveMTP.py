@@ -513,6 +513,10 @@ class moveMTP():
         self.udpArray.append(pt)
         self.eline = self.parent.packetStore.getData('Eline')
         self.udpArray.append(self.eline)
+        if self.bline.size > 30:
+            logging.info("bline size larger than expected (30): %s", self.bline.size)
+        if self.eline.size > 06:
+            logging.info("eline size larger than expected (06): %s", self.bline.size)
         # open file in append binary mode
         with open("MTP_data.txt", "ab") as datafile:
             # may need to .append instead of +
