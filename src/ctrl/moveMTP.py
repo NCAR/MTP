@@ -61,6 +61,7 @@ class moveMTP():
         # set current mode to init 
         self.parent.packetStore.setData("currentMode", "init")
         self.parent.app.processEvents
+        # one time sleep, run only when probe is started up or re-initialized
         time.sleep(0.2)
         self.parent.app.processEvents()
         logging.debug("initScan in mtpmove")
@@ -113,10 +114,13 @@ class moveMTP():
             # send home1
             self.parent.serialPort.sendCommand(str.encode(self.parent.commandDict.getCommand("home1")))
             logging.debug(" sending home1 command")
-            
-            self.parent.app.processEvents
-            time.sleep(0.7)
-            self.parent.app.processEvents
+            # try and minimize time spent blocking here, though waiting for correct home response
+            # need to test to see if it works
+            for i in range(0, 0.7, 0.1):
+                self.parent.app.processEvents()
+                time.sleep(0.01)
+            #time.sleep(0.7)
+            #self.parent.app.processEvents
             # one time actions
             if self.parent.packetStore.getData("currentMode") is not "home":
                 # set current mode to home
