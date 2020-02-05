@@ -84,16 +84,22 @@ class SerialInit(object):
         # 0.07 s sleep works for smaller commands
         # need to test if it works for the big lines
         # works for pt, m02, m01
-
-        time.sleep(0.06)
+        for i in range (0, 100, 1): #start, stop, step
+            if self.serialPort.canReadLine():
+                # exit for loop
+                i = 100
+            if i == 100:
+                logging.error("Sleep timeout on canReadLine")
+            time.sleep(0.001)
         # Add do sleep while nodata to catch multiple responses if necessary
-        while self.serialPort.canReadLine():
-            self.buf = self.serialPort.readLine()
-            self.splitSignal() #returns QByte array of data
-            # time.sleep(0.55555)
-        self.parent.app.processEvents()
+        #while self.serialPort.canReadLine():
+        self.buf = self.serialPort.readLine()
+        # process the recieved data
+        self.splitSignal() #returns QByte array of data
         # only want to signal when there's no more stuff to read
         self.parent.cycleTimer.start()
+        # Not sure this is something we want here:
+        # self.parent.app.processEvents()
         return 
 
     def splitSignal(self):
@@ -116,7 +122,7 @@ class SerialInit(object):
         # would be easier to determine.
         # or adding process events after resetting of logic, 
         # but before writes?
-        self.parent.app.processEvents()
+        #self.parent.app.processEvents()
         switchSubstring = self.buf[0:2]
         shortSubstring = self.buf[0:1]
         longSubstring = self.buf[0:3]
