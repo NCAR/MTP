@@ -403,6 +403,9 @@ class controlWindow(QWidget):
         # reload config
         #    - calculate MAM
         # initializes the saveData file
+        ''' reads config file into dictionary to change default values '''
+        ''' to be implemented '''
+        #self.serialPort.sendCommand(str.encode(self.commandDict.getCommand("read_scan")))
 
         with open("MTP_data.txt", "ab") as datafile:
                 # this will be rewritten each time the program restarts
@@ -535,13 +538,6 @@ class controlWindow(QWidget):
         #getcommand read_scan
         self.serialPort.sendCommand(str.encode(self.commandDict.getCommand("read_scan")))
         return 0
-
-
-    def initConfig(self):
-        ''' reads config file into dictionary to change default values '''
-        ''' to be implemented '''
-        logging.debug("initConfig")
-        #self.serialPort.sendCommand(str.encode(self.commandDict.getCommand("read_scan")))
 
     def initScan(self):
         logging.debug("cycle")
