@@ -442,11 +442,9 @@ class SerialInit(object):
         data = data.split(' ')
         # print(self.buf.decode('ascii'))
         #data = data.split(' ')
+        tmp = data[0].split(':')
         for i in data:
-            print(i)
-            #print(str(i))
-            tmp = i.split(':')
-            if len(tmp) > 1:
+            if i == 0:
                 # reset the dataArray with first equal
                 stringData = str(tmp[0]) + ": " + str(int(str(tmp[1]),16)) + " "
                 #dataArray.append(str(int(str(tmp[1]).decode('ascii'),16)))
