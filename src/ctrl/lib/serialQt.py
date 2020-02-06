@@ -127,6 +127,84 @@ class SerialInit(object):
         shortSubstring = self.buf[0:1]
         longSubstring = self.buf[0:3]
         logger.debug("buffer = %s", str(self.buf))
+        '''
+        once the swap on switchSubstring is done, check for i's
+        could move this to top of switch if it takes too long.
+        aka if race condition remains
+        '''
+        if shortSubstring == str.encode("I"):
+            if switchSubstring == "I ":
+                logger.debug("discarding I echo")
+            else:
+                # logger.debug(self.buf[1:3] + self.buf[0:1])
+                # use the number returned from this to match R case
+                self.parent.packetStore.setData("integrateData", self.buf[1:3])
+                self.parent.packetStore.setData("count2Flag", True)
+        elif shortSubstring == str.encode("R"):
+            number = self.parent.packetStore.getData("integrateData")
+            if switchSubstring == str.encode("R\r"):
+                logger.debug("discarding R echo")
+            
+            elif self.parent.packetStore.getData("calledFrom") is "Eline":
+                #temp = PyQt5.QtCore.QByteArray(str.encode(" "))
+                #temp.append(self.buf[4:9]) # add the spaces
+                # dont take above out because R\r\n will be out of bounds for r[4+]
+                # though the data array doesn't do anything, 
+                # it does appear that we need a bit more processing time
+                # for the Eline characters to correctly get a space between 
+                # them. Else they will run together
+                # perhaps wherever the append space functionality is
+                # should be moved
+                data = self.buf[4:10] 
+                # data = data.data().decode()
+                # convert to normal string from binary string
+                # then convert the hex to decimal
+                data = str(int(data.data().decode('ascii'), 16))
+                # initial space after E added when eline is initialized
+                # could reverse this, if end space causes issues
+                data = data + " "
+                #logger.debug(self.buf[4:10])
+                #logger.debug(data)
+                self.iSwitch = self.parent.packetStore.getData("integrateSwitch")
+                self.parent.packetStore.setData("currentFrequency", self.iSwitch) 
+                self.parent.packetStore.setData("count2Flag", False)
+                self.parent.packetStore.setData("tuneSwitch", True)
+                logging.debug("integrate Switch should be set to 56 here: %s", self.iSwitch)
+                self.parent.packetStore.appendData("Eline",data)
+                # race condition causes intermittent e line truncation
+                # so it will only have 3 values
+                # or e value repetition. Hopfully having appending after
+                # logic switching will help
+                logging.debug(self.parent.packetStore.getData("Eline"))
+
+            elif self.parent.packetStore.getData("calledFrom") is "blIne":
+                #temp = PyQt5.QtCore.QByteArray(str.encode(" "))
+                #temp.append(self.buf[4:9]) # add the spaces
+                logging.debug("bline integrate, got R")
+                data = self.buf[4:10] 
+                data = str(int(data.data().decode('ascii'), 16))
+                data = data + " "
+                #data = int(data.decode('ascii'), 16)
+                #data.append(" ")
+                self.parent.packetStore.appendData("Bline", data)
+                logging.debug(self.parent.packetStore.getData("Bline"))
+                # Reset blIne logic - no: in bline:
+                '''
+                self.i = self.parent.packetStore.getData("angleI")
+                if self.i < 12:
+                    logging.debug("recieving logic: angleI value(2-11): %s", str(self.i))
+                    self.parent.packetStore.setData("angleI", self.i +1)
+                else:
+                    #stop logic
+                    self.parent.packetStore.setData("bDone", True)
+                '''
+                # Reset integrate logic
+                self.parent.packetStore.setData("count2Flag", False)
+                logging.debug(self.parent.packetStore.getData("count2Flag"))
+                self.parent.packetStore.setData("tuneSwitch", True)
+                self.parent.packetStore.setData("currentFrequency", self.parent.packetStore.getData("integrateSwitch"))
+            else: 
+                logger.debug("received R value, unsure who is calling")
         if switchSubstring == str.encode('ST'):
             # sends number to update status
             # logger.debug("splitSignal:ST")
