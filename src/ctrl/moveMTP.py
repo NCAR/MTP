@@ -497,8 +497,8 @@ class moveMTP():
         t = time.gmtime();
         # yyyymmdd hhmmss in udp feed for backwards compatability
         # yyyymmdd hh:mm:ss in save feed
-        self.currentDateUDP =  "%s%s%s %s%s%s" %( str(t[0]), str(t[1]), str(t[2]), str(t[3]), str(t[4]), str(t[5]))
-        self.currentDateSave =  "%s%s%s %s:%s:%s" %( str(t[0]), str(t[1]), str(t[2]), str(t[3]), str(t[4]), str(t[5]))
+        self.currentDateUDP =  "%02d%02d%02d %02d%02d%02d" %(t[0], t[1], t[2],t[3], t[4], t[5])
+        self.currentDateSave =  "%02d%02d%02d %02d:%02d:%02d" %( t[0], t[1], t[2], t[3], t[4], t[5])
         # aline = "A " + self.currentDate
         self.udpArray.append("A " + self.currentDateUDP + " " + self.aline)
         self.iwg = self.parent.packetStore.getData('IWG')
