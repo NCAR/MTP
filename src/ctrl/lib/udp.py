@@ -187,13 +187,13 @@ class doUDP(object):
             # logging.debug(datum)
             # logging.debug("averageVal for loop")
             avg = avg + datum
-            rms = rms + datum * datum
+            rms = rms + (datum * datum)
             i = i + 1 
         avg = avg/self.nval
         # logging.debug("avg %f", avg)
-        if rms - avg * avg * self.nval >0:
+        if rms - (avg * avg) * self.nval >0:
             if self.nval > 1:
-                rms = math.sqrt((rms - avg * avg * self.nval)/(self.nval-1))
+                rms = math.sqrt((rms - (avg * avg) * self.nval)/(self.nval-1))
             else:
                 rms = 0.0
         else: 
@@ -204,8 +204,8 @@ class doUDP(object):
         # logging.debug(name + "avg")
         # saves avg and rms in nameAvg and nameRMS
         # truncate values to third decimal place
-        avg = int(avg*1000)/1000.0
-        rms = int(avg * 1000)/1000.0
+        avg = int(avg * 1000) / 1000.0
+        rms = int(rms * 1000) / 1000.0
         self.parent.packetStore.setData(str(name) +'avg', avg)
         self.parent.packetStore.setData(str(name) +'rms', rms)
         
