@@ -30,6 +30,7 @@ import copy
 import struct
 import inspect
 from util.rcf_structs import RCF_HDR, RCF_FL
+from Qlogger.messageHandler import QLogger as logger
 
 
 class RetrievalCoefficientFile():
@@ -52,7 +53,8 @@ class RetrievalCoefficientFile():
 
         # Sanity check that header read is working
         if not self.testFlightLevelsKm():
-            print("Major failure, exiting")
+            logger.printmsg("ERROR", "Major failure reading RCF header for " +
+                            "file" + Filename + ", exiting")
             exit(1)
 
         self.NUM_BRT_TEMPS = self._RCFHdr['Nlo'] * self._RCFHdr['Nel']
@@ -78,8 +80,8 @@ class RetrievalCoefficientFile():
         try:
             self.rcf.close()
         except Exception as err:
-            print(err)
-            print("Unable to close file " + self._RCFFileName)
+            logger.printmsg("ERROR", err + " Unable to close file " +
+                            self._RCFFileName)
             return(False)
 
     def getNUM_BRT_TEMPS(self):
@@ -347,19 +349,19 @@ class RetrievalCoefficientFile():
 
         # Test that len of the flight levels list is as expected.
         if (Len != self._RCFHdr['NFL']):
-            print("In " + inspect.stack()[0][3] + "for RCFID: " +
-                  self.getId())
-            print("ERROR: Number of flight levels input:" + Len + " is not " +
-                  "equal to number in RCF:" + self._RCFHdr['NFL'])
+            logger.printmsg("ERROR", "In " + inspect.stack()[0][3] + " for " +
+                            "RCFID: " + self.getId() + ", number of flight " +
+                            "levels input - " + str(Len) + " - is not equal " +
+                            "to number in RCF - " + str(self._RCFHdr['NFL']))
             return(False)
 
         # Test that the flight levels are in decreasing order
         for i in range(Len):
             if ((i+1 < Len) and
                     (self._RCFHdr['Zr'][i] <= self._RCFHdr['Zr'][i+1])):
-                print("In " + inspect.stack()[0][3] + "for RCFID: " +
-                      self.getId())
-                print("ERROR: Flight Levels are not in decreasing altitude")
+                logger.printmsg("ERROR", "In " + inspect.stack()[0][3] +
+                                " for RCFID: " + self.getId() + ", flight " +
+                                "levels are not in decreasing altitude.")
                 return(False)
 
         # Add test for flight levels of current rcf equal to flight levels
@@ -368,9 +370,9 @@ class RetrievalCoefficientFile():
         if len(FlightLevels) != 0:
             for i in range(Len):
                 if self._RCFHdr['Zr'][i] != FlightLevels[i]:
-                    print("In " + inspect.stack()[0][3] + "for RCFID: " +
-                          self.getId())
-                    print("ERROR: Flight Levels are not as expected")
+                    logger.printmsg("ERROR", "In " + inspect.stack()[0][3] +
+                                    " for RCFID: " + self.getId() + ", " +
+                                    "flight levels are not as expected.")
                     return(False)
 
         return(True)
