@@ -69,12 +69,16 @@ class RetrievalCoefficientFileSet():
                 #  Only include files that are in the requested filelist
                 #  If filelist is empty, then get everything.
                 if (len(filelist) == 0):
+                    # If in debug mode, print out names of RCF files that
+                    # will be loaded.
                     logger.printmsg("DEBUG", "Found RCF file:" + filename +
                                     "  with ID:" + self._RCFs[i].getId())
                     i += 1
                 else:
                     for j in range(len(filelist)):
                         if (filelist[j] == self._RCFs[i].getId()):
+                            # If in debug mode, print out names of RCF files
+                            # that will be loaded.
                             logger.printmsg("DEBUG", "Found RCF file:" +
                                             filename + "  with ID:" +
                                             self._RCFs[i].getId())
