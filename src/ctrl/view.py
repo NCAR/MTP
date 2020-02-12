@@ -256,7 +256,7 @@ class controlWindow(QWidget):
         self.packetStore.setData("scanStatus", False)
         self.packetStore.setData("calledFrom", "resetProbeClick")
         self.cycleTimer.start()
-        self.cycle()
+        #self.cycle()
 
         self.app.processEvents()
 
@@ -413,7 +413,12 @@ class controlWindow(QWidget):
         logging.debug("initConfig")
 
     def cycle(self):
+        self.cycleTimer.stop()
+        # this process Events can really slow things down
+        # still necessary because recieved data has to be processed
+        # before deciding if moving to next command or no.
         self.app.processEvents()
+        logging.debug("Cycle, processEvents1")
         # at startup, when cycling = false sets probe to start position
         if self.packetStore.getData("desiredMode") is "init":
             self.probeStatusLED.setPixmap(self.ICON_YELLOW_LED.scaled(40, 40))
@@ -428,7 +433,6 @@ class controlWindow(QWidget):
         # open save file
         # add header "Instrument on " + time + " " + date
 
-        self.cycleTimer.stop()
         logging.debug("cycle")
         # state machine like behavior to ensure all tasks complete before next
         # command is sent. Somewhat like enum's 
@@ -450,7 +454,8 @@ class controlWindow(QWidget):
                 # set button text to stoped cycle
                 self.scanStatusButton.setText("Start Scanning")
             # self.mover.dispatch(matchWord)
-            self.app.processEvents()
+            #self.app.processEvents()
+            logging.debug("Cycle, processEvents2")
             
         if self.packetStore.getData("currentMode") is 'init':
             # stop if matchword = Aline
@@ -465,15 +470,19 @@ class controlWindow(QWidget):
         # if bline, set new frame? or set in bline
 
         # with timer these should become unnecessary     
-        self.app.processEvents()
+        # self.app.processEvents()
+        logging.debug("Cycle, processEvents3")
+        '''
         time.sleep(0.2)
         self.app.processEvents()
+        '''
         # continue through the cycle
         logging.debug("cycle, before dispatch, with matchword:")
         logging.debug(matchWord)
         self.mover.dispatch(matchWord)
         logging.debug("cycle, after dispatch")
-        self.app.processEvents()
+        #self.app.processEvents()
+        logging.debug("Cycle, processEvents4")
         '''
         switch (matchWord){
                 case 1: matchWord == 'initConfig';
@@ -580,7 +589,7 @@ class controlWindow(QWidget):
 
 if __name__ == '__main__':
     #    signal.signal(signal.SIGINT, ctrl_c)
-    logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',filename="MTPCtrl.log",level=logging.ERROR)
+    logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',filename="MTPCtrl.log",level=logging.DEBUG)
     logger = logging.getLogger(__name__)
     logging.warning("warning")
     app = QApplication(sys.argv)
