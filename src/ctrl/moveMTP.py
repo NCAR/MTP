@@ -116,7 +116,7 @@ class moveMTP():
             logging.debug(" sending home1 command")
             # try and minimize time spent blocking here, though waiting for correct home response
             # need to test to see if it works
-            for i in range(0, 0.7, 0.1):
+            for i in range(0, 20, 1):
                 self.parent.app.processEvents()
                 time.sleep(0.01)
             #time.sleep(0.7)
@@ -500,7 +500,7 @@ class moveMTP():
         self.currentDateUDP =  "%02d%02d%02d %02d%02d%02d" %(t[0], t[1], t[2],t[3], t[4], t[5])
         self.currentDateSave =  "%02d%02d%02d %02d:%02d:%02d" %( t[0], t[1], t[2], t[3], t[4], t[5])
         # aline = "A " + self.currentDate
-        self.udpArray.append("A " + self.currentDateUDP + " " + self.aline)
+        self.udpArray.append("A " + self.currentDateUDP + " " + aline)
         self.iwg = self.parent.packetStore.getData('IWG')
         self.udpArray.append(self.iwg)
         self.bline = self.parent.packetStore.getData('Bline')
@@ -513,10 +513,12 @@ class moveMTP():
         self.udpArray.append(pt)
         self.eline = self.parent.packetStore.getData('Eline')
         self.udpArray.append(self.eline)
+        '''
         if self.bline.size > 30:
             logging.info("bline size larger than expected (30): %s", self.bline.size)
         if self.eline.size > 06:
             logging.info("eline size larger than expected (06): %s", self.bline.size)
+        '''
         # open file in append binary mode
         with open("MTP_data.txt", "ab") as datafile:
             # may need to .append instead of +
