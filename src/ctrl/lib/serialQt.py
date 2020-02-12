@@ -13,8 +13,8 @@ from PyQt5.QtSerialPort import *
 from PyQt5.QtCore import *
 from PyQt5 import QtCore
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.ERROR)
+#logging = logging.getLogger(__name__)
 class SerialInit(object):
 
     serialPort = QSerialPort()
@@ -47,19 +47,19 @@ class SerialInit(object):
 
         if self.serialPort.isOpen():
             self.serialPort.close()
-            logger.info("COM6 was open: now closed")
+            logging.info("COM6 was open: now closed")
 
         if self.serialPort.open(QIODevice.ReadWrite):
             #print ("serial port is open")
-            logger.info("COM6 is open")
+            logging.info("COM6 is open")
         else:
             print ("serial port failed to open")
-            logger.info ("COM6 failed to open")
+            logging.info ("COM6 failed to open")
 
         """ Not sure QtSerialPort has an exception in this case?"""
         '''
         except self.serialPort.SerialException as ex:
-            logger.info("Port is unavailable: " + str(ex))
+            logging.info("Port is unavailable: " + str(ex))
             exit()
         '''
         #as yet appears to be unnecessary
@@ -68,15 +68,15 @@ class SerialInit(object):
 
     def getSerial(self):
         """ Return the pointer to the serial port """
-#        logger.debug("Connected to serial port " + self.serialPort.name)
+#        logging.debug("Connected to serial port " + self.serialPort.name)
         return self.serialPort
 
     def sendCommand(self, command):
         """ Send a command to the serial port """
-        logger.debug("serial port sending command %s", command)
+        logging.debug("serial port sending command %s", command)
         self.serialPort.write(command)
         self.sentCommand = str(command)
-#        logger.info('Sending command - ' + str(command))
+#        logging.info('Sending command - ' + str(command))
         return
 
     def tickSerial(self):
@@ -128,7 +128,7 @@ class SerialInit(object):
         switchSubstring = self.buf[0:2]
         shortSubstring = self.buf[0:1]
         longSubstring = self.buf[0:3]
-        logger.debug("buffer = %s", str(self.buf))
+        logging.debug("buffer = %s", str(self.buf))
         '''
         once the swap on switchSubstring is done, check for i's
         could move this to top of switch if it takes too long.
@@ -136,16 +136,16 @@ class SerialInit(object):
         '''
         if shortSubstring == str.encode("I"):
             if switchSubstring == "I ":
-                logger.debug("discarding I echo")
+                logging.debug("discarding I echo")
             else:
-                # logger.debug(self.buf[1:3] + self.buf[0:1])
+                # logging.debug(self.buf[1:3] + self.buf[0:1])
                 # use the number returned from this to match R case
                 self.parent.packetStore.setData("integrateData", self.buf[1:3])
                 self.parent.packetStore.setData("count2Flag", True)
         elif shortSubstring == str.encode("R"):
             number = self.parent.packetStore.getData("integrateData")
             if switchSubstring == str.encode("R\r"):
-                logger.debug("discarding R echo")
+                logging.debug("discarding R echo")
             
             elif self.parent.packetStore.getData("calledFrom") is "Eline":
                 #temp = PyQt5.QtCore.QByteArray(str.encode(" "))
@@ -165,8 +165,8 @@ class SerialInit(object):
                 # initial space after E added when eline is initialized
                 # could reverse this, if end space causes issues
                 data = data + " "
-                #logger.debug(self.buf[4:10])
-                #logger.debug(data)
+                #logging.debug(self.buf[4:10])
+                #logging.debug(data)
                 self.iSwitch = self.parent.packetStore.getData("integrateSwitch")
                 self.parent.packetStore.setData("currentFrequency", self.iSwitch) 
                 self.parent.packetStore.setData("count2Flag", False)
@@ -206,18 +206,18 @@ class SerialInit(object):
                 self.parent.packetStore.setData("tuneSwitch", True)
                 self.parent.packetStore.setData("currentFrequency", self.parent.packetStore.getData("integrateSwitch"))
             else: 
-                logger.debug("received R value, unsure who is calling")
+                logging.debug("received R value, unsure who is calling")
         if switchSubstring == str.encode('ST'):
             # sends number to update status
-            # logger.debug("splitSignal:ST")
+            # logging.debug("splitSignal:ST"
             return self.buf[3:5]
 
         elif switchSubstring == str.encode("Ve"):
-            logger.debug("splitSignal:Ve (rsion)")
+            logging.debug("splitSignal:Ve (rsion)")
             return self.buf
         elif switchSubstring == str.encode("St"):
-            #logger.debug("received a step signal")
-            #logger.debug(str(self.buf))
+            #logging.debug("received a step signal")
+            #logging.debug(str(self.buf))
             # initScan cases
             self.mode = self.parent.packetStore.getData("currentMode")
             self.switchControl = self.parent.packetStore.getData("switchControl")
@@ -247,12 +247,12 @@ class SerialInit(object):
                 if self.parent.packetStore.getData("homeSwitch"):
                     if self.parent.packetStore.getData("scanSet"):
                         self.parent.packetStore.setData("switchControl", "m01")
-                        logger.debug("init 3rd home command received")
+                        logging.debug("init 3rd home command received")
                     # this I believe is unnecessary here, but needed in scan mode
                     # move along check if not sending the third command
                     #elif self.parent.packetStore.getData("currentMode") is "scan":
                     #    self.parent.packetStore.setData("switchControl", "m01")
-                    #    logger.debug("init: 3rd home command skipped: scan mode")
+                    #    logging.debug("init: 3rd home command skipped: scan mode")
                 else:
                 '''
                 if self.parent.packetStore.getData("initSwitch"):
@@ -269,7 +269,7 @@ class SerialInit(object):
                     if self.parent.packetStore.getData("scanSet"):
                         self.parent.packetStore.setData("switchControl", "m01")
                         self.parent.packetStore.setData("echoCommand", False)
-                        logger.debug("home: 3rd home command received")
+                        logging.debug("home: 3rd home command received")
                         logging.debug("setitng current mode to desired mode:")
                         logging.debug(self.parent.packetStore.getData("desiredMode"))
 
@@ -278,7 +278,7 @@ class SerialInit(object):
                         # if returning to Eline,
                         self.parent.packetStore.setData("switchControl", "Eline")
                         self.parent.packetStore.setData("echoCommand", False)
-                        logger.debug("home: 3rd home command skipped: scan mode")
+                        logging.debug("home: 3rd home command skipped: scan mode")
 
                     elif self.parent.packetStore.getData("calledFrom") is "Bline":
                         # resetting to take more measurements for next angle Bline
@@ -286,40 +286,40 @@ class SerialInit(object):
                         # if returning to Bline :
                         self.parent.packetStore.setData("switchControl", "blIne")
                         self.parent.packetStore.setData("echoCommand", False)
-                        logger.debug("home: 3rd home command skipped: scan mode")
+                        logging.debug("home: 3rd home command skipped: scan mode")
                     else:
                         self.parent.packetStore.setData("scanSet", True)
-                        logger.debug("2nd home command received")
+                        logging.debug("2nd home command received")
                 else:
                     # first homeStep recieved: 
                     self.parent.packetStore.setData("homeSwitch", True)
-                    logger.debug("1st home command received")
+                    logging.debug("1st home command received")
                     
 
-                logger.debug("home")
+                logging.debug("home")
             
             elif self.mode is "scan":
                 if self.parent.packetStore.getData("homeSwitch"):
                     # this I believe is unnecessary here, but needed in init mode
                     if self.parent.packetStore.getData("scanSet"):
                         #    self.parent.packetStore.setData("switchControl", "m01")
-                        logger.debug("scan: 3rd home command received")
+                        logging.debug("scan: 3rd home command received")
                     elif self.parent.packetStore.getData("currentMode") is "scan":
                         # move along check if not sending the third command
                         self.parent.packetStore.setData("switchControl", "m01")
-                        logger.debug("scan: 3rd home command skipped: scan mode")
+                        logging.debug("scan: 3rd home command skipped: scan mode")
             else:
                 logging.debug("Don't care about return status here")
                 logging.debug(self.parent.packetStore.getData("switchControl"))
 
         elif switchSubstring == str.encode("00"):
             # catch return of home 1, "00000J3R"
-            logger.debug("zeros")
+            logging.debug("zeros")
 
         # readscan time case
         elif switchSubstring == str.encode("Ti"):
             #set readscan to "999999"
-            logger.debug('Time')
+            logging.debug('Time')
 
         elif switchSubstring == str.encode("M0"):
             # Doesn't work on Qbyte array type:
@@ -329,13 +329,13 @@ class SerialInit(object):
                 data = self.decodeLine()
                 # self.parent.packetStore.setData("M01", self.buf.data())
                 self.parent.packetStore.setData("M01", data)
-                logger.debug("received m01")
+                logging.debug("received m01")
                 self.parent.packetStore.setData("switchControl", "m02")
             else: 
                 data = self.decodeLine()
                 self.parent.packetStore.setData("M02", data)
-                logger.debug("received m02")
-                logger.debug("buff[1,4]: %s    str.encode(): %s", self.buf[1:4], "01:")
+                logging.debug("received m02")
+                logging.debug("buff[1,4]: %s    str.encode(): %s", self.buf[1:4], "01:")
                 self.parent.packetStore.setData("switchControl", "pt")
 
                 """
@@ -343,7 +343,7 @@ class SerialInit(object):
                 or if in homescan and initSwitch is false
         elif switchSubstring == str.encode("Pt"):
             self.parent.packetStore.setData("Pt", self.buf)
-            logger.debug("received Pt")
+            logging.debug("received Pt")
             self.parent.packetStore.setData("switchControl", "Eline")
             # Flag so homeScan knows where to return to, 
             # Should be set in Aline, just before Bline is called
@@ -360,14 +360,14 @@ class SerialInit(object):
         elif switchSubstring == str.encode("Pt"):
                 data = self.decodeLine()
                 self.parent.packetStore.setData("Pt", data)
-                logger.debug("received Pt")
+                logging.debug("received Pt")
                 self.parent.packetStore.setData("switchControl", "Eline")
 
         elif switchSubstring == str.encode("ND"):
                 # note that while the echo command "N" would also be
                 # easy to match on, it is irrelavant for switching purposes
                 self.parent.packetStore.setData("noise", self.buf)
-                logger.debug("received setNoise data")
+                logging.debug("received setNoise data")
                 '''
                 if self.buf[0,4] == str.encode("N02"):
                     # only on receipt of first noise command can we switch this
@@ -409,7 +409,7 @@ class SerialInit(object):
         elif switchSubstring == :
             '''
         elif self.buf is (self.sentCommand):
-            logger.debug("sent")
+            logging.debug("sent")
         else:
             '''
             once the swap on switchSubstring is done, check for i's
@@ -418,16 +418,16 @@ class SerialInit(object):
             '''
             if shortSubstring == str.encode("I"):
                 if switchSubstring == "I ":
-                    logger.debug("discarding I echo")
+                    logging.debug("discarding I echo")
                 else:
-                    # logger.debug(self.buf[1:3] + self.buf[0:1])
+                    # logging.debug(self.buf[1:3] + self.buf[0:1])
                     # use the number returned from this to match R case
                     self.parent.packetStore.setData("integrateData", self.buf[1:3])
                     self.parent.packetStore.setData("count2Flag", True)
             elif shortSubstring == str.encode("R"):
                 number = self.parent.packetStore.getData("integrateData")
                 if switchSubstring == str.encode("R\r"):
-                    logger.debug("discarding R echo")
+                    logging.debug("discarding R echo")
                 
                 elif self.parent.packetStore.getData("calledFrom") is "Eline":
                     #temp = PyQt5.QtCore.QByteArray(str.encode(" "))
@@ -447,8 +447,8 @@ class SerialInit(object):
                     # initial space after E added when eline is initialized
                     # could reverse this, if end space causes issues
                     data = data + " "
-                    #logger.debug(self.buf[4:10])
-                    #logger.debug(data)
+                    #logging.debug(self.buf[4:10])
+                    #logging.debug(data)
                     self.iSwitch = self.parent.packetStore.getData("integrateSwitch")
                     self.parent.packetStore.setData("currentFrequency", self.iSwitch) 
                     self.parent.packetStore.setData("count2Flag", False)
@@ -488,13 +488,13 @@ class SerialInit(object):
                     self.parent.packetStore.setData("tuneSwitch", True)
                     self.parent.packetStore.setData("currentFrequency", self.parent.packetStore.getData("integrateSwitch"))
                 else: 
-                    logger.debug("received R value, unsure who is calling")
+                    logging.debug("received R value, unsure who is calling")
 
-        logger.debug("Catch all for truncations, collisions, and unwanted command echos")
-        logger.debug("sentcommand: %s", self.sentCommand )
+        logging.debug("Catch all for truncations, collisions, and unwanted command echos")
+        logging.debug("sentcommand: %s", self.sentCommand )
         self.parent.app.processEvents()
-        #logger.debug("buffer: %s ", self.buf )
-        #logger.debug("buffer 3 and 4: %s \r\n", self.buf[0:2])
+        #logging.debug("buffer: %s ", self.buf )
+        #logging.debug("buffer 3 and 4: %s \r\n", self.buf[0:2])
 
     def readin(self):
         """
@@ -509,7 +509,7 @@ class SerialInit(object):
             if byte.decode("utf-8") == "\n":
                 break
             message += byte.decode("utf-8")
-        logger.debug("read data: " + message.rstrip())
+        logging.debug("read data: " + message.rstrip())
         return(message.rstrip())
     
     def decodeLine(self):
@@ -546,7 +546,7 @@ class SerialInit(object):
         if serialPort.isOpen():
             self.serialPort.close()
         else:
-            logger.debug("qtserial closed")
+            logging.debug("qtserial closed")
 
 
 if __name__ == "__main__":

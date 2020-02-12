@@ -497,10 +497,10 @@ class moveMTP():
         t = time.gmtime();
         # yyyymmdd hhmmss in udp feed for backwards compatability
         # yyyymmdd hh:mm:ss in save feed
-        self.currentDateUDP =  "%02d%02d%02d %02d%02d%02d" %(t[0], t[1], t[2],t[3], t[4], t[5])
-        self.currentDateSave =  "%02d%02d%02d %02d:%02d:%02d" %( t[0], t[1], t[2], t[3], t[4], t[5])
+        currentDateUDP =  "%02d%02d%02d %02d%02d%02d" %(t[0], t[1], t[2],t[3], t[4], t[5])
+        currentDateSave =  "%02d%02d%02d %02d:%02d:%02d" %( t[0], t[1], t[2], t[3], t[4], t[5])
         # aline = "A " + self.currentDate
-        self.udpArray.append("A " + self.currentDateUDP + " " + aline)
+        self.udpArray.append("A " + currentDateUDP + " " + aline)
         self.iwg = self.parent.packetStore.getData('IWG')
         self.udpArray.append(self.iwg)
         self.bline = self.parent.packetStore.getData('Bline')
@@ -522,14 +522,14 @@ class moveMTP():
         # open file in append binary mode
         with open("MTP_data.txt", "ab") as datafile:
             # may need to .append instead of +
-            datafile.write(str.encode("A " + self.currentDateSave + " " + self.aline))
+            datafile.write(str.encode("A " + currentDateSave + " " + aline))
             datafile.write(str.encode('\n'))
             datafile.write(self.iwg)
             datafile.write(self.bline)
             datafile.write(str.encode('\n'))
-            datafile.write(m01)
-            datafile.write(m02)
-            datafile.write(pt)
+            datafile.write(str.encode(m01))
+            datafile.write(str.encode(m02))
+            datafile.write(str.encode(pt))
             datafile.write(self.eline)
             datafile.write(str.encode('\n'))
             # this \n doesn't leave the ^M's
