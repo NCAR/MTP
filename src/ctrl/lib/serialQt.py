@@ -84,12 +84,14 @@ class SerialInit(object):
         # 0.07 s sleep works for smaller commands
         # need to test if it works for the big lines
         # works for pt, m02, m01
-        for i in range (0, 100, 1): #start, stop, step
+        i=0
+        while i < 10: #start, stop, step
             if self.serialPort.canReadLine():
                 # exit for loop
-                i = 100
-            if i == 100:
+                break
+            if i == 10:
                 logging.error("Sleep timeout on canReadLine")
+            i = i + 1
             time.sleep(0.001)
         # Add do sleep while nodata to catch multiple responses if necessary
         #while self.serialPort.canReadLine():
@@ -522,16 +524,20 @@ class SerialInit(object):
         #data = data.split(' ')
         tmp = data[0].split(':')
         for i in data:
-            if i == 0:
+            if i == data[0]:
                 # reset the dataArray with first equal
                 stringData = str(tmp[0]) + ": " + str(int(str(tmp[1]),16)) + " "
+                logging.debug("decodeLine, 0 case")
                 #dataArray.append(str(int(str(tmp[1]).decode('ascii'),16)))
                 #dataArray.append(str.encode(' '))
             else:
                 if i == '\r\n':
                     stringData + '\r\n'
+                elif i == '':
+                    stringData
                 else:
                     stringData = stringData + str(int(i,16)) + ' '
+            logging.debug(" data i = %s ", i)
         return stringData
 
 

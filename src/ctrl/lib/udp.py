@@ -79,8 +79,8 @@ class doUDP(object):
         self.parent.packetStore.setData("IWG", self.data)
 
         # Writes to iwg file
-        with open("IWG.txt", a) as iwgFile:
-            iwgFile.write(self.data)
+        with open("IWG.txt", 'a') as iwgFile:
+            iwgFile.write(str(self.data))
 
         iwgFile.close()
 
