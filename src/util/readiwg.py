@@ -38,13 +38,13 @@ class readIWG:
         try:
             ascii_parms = open(ascii_parms_file, 'r')
         except OSError as err:
-            print(err)
-            print("Copy ascii_parms for project into config/ dir in order to" +
-                  " parse IWG packet correctly then rerun code.")
+            logger.printmsg("ERROR", str(err) + " Copy ascii_parms for " +
+                            "project into config/ dir in order to parse IWG" +
+                            " packet correctly then rerun code.")
             return(False)
-        except Exception:
-            print("Unexpected error occurred while trying to open " +
-                  "ascii_parms file")
+        except Exception as error:
+            logger.printmsg("ERROR", str(error) + " Unexpected error " +
+                            "occurred while trying to open ascii_parms file")
             return(False)
 
         i = 2  # index of each variable in IWG1 line (after dateTtime)
