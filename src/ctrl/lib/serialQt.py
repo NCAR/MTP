@@ -13,7 +13,7 @@ from PyQt5.QtSerialPort import *
 from PyQt5.QtCore import *
 from PyQt5 import QtCore
 
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(level=logging.DEBUG)
 #logging = logging.getLogger(__name__)
 class SerialInit(object):
 
@@ -125,9 +125,20 @@ class SerialInit(object):
         # or adding process events after resetting of logic, 
         # but before writes?
         #self.parent.app.processEvents()
+        st = self.buf.data().decode('ascii')
+        logging.debug("decode st: %s", st)
+        logging.debug("decode st[1]: %s", st[0])
+        logging.debug("decode st[2]: %s", st[0:2])
+        logging.debug("decode shortst[2]: %s", st[0:1])
+        logging.debug("decode longst[2]: %s", st[0:3])
+
         switchSubstring = self.buf[0:2]
+        logging.debug("switchSubstring = %s", str(switchSubstring))
         shortSubstring = self.buf[0:1]
+        logging.debug("shortSubstring = %s", str(shortSubstring))
         longSubstring = self.buf[0:3]
+        logging.debug("longSubstring = %s", str(longSubstring))
+
         logging.debug("buffer = %s", str(self.buf))
         '''
         once the swap on switchSubstring is done, check for i's
@@ -161,7 +172,11 @@ class SerialInit(object):
                 # data = data.data().decode()
                 # convert to normal string from binary string
                 # then convert the hex to decimal
-                data = str(int(data.data().decode('ascii'), 16))
+                if data == '':
+                    logging.debug("data is ''")
+                    return
+                else:
+                    data = str(int(data.data().decode('ascii'), 16))
                 # initial space after E added when eline is initialized
                 # could reverse this, if end space causes issues
                 data = data + " "

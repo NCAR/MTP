@@ -394,7 +394,6 @@ class moveMTP():
 
 
         self.parent.packetStore.setData("angleI", 0) # angle index
-        self.parent.app.processEvents
 
         self.parent.packetStore.setData("switchControl", "blIne")       
         self.parent.serialPort.sendCommand(str.encode(self.parent.commandDict.getCommand("read_scan")))
@@ -405,6 +404,7 @@ class moveMTP():
 
     def blIne(self):
         logging.debug("in Bline")
+        # self.parent.app.processEvents()
         # for bli = 1 To Nangle
         # bSwitch iteration starts at 1, because array of data from config includes precurssor Nangle
         # currently should go 0 to 8
@@ -489,6 +489,7 @@ class moveMTP():
         #logging.debug("blIne End")
 
     def saveData(self):
+        # self.parent.app.processEvents()
         logging.debug("saving Data to file")
         # clear udp string
         self.udpArray =  QtCore.QByteArray(str.encode(""))
@@ -528,8 +529,11 @@ class moveMTP():
             datafile.write(self.bline)
             datafile.write(str.encode('\n'))
             datafile.write(str.encode(m01))
+            datafile.write(str.encode('\n'))
             datafile.write(str.encode(m02))
+            datafile.write(str.encode('\n'))
             datafile.write(str.encode(pt))
+            datafile.write(str.encode('\n'))
             datafile.write(self.eline)
             datafile.write(str.encode('\n'))
             # this \n doesn't leave the ^M's
