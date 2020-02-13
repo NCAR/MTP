@@ -20,13 +20,19 @@ class config():
 
     def read(self, yamlfile):
 
+        self.yamlfile = yamlfile
+
         # Check if config file exists
         if os.path.exists(yamlfile):
-            infile = open(yamlfile)
-            self.projConfig = yaml.load(infile, Loader=yaml.BaseLoader)
-            infile.close()
+            self.readConfig(yamlfile)
+            # If in debug mode, print contents of config file
             for key, value in self.projConfig.items():
                 logger.printmsg("DEBUG", key + ": " + str(value))
+
+    def readConfig(self, yamlfile):
+        infile = open(yamlfile)
+        self.projConfig = yaml.load(infile, Loader=yaml.BaseLoader)
+        infile.close()
 
     def getVal(self, key):
         """ Get value for given key in the yaml file """
@@ -42,8 +48,11 @@ class config():
             return(int(val))
         else:
             logger.printmsg("ERROR", "Error in config file - " + key +
-                            " should be an integer")
-            exit()
+                            " should be an integer. Edit config file " +
+                            self.yamlfile + " then" +
+                            " click OK to be prompted to reload it")
+            self.readConfig(self.yamlfile)
+            self.getInt(key)  # Try again. Will loop until user fixes issue.
 
     def getPath(self, key):
         """ Read a param from the config file that should be a path """
