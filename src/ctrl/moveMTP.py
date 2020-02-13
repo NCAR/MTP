@@ -237,8 +237,8 @@ class moveMTP():
             self.parent.packetStore.setData("scanSet", False)
             
             # clear data stored in packetStore.integrateData from previous call
-            self.eline = QtCore.QByteArray(str.encode("E "))
-            self.parent.packetStore.setData("Eline", self.eline)
+            self.parent.elineStore = QtCore.QByteArray(str.encode("E "))
+            
             self.parent.packetStore.setData('currentFrequency', 55.51)
             self.parent.packetStore.setData("doneCycle", False)
 
@@ -365,7 +365,7 @@ class moveMTP():
         aline = aline + " " + str(self.parent.packetStore.getData("lonrms"))
         aline = aline + " " + str(self.parent.packetStore.getData("scanCount"))
         aline = aline + " " + str(self.parent.packetStore.getData("encoderCount"))
-        self.parent.packetStore.setData("Aline", aline)
+        self.parent.alineStore = aline
         #logging.info(aline)
         '''
         self.pitch_Frame = pitchI # from getIWG 16, deg
@@ -377,7 +377,7 @@ class moveMTP():
         self.scanCount = # from packet store
         self.encoderCount =  # from packet store
 
-        # translate units 
+        # translate units /
         self.ft_km = 3280.8 # translate from ft to km 
         self.zp = self.zp/self.ft_km
         self.oat = self.oat + 273.15 # to kelvin
@@ -389,7 +389,7 @@ class moveMTP():
 
         # save A line:
         aline = "A " + self.currentDate + self.pitch_Frame + self.roll_Frame + self.zp + self.oat + self.lat + self.lon + self.scanCount + self.encoderCount
-        self.parent.packetStore.setData("Aline", aline)
+        #self.parent.packetStore.setData("Aline", aline)
         '''
 
 
@@ -421,8 +421,7 @@ class moveMTP():
             self.parent.packetStore.setData("bDone", False)
             self.parent.packetStore.setData("calledFrom", 'blIne')
             # reset/clear bline
-            self.bline = QtCore.QByteArray(str.encode("B "))
-            self.parent.packetStore.setData("Bline", self.bline)
+            self.parent.blineStore = QtCore.QByteArray(str.encode("B "))
             # angleI ++
             self.parent.packetStore.setData("angleI",2) # angle index, zenith at 1
             # self.parent.serialPort.sendCommand(str.encode(self.parent.commandDict.getCommand("read_enc")))
@@ -494,18 +493,20 @@ class moveMTP():
         # clear udp string
         self.udpArray =  QtCore.QByteArray(str.encode(""))
         # store everything locally
-        aline = self.parent.packetStore.getData('Aline')
         t = time.gmtime();
         # yyyymmdd hhmmss in udp feed for backwards compatability
         # yyyymmdd hh:mm:ss in save feed
         currentDateUDP =  "%02d%02d%02d %02d%02d%02d" %(t[0], t[1], t[2],t[3], t[4], t[5])
         currentDateSave =  "%02d%02d%02d %02d:%02d:%02d" %( t[0], t[1], t[2], t[3], t[4], t[5])
         # aline = "A " + self.currentDate
-        self.udpArray.append("A " + currentDateUDP + " " + aline)
-        self.iwg = self.parent.packetStore.getData('IWG')
-        self.udpArray.append(self.iwg)
-        self.bline = self.parent.packetStore.getData('Bline')
-        self.udpArray.append(self.bline)
+        self.udpArray.append("A " + currentDateUDP + " " + self.parent.alineStore)
+        self.udpArray.append(self.parent.iwgStore)
+        self.udpArray.append(self.parent.blineStore)
+        self.udpArray.append(self.parent.m01Store)
+        self.udpArray.append(self.parent.m02Store)
+        self.udpArray.append(self.parent.ptStore)
+        self.udpArray.append(self.parent.elineStore)
+        '''
         m01 = self.parent.packetStore.getData('M01')
         self.udpArray.append(m01)
         m02 = self.parent.packetStore.getData('M02')
@@ -514,6 +515,7 @@ class moveMTP():
         self.udpArray.append(pt)
         self.eline = self.parent.packetStore.getData('Eline')
         self.udpArray.append(self.eline)
+        '''
         '''
         if self.bline.size > 30:
             logging.info("bline size larger than expected (30): %s", self.bline.size)
@@ -525,16 +527,16 @@ class moveMTP():
             # may need to .append instead of +
             datafile.write(str.encode("A " + currentDateSave + " " + aline))
             datafile.write(str.encode('\n'))
-            datafile.write(self.iwg)
-            datafile.write(self.bline)
+            datafile.write(self.parent.iwgStore)
+            datafile.write(self.parent.blineStore)
             datafile.write(str.encode('\n'))
-            datafile.write(str.encode(m01))
+            datafile.write(str.encode(self.parent.m01Store))
             datafile.write(str.encode('\n'))
-            datafile.write(str.encode(m02))
+            datafile.write(str.encode(self.parent.m02Store))
             datafile.write(str.encode('\n'))
-            datafile.write(str.encode(pt))
+            datafile.write(str.encode(self.parent.ptStore))
             datafile.write(str.encode('\n'))
-            datafile.write(self.eline)
+            datafile.write(self.parent.elineStore)
             datafile.write(str.encode('\n'))
             # this \n doesn't leave the ^M's
             datafile.write(str.encode('\n'))

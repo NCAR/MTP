@@ -187,12 +187,14 @@ class SerialInit(object):
                 self.parent.packetStore.setData("count2Flag", False)
                 self.parent.packetStore.setData("tuneSwitch", True)
                 logging.debug("integrate Switch should be set to 56 here: %s", self.iSwitch)
-                self.parent.packetStore.appendData("Eline",data)
+                self.parent.elineStore = data
+                #self.parent.packetStore.appendData("Eline",data)
+                
                 # race condition causes intermittent e line truncation
                 # so it will only have 3 values
                 # or e value repetition. Hopfully having appending after
                 # logic switching will help
-                logging.debug(self.parent.packetStore.getData("Eline"))
+                logging.debug(self.parent.elineStore)
 
             elif self.parent.packetStore.getData("calledFrom") is "blIne":
                 #temp = PyQt5.QtCore.QByteArray(str.encode(" "))
@@ -203,8 +205,9 @@ class SerialInit(object):
                 data = data + " "
                 #data = int(data.decode('ascii'), 16)
                 #data.append(" ")
-                self.parent.packetStore.appendData("Bline", data)
-                logging.debug(self.parent.packetStore.getData("Bline"))
+                self.parent.blineStore = self.parent.blineStore.append(data)
+                # self.parent.packetStore.appendData("Bline", data)
+                # logging.debug(self.parent.packetStore.getData("Bline"))
                 # Reset blIne logic - no: in bline:
                 '''
                 self.i = self.parent.packetStore.getData("angleI")
@@ -342,13 +345,14 @@ class SerialInit(object):
             # check self.buf[1:3] actually is substring we want
             if self.buf[1:4] == str.encode("01:"):
                 data = self.decodeLine()
-                # self.parent.packetStore.setData("M01", self.buf.data())
-                self.parent.packetStore.setData("M01", data)
+                #self.parent.packetStore.setData("M01", data)
+                self.parent.m01Store = data
                 logging.debug("received m01")
                 self.parent.packetStore.setData("switchControl", "m02")
             else: 
                 data = self.decodeLine()
-                self.parent.packetStore.setData("M02", data)
+                self.parent.m02Store = data
+                #self.parent.packetStore.setData("M02", data)
                 logging.debug("received m02")
                 logging.debug("buff[1,4]: %s    str.encode(): %s", self.buf[1:4], "01:")
                 self.parent.packetStore.setData("switchControl", "pt")
@@ -357,7 +361,7 @@ class SerialInit(object):
                 # Apparently not. Will set echoCommand in homeScan itself
                 or if in homescan and initSwitch is false
         elif switchSubstring == str.encode("Pt"):
-            self.parent.packetStore.setData("Pt", self.buf)
+            #self.parent.packetStore.setData("Pt", self.buf)
             logging.debug("received Pt")
             self.parent.packetStore.setData("switchControl", "Eline")
             # Flag so homeScan knows where to return to, 
@@ -374,7 +378,7 @@ class SerialInit(object):
             # or initSwitch = true
         elif switchSubstring == str.encode("Pt"):
                 data = self.decodeLine()
-                self.parent.packetStore.setData("Pt", data)
+                self.parent.ptStore = data
                 logging.debug("received Pt")
                 self.parent.packetStore.setData("switchControl", "Eline")
 
@@ -430,6 +434,9 @@ class SerialInit(object):
             once the swap on switchSubstring is done, check for i's
             could move this to top of switch if it takes too long.
             aka if race condition remains
+            '''
+            # now that this is at the top of the switch statement,
+            # having it here is redundant
             '''
             if shortSubstring == str.encode("I"):
                 if switchSubstring == "I ":
@@ -489,6 +496,7 @@ class SerialInit(object):
                     logging.debug(self.parent.packetStore.getData("Bline"))
                     # Reset blIne logic - no: in bline:
                     '''
+                    '''
                     self.i = self.parent.packetStore.getData("angleI")
                     if self.i < 12:
                         logging.debug("recieving logic: angleI value(2-11): %s", str(self.i))
@@ -497,6 +505,7 @@ class SerialInit(object):
                         #stop logic
                         self.parent.packetStore.setData("bDone", True)
                     '''
+                    '''
                     # Reset integrate logic
                     self.parent.packetStore.setData("count2Flag", False)
                     logging.debug(self.parent.packetStore.getData("count2Flag"))
@@ -504,6 +513,7 @@ class SerialInit(object):
                     self.parent.packetStore.setData("currentFrequency", self.parent.packetStore.getData("integrateSwitch"))
                 else: 
                     logging.debug("received R value, unsure who is calling")
+            '''
 
         logging.debug("Catch all for truncations, collisions, and unwanted command echos")
         logging.debug("sentcommand: %s", self.sentCommand )
