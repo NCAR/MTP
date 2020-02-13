@@ -154,7 +154,7 @@ class doUDP(object):
         # self.list = self.parent.packetStore.getData(name)
         # logging.debug("list: %s", self.list) # more like a qbyte array
         templist = self.getArray(name)
-        print(templist)
+        logging.debug(templist)
         nval = len(templist)
         #logging.debug("nval: %s", nval)
 
