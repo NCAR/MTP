@@ -495,8 +495,8 @@ class SerialInit(object):
                     self.parent.packetStore.appendData("Bline", data)
                     logging.debug(self.parent.packetStore.getData("Bline"))
                     # Reset blIne logic - no: in bline:
-                    '''
-                    '''
+            '''
+            '''
                     self.i = self.parent.packetStore.getData("angleI")
                     if self.i < 12:
                         logging.debug("recieving logic: angleI value(2-11): %s", str(self.i))
@@ -504,8 +504,8 @@ class SerialInit(object):
                     else:
                         #stop logic
                         self.parent.packetStore.setData("bDone", True)
-                    '''
-                    '''
+            '''
+            '''
                     # Reset integrate logic
                     self.parent.packetStore.setData("count2Flag", False)
                     logging.debug(self.parent.packetStore.getData("count2Flag"))
