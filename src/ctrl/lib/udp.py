@@ -74,9 +74,10 @@ class doUDP(object):
 
         # returns QByteArray
         self.data = self.networkDatagram.data()
+        logging.debug("Does iwg networkDatagram really return QByte array? %s", self.networkDatagram.data())
 
-        # Stores data in packetStore
-        self.parent.packetStore.setData("IWG", self.data)
+        # Stores data 
+        self.parent.iwgStore = self.data
 
         # Writes to iwg file
         with open("IWG.txt", 'a') as iwgFile:
@@ -99,7 +100,8 @@ class doUDP(object):
         self.parent.receivingUDPLED.setPixmap(self.parent.ICON_GREEN_LED.scaled(40,40))
         # Ensures that events will be processed at 
         # least once a second
-        self.parent.app.processEvents()
+        # doesn't because this is whole thing is an event to be queued 
+        #self.parent.app.processEvents()
 
         self.sortIWG()
 
@@ -119,18 +121,26 @@ class doUDP(object):
     def sortIWG(self):
         # grabs values needed for Aline
         # calls keep15, and avgVal for each
-        # this could be another enum
         # logging.debug( self.parent.packetStore.getData("IWGSplit"))
-        self.keep15("pitch", self.parent.packetStore.getArray("IWGSplit", 16))
-        self.keep15("roll",  self.parent.packetStore.getArray("IWGSplit", 17))
+        IWGSplit = self.parent.iwgStore.split(' ')
+        self.keep15("pitch",IWGSplit[16])
+        self.keep15("roll",IWGSplit[17])
         # Zp is pressure Altitude
         # converted from IWG ft to km in keep 15
-        self.keep15("Zp",  self.parent.packetStore.getArray("IWGSplit", 6))
+        self.keep15("Zp",IWGSplit[6])
         # oat is ambient temperature
         # converted from IWG C to K in keep 15
+        self.keep15("oat",IWGSplit[20])
+        self.keep15("lat",IWGSplit[2])
+        self.keep15("lon",IWGSplit[3])
+        '''
+        self.keep15("pitch",  self.parent.packetStore.getArray("IWGSplit", 16))
+        self.keep15("roll",  self.parent.packetStore.getArray("IWGSplit", 17))
+        self.keep15("Zp",  self.parent.packetStore.getArray("IWGSplit", 6))
         self.keep15("oat",  self.parent.packetStore.getArray("IWGSplit", 20))
         self.keep15("lat",  self.parent.packetStore.getArray("IWGSplit", 2))
         self.keep15("lon",  self.parent.packetStore.getArray("IWGSplit", 3))
+        '''
         # logging.debug("sortIWG")
 
 
@@ -138,8 +148,13 @@ class doUDP(object):
         # removes oldest value if there are more than 15
         self.list = self.parent.packetStore.getData(name)
         # logging.debug("list: %s", self.list) # more like a qbyte array
-        self.nval = len(self.list)
-        # logging.debug("nval: %s", self.nval)
+        arrayName = name + '15'
+        logging.debug("keep15 naming arrayName: %s" , arrayName)
+        templist = self.parent.arrayName
+        print(templist)
+        nval = len(templist)
+        logging.debug("nval: %s", self.nval)
+
         # Sometimes IWG packet doesn't fill out values
         # check if roll/pitch is zero in goAngle
         if latestValue is '':
@@ -150,24 +165,25 @@ class doUDP(object):
             latestValue = float(latestValue) + 273.15 # C to K value from vb6
 
         # only want to keep 16 values in each array
-        if self.nval > 15:
-            self.nval = 15
+        if nval > 15:
+            nval = 15
         
         # want to shuffle last value, 
         # then second last value
         # so that the list[0] is empty
         # but others are full
         i = 0
-        while i < self.nval: 
-            # adds latest value 
-            #logging.debug("nval :: i " )
-            #logging.debug( self.nval-self.i )
-            #logging.debug( self.nval-(self.i+1))
+        while i < nval: 
+            # shuffle list
+            logging.debug("nval :: i " )
+            logging.debug( nval-i )
+            logging.debug( nval-(i+1))
 
-            self.list[self.nval-i] = self.list[self.nval-(i+1)]
+            templist[nval-i] = templist[.nval-(i+1)]
             i = i+1
-        self.list[0] = latestValue
-        self.parent.packetStore.setData(name, self.list)
+        templist[0] = latestValue
+        sefl.parent.arrayName = templist
+        #self.parent.packetStore.setData(name, self.list)
         self.averageVal(name)
 
         # logging.debug("in keep15")
@@ -175,25 +191,31 @@ class doUDP(object):
     def averageVal(self, name):
         # logging.debug("in averageVal")
         # takes in name, grabs name+array
-        data = self.parent.packetStore.getData(name)
+
+        #data = self.parent.packetStore.getData(name)
+        arrayName = name + '15'
+        data = self.parent.arrayName
+        nval = len(data)
+        logging.debug("averageval nval = len(data_, should be 15: %s", nval)
 
         avg = 0
         rms = 0
         i = 0
         # calculates average and root mean square error
-        while i < self.nval:
-            datum = float(self.parent.packetStore.getArray(name,i))
+        while i < nval:
+            #datum = float(self.parent.packetStore.getArray(name,i))
+            datum = float(self.parent.arrayName[i]
             # logging.debug(i)
             # logging.debug(datum)
             # logging.debug("averageVal for loop")
             avg = avg + datum
             rms = rms + (datum * datum)
             i = i + 1 
-        avg = avg/self.nval
+        avg = avg/nval
         # logging.debug("avg %f", avg)
-        if rms - (avg * avg) * self.nval >0:
-            if self.nval > 1:
-                rms = math.sqrt((rms - (avg * avg) * self.nval)/(self.nval-1))
+        if rms - (avg * avg) * nval >0:
+            if nval > 1:
+                rms = math.sqrt((rms - (avg * avg) * nval)/(nval-1))
             else:
                 rms = 0.0
         else: 
@@ -206,6 +228,9 @@ class doUDP(object):
         # truncate values to third decimal place
         avg = int(avg * 1000) / 1000.0
         rms = int(rms * 1000) / 1000.0
+
+        #keeping these in the packet store because they are single values
+        # may remove if time still an issue
         self.parent.packetStore.setData(str(name) +'avg', avg)
         self.parent.packetStore.setData(str(name) +'rms', rms)
         
