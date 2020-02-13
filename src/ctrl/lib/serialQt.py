@@ -50,10 +50,8 @@ class SerialInit(object):
             logging.info("COM6 was open: now closed")
 
         if self.serialPort.open(QIODevice.ReadWrite):
-            #print ("serial port is open")
             logging.info("COM6 is open")
         else:
-            print ("serial port failed to open")
             logging.info ("COM6 failed to open")
 
         """ Not sure QtSerialPort has an exception in this case?"""
@@ -545,7 +543,6 @@ class SerialInit(object):
         logging.debug('decode')
         data = self.buf.data().decode()
         data = data.split(' ')
-        # print(self.buf.decode('ascii'))
         #data = data.split(' ')
         tmp = data[0].split(':')
         for i in data:
