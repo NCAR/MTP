@@ -24,13 +24,14 @@ def main():
     stream = sys.stdout
     logger.initLogger(stream, args.loglevel, args.logmod)
 
-    # Read in config file and set up MTP controller
-    client.config(args.config)
-
     # Every GUI app must have exactly one instance of QApplication. The
     # QApplication class manages the GUI application's control flow and
     # main settings.
     app = QApplication(sys.argv)
+
+    # Read in config file and set up MTP controller. Needs app to be
+    # instantiated first in case it needs to call a fileselector.
+    client.config(args.config)
 
     # Instantiate the GUI
     viewer = MTPviewer(client, app)
