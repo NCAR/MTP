@@ -154,7 +154,7 @@ class doUDP(object):
         # self.list = self.parent.packetStore.getData(name)
         # logging.debug("list: %s", self.list) # more like a qbyte array
         templist = self.getArray(name)
-        logging.debug(templist)
+        # logging.debug(templist)
         nval = len(templist)
         #logging.debug("nval: %s", nval)
 
@@ -273,8 +273,9 @@ class doUDP(object):
 
         #keeping these in the packet store because they are single values
         # may remove if time still an issue
-        self.parent.packetStore.setData(str(name) +'avg', avg)
-        self.parent.packetStore.setData(str(name) +'rms', rms)
+        logging.debug("Got IWG, but pitchrms still not in packet store, name = %s",str(name) + 'avg')
+        self.parent.packetStore.setData(str(name) + 'avg', avg)
+        self.parent.packetStore.setData(str(name) + 'rms', rms)
         
 
     def timeoutUDP(self):
