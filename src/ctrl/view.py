@@ -181,6 +181,7 @@ class controlWindow(QWidget):
         self.cycleTimer.timeout.connect(self.cycle)
         self.cycleTimer.setInterval(82) # mseconds
         # 82 ms fixes race condition that makes
+        # arriving data concatinate
         # 72 mostly fixes it, but not all
         # Eline/Bline double sample
         # 62 does not 
