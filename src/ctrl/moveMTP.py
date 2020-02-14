@@ -237,7 +237,8 @@ class moveMTP():
             self.parent.packetStore.setData("scanSet", False)
             
             # clear data stored in packetStore.integrateData from previous call
-            self.parent.elineStore = QtCore.QByteArray(str.encode("E "))
+            #self.parent.elineStore = QtCore.QByteArray(str.encode("E "))
+            self.parent.elineStore = "E "
             
             self.parent.packetStore.setData('currentFrequency', 55.51)
             self.parent.packetStore.setData("doneCycle", False)
@@ -351,18 +352,69 @@ class moveMTP():
         # (aka testing on the ground)
         # those will be set to 1 in goAngle
         # but not adjusted for Aline
-        aline = " " + str(self.parent.packetStore.getData("pitchavg"))
-        aline = aline + " " + str(self.parent.packetStore.getData("pitchrms"))
-        aline = aline + " " + str(self.parent.packetStore.getData("rollavg"))
-        aline = aline + " " + str(self.parent.packetStore.getData("rollrms"))
-        aline = aline + " " + str(self.parent.packetStore.getData("Zpavg"))
-        aline = aline + " " + str(self.parent.packetStore.getData("Zprms"))
-        aline = aline + " " + str(self.parent.packetStore.getData("oatavg"))
-        aline = aline + " " + str(self.parent.packetStore.getData("oatrms"))
-        aline = aline + " " + str(self.parent.packetStore.getData("latavg"))
-        aline = aline + " " + str(self.parent.packetStore.getData("latrms"))
-        aline = aline + " " + str(self.parent.packetStore.getData("lonavg"))
-        aline = aline + " " + str(self.parent.packetStore.getData("lonrms"))
+        try:
+            logging.debug("before pitch avg")
+            pitchavg = self.parent.packetStore.getData("pitchavg")
+            logging.debug("after pitch avg")
+            pitchrms = self.parent.packetStore.getData("pitchrms")
+            logging.debug("after pitch rms1")
+            rollavg = self.parent.packetStore.getData("rollavg")
+            logging.debug("after pitch rms2")
+            rollrms = self.parent.packetStore.getData("rollrms")
+            logging.debug("after pitch rms3")
+            Zpavg = self.parent.packetStore.getData("Zpavg")
+            logging.debug("after pitch rms4")
+            Zprms = self.parent.packetStore.getData("Zpavg")
+            logging.debug("after pitch rms5")
+            oatavg = self.parent.packetStore.getData("oatavg")
+            logging.debug("after pitch rms6")
+            oatrms = self.parent.packetStore.getData("oatrms")
+            logging.debug("after pitch rms7")
+            latavg = self.parent.packetStore.getData("latavg")
+            logging.debug("after pitch rms8")
+            latrms = self.parent.packetStore.getData("latrms")
+            logging.debug("after pitch rms9")
+            lonavg = self.parent.packetStore.getData("lonavg")
+            logging.debug("after pitch rms10")
+            lonrms = self.parent.packetStore.getData("lonrms")
+            logging.debug("after pitch rms end")
+        except Exception as e:
+            logging.debug("after pitch rms, in exception")
+            logging.error(repr(e))
+            logging.error(e.message)
+            logging.error(sys.exe_info()[0])
+            logging.error("IWG not detected, using defaults")
+            pitchavg = 3
+            pitchrms = 3
+            rollavg = 3
+            rollrms = 3
+            Zpavg = 3
+            Zprms = 3
+            oatavg = 3
+            oatrms = 3
+            latavg = 3
+            latrms = 3
+            lonavg = 3
+            lonrms = 3
+            # set from config file eventually
+            # other odd constant is in udp.py -
+            # sets the recieved values in iwg line to 0
+        else:
+            logging.debug("else got IWG")
+
+
+        aline = " " + str(pitchavg)
+        aline = aline + " " + str(pitchrms)
+        aline = aline + " " + str(rollavg)
+        aline = aline + " " + str(rollrms)
+        aline = aline + " " + str(Zpavg)
+        aline = aline + " " + str(Zprms)
+        aline = aline + " " + str(oatavg)
+        aline = aline + " " + str(oatrms)
+        aline = aline + " " + str(latavg)
+        aline = aline + " " + str(latrms)
+        aline = aline + " " + str(lonavg)
+        aline = aline + " " + str(lonrms)
         aline = aline + " " + str(self.parent.packetStore.getData("scanCount"))
         aline = aline + " " + str(self.parent.packetStore.getData("encoderCount"))
         self.parent.alineStore = aline
@@ -525,9 +577,10 @@ class moveMTP():
         # open file in append binary mode
         with open("MTP_data.txt", "ab") as datafile:
             # may need to .append instead of +
-            datafile.write(str.encode("A " + currentDateSave + " " + aline))
+            datafile.write(str.encode("A " + currentDateSave + " " + self.parent.alineStore))
             datafile.write(str.encode('\n'))
-            datafile.write(self.parent.iwgStore)
+            datafile.write(str.encode(self.parent.iwgStore))
+            datafile.write(str.encode('\n'))
             datafile.write(self.parent.blineStore)
             datafile.write(str.encode('\n'))
             datafile.write(str.encode(self.parent.m01Store))
@@ -536,7 +589,7 @@ class moveMTP():
             datafile.write(str.encode('\n'))
             datafile.write(str.encode(self.parent.ptStore))
             datafile.write(str.encode('\n'))
-            datafile.write(self.parent.elineStore)
+            datafile.write(str.encode(self.parent.elineStore))
             datafile.write(str.encode('\n'))
             # this \n doesn't leave the ^M's
             datafile.write(str.encode('\n'))
