@@ -123,9 +123,11 @@ class SerialInit(object):
         # or adding process events after resetting of logic, 
         # but before writes?
         #self.parent.app.processEvents()
-        st = self.buf.data().decode('ascii')
+        st = self.buf.data() #.decode('ascii') # decode farts on init string
+        # and on b'\xff/0@\r\n', will have to keep encode switching.
         logging.debug("decode st: %s", st)
-        logging.debug("decode st[1]: %s", st[0])
+        # logging.debug("decode st[1]: %s", st[0]) # this value is unpredictable
+        # have to use range - also got a b'R' string once
         logging.debug("decode st[2]: %s", st[0:2])
         logging.debug("decode shortst[2]: %s", st[0:1])
         logging.debug("decode longst[2]: %s", st[0:3])
@@ -185,7 +187,7 @@ class SerialInit(object):
                 self.parent.packetStore.setData("count2Flag", False)
                 self.parent.packetStore.setData("tuneSwitch", True)
                 logging.debug("integrate Switch should be set to 56 here: %s", self.iSwitch)
-                self.parent.elineStore = data
+                self.parent.elineStore = self.parent.elineStore + data
                 #self.parent.packetStore.appendData("Eline",data)
                 
                 # race condition causes intermittent e line truncation
@@ -556,6 +558,8 @@ class SerialInit(object):
                 if i == '\r\n':
                     stringData + '\r\n'
                 elif i == '':
+                    stringData
+                elif i == '\r':
                     stringData
                 else:
                     stringData = stringData + str(int(i,16)) + ' '
