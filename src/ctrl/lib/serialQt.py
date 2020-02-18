@@ -62,6 +62,20 @@ class SerialInit(object):
         '''
         #as yet appears to be unnecessary
         #self.app.processEvents()
+        self.binI = str.encode("I")
+        self.binR = str.encode("R")
+        self.binRnewline = str.encode("R\n")
+        self.binST = str.encode('ST')
+        self.binST = str.encode('ST')
+        self.binVe = str.encode('Ve')
+        self.binSt = str.encode('St')
+        self.bin00 = str.encode('00')
+        self.binTi = str.encode('Ti')
+        self.binM0 = str.encode('M01')
+        self.bin01 = str.encode('01:')
+        self.binPt = str.encode('Pt')
+        self.binND = str.encode('ND')
+        self.binU = str.encode('U/') 
         return
 
     def getSerial(self):
@@ -145,17 +159,21 @@ class SerialInit(object):
         could move this to top of switch if it takes too long.
         aka if race condition remains
         '''
-        if shortSubstring == str.encode("I"):
+        if shortSubstring == self.binI:
             if switchSubstring == "I ":
+                # testing to see if this removes duplicates
+                self.parent.cycleTimer.stop()
                 logging.debug("discarding I echo")
             else:
                 # logging.debug(self.buf[1:3] + self.buf[0:1])
                 # use the number returned from this to match R case
                 self.parent.packetStore.setData("integrateData", self.buf[1:3])
                 self.parent.packetStore.setData("count2Flag", True)
-        elif shortSubstring == str.encode("R"):
+        elif shortSubstring == self.binR 
             number = self.parent.packetStore.getData("integrateData")
-            if switchSubstring == str.encode("R\r"):
+            if switchSubstring == self.binRnewline:
+                # testing to see if this removes duplicates
+                self.parent.cycleTimer.stop()
                 logging.debug("discarding R echo")
             
             elif self.parent.packetStore.getData("calledFrom") is "Eline":
@@ -225,15 +243,15 @@ class SerialInit(object):
                 self.parent.packetStore.setData("currentFrequency", self.parent.packetStore.getData("integrateSwitch"))
             else: 
                 logging.debug("received R value, unsure who is calling")
-        if switchSubstring == str.encode('ST'):
+        if switchSubstring == 
             # sends number to update status
             # logging.debug("splitSignal:ST"
             return self.buf[3:5]
 
-        elif switchSubstring == str.encode("Ve"):
+        elif switchSubstring == self.binVe:
             logging.debug("splitSignal:Ve (rsion)")
             return self.buf
-        elif switchSubstring == str.encode("St"):
+        elif switchSubstring == self.binSt:
             #logging.debug("received a step signal")
             #logging.debug(str(self.buf))
             # initScan cases
@@ -330,24 +348,24 @@ class SerialInit(object):
                 logging.debug("Don't care about return status here")
                 logging.debug(self.parent.packetStore.getData("switchControl"))
 
-        elif switchSubstring == str.encode("00"):
+        elif switchSubstring == self.bin00:
             # catch return of home 1, "00000J3R"
             logging.debug("zeros")
 
         # readscan time case
-        elif switchSubstring == str.encode("Ti"):
+    elif switchSubstring == self.binTi:
             #set readscan to "999999"
             logging.debug('Time')
 
-        elif switchSubstring == str.encode("M0"):
+        elif switchSubstring == self.binM0: 
             # Doesn't work on Qbyte array type:
             # self.buf.decode("ascii")
             # check self.buf[1:3] actually is substring we want
-            if self.buf[1:4] == str.encode("01:"):
+            if self.buf[1:4] == self.bin01:
                 data = self.decodeLine()
                 #self.parent.packetStore.setData("M01", data)
                 self.parent.m01Store = data
-                logging.debug("received m01")
+                logging.debug("received m01 does the long substring not work here? %s ", longSubstring)
                 self.parent.packetStore.setData("switchControl", "m02")
             else: 
                 data = self.decodeLine()
@@ -355,6 +373,7 @@ class SerialInit(object):
                 #self.parent.packetStore.setData("M02", data)
                 logging.debug("received m02")
                 logging.debug("buff[1,4]: %s    str.encode(): %s", self.buf[1:4], "01:")
+                logging.debug("buff[1,3]: %s    str.encode(): %s", self.buf[1:3], "01")
                 self.parent.packetStore.setData("switchControl", "pt")
 
                 """
@@ -376,13 +395,13 @@ class SerialInit(object):
 
             # set matchWord: next
             # or initSwitch = true
-        elif switchSubstring == str.encode("Pt"):
+        elif switchSubstring == self.binPt:
                 data = self.decodeLine()
                 self.parent.ptStore = data
                 logging.debug("received Pt")
                 self.parent.packetStore.setData("switchControl", "Eline")
 
-        elif switchSubstring == str.encode("ND"):
+        elif switchSubstring == self.binND:
                 # note that while the echo command "N" would also be
                 # easy to match on, it is irrelavant for switching purposes
                 self.parent.packetStore.setData("noise", self.buf)
@@ -396,7 +415,7 @@ class SerialInit(object):
                     self.parent.packetStore.setData("ElineSwitch", True)
                 '''
 
-        elif switchSubstring == str.encode("U/"):
+        elif switchSubstring == self.binU:
             # when we do care about the echoed commands:
             if self.parent.packetStore.getData("switchControl") is "homeScan":
                 logging.debug("switchSubstring, homeScan case")
@@ -411,113 +430,15 @@ class SerialInit(object):
             else:
                 logging.debug("switchSubstring - discard echo case")
 
-
-
-
-
-
-
-
-
-            '''
-        elif switchSubstring == :
-        elif switchSubstring == :
-        elif switchSubstring == :
-        elif switchSubstring == :
-        elif switchSubstring == :
-        elif switchSubstring == :
-            '''
         elif self.buf is (self.sentCommand):
-            logging.debug("sent")
+            logging.debug("sent %s" , self.sentCommand)
         else:
-            '''
-            once the swap on switchSubstring is done, check for i's
-            could move this to top of switch if it takes too long.
-            aka if race condition remains
-            '''
-            # now that this is at the top of the switch statement,
-            # having it here is redundant
-            '''
-            if shortSubstring == str.encode("I"):
-                if switchSubstring == "I ":
-                    logging.debug("discarding I echo")
-                else:
-                    # logging.debug(self.buf[1:3] + self.buf[0:1])
-                    # use the number returned from this to match R case
-                    self.parent.packetStore.setData("integrateData", self.buf[1:3])
-                    self.parent.packetStore.setData("count2Flag", True)
-            elif shortSubstring == str.encode("R"):
-                number = self.parent.packetStore.getData("integrateData")
-                if switchSubstring == str.encode("R\r"):
-                    logging.debug("discarding R echo")
-                
-                elif self.parent.packetStore.getData("calledFrom") is "Eline":
-                    #temp = PyQt5.QtCore.QByteArray(str.encode(" "))
-                    #temp.append(self.buf[4:9]) # add the spaces
-                    # dont take above out because R\r\n will be out of bounds for r[4+]
-                    # though the data array doesn't do anything, 
-                    # it does appear that we need a bit more processing time
-                    # for the Eline characters to correctly get a space between 
-                    # them. Else they will run together
-                    # perhaps wherever the append space functionality is
-                    # should be moved
-                    data = self.buf[4:10] 
-                    # data = data.data().decode()
-                    # convert to normal string from binary string
-                    # then convert the hex to decimal
-                    data = str(int(data.data().decode('ascii'), 16))
-                    # initial space after E added when eline is initialized
-                    # could reverse this, if end space causes issues
-                    data = data + " "
-                    #logging.debug(self.buf[4:10])
-                    #logging.debug(data)
-                    self.iSwitch = self.parent.packetStore.getData("integrateSwitch")
-                    self.parent.packetStore.setData("currentFrequency", self.iSwitch) 
-                    self.parent.packetStore.setData("count2Flag", False)
-                    self.parent.packetStore.setData("tuneSwitch", True)
-                    logging.debug("integrate Switch should be set to 56 here: %s", self.iSwitch)
-                    self.parent.packetStore.appendData("Eline",data)
-                    # race condition causes intermittent e line truncation
-                    # so it will only have 3 values
-                    # or e value repetition. Hopfully having appending after
-                    # logic switching will help
-                    logging.debug(self.parent.packetStore.getData("Eline"))
-
-                elif self.parent.packetStore.getData("calledFrom") is "blIne":
-                    #temp = PyQt5.QtCore.QByteArray(str.encode(" "))
-                    #temp.append(self.buf[4:9]) # add the spaces
-                    logging.debug("bline integrate, got R")
-                    data = self.buf[4:10] 
-                    data = str(int(data.data().decode('ascii'), 16))
-                    data = data + " "
-                    #data = int(data.decode('ascii'), 16)
-                    #data.append(" ")
-                    self.parent.packetStore.appendData("Bline", data)
-                    logging.debug(self.parent.packetStore.getData("Bline"))
-                    # Reset blIne logic - no: in bline:
-            '''
-            '''
-                    self.i = self.parent.packetStore.getData("angleI")
-                    if self.i < 12:
-                        logging.debug("recieving logic: angleI value(2-11): %s", str(self.i))
-                        self.parent.packetStore.setData("angleI", self.i +1)
-                    else:
-                        #stop logic
-                        self.parent.packetStore.setData("bDone", True)
-            '''
-            '''
-                    # Reset integrate logic
-                    self.parent.packetStore.setData("count2Flag", False)
-                    logging.debug(self.parent.packetStore.getData("count2Flag"))
-                    self.parent.packetStore.setData("tuneSwitch", True)
-                    self.parent.packetStore.setData("currentFrequency", self.parent.packetStore.getData("integrateSwitch"))
-                else: 
-                    logging.debug("received R value, unsure who is calling")
-            '''
-
         logging.debug("Catch all for truncations, collisions, and unwanted command echos")
-        logging.debug("sentcommand: %s", self.sentCommand )
-        self.parent.app.processEvents()
+        logging.debug("sentcommand: %s with buffer: ", self.sentCommand )
+        logging.debug(self.buf.data() )
+        # testing to see if this removes duplicates
+        self.parent.cycleTimer.stop()
+        #self.parent.app.processEvents()
         #logging.debug("buffer: %s ", self.buf )
         #logging.debug("buffer 3 and 4: %s \r\n", self.buf[0:2])
 
