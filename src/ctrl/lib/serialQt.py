@@ -109,11 +109,14 @@ class SerialInit(object):
         # Add do sleep while nodata to catch multiple responses if necessary
         #while self.serialPort.canReadLine():
 
-        time.sleep(0.001)
-        time.sleep(0.001)
-        self.buf = self.serialPort.readLine()
-        # only want to signal when there's no more stuff to read
-        self.splitSignal() #returns QByte array of data
+        self.buf = self.serialPort.peek(2)
+        if self.buf == self.binM0 or self.buf == self.binPt:
+            time.sleep(0.003)
+            self.splitSignal() #returns QByte array of data
+        else:
+            self.buf = self.serialPort.readLine()
+            self.splitSignal() #returns QByte array of data
+            
         # Not sure this is something we want here:
         self.parent.cycleTimer.start()
         # process the recieved data
@@ -366,6 +369,8 @@ class SerialInit(object):
             # self.buf.decode("ascii")
             # check self.buf[1:3] actually is substring we want
             #if self.buf[1:4] == self.bin01:
+            
+            self.buf = self.serialPort.readLine()
             if longSubstring == self.binM01:
                 data = self.decodeLine()
                 #self.parent.packetStore.setData("M01", data)
@@ -375,6 +380,7 @@ class SerialInit(object):
             else: 
                 data = self.decodeLine()
                 self.parent.m02Store = data
+                logging.debug("longSubstring: %s, binM01: %s", longSubstring, self.binM01.decode('ascii'))
                 #self.parent.packetStore.setData("M02", data)
                 logging.debug("received m02")
                 logging.debug("buff[1,4]: %s    str.encode(): %s", self.buf[1:4], "01:")
@@ -401,24 +407,26 @@ class SerialInit(object):
             # set matchWord: next
             # or initSwitch = true
         elif switchSubstring == self.binPt:
-                data = self.decodeLine()
-                self.parent.ptStore = data
-                logging.debug("received Pt")
-                self.parent.packetStore.setData("switchControl", "Eline")
+            time.sleep(0.003)
+            self.buf = self.serialPort.readLine()
+            data = self.decodeLine()
+            self.parent.ptStore = data
+            logging.debug("received Pt")
+            self.parent.packetStore.setData("switchControl", "Eline")
 
         elif switchSubstring == self.binND:
-                # note that while the echo command "N" would also be
-                # easy to match on, it is irrelavant for switching purposes
-                self.parent.packetStore.setData("noise", self.buf)
-                logging.debug("received setNoise data")
-                '''
-                if self.buf[0,4] == str.encode("N02"):
-                    # only on receipt of first noise command can we switch this
-                    # above is false. Should only switch once the last I 40
-                    # from integrate is called. There it should also be 
-                    # returning switchControl to calledFrom
-                    self.parent.packetStore.setData("ElineSwitch", True)
-                '''
+            # note that while the echo command "N" would also be
+            # easy to match on, it is irrelavant for switching purposes
+            self.parent.packetStore.setData("noise", self.buf)
+            logging.debug("received setNoise data")
+            '''
+            if self.buf[0,4] == str.encode("N02"):
+                # only on receipt of first noise command can we switch this
+                # above is false. Should only switch once the last I 40
+                # from integrate is called. There it should also be 
+                # returning switchControl to calledFrom
+                self.parent.packetStore.setData("ElineSwitch", True)
+            '''
 
         elif switchSubstring == self.binU:
             # when we do care about the echoed commands:
