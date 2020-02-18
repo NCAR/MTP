@@ -243,7 +243,7 @@ class SerialInit(object):
                 self.parent.packetStore.setData("currentFrequency", self.parent.packetStore.getData("integrateSwitch"))
             else: 
                 logging.debug("received R value, unsure who is calling")
-        if switchSubstring == 
+        if switchSubstring == self.binST 
             # sends number to update status
             # logging.debug("splitSignal:ST"
             return self.buf[3:5]
@@ -353,7 +353,7 @@ class SerialInit(object):
             logging.debug("zeros")
 
         # readscan time case
-    elif switchSubstring == self.binTi:
+        elif switchSubstring == self.binTi:
             #set readscan to "999999"
             logging.debug('Time')
 
