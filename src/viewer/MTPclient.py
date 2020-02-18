@@ -21,6 +21,8 @@ from util.retriever import Retriever
 from util.tropopause import Tropopause
 from lib.rootdir import getrootdir
 from lib.config import config
+from EOLpython.fileselector import FileSelector
+from Qlogger.messageHandler import QLogger as logger
 
 
 class MTPclient():
@@ -106,10 +108,13 @@ class MTPclient():
         # Check if RCFdir exists. If not, don't create Profile plot but let
         # real-time code continue
         if not os.path.isdir(self.RCFdir):
+            logger.printmsg("ERROR", "RCF dir " + self.RCFdir + " doesn't " +
+                            "exist.", "Click OK to select correct dir. Don't" +
+                            " forget to update config file with correct dir " +
+                            "path")
             # Launch a file selector for user to select correct RCFdir
-            # Temporarily...
-            print("RCF dir " + self.RCFdir + " doesn't exist. Quitting.")
-            exit(1)
+            self.loader = FileSelector("loadRCFdir", getrootdir())
+            self.RCFdir = os.path.join(getrootdir(), self.loader.get_file())
 
     def getAsciiParms(self):
         """ Return path to ascii_parms file """
@@ -351,7 +356,7 @@ class MTPclient():
 
         # Store IWG record to data dictionary
         status = self.iwg.parseIwgPacket(dataI)   # Store to values
-        if status == True:  # Successful parse if IWG packet
+        if status is True:  # Successful parse if IWG packet
             self.reader.parseLine(dataI)  # Store to date, data, & asciiPacket
 
     def readSocket(self):
@@ -362,6 +367,8 @@ class MTPclient():
         # Store data to data dictionary
         self.reader.parseAsciiPacket(data)  # Store to values
         self.reader.parseLine(data)   # Store to date and data
+        # Copy to array of dictionaries that holds entire flight
+        self.reader.archive()
 
     def close(self):
         """ Close UDP socket connections """
