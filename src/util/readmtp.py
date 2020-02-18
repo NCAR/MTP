@@ -50,6 +50,7 @@ import re
 import numpy
 import copy
 from util.MTP import MTPrecord
+from Qlogger.messageHandler import QLogger as logger
 
 
 class readMTP:
@@ -64,6 +65,10 @@ class readMTP:
     def getRawscan(self):
         """ Return a pointer to the MTP data dictionary """
         return(self.rawscan)
+
+    def getRecord(self, index):
+        """ Return a pointer to the MTP data dictionary for a specific scan """
+        return(self.flightData[index])
 
     def readRawScan(self, raw_data_file):
         """
@@ -88,13 +93,17 @@ class readMTP:
 
             if (foundall):
                 # Have a complete scan. Save this record to the flight library
-                self.flightData.append(copy.deepcopy(self.rawscan))
+                self.archive()
 
                 # Reset found to False for all and return
                 for linetype in self.rawscan:
                     if 'found' in self.rawscan[linetype]:
                         self.rawscan[linetype]['found'] = False
                 return(True)  # Not at EOF
+
+    def archive(self):
+        """ Save the current record to the flight library (flightData[]) """
+        self.flightData.append(copy.deepcopy(self.rawscan))
 
     def parseLine(self, line):
         """
@@ -391,8 +400,9 @@ class readMTP:
            (calctype == 'volts' and linetype == 'M01line')):
             self.rawscan[linetype]['values'][var][calctype] = value
         else:
-            print("linetype " + linetype + " doesn't have a " + calctype +
-                  " entry in the MTP dictionary. Ignored.")
+            logger.printmsg("WARNING", " linetype " + linetype + " doesn't " +
+                            "have a " + calctype + " entry in the MTP " +
+                            "dictionary. Ignored.")
 
     def getCalcVal(self, linetype, var, calctype):
         """
