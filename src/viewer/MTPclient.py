@@ -38,7 +38,7 @@ class MTPclient():
         self.readConfig(configfile)
         self.checkRCF()  # Check that RCF file exists
 
-        # Instantiate and IWG reader. Needs path to ascii_parms file.
+        # Instantiate an IWG reader. Needs path to ascii_parms file.
         self.initIWG()
 
         # Instantiate an RCF retriever
