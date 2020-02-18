@@ -25,6 +25,10 @@ from viewer.MTPclient import MTPclient
 from util.readmtp import readMTP
 from lib.rootdir import getrootdir
 
+import sys
+import logging
+from logger.messageHandler import Logger as logger
+
 
 class TESTgui(unittest.TestCase):
 
@@ -32,6 +36,9 @@ class TESTgui(unittest.TestCase):
         # Location of default ascii_parms file
         self.ascii_parms = os.path.join(getrootdir(), 'config', 'ascii_parms')
         self.configfile = os.path.join(getrootdir(), 'config', 'proj.yml')
+        self.stream = sys.stdout  # Send log messages to stdout
+        loglevel = logging.INFO
+        logger.initLogger(self.stream, loglevel)
 
     def test_eng1(self):
         """ Test Engineering 1 display window shows what we expect """
