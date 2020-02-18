@@ -16,6 +16,7 @@ from PyQt5.QtGui import QFontMetrics, QFont
 from viewer.plotScanTemp import ScanTemp
 from viewer.plotProfile import Profile
 from viewer.plotCurtain import Curtain
+from Qlogger.messageHandler import QLogger as logger
 
 
 class MTPviewer(QMainWindow):
@@ -28,16 +29,23 @@ class MTPviewer(QMainWindow):
 
         self.clicked = False  # Only show error msg once
 
+        # In order to support stepping forward and back through scans, we need
+        # to keep track of what scan is currently being displayed. When
+        # back and fwd have not been clicked, these two indices will be the
+        # same.
+        self.viewScanIndex = -1  # The index of the scan being displayed.
+        self.currentScanIndex = -1  # index of the scan just measured by MTP
+
         # The QMainWindow class provides a main application window
         QMainWindow.__init__(self)
 
         # Create the GUI
         self.initUI()
 
-        # When data appears on the MTP socket, call plotData()
+        # When data appears on the MTP socket, call processData()
         self.readNotifier = QSocketNotifier(
                 self.client.getSocketFileDescriptor(), QSocketNotifier.Read)
-        self.readNotifier.activated.connect(lambda: self.plotData())
+        self.readNotifier.activated.connect(lambda: self.processData())
 
         # When data appears on the IWG socket, call readIWG()
         self.readNotifierI = QSocketNotifier(
@@ -128,13 +136,13 @@ class MTPviewer(QMainWindow):
 
         # Create the Engineering 1 display window
         eng1label = QLabel("Platinum Multiplxr (Pt)")
-        self.layout.addWidget(eng1label, 9, 0, 1, 2)
+        self.layout.addWidget(eng1label, 9, 0, 1, 3)
 
         self.eng1 = QPlainTextEdit()
         self.eng1.setReadOnly(True)
         self.eng1.setFixedHeight(300)
         self.eng1.setDocumentTitle("Pt")
-        self.layout.addWidget(self.eng1, 10, 0, 1, 2)
+        self.layout.addWidget(self.eng1, 10, 0, 1, 3)
         self.eng1.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.header_eng1 = "Channel\tCounts  Ohms  Temp  "
         self.eng1.setPlainText(self.header_eng1)
@@ -144,11 +152,11 @@ class MTPviewer(QMainWindow):
 
         # Create the Engineering 2 display window
         eng2label = QLabel("Engineering Multiplxr (M01)")
-        self.layout.addWidget(eng2label, 9, 2, 1, 3)
+        self.layout.addWidget(eng2label, 9, 3, 1, 3)
 
         self.eng2 = QPlainTextEdit()
         self.eng2.setReadOnly(True)
-        self.layout.addWidget(self.eng2, 10, 2, 1, 3)
+        self.layout.addWidget(self.eng2, 10, 3, 1, 3)
         self.eng2.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.header_eng2 = "Channel\tCounts  Volts"
         self.eng2.setPlainText(self.header_eng2)
@@ -161,11 +169,11 @@ class MTPviewer(QMainWindow):
         eng3label.setStyleSheet("""QToolTip {background-color: lightyellow}""")
         eng3label.setToolTip("If T Synth goes over 50, turn off MTP to avoid" +
                              " damage due to overheating")
-        self.layout.addWidget(eng3label, 9, 5, 1, 3)
+        self.layout.addWidget(eng3label, 9, 6, 1, 3)
 
         self.eng3 = QPlainTextEdit()
         self.eng3.setReadOnly(True)
-        self.layout.addWidget(self.eng3, 10, 5, 1, 3)
+        self.layout.addWidget(self.eng3, 10, 6, 1, 3)
         self.eng3.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.header_eng3 = "Channel\tCounts  Value"
         self.eng3.appendPlainText(self.header_eng3)
@@ -174,19 +182,22 @@ class MTPviewer(QMainWindow):
         self.configEngWindow(self.eng3, self.header_eng3)
 
         # Create project metadata fields for first row of GUI
-        self.layout.addWidget(QLabel("Project"), 0, 0, 1, 1)
+        self.layout.addWidget(QLabel("Project"), 0, 0, 1, 1,
+                              alignment=Qt.AlignRight)
         metadata = QPlainTextEdit(self.client.getProj())
         metadata.setFixedHeight(25)
         metadata.setReadOnly(True)
         self.layout.addWidget(metadata, 0, 1, 1, 1)
 
-        self.layout.addWidget(QLabel("FltNo"), 0, 2, 1, 1)
+        self.layout.addWidget(QLabel("FltNo"), 0, 2, 1, 1,
+                              alignment=Qt.AlignRight)
         metadata = QPlainTextEdit(self.client.getFltno())
         metadata.setFixedHeight(25)
         metadata.setReadOnly(True)
         self.layout.addWidget(metadata, 0, 3, 1, 1)
 
-        self.layout.addWidget(QLabel("Date"), 0, 4, 1, 1)
+        self.layout.addWidget(QLabel("Date"), 0, 4, 1, 1,
+                              alignment=Qt.AlignRight)
         self.date = QPlainTextEdit("Date")
         self.date.setFixedHeight(25)
         self.date.setReadOnly(True)
@@ -202,7 +213,7 @@ class MTPviewer(QMainWindow):
         # Create a box to hold the list of brightness temps
         box = QGroupBox()
         box.setFixedHeight(275)
-        self.layout.addWidget(box, 1, 0, 1, 2)
+        self.layout.addWidget(box, 1, 0, 1, 3)
         grid = QGridLayout()
 
         ch1 = QLabel("Channel 1")
@@ -233,14 +244,14 @@ class MTPviewer(QMainWindow):
         st = self.scantemp.getWindow()
         st.setFixedHeight(275)
         st.setFixedWidth(280)
-        self.layout.addWidget(st, 1, 2, 1, 3)
+        self.layout.addWidget(st, 1, 3, 1, 3)
 
         # Create a profile plot and add it to the layout
         self.profile = Profile()
         profile = self.profile.getWindow()
         profile.setFixedHeight(275)
         profile.setFixedWidth(300)
-        self.layout.addWidget(profile, 1, 5, 1, 3)
+        self.layout.addWidget(profile, 1, 6, 1, 3)
 
         # Create a box to hold selected RCFs and controls
         self.layout.addWidget(QLabel("IWG port"), 2, 0, 1, 1)
@@ -255,52 +266,62 @@ class MTPviewer(QMainWindow):
         udpport.setReadOnly(True)
         self.layout.addWidget(udpport, 3, 1, 1, 1)
 
+        self.layout.addWidget(QLabel("Scan Index"), 3, 2, 1, 1)
+        self.index = QPlainTextEdit("")
+        self.index.setFixedHeight(25)
+        self.index.setReadOnly(True)
+        self.layout.addWidget(self.index, 3, 3, 1, 1)
+
         back = QPushButton("BACK")
         back.setFixedHeight(25)
         back.setFixedWidth(75)
-        self.layout.addWidget(back, 2, 2, 1, 1)
+        self.layout.addWidget(back, 2, 3, 1, 1, alignment=Qt.AlignRight)
+        back.clicked.connect(self.clickBack)
 
         nav = QLabel("<- Nav ->")
-        self.layout.addWidget(nav, 2, 3, 1, 1)
+        self.layout.addWidget(nav, 2, 4, 1, 1, alignment=Qt.AlignHCenter)
         nav.setAlignment(Qt.AlignCenter)
 
         fwd = QPushButton("FWD")
         fwd.setFixedHeight(25)
         fwd.setFixedWidth(75)
-        self.layout.addWidget(fwd, 2, 4, 1, 1)
+        self.layout.addWidget(fwd, 2, 5, 1, 1)
+        fwd.clicked.connect(self.clickFwd)
 
-        self.layout.addWidget(QLabel("RCF1"), 2, 5, 1, 1)
+        self.layout.addWidget(QLabel("RCF1"), 2, 6, 1, 1,
+                              alignment=Qt.AlignRight)
         self.RCF1 = QPlainTextEdit("RCF1#")
         self.RCF1.setFixedHeight(25)
         self.RCF1.setReadOnly(True)
-        self.layout.addWidget(self.RCF1, 2, 6, 1, 1)
+        self.layout.addWidget(self.RCF1, 2, 7, 1, 1)
 
-        self.layout.addWidget(QLabel("RCF2"), 3, 5, 1, 1)
+        self.layout.addWidget(QLabel("RCF2"), 3, 6, 1, 1,
+                              alignment=Qt.AlignRight)
         RCF2 = QPlainTextEdit("RCF2#")
         RCF2.setFixedHeight(25)
         RCF2.setReadOnly(True)
-        self.layout.addWidget(RCF2, 3, 6, 1, 1)
+        self.layout.addWidget(RCF2, 3, 7, 1, 1)
 
         bad = QPushButton("Mark Bad Scan")
         bad.setFixedHeight(25)
-        self.layout.addWidget(bad, 2, 7, 1, 1)
+        self.layout.addWidget(bad, 2, 8, 2, 1, alignment=Qt.AlignVCenter)
 
         mrilabel = QLabel("MRI")
         mrilabel.setStyleSheet("""QToolTip {background-color: lightyellow}""")
         mrilabel.setToolTip("Meridional Region Index: Quality of match " +
                             "between measured Brightness Temperture (TB) and" +
                             "TB from template")
-        self.layout.addWidget(mrilabel, 3, 2, 1, 1)
+        self.layout.addWidget(mrilabel, 3, 4, 1, 1, alignment=Qt.AlignRight)
         self.MRI = QPlainTextEdit("MRI")
         self.MRI.setFixedHeight(25)
         self.MRI.setReadOnly(True)
-        self.layout.addWidget(self.MRI, 3, 3, 1, 1)
+        self.layout.addWidget(self.MRI, 3, 5, 1, 1)
 
         # Create a File data display window
         self.filedata = QPlainTextEdit()
         self.filedata.setReadOnly(True)
         self.filedata.setFixedHeight(140)
-        self.layout.addWidget(self.filedata, 4, 0, 4, 8)
+        self.layout.addWidget(self.filedata, 4, 0, 4, 9)
         self.filedata.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.filedata.appendPlainText("MTP data block display")
 
@@ -322,7 +343,7 @@ class MTPviewer(QMainWindow):
         self.iwg = QPlainTextEdit()
         self.iwg.setReadOnly(True)
         self.iwg.setFixedHeight(60)
-        self.layout.addWidget(self.iwg, 8, 0, 1, 8)
+        self.layout.addWidget(self.iwg, 8, 0, 1, 9)
         self.iwg.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         # Temporarily insert some sample data to get an idea how it will
         # look. Remove this when get data parsing coded.
@@ -346,20 +367,34 @@ class MTPviewer(QMainWindow):
         # Display the latest IWG packet
         self.writeIWG()
 
-    def plotData(self):
+    def processData(self):
         """
         Function to tell client to read latest data and to update all plots in
         the GUI.
         """
-        # Ask client to read data from the UDP feed and save it to the data
+        # Ask client to read MTP data from the UDP feed and save it to the data
         # dictionary.
         self.client.readSocket()
 
+        # What is the index of the current scan, i.e. the one just collected
+        # by the MTP (scans are stored in array so index starts at zero not 1)
+        self.currentScanIndex = len(self.client.reader.flightData) - 1
+        self.viewScanIndex = self.currentScanIndex  # Viewing latest scan
+
+        # Perform calculations and populate the GUI with data
+        self.plotData()
+        self.updateCurtainPlot()
+
+        # Process any events generated by the GUI so it stays reponsive to the
+        # user.
+        self.app.processEvents()
+
+    def plotData(self):
         # Perform line calculations on latest scan
         tbi = self.client.doCalcs()
 
         try:
-            BestWtdRCSet = self.client.doRetrieval(tbi)  # Perform retrieval
+            self.BestWtdRCSet = self.client.doRetrieval(tbi)  # Perform retrieval
         except Exception as err:
             if not self.clicked:
                 QMessageBox.warning(self, '',
@@ -371,6 +406,9 @@ class MTPviewer(QMainWindow):
 
         # Display date of latest record
         self.writeDate()
+
+        # Display index of latest record (start with 1, so intuitive to user
+        self.index.setPlainText(str(self.currentScanIndex + 1))
 
         # Display the latest data in the MTP data block display
         self.writeData()
@@ -399,26 +437,26 @@ class MTPviewer(QMainWindow):
         self.scantemp.draw()
 
         # If retrieval failed, go no further
-        if not (BestWtdRCSet):
+        if not (self.BestWtdRCSet):
             return()
 
         # ---------- Retrieval succeeded ----------
         # Get the physical temperature profile (and find tropopause)
-        ATP = self.client.getProfile(tbi, BestWtdRCSet)
+        self.ATP = self.client.getProfile(tbi, self.BestWtdRCSet)
 
         # Does RCF file always start with NRC? I think it stands for:
         # "Ncar gv RCf file"
-        self.RCF1.setPlainText(BestWtdRCSet['RCFId'].replace('NRC', ''))
+        self.RCF1.setPlainText(self.BestWtdRCSet['RCFId'].replace('NRC', ''))
 
         # Display MRI
-        self.MRI.setPlainText('%.3f' % (ATP['RCFMRIndex']))
+        self.MRI.setPlainText('%.3f' % (self.ATP['RCFMRIndex']))
 
         # Plot the template brightness temperatures on the scan and temp plot
-        self.scantemp.plotTemplate(BestWtdRCSet['FL_RCs']['sOBav'])
+        self.scantemp.plotTemplate(self.BestWtdRCSet['FL_RCs']['sOBav'])
 
         # Get min and max x values, used for auto-scaling horizontal lines
-        xmin = self.scantemp.minTemp(tbi, BestWtdRCSet['FL_RCs']['sOBav'])
-        xmax = self.scantemp.maxTemp(tbi, BestWtdRCSet['FL_RCs']['sOBav'])
+        xmin = self.scantemp.minTemp(tbi, self.BestWtdRCSet['FL_RCs']['sOBav'])
+        xmax = self.scantemp.maxTemp(tbi, self.BestWtdRCSet['FL_RCs']['sOBav'])
 
         # Plot a line for the horizontal scan (grey line) to autoscaled width
         self.scantemp.plotHorizScan(xmin, xmax)
@@ -435,43 +473,40 @@ class MTPviewer(QMainWindow):
         self.profile.configure()  # Layout the profile plot
 
         # Plot the profile from the template
-        self.profile.plotTemplate((BestWtdRCSet['FL_RCs']['sRTav']),
-                                  ATP['Altitudes'])
+        self.profile.plotTemplate((self.BestWtdRCSet['FL_RCs']['sRTav']),
+                                  self.ATP['Altitudes'])
 
         # Plot the physical temperature profile
-        if (ATP):  # If successfully create a profile from this scan
-            self.profile.plotProfile(ATP['Temperatures'], ATP['Altitudes'])
+        if (self.ATP):  # If successfully create a profile from this scan
+            self.profile.plotProfile(self.ATP['Temperatures'], self.ATP['Altitudes'])
 
         # Plot the aircraft altitude
         self.profile.plotACALT(self.client.reader.getVar('Aline', 'SAAT'),
                                self.client.reader.getACAlt())
 
         # Plot the tropopause (dotted line)
-        for i in range(len(ATP['trop'])):
-            self.profile.plotTropopause(ATP['trop'][i])
+        for i in range(len(self.ATP['trop'])):
+            self.profile.plotTropopause(self.ATP['trop'][i])
 
         # Plot the adiabatic lapse rate
         # diagonal dashed line, fixed slope anchored to ambient temperature
         # point of first tropopause
         referenceLapseRate = -2  # This is also hardcoded in tropopause.py
-        self.profile.plotLapseRate(ATP['trop'][0], referenceLapseRate)
+        self.profile.plotLapseRate(self.ATP['trop'][0], referenceLapseRate)
 
         # Draw the plots
         self.profile.draw()
 
+    def updateCurtainPlot(self):
         # ------- Append to the curtain plot ------ #
         self.curtain.clear()
         self.curtain.plotCurtain(self.client.reader.getVar('Aline', 'TIME'),
-                                 ATP['Temperatures'], ATP['Altitudes'])
+                                 self.ATP['Temperatures'], self.ATP['Altitudes'])
         self.curtain.plotACALT(self.client.reader.getVar('Aline', 'TIME'),
                                self.client.reader.getACAlt())
-        self.curtain.plotTropopause(ATP['trop'][0])  # Plot first tropopause
-        self.curtain.plotMRI(BestWtdRCSet['SumLnProb'])  # Plot data quality
+        self.curtain.plotTropopause(self.ATP['trop'][0])  # Plot first tropopause
+        self.curtain.plotMRI(self.BestWtdRCSet['SumLnProb'])  # Plot data quality
         self.curtain.draw()
-
-        # Process any events generated by the GUI so it stays reponsive to the
-        # user.
-        self.app.processEvents()
 
     def writeDate(self):
         """ Display the record date in the Date box at the top of the GUI """
@@ -599,3 +634,36 @@ class MTPviewer(QMainWindow):
                 fmt = self.eng3.currentCharFormat()
                 fmt.setBackground(Qt.white)
                 self.eng3.setCurrentCharFormat(fmt)
+
+    def clickBack(self):
+        """ Go back to previous scan and show plots and data. """
+        # Do we want the code to skip to current scan when a new scan comes
+        # in, or stay where we are and user has to go forward to see current
+        # scan?
+
+        print("Go back to scan " + str(self.viewScanIndex))
+
+        if self.viewScanIndex < 0:  # MTP has not collected a scan yet
+            # disallow click, notify user via QMessage box
+            logger.printmsg("ERROR", "No scans yet. Can't go backward")
+        elif self.viewScanIndex == 0:  # Only one scan, can't go backward
+            # disallow click, notify user via QMessage box
+            logger.printmsg("ERROR", "On first scan. Can't go backward")
+        else:  # Go back one scan
+            self.viewScanIndex = self.viewScanIndex - 1
+            self.viewScan = self.client.reader.getRecord(self.viewScanIndex)
+            print(self.viewScan['Aline']['values']['timestr'])
+
+    def clickFwd(self):
+        """
+        If not at most recent scan, go forward to next scan and show plots and
+        data
+        """
+        print("Go fwd to scan " + str(self.viewScanIndex + 2))
+        if self.viewScanIndex == self.currentScanIndex:
+            # On current scan, can't go forward.
+            logger.printmsg("ERROR", "On latest scan. Can't go forward")
+        else:
+            self.viewScanIndex = self.viewScanIndex + 1
+            self.viewScan = self.client.reader.getRecord(self.viewScanIndex)
+            print(self.viewScan['Aline']['values']['timestr'])
