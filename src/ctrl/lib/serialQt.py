@@ -71,8 +71,8 @@ class SerialInit(object):
         self.binSt = str.encode('St')
         self.bin00 = str.encode('00')
         self.binTi = str.encode('Ti')
-        self.binM0 = str.encode('M01')
-        self.bin01 = str.encode('01:')
+        self.binM0 = str.encode('M0')
+        self.binM01 = str.encode('M01')
         self.binPt = str.encode('Pt')
         self.binND = str.encode('ND')
         self.binU = str.encode('U/') 
@@ -97,22 +97,26 @@ class SerialInit(object):
         # need to test if it works for the big lines
         # works for pt, m02, m01
         i=0
-        while i < 10: #start, stop, step
+        # less than 20 here causes M line truncation
+        while i < 25: #start, stop, step
             if self.serialPort.canReadLine():
                 # exit for loop
                 break
-            if i == 10:
+            if i == 25:
                 logging.error("Sleep timeout on canReadLine")
             i = i + 1
             time.sleep(0.001)
         # Add do sleep while nodata to catch multiple responses if necessary
         #while self.serialPort.canReadLine():
+
+        time.sleep(0.001)
+        time.sleep(0.001)
         self.buf = self.serialPort.readLine()
-        # process the recieved data
-        self.splitSignal() #returns QByte array of data
         # only want to signal when there's no more stuff to read
-        self.parent.cycleTimer.start()
+        self.splitSignal() #returns QByte array of data
         # Not sure this is something we want here:
+        self.parent.cycleTimer.start()
+        # process the recieved data
         # self.parent.app.processEvents()
         return 
 
@@ -169,7 +173,7 @@ class SerialInit(object):
                 # use the number returned from this to match R case
                 self.parent.packetStore.setData("integrateData", self.buf[1:3])
                 self.parent.packetStore.setData("count2Flag", True)
-        elif shortSubstring == self.binR 
+        elif shortSubstring == self.binR: 
             number = self.parent.packetStore.getData("integrateData")
             if switchSubstring == self.binRnewline:
                 # testing to see if this removes duplicates
@@ -243,7 +247,7 @@ class SerialInit(object):
                 self.parent.packetStore.setData("currentFrequency", self.parent.packetStore.getData("integrateSwitch"))
             else: 
                 logging.debug("received R value, unsure who is calling")
-        if switchSubstring == self.binST 
+        if switchSubstring == self.binST: 
             # sends number to update status
             # logging.debug("splitSignal:ST"
             return self.buf[3:5]
@@ -361,7 +365,8 @@ class SerialInit(object):
             # Doesn't work on Qbyte array type:
             # self.buf.decode("ascii")
             # check self.buf[1:3] actually is substring we want
-            if self.buf[1:4] == self.bin01:
+            #if self.buf[1:4] == self.bin01:
+            if longSubstring == self.binM01:
                 data = self.decodeLine()
                 #self.parent.packetStore.setData("M01", data)
                 self.parent.m01Store = data
@@ -433,15 +438,15 @@ class SerialInit(object):
         elif self.buf is (self.sentCommand):
             logging.debug("sent %s" , self.sentCommand)
         else:
-        logging.debug("Catch all for truncations, collisions, and unwanted command echos")
-        logging.debug("sentcommand: %s with buffer: ", self.sentCommand )
-        logging.debug(self.buf.data() )
-        # testing to see if this removes duplicates
-        self.parent.cycleTimer.stop()
-        #self.parent.app.processEvents()
-        #logging.debug("buffer: %s ", self.buf )
-        #logging.debug("buffer 3 and 4: %s \r\n", self.buf[0:2])
-
+            logging.debug("Catch all for truncations, collisions, and unwanted command echos")
+            logging.debug("sentcommand: %s with buffer: ", self.sentCommand )
+            logging.debug(self.buf.data() )
+            # testing to see if this removes duplicates
+            self.parent.cycleTimer.stop()
+            #self.parent.app.processEvents()
+            logging.debug("buffer: %s ", self.buf )
+            #logging.debug("buffer 3 and 4: %s \r\n", self.buf[0:2])
+        logging.debug("switch end")
     def readin(self):
         """
         Read data from the serial port and parse it for status updates.
