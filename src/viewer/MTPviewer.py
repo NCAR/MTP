@@ -394,7 +394,8 @@ class MTPviewer(QMainWindow):
         tbi = self.client.doCalcs()
 
         try:
-            self.BestWtdRCSet = self.client.doRetrieval(tbi)  # Perform retrieval
+            # Perform retrieval
+            self.BestWtdRCSet = self.client.doRetrieval(tbi)
         except Exception as err:
             if not self.clicked:
                 QMessageBox.warning(self, '',
@@ -478,7 +479,8 @@ class MTPviewer(QMainWindow):
 
         # Plot the physical temperature profile
         if (self.ATP):  # If successfully create a profile from this scan
-            self.profile.plotProfile(self.ATP['Temperatures'], self.ATP['Altitudes'])
+            self.profile.plotProfile(self.ATP['Temperatures'],
+                                     self.ATP['Altitudes'])
 
         # Plot the aircraft altitude
         self.profile.plotACALT(self.client.reader.getVar('Aline', 'SAAT'),
@@ -501,11 +503,15 @@ class MTPviewer(QMainWindow):
         # ------- Append to the curtain plot ------ #
         self.curtain.clear()
         self.curtain.plotCurtain(self.client.reader.getVar('Aline', 'TIME'),
-                                 self.ATP['Temperatures'], self.ATP['Altitudes'])
+                                 self.ATP['Temperatures'],
+                                 self.ATP['Altitudes'])
         self.curtain.plotACALT(self.client.reader.getVar('Aline', 'TIME'),
                                self.client.reader.getACAlt())
-        self.curtain.plotTropopause(self.ATP['trop'][0])  # Plot first tropopause
-        self.curtain.plotMRI(self.BestWtdRCSet['SumLnProb'])  # Plot data quality
+        # Plot first tropopause
+        self.curtain.plotTropopause(self.ATP['trop'][0])
+        # Plot data quality
+        self.curtain.plotMRI(self.BestWtdRCSet['SumLnProb'])
+
         self.curtain.draw()
 
     def writeDate(self):
