@@ -60,7 +60,7 @@ class TESTprintmsg(unittest.TestCase):
         logger.printmsg("INFO", "test no app")
         logger.flushHandler()
         self.assertRegex(self.stream.getvalue(),
-                         r'INFO:.*test_1messageHandler.py:test no app\n')
+                         r'INFO:.*test_1messageHandler.py: test no app\n')
 
     def test_noappWarning(self):
         """ Test that when an app isn't running, messages go to stderr """
@@ -68,7 +68,7 @@ class TESTprintmsg(unittest.TestCase):
         logger.printmsg("WARNING", "test no app")
         logger.flushHandler()
         self.assertRegex(self.stream.getvalue(),
-                         r'WARNING:.*test_1messageHandler.py:test no app\n')
+                         r'WARNING:.*test_1messageHandler.py: test no app\n')
 
     def test_noappError(self):
         """ Test that when an app isn't running, messages go to stderr """
@@ -76,7 +76,7 @@ class TESTprintmsg(unittest.TestCase):
         logger.printmsg("ERROR", "test no app")
         logger.flushHandler()
         self.assertRegex(self.stream.getvalue(),
-                         r'ERROR:.*test_1messageHandler.py:test no app\n')
+                         r'ERROR:.*test_1messageHandler.py: test no app\n')
 
     def test_1noapp_2(self):
         """ Test when app isn't running, msgbox isn't called """
@@ -104,13 +104,13 @@ class TESTprintmsg(unittest.TestCase):
         # tests to proceed. Have not figure out how to close them
         # programmatically.
 
-        box = logger.msgbox("INFO", "test app")
+        box = logger.msgbox("INFO", "test app", None)
         self.assertEqual(box.icon(), 1)  # 1 = info
 
-        box = logger.msgbox("WARNING", "test app")
+        box = logger.msgbox("WARNING", "test app", None)
         self.assertEqual(box.icon(), 2)  # 2 = critical
 
-        box = logger.msgbox("ERROR", "test app")
+        box = logger.msgbox("ERROR", "test app", None)
         self.assertEqual(box.icon(), 3)  # 3 = error
 
     def tearDown(self):
