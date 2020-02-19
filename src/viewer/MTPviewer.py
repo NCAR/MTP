@@ -98,7 +98,7 @@ class MTPviewer(QMainWindow):
         Configure the Engineering windows - monospace font to make text
         allignment easier, and resize minimum width to fit header.
         """
-        font = QFont("monospace")               # Use a monospace font
+        font = QFont("courier")               # Use a monospace font
         windowID.setFont(font)
         fontMetrics = QFontMetrics(font)        # QFontMetrics based on font
         textSize = fontMetrics.size(0, header)  # Size of text in font
