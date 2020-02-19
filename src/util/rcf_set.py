@@ -30,6 +30,7 @@ import math
 import inspect
 from util.rcf_structs import RC_Set_4Retrieval
 from util.rcf import RetrievalCoefficientFile
+from Qlogger.messageHandler import QLogger as logger
 
 
 class RetrievalCoefficientFileSet():
@@ -68,14 +69,15 @@ class RetrievalCoefficientFileSet():
                 #  Only include files that are in the requested filelist
                 #  If filelist is empty, then get everything.
                 if (len(filelist) == 0):
-                    # print("Found RCF file:" + filename + "  with ID:" +
-                    #       self._RCFs[i].getId())
+                    logger.printmsg("DEBUG", "Found RCF file:" + filename +
+                                    "  with ID:" + self._RCFs[i].getId())
                     i += 1
                 else:
                     for j in range(len(filelist)):
                         if (filelist[j] == self._RCFs[i].getId()):
-                            # print("Found RCF file:" + filename +
-                            # "  with ID:" + self._RCFs[i].getId())
+                            logger.printmsg("DEBUG", "Found RCF file:" +
+                                            filename + "  with ID:" +
+                                            self._RCFs[i].getId())
                             found = 1
                     if found:
                         i += 1
@@ -98,8 +100,8 @@ class RetrievalCoefficientFileSet():
             if (rcf.getId() == RCFId):
                 return(rcf)
 
-        print("In " + inspect.stack()[0][3] + ": ERROR: ")
-        print("  Could not find RCF with ID: " + str(RCFId))
+        logger.printmsg("ERROR", "In " + inspect.stack()[0][3] + ":" +
+                        "  Could not find RCF with ID: " + str(RCFId))
         return(False)
 
     def setFlightLevelsKm(self, FlightLevels, NumFlightLevels):
@@ -118,15 +120,15 @@ class RetrievalCoefficientFileSet():
 
         """
         if (len(self._RCFs) == 0):
-            print("In " + inspect.stack()[0][3] + " call failed:")
-            print("ERROR: There are currently no RCFs in the set")
+            logger.printmsg("ERROR", "In " + inspect.stack()[0][3] + " call " +
+                            "failed: There are currently no RCFs in the set")
             return(False)
 
         for rcf in self._RCFs:
             if not (rcf.testFlightLevelsKm(FlightLevels, NumFlightLevels)):
-                print("In " + inspect.stack()[0][3] + " call failed:")
-                print("ERROR: Failed test of flight levels for RCFID:" +
-                      rcf.getId())
+                logger.printmsg("ERROR", "In " + inspect.stack()[0][3] +
+                                " call failed: ERROR: Failed test of flight " +
+                                "levels for RCFID:" + rcf.getId())
                 return(False)
 
         return(True)

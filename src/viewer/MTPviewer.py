@@ -7,32 +7,25 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
+import numpy
 from PyQt5.QtWidgets import QMainWindow, QGridLayout, QWidget, \
         QPlainTextEdit, QFrame, QAction, QLabel, QPushButton, QGroupBox, \
         QMessageBox
 from PyQt5.QtCore import QSocketNotifier, Qt
 from PyQt5.QtGui import QFontMetrics, QFont
-
-from viewer.MTPclient import MTPclient
 from viewer.plotScanTemp import ScanTemp
 from viewer.plotProfile import Profile
-# from viewer.plotTimeseries import Timeseries
-import numpy
 
 
 class MTPviewer(QMainWindow):
 
-    def __init__(self, app):
+    def __init__(self, client, app):
 
+        self.client = client
         self.app = app
         self.cell = [[numpy.nan for j in range(10)] for i in range(3)]
 
         self.clicked = False  # Only show error msg once
-
-        self.client = MTPclient()
-        self.client.initRetriever()
-        self.client.connectMTP()
-        self.client.connectIWG()
 
         # The QMainWindow class provides a main application window
         QMainWindow.__init__(self)

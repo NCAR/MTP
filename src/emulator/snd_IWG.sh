@@ -1,1 +1,1 @@
-/Users/janine/dev/aircraft_nc_utils/nc2iwg1/nc2iwg1 -u -d 1000000 DEEPWAVErf01.nc
+python3 /Users/janine/dev/aircraft_nc2iwg1/nc2iwg1.py -i DEEPWAVErf01.nc -s 1 -u True -er True

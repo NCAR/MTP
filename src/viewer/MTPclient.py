@@ -9,6 +9,8 @@
 import os
 import socket
 import numpy
+import logging
+import argparse
 from util.readmtp import readMTP
 from util.readiwg import readIWG
 from util.decodePt import decodePt
@@ -25,10 +27,81 @@ class MTPclient():
 
     def __init__(self):
 
-        # Set config file name - should be passed in on command line
-        self.config = os.path.join(getrootdir(), 'config', 'proj.yml')
+        # Instantiate an instance of an MTP reader
+        self.reader = readMTP()
 
-        self.configfile = self.readConfig(self.config)
+    def config(self, configfile):
+        """ Read in config file and set up a bunch of stuff """
+        # Read the config file. Gets path to RCF dir
+        self.readConfig(configfile)
+        self.checkRCF()  # Check that RCF file exists
+
+        # Instantiate and IWG reader. Needs path to ascii_parms file.
+        self.initIWG()
+
+        # Instantiate an RCF retriever
+        self.initRetriever()
+
+        # Connect to the MTP and IWG UDP feeds
+        self.connectMTP()
+        self.connectIWG()
+
+    def parse(self):
+        """ Define command line arguments which can be provided """
+        parser = argparse.ArgumentParser(
+            description="Script to display and process MTP scans")
+        parser.add_argument(
+            '--config', type=str,
+            default=os.path.join(getrootdir(), 'config', 'proj.yml'),
+            help='File containing project-specific MTP configuration info. ' +
+            'Defaults to config/proj.yml in code checkout for testing')
+        parser.add_argument(
+            '--debug', dest='loglevel', action='store_const',
+            const=logging.DEBUG, default=logging.INFO,
+            help="Show debug log messages")
+        parser.add_argument(
+            '--logmod', type=str, default=None, help="Limit logging to " +
+            "given module")
+        args = parser.parse_args()
+
+        return(args)
+
+    def get_args(self):
+        """ Parse the command line arguments """
+        args = self.parse()
+
+        return(args)
+
+    def initIWG(self):
+        # Instantiate an instance of an IWG reader. Have it point to the same
+        # MTP dictionary as the MTP reader. Requires the location of the
+        # ascii_parms file.
+        self.iwg = readIWG(self.getAsciiParms(), self.reader.getRawscan())
+
+    def readConfig(self, filename):
+        # Read config from config file
+        self.configfile = config()
+        self.configfile.read(filename)
+
+        # udp_send_port is port from viewer to MTP
+        self.udp_send_port = self.configfile.getInt('udp_send_port')
+        # udp_read_port is from MTP to viewer
+        self.udp_read_port = self.configfile.getInt('udp_read_port')
+        # port to receive IWG1 packets from GV
+        self.iwg1_port = self.configfile.getInt('iwg1_port')
+
+        # Config for current MTP setup
+        # Number of scan angles being read
+        self.NUM_SCAN_ANGLES = self.configfile.getInt('NUM_SCAN_ANGLES')
+        # Number of channels being read
+        self.NUM_CHANNELS = self.configfile.getInt('NUM_CHANNELS')
+
+        # Location of RCF dir
+        self.RCFdir = self.configfile.getPath('RCFdir')
+
+    def checkRCF(self):
+        # Check if self.RCFdir exists. If not, call readConfig.
+        # TBD
 
         # Check if RCFdir exists. If not, don't create Profile plot but let
         # real-time code continue
@@ -38,44 +111,23 @@ class MTPclient():
             print("RCF dir " + self.RCFdir + " doesn't exist. Quitting.")
             exit(1)
 
-        # Instantiate an instance of an MTP reader
-        self.reader = readMTP()
+    def getAsciiParms(self):
+        """ Return path to ascii_parms file """
 
-        # Instantiate an instance of an IWG reader. Have it point to the same
-        # MTP dictionary as the MTP reader. Requires the location of the
-        # ascii_parms file.
-        self.iwg = readIWG(self.configfile.getPath('ascii_parms'),
-                           self.reader.getRawscan())
-
-    def readConfig(self, filename):
-        # Read config from config file
-        configfile = config()
-        configfile.read(filename)
-
-        # udp_send_port is port from viewer to MTP
-        self.udp_send_port = configfile.getInt('udp_send_port')
-        # udp_read_port is from MTP to viewer
-        self.udp_read_port = configfile.getInt('udp_read_port')
-        # port to receive IWG1 packets from GV
-        self.iwg1_port = configfile.getInt('iwg1_port')
-
-        # Config for current MTP setup
-        # Number of scan angles being read
-        self.NUM_SCAN_ANGLES = configfile.getInt('NUM_SCAN_ANGLES')
-        # Number of channels being read
-        self.NUM_CHANNELS = configfile.getInt('NUM_CHANNELS')
-
-        # Location of RCF dir
-        self.RCFdir = configfile.getPath('RCFdir')
-
-        return(configfile)
+        # Check if self.configfile exists. If not, call readConfig.
+        # TBD
+        return(self.configfile.getPath('ascii_parms'))
 
     def getProj(self):
         """ Return the project name of the current project from config file """
+        # Check if self.configfile exists. If not, call readConfig.
+        # TBD
         return(self.configfile.getVal('project'))
 
     def getFltno(self):
         """ Return the flight number of the current flight from config file """
+        # Check if self.configfile exists. If not, call readConfig.
+        # TBD
         return(self.configfile.getVal('fltno'))
 
     def initRetriever(self):
@@ -83,6 +135,7 @@ class MTPclient():
         self.retriever = Retriever(self.RCFdir)
 
     def setRCFdir(self, Dir):
+        """ Only used during testing """
         self.RCFdir = os.path.join(getrootdir(), Dir)
 
     def getIWGport(self):
@@ -170,6 +223,8 @@ class MTPclient():
         OAT = rawscan['Aline']['values']['SAAT']['val']  # Kelvin
         scnt = rawscan['Bline']['values']['SCNT']['val']
 
+        # Check if self.configfile exists. If not, call readConfig.
+        # TBD
         tb = BrightnessTemperature(self.configfile)
 
         # Calculate the brightness temperatures for the latest scan counts
@@ -295,8 +350,9 @@ class MTPclient():
         dataI = self.sockI.recv(1024).decode()
 
         # Store IWG record to data dictionary
-        self.iwg.parseIwgPacket(dataI)   # Store to values
-        self.reader.parseLine(dataI)  # Store to date, data, and asciiPacket
+        status = self.iwg.parseIwgPacket(dataI)   # Store to values
+        if status == True:  # Successful parse if IWG packet
+            self.reader.parseLine(dataI)  # Store to date, data, & asciiPacket
 
     def readSocket(self):
         """ Read data from the UDP feed and save it to the data dictionary """

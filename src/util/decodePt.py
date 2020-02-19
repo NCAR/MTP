@@ -15,6 +15,7 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
 import numpy
+from Qlogger.messageHandler import QLogger as logger
 
 
 class decodePt():
@@ -59,7 +60,7 @@ class decodePt():
             # that sets calculated values to N/A in display.
             # I have no idea why. So just check for it here and warn user.
             if int(self.getCount(var)) == 16383:
-                print("WARNING: count for var " + var + " = 16383")
+                logger.printmsg("WARNING:count for var " + var + " = 16383")
 
             # Resistance from counts (R)
             # R[i] = 350 + (Ct[i] - Ct[0]) / rslop
