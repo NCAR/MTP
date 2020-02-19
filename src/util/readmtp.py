@@ -63,7 +63,7 @@ class readMTP:
         self.flightData = []
 
     def getRawscan(self):
-        """ Return a pointer to the MTP data dictionary """
+        """ Return a pointer to the MTP data dictionary of the current scan """
         return(self.rawscan)
 
     def getRecord(self, index):
@@ -237,7 +237,7 @@ class readMTP:
         separator = ' '
         Adata = separator.join(packet)  # Join the components into a string
 
-        # Save the generated a line to the dictionary
+        # Save the generated A line to the dictionary
         self.rawscan['Aline']['data'] = Adata
 
     def createBdata(self):
