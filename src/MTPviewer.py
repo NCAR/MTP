@@ -31,6 +31,7 @@ def main():
 
     # Read in config file and set up MTP controller. Needs app to be
     # instantiated first in case it needs to call a fileselector.
+    # This also connects to the MTP and IWG feeds
     client.config(args.config)
 
     # Instantiate the GUI
