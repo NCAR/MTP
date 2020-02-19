@@ -34,7 +34,7 @@ def main(args):
     # iwg1_port = 7071       # IWG1 packets from GV
     udp_send_port = 32107  # Communication from MTP
     # udp_read_port = 30106  # Communication to MTP; not used by this emulator
-    udp_ip = "127.0.0.1"
+    udp_ip = socket.gethostname()
 
     # Location of default ascii_parms file
     # ascii_parms = os.path.join(getrootdir(), 'config', 'ascii_parms')
