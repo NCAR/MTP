@@ -18,6 +18,7 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
 import os
+import platform
 import unittest
 from util.rcf import RetrievalCoefficientFile
 
@@ -47,8 +48,13 @@ class TESTrcf(unittest.TestCase):
 
     def testBadOpen(self):
         """ Test initialization with a bogus directory """
-        with self.assertRaises(IsADirectoryError):
-            RetrievalCoefficientFile("../")
+        # Error raised differs between MacOS and Windows
+        if platform.system() == "Darwin":  # MacOS
+            with self.assertRaises(IsADirectoryError):
+                RetrievalCoefficientFile("../")
+        else:
+            with self.assertRaises(PermissionError):
+                RetrievalCoefficientFile("../")
 
     def testHeader(self):
         """ Test that header read in correctly """
