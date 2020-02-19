@@ -162,9 +162,45 @@ class MTPclient():
 
         # Invert the brightness temperature to column major storage
         tb = self.getTB()
-        tbi = self.invertArray(tb)
+        self.tbi = self.invertArray(tb)  # inverted brightness temperature
 
-        return(tbi)
+    def getTBI(self):
+        """ Return the inverted brightness temperature array """
+        return(self.tbi)
+
+    def processMTP(self):
+        # Perform line calculations on latest scan
+        self.doCalcs()
+
+        # Generate the data lines for current scan and save to dictionary
+        self.createRecord()
+
+        # Perform retrieval
+        try:
+            self.BestWtdRCSet = self.doRetrieval(self.getTBI())
+        except Exception:
+            raise  # Pass error back up to calling function
+
+        # If retrieval succeeded, get the physical temperature profile (and
+        # find the tropopause)
+        self.ATP = self.getProfile(self.getTBI(), self.BestWtdRCSet)
+
+    def getBestWtdRCSet(self):
+        """ Return the best weighted RC set """
+        return(self.BestWtdRCSet)
+
+    def getATP(self):
+        """ Return the ATP profile and metadata """
+        return(self.ATP)
+
+    def createRecord(self):
+        """ Generate the data strings for each data line and save to dict """
+        self.reader.createAdata()  # Create the A data string
+        self.reader.createBdata()  # Create the B data string
+        self.reader.createM01data()  # Create the M01 data string
+        self.reader.createM02data()  # Create the M02 data string
+        self.reader.createPtdata()  # Create the Pt data string
+        self.reader.createEdata()  # Create the E data string
 
     def doRetrieval(self, tbi):
         """ Perform retrieval """
@@ -367,6 +403,7 @@ class MTPclient():
         # Store data to data dictionary
         self.reader.parseAsciiPacket(data)  # Store to values
         self.reader.parseLine(data)   # Store to date and data
+
         # Copy to array of dictionaries that holds entire flight
         self.reader.archive()
 
