@@ -10,6 +10,7 @@ import re
 import numpy
 import yaml
 from lib.rootdir import getrootdir
+from EOLpython.fileselector import FileSelector
 from Qlogger.messageHandler import QLogger as logger
 
 
@@ -24,13 +25,43 @@ class config():
 
         # Check if config file exists
         if os.path.exists(yamlfile):
-            self.readConfig(yamlfile)
+            try:
+                self.readConfig(yamlfile)
+            except Exception as err:
+                logger.printmsg("ERROR", str(err), "Click OK to select" +
+                                " correct file.")
+                self.selectConfig()
+
             # If in debug mode, print contents of config file
             for key, value in self.projConfig.items():
                 logger.printmsg("DEBUG", key + ": " + str(value))
+        else:
+            self.selectConfig()
+
+    def selectConfig(self):
+        """
+        Let user select a config file. Called if config file given on command
+        line doesn't exist (or if user used default and that doesn't exist)
+
+        Will loop until correct file is selected or user clicks "Quit" in
+        printmsg dialog
+        """
+        logger.printmsg("ERROR", "config file" + self.yamlfile + " doesn't " +
+                        "exist.", "Click OK to select correct file.")
+
+        # Launch a file selector for user to select correct config file
+        self.loader = FileSelector("loadConfig", getrootdir())
+        self.yamlfile = os.path.join(getrootdir(), self.loader.get_file())
+
+        # Try read again
+        self.read(self.yamlfile)
 
     def readConfig(self, yamlfile):
-        infile = open(yamlfile)
+        try:
+            infile = open(yamlfile)
+        except Exception:
+            raise
+
         self.projConfig = yaml.load(infile, Loader=yaml.BaseLoader)
         infile.close()
 
