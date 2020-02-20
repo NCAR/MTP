@@ -234,4 +234,7 @@ MTPrecord = {
                     'val': [numpy.nan]*6}
                    },
     },
+    'tbi': "",  # Will hold a tbi array
+    'BestWtdRCSet': "",  # Will hold an RC_Set_4Retrieval dictionary
+    'ATP': "",  # Will hold an AtmosphericTemperatureProfile dictionary
 }

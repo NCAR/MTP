@@ -361,25 +361,19 @@ class MTPviewer(QMainWindow):
         self.app.quit()      # Close app
 
     def processIWG(self):
-        """ Tell client to read latest IWG record """
-        self.client.readSocketI()
+        """ Tell client to read latest IWG record and save to dictionary """
+        self.client.readSocketI()  # Only saves to current scan
 
         # Display the latest IWG packet
         self.writeIWG()
 
     def processData(self):
         """
-        Function to tell client to read latest data and to update all plots in
-        the GUI.
+        Tell client to read latest data and to update all plots in the GUI.
         """
         # Ask client to read MTP data from the UDP feed and save it to the data
         # dictionaries - one for current scan and one for all scans in flight
         self.client.readSocket()
-
-        # What is the index of the current scan, i.e. the one just collected
-        # by the MTP (scans are stored in array so index starts at zero not 1)
-        self.currentScanIndex = len(self.client.reader.flightData) - 1
-        self.viewScanIndex = self.currentScanIndex  # Viewing latest scan
 
         # Perform calculations on the raw MTP data
         try:
@@ -394,6 +388,15 @@ class MTPviewer(QMainWindow):
                 # Do not get to this point until user clicks OK
                 self.clicked = True  # Only show error once
 
+        # Copy to array of dictionaries that holds entire flight
+        self.client.reader.archive()
+
+        # What is the index of the current scan, i.e. the one just collected
+        # by the MTP (scans are stored in array so index starts at zero not 1)
+        self.currentScanIndex = len(self.client.reader.flightData) - 1
+        self.viewScanIndex = self.currentScanIndex  # Viewing latest scan
+
+        # Update the display
         self.plotData()
         self.updateCurtainPlot()
 
@@ -407,7 +410,7 @@ class MTPviewer(QMainWindow):
         self.writeDate()
 
         # Display index of latest record (start with 1, so intuitive to user
-        self.index.setPlainText(str(self.currentScanIndex + 1))
+        self.index.setPlainText(str(self.viewScanIndex + 1))
 
         # Display the latest data in the MTP data block display
         self.writeData()
@@ -635,7 +638,7 @@ class MTPviewer(QMainWindow):
         # in, or stay where we are and user has to go forward to see current
         # scan?
 
-        print("Go back to scan " + str(self.viewScanIndex))
+        logger.printmsg("DEBUG", "Go back to scan " + str(self.viewScanIndex))
 
         if self.viewScanIndex < 0:  # MTP has not collected a scan yet
             # disallow click, notify user via QMessage box
@@ -645,19 +648,31 @@ class MTPviewer(QMainWindow):
             logger.printmsg("ERROR", "On first scan. Can't go backward")
         else:  # Go back one scan
             self.viewScanIndex = self.viewScanIndex - 1
-            self.viewScan = self.client.reader.getRecord(self.viewScanIndex)
-            print(self.viewScan['Aline']['values']['timestr'])
+            # Set the reader to point to the previous scan
+            self.client.reader.setRawscan(self.viewScanIndex)
+            self.plotData()  # Update the display to display this scan
+            # Set the reader back to the current scan so when it updates we
+            # see that data.
+            self.client.reader.resetRawscan()
 
     def clickFwd(self):
         """
         If not at most recent scan, go forward to next scan and show plots and
         data
         """
-        print("Go fwd to scan " + str(self.viewScanIndex + 2))
+
+        logger.printmsg("DEBUG", "Go fwd to scan " +
+                        str(self.viewScanIndex + 2))
+
         if self.viewScanIndex == self.currentScanIndex:
             # On current scan, can't go forward.
             logger.printmsg("ERROR", "On latest scan. Can't go forward")
         else:
             self.viewScanIndex = self.viewScanIndex + 1
-            self.viewScan = self.client.reader.getRecord(self.viewScanIndex)
-            print(self.viewScan['Aline']['values']['timestr'])
+            # Set the reader to point to the next scan
+            self.client.reader.setRawscan(self.viewScanIndex)
+            self.plotData()  # Update the display to display this scan
+            # WHAT HAPPENS IF NEW SCAN COMES IN WHILE plotData is running??
+            # Set the reader back to the current scan so when it updates we
+            # see that data.
+            self.client.reader.resetRawscan()

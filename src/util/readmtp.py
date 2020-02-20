@@ -56,11 +56,25 @@ from Qlogger.messageHandler import QLogger as logger
 class readMTP:
 
     def __init__(self):
-        self.rawscan = MTPrecord  # Instantiate dictionary to hold the MTP data
+        self.curscan = MTPrecord  # Instantiate dictionary to hold the MTP data
 
         # An array of MTP data dictionaries - used to display a single variable
         # across time.
         self.flightData = []
+
+        # Set the scan we are working with to be the current scan
+        self.rawscan = self.curscan
+
+    def setRawscan(self, index):
+        """ Set the MTP data dictionary we want to read a scan from """
+        # The current scan is in self.rawscan and in the last scan in
+        # self.flightData. Sometimes we might want this class to read from
+        # a scan other than the current scan. Set that scan here.
+        self.rawscan = self.flightData[index]
+
+    def resetRawscan(self):
+        """ Set the data dictionary back to the current scan """
+        self.rawscan = self.curscan
 
     def getRawscan(self):
         """ Return a pointer to the MTP data dictionary of the current scan """
@@ -422,3 +436,21 @@ class readMTP:
 
     def getName(self, linetype, var):
         return(self.rawscan[linetype]['values'][var]['name'])
+
+    def saveTBI(self, tbi):
+        self.rawscan['tbi'] = tbi
+
+    def getTBI(self):
+        return(self.rawscan['tbi'])
+
+    def saveATP(self, ATP):
+        self.rawscan['ATP'] = ATP
+
+    def getATP(self):
+        return(self.rawscan['ATP'])
+
+    def saveBestWtdRCSet(self, BestWtdRCSet):
+        self.rawscan['BestWtdRCSet'] = BestWtdRCSet
+
+    def getBestWtdRCSet(self):
+        return(self.rawscan['BestWtdRCSet'])

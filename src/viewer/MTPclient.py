@@ -102,17 +102,17 @@ class MTPclient():
         self.RCFdir = self.configfile.getPath('RCFdir')
 
     def checkRCF(self):
-        # Check if self.RCFdir exists. If not, call readConfig.
-        # TBD
-
-        # Check if RCFdir exists. If not, don't create Profile plot but let
-        # real-time code continue
+        """
+        Check if RCFdir exists. If not, prompt user to select correct RCFdir
+        """
         if not os.path.isdir(self.RCFdir):
             logger.printmsg("ERROR", "RCF dir " + self.RCFdir + " doesn't " +
                             "exist.", "Click OK to select correct dir. Don't" +
                             " forget to update config file with correct dir " +
                             "path")
             # Launch a file selector for user to select correct RCFdir
+            # This should really be done in MTPviewer, with a non-GUI option
+            # for command-line mode.
             self.loader = FileSelector("loadRCFdir", getrootdir())
             self.RCFdir = os.path.join(getrootdir(), self.loader.get_file())
 
@@ -166,11 +166,12 @@ class MTPclient():
 
     def getTBI(self):
         """ Return the inverted brightness temperature array """
-        return(self.tbi)
+        return(self.reader.getTBI())
 
     def processMTP(self):
         # Perform line calculations on latest scan
         self.doCalcs()
+        self.reader.saveTBI(self.tbi)
 
         # Generate the data lines for current scan and save to dictionary
         self.createRecord()
@@ -183,15 +184,18 @@ class MTPclient():
 
         # If retrieval succeeded, get the physical temperature profile (and
         # find the tropopause)
+        self.reader.saveBestWtdRCSet(self.BestWtdRCSet)
+
         self.ATP = self.getProfile(self.getTBI(), self.BestWtdRCSet)
+        self.reader.saveATP(self.ATP)
 
     def getBestWtdRCSet(self):
         """ Return the best weighted RC set """
-        return(self.BestWtdRCSet)
+        return(self.reader.getBestWtdRCSet())
 
     def getATP(self):
         """ Return the ATP profile and metadata """
-        return(self.ATP)
+        return(self.reader.getATP())
 
     def createRecord(self):
         """ Generate the data strings for each data line and save to dict """
@@ -403,9 +407,6 @@ class MTPclient():
         # Store data to data dictionary
         self.reader.parseAsciiPacket(data)  # Store to values
         self.reader.parseLine(data)   # Store to date and data
-
-        # Copy to array of dictionaries that holds entire flight
-        self.reader.archive()
 
     def close(self):
         """ Close UDP socket connections """
