@@ -78,6 +78,22 @@ class SerialInit(object):
         self.binU = str.encode('U/') 
         return
 
+    def waitReadyRead(self):
+        # returns a signal when there is data to be read
+        # times out in 7 msec
+        return self.serialPort.waitForReadyRead(7)
+
+    def readLine(self, time):
+        # reads until there is no more data
+        # or to first newline
+        # for M01, M02, pt wait for entire line to come in. 
+        # doing multiple reads just allows for the lines to 
+        # run together e.g. b'03 \r\nM'
+        i = 0 
+        while i < time:
+            time.sleep(0.001)
+        return self.serialPort.readLine()
+    
     def getSerial(self):
         """ Return the pointer to the serial port """
 #        logging.debug("Connected to serial port " + self.serialPort.name)
@@ -96,6 +112,7 @@ class SerialInit(object):
         # 0.07 s sleep works for smaller commands
         # need to test if it works for the big lines
         # works for pt, m02, m01
+        self.buf = QByteArray(0)
         i=0
         # less than 20 here causes M line truncation
         while i < 25: #start, stop, step
