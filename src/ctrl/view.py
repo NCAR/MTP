@@ -430,7 +430,13 @@ class controlWindow(QWidget):
         logging.debug("initConfig")
 
     def cycle(self):
-        self.cycleTimer.stop()
+        # self.cycleTimer.stop()
+        logging.debug("Start of cycle")
+        self.serialPort.waitForReadyRead()
+        logging.debug("After ready read")
+        buf = self.serialPort.readLine()
+        logging.debug("after readline")
+        logging.debug(buf.data())
         # this process Events can really slow things down
         # still necessary because recieved data has to be processed
         # before deciding if moving to next command or no.
