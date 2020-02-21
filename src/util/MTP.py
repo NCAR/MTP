@@ -15,7 +15,6 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
-import re
 import numpy
 
 MTPrecord = {
@@ -26,7 +25,7 @@ MTPrecord = {
     # a set of 7 different line types
     'Aline': {
         # Regular expressions to match the various scan lines
-        're': re.compile("^A (........) (..):(..):(..) (.*)"),
+        're': "^A (........) (..):(..):(..) (.*)",
         'found': False,
         'date': "",  # YYYYMMDDTHHMMSS
         'data': [],  # A string containing the data values after date/time
@@ -68,7 +67,7 @@ MTPrecord = {
     },
     'IWG1line': {
         # From project "ascii_parms" file
-        're': re.compile("^IWG1,(........T......),(.*)"),
+        're': "^IWG1,(........T......),(.*)",
         'found': False,
         'date': "",
         'asciiPacket': "",
@@ -83,7 +82,7 @@ MTPrecord = {
     },
 
     'Bline': {
-        're': re.compile("(^B) (.*)"),
+        're': "(^B) (.*)",
         'found': False,
         'data': [],
         'values': {'SCNT': {  # MTP Scan Counts[Angle,Channel]
@@ -92,7 +91,7 @@ MTPrecord = {
                  },
     },
     'M01line': {  # MTP Engineering Multiplxr
-        're': re.compile("(^M01): (.*)"),
+        're': "(^M01): (.*)",
         'found': False,
         'data': [],
         'values': {'VM08CNTE': {  # Vm08 Counts
@@ -140,7 +139,7 @@ MTPrecord = {
     },
 
     'M02line': {  # MTP Engineering Multiplxr
-        're': re.compile("(^M02): (.*)"),
+        're': "(^M02): (.*)",
         'found': False,
         'data': [],
         'values': {'ACCPCNTE': {  # Acceler Counts
@@ -178,7 +177,7 @@ MTPrecord = {
                    },
     },
     'Ptline': {  # MTP Platinum Multiplxr
-        're': re.compile("(^Pt): (.*)"),
+        're': "(^Pt): (.*)",
         'found': False,
         'data': [],
         'values': {'TR350CNTP': {  # R350 Counts
@@ -224,7 +223,7 @@ MTPrecord = {
                    },
     },
     'Eline': {
-        're': re.compile("(^E) (.*)"),
+        're': "(^E) (.*)",
         'found': False,
         'data': [],
         # The vector of counts produced by the MTP target. This vector is of
