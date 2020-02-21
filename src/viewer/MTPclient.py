@@ -406,7 +406,6 @@ class MTPclient():
 
         # Store data to data dictionary
         self.reader.parseAsciiPacket(data)  # Store to values
-        self.reader.parseLine(data)   # Store to date and data
 
     def close(self):
         """ Close UDP socket connections """
