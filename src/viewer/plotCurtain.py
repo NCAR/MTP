@@ -122,6 +122,32 @@ class Curtain(QMainWindow):
         # Add back the labels and formatting
         self.configureAxis()
 
+    def addAlt(self, altitude):
+        """ Build 2-D array of altitudes """
+        # Convert nans in alt to zero, so when temperature is nan, will plot
+        # NaN at zero alt.
+        alt = numpy.nan_to_num(altitude).tolist()
+        for i in range(len(alt)):
+            if self.first:
+                self.alt.append([alt[i], alt[i]])
+            else:
+                self.alt[i].append(alt[i])
+
+    def addTemp(self, temperature):
+        """ Build 2-D array of temperatures """
+        self.data.append(temperature)
+
+    def addTime(self, time, temperature):
+        """ Create a 2-D aray of times """
+        # Create 1-D array of profile times (convert seconds to hours)
+        if self.first:
+            self.time.append((time-17)/3600.0)
+        self.time.append(time/3600.0)
+
+        # Now build a 2-D array of self.time arrays
+        timearr = []
+        timearr.append([self.time] * (len(temperature)+1))
+
     def plotCurtain(self, time, temperature, altitude):
         """
         Plot profile vs temperature in the self.profile plot window
@@ -132,26 +158,14 @@ class Curtain(QMainWindow):
           temperature - array of temperatures of scan
         """
 
-        # Build 2-D array of altitudes
-        # Convert nans in alt to zero, so when temperature is nan, will plot
-        # NaN at zero alt.
-        alt = numpy.nan_to_num(altitude).tolist()
-        for i in range(len(alt)):
-            if self.first:
-                self.alt.append([alt[i], alt[i]])
-            else:
-                self.alt[i].append(alt[i])
+        # Add latest data to  2-D array of altitudes
+        self.addAlt(altitude)
 
-        # Begin building up 2-D array of temperatures
-        self.data.append(temperature)
+        # Add latest data to 2-D array of temperatures
+        self.addTemp(temperature)
 
-        # Create 1-D array of profile times (convert seconds to hours)
-        if self.first:
-            self.time.append((time-17)/3600.0)
-        self.time.append(time/3600.0)
-        # Now build a 2-D array of self.time arrays
-        timearr = []
-        timearr.append([self.time] * (len(temperature)+1))
+        # Add latest data to 2-D array of profile times
+        self.addTime(time, temperature)
 
         # Plot the temperature as a color mesh. Time on X-axis. Altitude on
         # Y-axis. Have to invert temperature array to match.
