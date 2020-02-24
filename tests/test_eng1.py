@@ -40,16 +40,37 @@ class TESTeng1(unittest.TestCase):
         logger.initLogger(self.stream, loglevel)
 
         self.app = QApplication([])
-
-    def test_eng1(self):
-        """ Test Engineering 1 display window shows what we expect """
         self.client = MTPclient()
         self.client.config(self.configfile)
-        self.viewer = MTPviewer(self.client, self.app)
+
+    def test_eng1_noJSON(self):
+        """ Test Engineering 1 display window shows what we expect """
         # This first emgineering window shows the Pt line
         # To start, the window just shows "Channel  Counts  Ohms  Temp  "
+        # unless there is a json file with data, in which case, data from last
+        # record in JSON file will be read in by MTPviewer initializer and
+        # displayed.
+
+        # Test with no JSON file
+        filename = ""
+        self.viewer = MTPviewer(self.client, self.app, filename)
         self.assertEqual(self.viewer.eng1.toPlainText(),
                          "Channel\tCounts  Ohms  Temp  ")
+
+    def test_eng1_JSON(self):
+        # Test with JSON file
+        filename = "../tests/test_data/DEEPWAVErf01.mtpRealTime.json"
+        self.viewer = MTPviewer(self.client, self.app, filename)
+        self.assertEqual(self.viewer.eng1.toPlainText(),
+                         "Channel\tCounts  Ohms  Temp  \n" +
+                         "Rref 350\t02174  350.00  \n" +
+                         "Target 1\t13808  586.81  +44.64\n" +
+                         "Target 2\t13807  586.79  +44.63\n" +
+                         "Window\t06689  441.90  -29.63\n" +
+                         "Mixer\t13383  578.16  +40.16\n" +
+                         "Dblr Amp\t13331  577.10  +39.61\n" +
+                         "Noise D.\t13215  574.74  +38.39\n" +
+                         "Rref 600\t14456  600.00  ")
 
         # Send an MTP packet to the parser and confirm it gets parsed
         # correctly

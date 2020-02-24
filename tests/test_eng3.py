@@ -39,16 +39,39 @@ class TESTeng3(unittest.TestCase):
         loglevel = logging.INFO
         logger.initLogger(self.stream, loglevel)
 
-    def test_eng3(self):
-        """ Test Engineering 3 display window shows what we expect """
         self.app = QApplication([])
         self.client = MTPclient()
         self.client.config(self.configfile)
-        self.viewer = MTPviewer(self.client, self.app)
+
+    def test_eng3_noJSON(self):
+        """ Test Engineering 3 display window shows what we expect """
         # The third engineering window displays the M02 line
         # To start, window just shows the header: "Channel Counts  Value"
+        # unless there is a json file with data, in which case, data from last
+        # record in JSON file will be read in by MTPviewer initializer and
+        # displayed.
+
+        # Test with no JSON file
+        filename = ""
+        self.viewer = MTPviewer(self.client, self.app, filename)
         self.assertEqual(self.viewer.eng3.toPlainText(),
                          "Channel\tCounts  Value")
+
+    def test_eng3_JSON(self):
+        # Test with JSON file
+        filename = "../tests/test_data/DEEPWAVErf01.mtpRealTime.json"
+        self.viewer = MTPviewer(self.client, self.app, filename)
+        self.assertEqual(self.viewer.eng3.toPlainText(),
+                         "Channel\tCounts  Value\n" +
+                         "Acceler\t2061  +01.10 g\n" +
+                         "T Data\t1316  +39.51 C\n" +
+                         "T Motor\t2188  +18.51 C\n" +
+                         "T Pod Air\t2743  +06.16 C\n" +
+                         "T Scan\t2697  +07.21 C\n" +
+                         "T Pwr Sup\t1591  +32.27 C\n" +
+                         "T N/C\t4095  N/A\n" +
+                         "T Synth\t1535  +33.67 C")
+        self.viewer.close()
 
         # Send an MTP packet to the parser and confirm it gets parsed
         # correctly.
