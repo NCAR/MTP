@@ -50,6 +50,7 @@ class MTPviewer(QMainWindow):
                                    self.client.getFltno()):
             self.setScanIndex()
             self.updateDisplay()
+            self.calcCurtain()
 
         # When data appears on the MTP socket, call processData()
         self.readNotifier = QSocketNotifier(
@@ -515,18 +516,61 @@ class MTPviewer(QMainWindow):
         # Draw the plots
         self.profile.draw()
 
+    def calcCurtain(self):
+        """
+        If read old data from JSON file, repopulate curtain plot vars with
+        data so can regenerate curtain plot for old data
+        """
+
+        # Loop through previous data and add data from each record to
+        # 2-D arrays used by curtain plot
+        for index in range(len(self.client.reader.flightData)-1):
+            thisscan = self.client.reader.flightData[index]
+            time = thisscan['Aline']['values']['TIME']['val']
+            temperature = thisscan['ATP']['Temperatures']
+
+            self.curtain.addAlt(thisscan['ATP']['Altitudes'])
+            self.curtain.addTemp(temperature)
+            self.curtain.addTime(time, temperature)
+            self.curtain.addACtime(time)
+            self.curtain.addACalt(thisscan['Aline']['values']['SAPALT']['val'])
+            self.curtain.addTrop(thisscan['ATP']['trop'][0])
+            self.curtain.addMRI(thisscan['BestWtdRCSet']['SumLnProb'])
+
+            # addAlt and addTime have special cases for first value read into
+            # data arrays, so after first time thru, have to set first to false
+            self.curtain.first = False
+
+        # First time plotting has special case, so set first to True again
+        # There has to be a cleaner way to do this - I'm being lazy.
+        self.curtain.first = True
+
+        # Generate the curtain plot
+        self.curtain.plotCurtain()
+        self.curtain.plotACALT()       # Plot aircraft altitude
+        self.curtain.plotTropopause()  # Plot first tropopause
+        self.curtain.plotMRI()         # Plot data quality
+
     def updateCurtainPlot(self):
         # ------- Append to the curtain plot ------ #
+
         self.curtain.clear()
-        self.curtain.plotCurtain(self.client.reader.getVar('Aline', 'TIME'),
-                                 self.ATP['Temperatures'],
-                                 self.ATP['Altitudes'])
-        self.curtain.plotACALT(self.client.reader.getVar('Aline', 'TIME'),
-                               self.client.reader.getACAlt())
-        # Plot first tropopause
-        self.curtain.plotTropopause(self.ATP['trop'][0])
-        # Plot data quality
-        self.curtain.plotMRI(self.BestWtdRCSet['SumLnProb'])
+
+        # Add latest data to 2-D arrays used by curtain plot
+        self.curtain.addAlt(self.ATP['Altitudes'])
+        self.curtain.addTemp(self.ATP['Temperatures'])
+        self.curtain.addTime(self.client.reader.getVar('Aline', 'TIME'),
+                             self.ATP['Temperatures'])
+        self.curtain.addACtime(self.client.reader.getVar('Aline', 'TIME'))
+        self.curtain.addACalt(self.client.reader.getACAlt())
+        self.curtain.addTrop(self.ATP['trop'][0])
+        self.curtain.addMRI(self.BestWtdRCSet['SumLnProb'])
+
+        # Generate the curtain plot
+        self.curtain.plotCurtain()
+        self.curtain.plotACALT()       # Plot aircraft altitude
+        self.curtain.plotTropopause()  # Plot first tropopause
+        self.curtain.plotMRI()         # Plot data quality
 
         self.curtain.draw()
 

@@ -47,7 +47,7 @@ class Curtain(QMainWindow):
         # Create 1-D array of MRI indicator (quality of fit)
         self.mri = []
 
-        # Indicate first time calling plot
+        # Indicate first time calling plot - flag for special cases
         self.first = True
 
     def initUI(self):
@@ -148,24 +148,23 @@ class Curtain(QMainWindow):
         timearr = []
         timearr.append([self.time] * (len(temperature)+1))
 
-    def plotCurtain(self, time, temperature, altitude):
+    def addACtime(self, time):
+        self.actime.append(time/3600.0)
+
+    def addACalt(self, acalt):
+        """ Build array of aircraft altitudes """
+        self.acalt.append(float(acalt))
+
+    def addTrop(self, trop):
+        self.trop.append(trop['altc'])
+
+    def addMRI(self, mri):
+        self.mri.append(mri)
+
+    def plotCurtain(self):
         """
         Plot profile vs temperature in the self.profile plot window
-
-        Requires:
-          time - time of scan (in seconds)
-          altitude - array of altitudes of scan
-          temperature - array of temperatures of scan
         """
-
-        # Add latest data to  2-D array of altitudes
-        self.addAlt(altitude)
-
-        # Add latest data to 2-D array of temperatures
-        self.addTemp(temperature)
-
-        # Add latest data to 2-D array of profile times
-        self.addTime(time, temperature)
 
         # Plot the temperature as a color mesh. Time on X-axis. Altitude on
         # Y-axis. Have to invert temperature array to match.
@@ -178,23 +177,19 @@ class Curtain(QMainWindow):
             self.fig.colorbar(im, ax=self.ax)  # Add a legend
             self.first = False
 
-    def plotACALT(self, time, ACAltKm):
+    def plotACALT(self):
         """ Plot the aircraft altitude on the left axis """
-        self.actime.append(time/3600.0)
-        self.acalt.append(float(ACAltKm))
         self.ax.plot(self.actime, self.acalt, color='black')
 
-    def plotTropopause(self, trop):
+    def plotTropopause(self):
         """ Plot the tropopause on the left axis """
-        self.trop.append(trop['altc'])
         self.ax.plot(self.actime, self.trop, color='white')
 
-    def plotMRI(self, mri):
+    def plotMRI(self):
         """
         Plot the MRI. MRI (data quality metric) ranges from .1-.2ish - plotted
         on pressure altitude scale. MRI is BestWtdRCSet['SumLnProb'])
         """
-        self.mri.append(mri)
         self.ax.vlines(self.actime, 0, self.mri, color='black')
 
 #   def markBadScan(self):  # TBD
