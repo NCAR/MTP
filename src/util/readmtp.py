@@ -145,25 +145,16 @@ class readMTP:
             return(False)
 
         with open(filename, 'r') as f:
-            old_data = [json.loads(line) for line in f]
+            previous_data = [json.loads(line) for line in f]
 
         # There does not appear to be a list.prepend() python function so
-        # extend the old_data and then replace flightData with old data. This
-        # could potentially cause us to loose a record if flightData is written
-        # to between the two commands below. Since this is used for real-time
-        # restarts, we probably lost at least one record anyway, so that's OK.
-        # This is just for display.
-        old_data.extend(self.flightData)
-        self.flightData = old_data
-
-        # Update the curtain plot
-        # time = self.flightData[index]['Aline']['values']['TIME']['val']
-        # altitude = self.flightData[index]['ATP']['Altitudes']
-        # temperature = self.flightData[index]['ATP']['Temperatures']
-        # for index in range(len(self.flightData)-1):
-        #     curtain.addAlt(altitude)
-        #     curtain.addTemp(temperature)
-        #     curtain.addTime(time, temperature)
+        # extend the previous_data array with any data written to flightData
+        # since restart, and then replace flightData with the previous_data.
+        # This could potentially cause us to loose a *display* record if
+        # flightData is written to between the two commands below. No actual
+        # data is lost - everything collected is in the JSON file.
+        previous_data.extend(self.flightData)
+        self.flightData = previous_data
 
         return(True)
 
