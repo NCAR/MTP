@@ -39,16 +39,38 @@ class TESTeng2(unittest.TestCase):
         loglevel = logging.INFO
         logger.initLogger(self.stream, loglevel)
 
-    def test_eng2(self):
-        """ Test Engineering 2 display window shows what we expect """
         self.app = QApplication([])
         self.client = MTPclient()
         self.client.config(self.configfile)
-        self.viewer = MTPviewer(self.client, self.app)
+
+    def test_eng2_noJSON(self):
+        """ Test Engineering 2 display window shows what we expect """
         # The second engineering window displays the M01 line
         # To start, window just shows the header: "Channel Counts  Volts"
+        # unless there is a json file with data, in which case, data from last
+        # record in JSON file will be read in by MTPviewer initializer and
+        # displayed.
+
+        # Test with no JSON file
+        filename = ""
+        self.viewer = MTPviewer(self.client, self.app, filename)
         self.assertEqual(self.viewer.eng2.toPlainText(),
                          "Channel\tCounts  Volts")
+
+    def test_eng2_JSON(self):
+        # Test with JSON file
+        filename = "../tests/test_data/DEEPWAVErf01.mtpRealTime.json"
+        self.viewer = MTPviewer(self.client, self.app, filename)
+        self.assertEqual(self.viewer.eng2.toPlainText(),
+                         "Channel\tCounts  Volts\n" +
+                         "-8V  PS\t2928  -07.99V\n" +
+                         "Video V.\t2061  +02.06V\n" +
+                         "+8V  PS\t2899  +08.06V\n" +
+                         "+24V Step\t3082  +24.01V\n" +
+                         "+15V Syn\t1923  +14.98V\n" +
+                         "+15V PS\t2922  +14.90V\n" +
+                         "VCC  PS\t2430  +04.86V\n" +
+                         "-15V PS\t2944  -15.01V")
 
         # Send an MTP packet to the parser and confirm it gets parsed
         # correctly.
