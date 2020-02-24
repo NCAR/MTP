@@ -52,6 +52,7 @@ import numpy
 import json
 import copy
 from util.MTP import MTPrecord
+from lib.rootdir import getrootdir
 from Qlogger.messageHandler import QLogger as logger
 
 
@@ -66,6 +67,13 @@ class readMTP:
 
         # Set the scan we are working with to be the current scan
         self.rawscan = self.curscan
+
+    def getJson(self, proj, fltno):
+        """ Build name of json file to save flight data to """
+        # This is used if the code is restarted mid-flight to provide access
+        # to previous data.
+        return(os.path.join(getrootdir(), 'config',
+                            proj+fltno.lower()+'.mtpRealTime.json'))
 
     def setRawscan(self, index):
         """ Set the MTP data dictionary we want to read a scan from """
@@ -123,24 +131,18 @@ class readMTP:
         """ Save the current record to the flight library (flightData[]) """
         self.flightData.append(copy.deepcopy(self.rawscan))
 
-    def save(self, proj, fltno):
+    def save(self, filename):
         """ Append the current record to a JSON file on disk """
-        # This is used if the code is restarted mid-flight to provide access
-        # to previous data.
-        filename = proj+fltno.lower()+'.mtpRealTime.json'
         with open(filename, 'a') as f:
             json.dump(self.rawscan, f)
             f.write(os.linesep)
 
-    def load(self, proj, fltno):
+    def load(self, filename):
         """
         Read records from JSON file on disk and prepend to flightData array
         """
-        # This is used if the code is restarted mid-flight to provide access
-        # to previous data.
-        filename = proj+fltno.lower()+'.mtpRealTime.json'
-
         # Check if file exists. If not, nothing to load, so return failed
+        print(filename)
         if not os.path.isfile(filename):
             return(False)
 
