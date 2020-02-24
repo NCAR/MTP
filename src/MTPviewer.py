@@ -34,8 +34,11 @@ def main():
     # This also connects to the MTP and IWG feeds
     client.config(args.config)
 
+    # Get name of file JSON data (potentially) saved to
+    filename = client.reader.getJson(client.getProj(), client.getFltno())
+
     # Instantiate the GUI
-    viewer = MTPviewer(client, app)
+    viewer = MTPviewer(client, app, filename)
     viewer.show()
 
     # Run the application until the user closes it.

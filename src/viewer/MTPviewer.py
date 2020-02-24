@@ -21,10 +21,11 @@ from Qlogger.messageHandler import QLogger as logger
 
 class MTPviewer(QMainWindow):
 
-    def __init__(self, client, app):
+    def __init__(self, client, app, mtpRealTimeFile):
 
         self.client = client
         self.app = app
+        self.mtpRealTimeFile = mtpRealTimeFile
         self.cell = [[numpy.nan for j in range(10)] for i in range(3)]
 
         self.clicked = False  # Only show error msg once
@@ -46,8 +47,7 @@ class MTPviewer(QMainWindow):
         # are in the config file, then assume we are restarting this code for
         # the same flight, and read in the previous data for this flight from
         # that mtpRealTime file.
-        if self.client.reader.load(self.client.getProj(),
-                                   self.client.getFltno()):
+        if self.client.reader.load(self.mtpRealTimeFile):
             self.setScanIndex()
             self.updateDisplay()
             self.calcCurtain()
@@ -402,7 +402,7 @@ class MTPviewer(QMainWindow):
         self.client.reader.archive()
 
         # Append to JSON file on disk
-        self.client.reader.save(self.client.getProj(), self.client.getFltno())
+        self.client.reader.save(self.mtpRealTimeFile)
 
         # Update the display
         self.setScanIndex()
