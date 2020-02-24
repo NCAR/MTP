@@ -28,26 +28,15 @@ class Curtain(QMainWindow):
         super(Curtain, self).__init__(parent)
         self.initUI()
 
-        # Create a 2-D array of temperatures
-        self.data = []
+        self.data = []    # 2-D array of temperatures
+        self.alt = []     # 2-D array of altitudes
+        self.time = []    # 1-D array of times (to label X-axis)
+        self.actime = []  # 1-D array of times (without duplicate first entry)
+        self.acalt = []   # 1-D array of ACALT
+        self.trop = []    # 1-D array of lowest tropopause (plot vs actime)
+        self.mri = []     # 1-D array of MRI indicator (quality of fit)
 
-        # Create a 2-D array of altitudes
-        self.alt = []
-
-        # Create a 1-D array of times (to label X-axis)
-        self.time = []
-
-        # Create a 1-D array of ACALT
-        self.actime = []
-        self.acalt = []
-
-        # Create 1-D array of first tropopause (use time from ACALT)
-        self.trop = []
-
-        # Create 1-D array of MRI indicator (quality of fit)
-        self.mri = []
-
-        # Indicate first time calling plot - flag for special cases
+        # Indicate first time calling plot
         self.first = True
 
     def initUI(self):
