@@ -1,7 +1,6 @@
 import sys
 import signal
 #import serial
-import logging
 import time
 from PyQt5.QtWidgets import (QWidget, QToolTip,
                              QPushButton, QButtonGroup,
@@ -242,18 +241,25 @@ class controlWindow(QWidget):
 
     def reInitProbeClicked(self):
         logging.debug("reInitProbeClicked")
+        # need a read to clear echo here
+        self.serialPort.sendCommand(str.encode(self.commandDict.getCommand("ctrl-C")))
         # set init led to yellow
         self.probeStatusLED.setPixmap(self.ICON_YELLOW_LED.scaled(40, 40))
-
+        # Reset should just send the re-initialization again
+        # regardless of previous status
+        # Therefore init shuold reset every cycle function
+        '''
         if self.packetStore.getData("isCycling"): 
             self.packetStore.setData("isCycling", False)
             self.reInitProbe.setText("Finishing scan: Please wait")
         else:
-            self.packetStore.setData("isCycling", True)
-            self.reInitProbe.setText("Initializing ...")
-        #set desired mode to init
+        '''
+        self.packetStore.setData("isCycling", True)
+        self.reInitProbe.setText("Initializing ...")
+        # set desired mode to init
         # changed these 3 from packetDict
         self.packetStore.setData("desiredMode", "init")
+        self.packetStore.setData("switchControl", "resetInitScan")
         self.packetStore.setData("scanStatus", False)
         self.packetStore.setData("calledFrom", "resetProbeClick")
         self.cycleTimer.start()
@@ -266,6 +272,19 @@ class controlWindow(QWidget):
         self.closeComm(serialPort)
         logging.debug("Safe exit")
         app.exit(0)
+
+    def readClear(self, waitReadyReadTime, readLineTime):
+        # clear a buffer, discarding whatever is in it
+        # will read until either the buffer is empty
+        # or it finds a \n, whichever is first
+        self.serialPort.readLine(readLineTime)
+        if self.serialPort.canReadLine(readLineTime):
+            self.serialPort.readLine(readLineTime)
+
+    def read(self, waitReadyReadTime, readLineTime):
+        logging.debug( 'waitreadyreadtime = %f', waitReadyReadTime)
+        return self.serialPort.canReadLine(readLineTime)
+
 
     def mainloop(self):
         # instantiate dict for commands
@@ -304,7 +323,7 @@ class controlWindow(QWidget):
         # comment out next n lines to test non serial port code       
         self.serialPort = SerialInit(self, app)
         # self.serialPort.readyRead.connect(self.tick(packetDict))
-        self.serialPort.sendCommand(str.encode(self.commandDict.getCommand("status")))
+        # self.serialPort.sendCommand(self.commandDict.getCommand("status"))
         # sPort = self.openComm(serialPort)
         self.app.processEvents()
         '''
@@ -314,7 +333,94 @@ class controlWindow(QWidget):
         self.mover = moveMTP(self)
 
 
+        # init probe
+        self.serialPort.sendCommand(self.commandDict.getCommand("init1"))
+        i=0
+        echo = b''
+        while i < 100000:
+            # grab whatever is in the buffer
+            # will terminate at \n if it finds one
+
+            echo = self.serialPort.canReadLine(20)#msec
+            logging.debug("init 1 loop echo: ")
+            logging.debug(echo)
+
+            #logging.debug(echo)
+            if echo is None or echo == b'':
+                #logging.debug("checking init1")
+                self.app.processEvents()
+                i = i + 1
+            elif echo.data().find(b'S') >= 0:
+                logging.debug("received S from init1")
+                break;
+            else:
+                logging.debug("init1 loop echo else case")
+                self.app.processEvents()
+                i = i + 1
+
+
+
+        self.serialPort.sendCommand(self.commandDict.getCommand("init2"))
+        self.readUntilFound(b'S', 100000, 20)
+        self.homeScan()
+
+        # loop over " scan commands"
+        while (1):
+            logging.debug("loop")
+            self.m01Store = self.m01()
+            self.m02Store = self.m02()
+            self.ptStore = self.pt()
+            # Eline: long 
+            self.elineStore = self.Eline()
+            # check here to exit cycling
+
+            # use the MTPmove aline
+            self.alineStore = self.Aline()
+
+            # Bline: long
+            # doesn't do any scan correcting 
+            self.blineStore = self.Bline()
+
+            # save to file
+            # assumes everything's been decoded from hex
+            # returns UDP packet
+            udp = self.mover.saveData()
+
+            # send packet over UDP
+
+
+
+            #time.sleep(1)
+
         return 0
+
+    def readUntilFound(self, binaryString, timeout, canReadLineTimeout):
+        i=0
+        echo = b''
+
+        while i < timeout:
+            # grab whatever is in the buffer
+            # will terminate at \n if it finds one
+
+            echo = self.serialPort.canReadLine(canReadLineTimeout)#msec
+            logging.debug("init 1 loop echo: ")
+            logging.debug(binaryString)
+            logging.debug(echo)
+
+            #logging.debug(echo)
+            if echo is None or echo == b'':
+                #logging.debug("checking init1")
+                self.app.processEvents()
+                i = i + 1
+            elif echo.data().find(binaryString) >= 0:
+                logging.debug("received S")
+                return echo
+            else:
+                logging.debug("init1 loop echo else case")
+                self.app.processEvents()
+                i = i + 1
+        logging.debug("readUntilStep timeout")
+        return echo
 
     def tick(self, buff):
         logging.debug("tick")
@@ -431,12 +537,14 @@ class controlWindow(QWidget):
 
     def cycle(self):
         # self.cycleTimer.stop()
+        '''
         logging.debug("Start of cycle")
-        self.serialPort.waitForReadyRead()
+        self.serialPort.waitReadyRead(20)
         logging.debug("After ready read")
-        buf = self.serialPort.readLine()
+        buf = self.serialPort.readLine(70)
         logging.debug("after readline")
         logging.debug(buf.data())
+        '''
         # this process Events can really slow things down
         # still necessary because recieved data has to be processed
         # before deciding if moving to next command or no.
@@ -445,6 +553,7 @@ class controlWindow(QWidget):
         # at startup, when cycling = false sets probe to start position
         if self.packetStore.getData("desiredMode") is "init":
             self.probeStatusLED.setPixmap(self.ICON_YELLOW_LED.scaled(40, 40))
+            self.packetStore.setData("switchControl", 'initScan')
         elif self.packetStore.getData("isCycling"):
             self.probeStatusLED.setPixmap(self.ICON_GREEN_LED.scaled(40, 40))
         else:
@@ -486,9 +595,11 @@ class controlWindow(QWidget):
                 # stop timer
                 self.cycleTimer.stop()
                 # set the button text back to reset
+                self.packetStore.setData("isCycling", False)
                 self.reInitProbe.setText("Reset Probe")
                 # set the init light to green
                 # self.probeStatusLED.setPixmap(self.ICON_GREEN_LED.scaled(40,40))
+            # otherwise continue with cycle
 
         # if bline, set new frame? or set in bline
 
@@ -540,6 +651,7 @@ class controlWindow(QWidget):
                     self.saveFrame()
                     break;
                 case 11: matchWord == 'sendUDP';
+
                     self.sendUDP()
                     break;
 
@@ -570,7 +682,7 @@ class controlWindow(QWidget):
         #getcommand read_scan
         self.serialPort.sendCommand(str.encode(self.commandDict.getCommand("read_scan")))
         return 0
-
+        '''
     def initScan(self):
         logging.debug("cycle")
         gearRatio = 80/20                           # 2007/11/29, assumes "j256" for 
@@ -580,31 +692,139 @@ class controlWindow(QWidget):
         if (initSwitch):
             self.serialPort.sendCommand(str.encode(self.commandDict.getCommand("init2")))
             logging.debug("cycle2")
-
+    '''
 
 
     def homeScan(self):
-        logging.debug("homeScan")
-        lastSky = self.readScan()
+        self.serialPort.sendCommand(self.commandDict.getCommand("home1"))
+        self.readUntilFound(b':', 100000, 20)
+        self.serialPort.sendCommand(self.commandDict.getCommand("home2"))
+        self.readUntilFound(b':', 100000, 20)
+        echo = self.read(200,20)
+        logging.debug("home2 1st echo =:%s",echo) 
+        echo = self.read(200,20)
+        logging.debug("home2 2nd echo =:%s",echo) 
+        self.serialPort.sendCommand(self.commandDict.getCommand("home3"))
+        self.readUntilFound(b'S', 100000, 20)
+        echo = self.read(200,20)
+        logging.debug("home3 1st echo =:%s",echo) 
+        echo = self.read(200,20)
+        logging.debug("home3 2nd echo =:%s",echo) 
 
 
     def m01(self):
         logging.debug("M01")
-        self.serialPort.sendCommand(str.encode(self.commandDict.getCommand("read_M1")))
+        self.serialPort.sendCommand((self.commandDict.getCommand("read_M1")))
+        # echo will echo "M  1" so have to scan for the : in the M line
+        self.readUntilFound(b':', 100000, 20)
+        # set a timer so m01 values get translated from hex?
+        
 
     def m02(self):
         logging.debug("M02")
-        self.serialPort.sendCommand(str.encode(self.commandDict.getCommand("read_M2")))
+        self.serialPort.sendCommand((self.commandDict.getCommand("read_M2")))
+        self.readUntilFound(b':', 100000, 20)
 
     def pt(self):
         logging.debug("pt")
-        self.serialPort.sendCommand(str.encode(self.commandDict.getCommand("read_P")))
+        self.serialPort.sendCommand((self.commandDict.getCommand("read_P")))
+        self.readUntilFound(b':', 100000, 20)
 
     def Eline(self):
         logging.debug("Eline")
 
     def Aline(self):
-        logging.debug("Aline")
+        logging.debug("View Aline")
+                # add current iwg values to running average,
+        # send that out instead of instant values
+        # made in goAngle for packetStore.savePacket/sendUDP
+
+        # yyyymmdd hhmmss in udp feed
+        # yyyymmdd hh:mm:ss in save feed
+        # self.currentDate =  "%s%s%s %s%s%s" %( str(t[0]), str(t[1]), str(t[2]), str(t[3]), str(t[4]), str(t[5]))
+        # aline = "A " + self.currentDate
+        # Note that if iwg is sending, but pitch and roll are
+        # not defined, they will be set to NAN
+        # (aka testing on the ground)
+        # those will be set to 1 in goAngle
+        # but not adjusted for Aline
+        try:
+            logging.debug("before pitch avg")
+            pitchavg = self.packetStore.getData("pitchavg")
+            logging.debug("after pitch avg")
+            pitchrms = self.packetStore.getData("pitchrms")
+            logging.debug("after pitch rms1")
+            rollavg = self.packetStore.getData("rollavg")
+            logging.debug("after pitch rms2")
+            rollrms = self.packetStore.getData("rollrms")
+            logging.debug("after pitch rms3")
+            Zpavg = self.packetStore.getData("Zpavg")
+            logging.debug("after pitch rms4")
+            Zprms = self.packetStore.getData("Zpavg")
+            logging.debug("after pitch rms5")
+            oatavg = self.packetStore.getData("oatavg")
+            logging.debug("after pitch rms6")
+            oatrms = self.packetStore.getData("oatrms")
+            logging.debug("after pitch rms7")
+            latavg = self.packetStore.getData("latavg")
+            logging.debug("after pitch rms8")
+            latrms = self.packetStore.getData("latrms")
+            logging.debug("after pitch rms9")
+            lonavg = self.packetStore.getData("lonavg")
+            logging.debug("after pitch rms10")
+            lonrms = self.packetStore.getData("lonrms")
+            logging.debug("after pitch rms end")
+        except Exception as e:
+            logging.debug("after pitch rms, in exception")
+            logging.error(repr(e))
+            logging.error(e.message)
+            logging.error(sys.exe_info()[0])
+            logging.error("IWG not detected, using defaults")
+            pitchavg = 3
+            pitchrms = 3
+            rollavg = 3
+            rollrms = 3
+            Zpavg = 3
+            Zprms = 3
+            oatavg = 3
+            oatrms = 3
+            latavg = 3
+            latrms = 3
+            lonavg = 3
+            lonrms = 3
+            # set from config file eventually
+            # other odd constant is in udp.py -
+            # sets the recieved values in iwg line to 0
+        else:
+            logging.debug("else got IWG")
+
+        aline = " " + str(pitchavg)
+        aline = aline + " " + str(pitchrms)
+        aline = aline + " " + str(rollavg)
+        aline = aline + " " + str(rollrms)
+        aline = aline + " " + str(Zpavg)
+        aline = aline + " " + str(Zprms)
+        aline = aline + " " + str(oatavg)
+        aline = aline + " " + str(oatrms)
+        aline = aline + " " + str(latavg)
+        aline = aline + " " + str(latrms)
+        aline = aline + " " + str(lonavg)
+        aline = aline + " " + str(lonrms)
+        aline = aline + " " + str(self.packetStore.getData("scanCount"))
+        aline = aline + " " + str(self.packetStore.getData("encoderCount"))
+        self.alineStore = aline
+
+        self.packetStore.setData("angleI", 0) # angle index
+
+        self.serialPort.sendCommand((self.commandDict.getCommand("read_scan")))
+        echo = self.read(200,200)
+        logging.debug("read_scan Aline Echo: %s", echo)
+        # need to implement the better logic counters in bline
+        # for scanCount and encoderCount
+        self.packetStore.setData("scanCount", int(self.packetStore.getData("scanCount")) + 1)
+        logging.debug("View: Aline end")
+
+
 
     #def Bline(self):
     #    logging.debug("Bline")
