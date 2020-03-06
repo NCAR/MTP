@@ -106,15 +106,23 @@ class MTPcommand():
         L4000  - Set the acceleration factor micro-steps per sec^2
         h30    - Set the hold current
         m100   - Set the running current
+
+
+        Python3 requires the strings to either use the b'' syntax or
+        be passsed through a str.encode(), which cumulatively causes 
+        some slowness.
+        The \n after the \r is not strictly necessary for the probe,
+        but pyQt's canReadLine checks for a \n, so not having it was
+        causing concatination of the command echo and the probe's response
         """
 
         command_list = {
             # This first set of commands are firmware commands. The firmware
             # contains the actual command sent to the stepper motor.
-            'version': 'V\r',         # Request the MTP Firmware Version. The
+            'version': b'V\r\n',         # Request the MTP Firmware Version. The
                                       # firmware version is hardcoded in 
                                       # MTPH_Control.C
-            'status': 'S\r',          # Request the MTP Firmware Status
+            'status': b'S\r\n',          # Request the MTP Firmware Status
                                       # - Bit 0 = integrator busy
                                       # - Bit 1 = Stepper moving
                                       # - Bit 2 = Synthesizer out of lock
@@ -122,28 +130,28 @@ class MTPcommand():
             'ctrl-C': chr(3),         # Send ascii char "3" = Ctrl-C. Is caught
                                       # in firmware interrupt routine and
                                       # restarts the program.
-            'read_P': 'P\r',          # Read all 8 platinum RTD channels
+            'read_P': b'P\r\n',          # Read all 8 platinum RTD channels
                                       # Return components of P line
-            'read_M1': 'M 1\r',       # Read all 8 channels of multiplexer 1
+            'read_M1': b'M 1\r',       # Read all 8 channels of multiplexer 1
                                       # Return components of M1 line
-            'read_M2': 'M 2\r',       # Read all 8 channels of multiplexer 2
+            'read_M2': b'M 2\r',       # Read all 8 channels of multiplexer 2
                                       # Return components of M2 line
 
             # From VB6 sub integrate()
-            'count': 'I 40\r',        # Count up the chCounts array; integrate
+            'count': b'I 40\r',        # Count up the chCounts array; integrate
                                       # for 40 * 20mS
-            'count2': 'R\r',          # Read results of last integration from
+            'count2': b'R\r',          # Read results of last integration from
                                       # counter (counts for each channel)
 
             # From VB6 sub Noise() - called by Eline(). Noise diode.
-            'noise1': 'N 1\r',  # Set Noise Diode On  ( I may have these )
-            'noise0': 'N 0\r',  # Set Noise Diode Off ( backward - TBD   )
+            'noise1': b'N 1\r',  # Set Noise Diode On  ( I may have these )
+            'noise0': b'N 0\r',  # Set Noise Diode Off ( backward - TBD   )
 
             # The next set of commands are passed to the stepper motor as-is.
 
-            'terminate': 'U/1TR\r',   # Terminate the stepper motion
-            'read_scan': 'U/1?0R\r',  # Read a scan
-            'read_enc': 'U/1?8R\r',   # Read encoder
+            'terminate': b'U/1TR\r',   # Terminate the stepper motion
+            'read_scan': b'U/1?0R\r',  # Read a scan
+            'read_enc': b'U/1?8R\r',   # Read encoder
 
             # VB6 sub tune(); set frequency for synthesizer, in MHz - 7 digits,
             # decimal always required.
@@ -161,19 +169,19 @@ class MTPcommand():
             # 'tuneF': 'F ' + chan + '\r',
             
             # From VB6 sub Init()
-            'init': 'U/1f1j256V5000L5000h30m100R\r',  # initialize
+            'init': b'U/1f1j256V5000L5000h30m100R\r',  # initialize
 
             # From VB6 sub initScan() - looks like these two togeter accomplish
             # same set of commands as one above - with different values.
-            'init1': 'U/1f1j256V50000R\r',  # direction,top speed, uSteps/step
-            'init2': 'U/1L4000h30m100R\r',  # acceration, holding current,
+            'init1': b'U/1f1j256V50000R\r\n',  # direction,top speed, uSteps/step
+            'init2': b'U/1L4000h30m100R\r\n',  # acceration, holding current,
                                             # motor current
 
             # From VB6 sub homeScan() - These three step down in resolution, so
             # maybe finer and finer adjustment of home position?
-            'home1': 'U/1J0f0j256Z1000000J3R\r',
-            'home2': 'U/1j128z1000000P10R\r',
-            'home3': 'U/1j64z1000000P10R\r',
+            'home1': b'U/1J0f0j256Z1000000J3R\r\n',
+            'home2': b'U/1j128z1000000P10R\r\n',
+            'home3': b'U/1j64z1000000P10R\r\n',
 
             # From VB6 sub moveScan(). Move the MTP Nsteps.
             # This syntax won't work because Nsteps is not defined - just a
