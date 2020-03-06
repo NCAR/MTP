@@ -42,7 +42,7 @@ class SerialInit(object):
         #self.serial.setParity(self.parity)
         #self.serial.setStopBits(self.stop_bits)
         #self.serial.setFlowControl(self.flow_control)
-        self.serialPort.readyRead.connect(self.tickSerial) 
+        #self.serialPort.readyRead.connect(self.tickSerial) 
         """ Check that the port isn't open already """
 
         if self.serialPort.isOpen():
@@ -62,6 +62,9 @@ class SerialInit(object):
         '''
         #as yet appears to be unnecessary
         #self.app.processEvents()
+        # when probe powers on it sends a string, unprompted:
+        # "MTPH_Control.c-101103>101208\r\n"
+        self.binReset = str.encode("MT") 
         self.binI = str.encode("I")
         self.binR = str.encode("R")
         self.binRnewline = str.encode("R\n")
@@ -78,21 +81,60 @@ class SerialInit(object):
         self.binU = str.encode('U/') 
         return
 
-    def waitReadyRead(self):
+    def canReadLine(self, timeVal):
         # returns a signal when there is data to be read
-        # times out in 7 msec
-        return self.serialPort.waitForReadyRead(7)
+        logging.debug("can read line waiting ready read")
+        val = self.serialPort.waitForReadyRead(timeVal)
+        i=0
+        while i < timeVal:
+            self.parent.app.processEvents()
+            if self.serialPort.canReadLine():
+                buf = self.serialPort.readLine()
+                logging.debug('canReadLine signal received')
+                while self.serialPort.canReadLine():
+                    logging.debug('while can readline')
+                    buf = buf + self.serialPort.readLine()
+                    #logging.debug(buf)
+                return buf
+                break
+            else:
+                #logging.debug('canReadLine waiting for canreadline signal')
+                i = i + 1
+        #return b''
 
-    def readLine(self, time):
+    def readLine(self, timeVal):
         # reads until there is no more data
         # or to first newline
         # for M01, M02, pt wait for entire line to come in. 
         # doing multiple reads just allows for the lines to 
         # run together e.g. b'03 \r\nM'
+        # clear buffer
+        #buf = b'' 
+        #logging.debug("serialqt readline")
         i = 0 
-        while i < time:
-            time.sleep(0.001)
-        return self.serialPort.readLine()
+        while i < 7 * timeVal:
+            self.parent.app.processEvents()
+            #logging.debug("i: %d, timeVal: %d" , i, timeVal)
+            '''
+            if self.serialPort.canReadLine():
+                logging.debug('canreadline')
+                buf = self.serialPort.readLineData().data()
+                logging.debug(buf)
+                break
+            else:
+                i = i+1
+            logging.debug("look for newline char's")
+            '''
+            '''
+            if buf.size()-1 <= 0:
+                # empty readline, exit?
+                logging.debug('empty readline')
+            else:
+                logging.debug(buf[buf.size()-1])
+            i= i+1
+            '''
+            i= i+1
+        return self.serialPort.readLine().data()
     
     def getSerial(self):
         """ Return the pointer to the serial port """
@@ -112,7 +154,7 @@ class SerialInit(object):
         # 0.07 s sleep works for smaller commands
         # need to test if it works for the big lines
         # works for pt, m02, m01
-        self.buf = QByteArray(0)
+        # self.buf = QByteArray(0)
         i=0
         # less than 20 here causes M line truncation
         while i < 25: #start, stop, step
@@ -127,6 +169,8 @@ class SerialInit(object):
         #while self.serialPort.canReadLine():
 
         self.buf = self.serialPort.peek(2)
+        logging.debug("self.buf")
+        logging.debug(self.buf)
         if self.buf == self.binM0 or self.buf == self.binPt:
             time.sleep(0.003)
             self.splitSignal() #returns QByte array of data
@@ -315,10 +359,16 @@ class SerialInit(object):
                     #    logging.debug("init: 3rd home command skipped: scan mode")
                 else:
                 '''
-                if self.parent.packetStore.getData("initSwitch"):
-                        self.parent.packetStore.setData("switchControl", "homeScan")
+                if self.parent.packetStore.getData("init1Received"):
+                    self.parent.packetStore.setData("init2Received", True)
+                    # setting move along in initScan
+                    #self.parent.packetStore.setData("switchControl", "homeScan")
+                    logging.debug("got init2")
+                    logging.debug(self.buf)
                 else:
-                    self.parent.packetStore.setData("initSwitch", True)
+                    self.parent.packetStore.setData("init1Received", True)
+                    logging.debug("got init1")
+                    logging.debug(self.buf)
             elif self.parent.packetStore.getData("switchControl") is "homeScan":
                 # HomeScan readScan, checks if  
                 # tick case or 0b0 is actual home value to check for
@@ -459,9 +509,13 @@ class SerialInit(object):
                 logging.debug("switchSubstring, integrate case")
             else:
                 logging.debug("switchSubstring - discard echo case")
-
+            '''
         elif self.buf is (self.sentCommand):
             logging.debug("sent %s" , self.sentCommand)
+            # doesn't work as intended
+            '''
+        elif switchSubstring == self.binReset:
+            logging.debug("Got a reset")
         else:
             logging.debug("Catch all for truncations, collisions, and unwanted command echos")
             logging.debug("sentcommand: %s with buffer: ", self.sentCommand )
