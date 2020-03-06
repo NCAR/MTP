@@ -33,6 +33,12 @@ class StorePacket():
             'oatavg':[1,0],   # default is 1 to not zero out
             'latavg':[1,0],   # goAngle calculation from pitch
             'lonavg':[1,0] ,  # and roll avg's
+            'pitchrms':[1,0], # Array containing average of 
+            'rollrms':[1,0],  # last 15 seconds array
+            'Zprms':[1,0],    # and the root mean square error
+            'oatrms':[1,0],   # default is 1 to not zero out
+            'latrms':[1,0],   # goAngle calculation from pitch
+            'lonrms':[1,0] ,  # and roll avg's
             # except not really, pitchavg/pitchrms added as
             # temp vars from udp averageVal
             # but we do need this in here if there is no iwg packet
@@ -46,7 +52,11 @@ class StorePacket():
             'doneCycle':False, # second time we're done with integrate
             'currentMode': 'init', # init, home, scan
             'desiredMode': 'init', # init, home, scan
-            'initSwitch': False,
+            'firstInit': True, # first time initScan is called, call resetInitScan
+            'initSwitch': False, # causes init 1 and 2 to be called every other time in initScan
+            # there has to enough of a delay so that there are no collisions
+            'init1Received': False,
+            'init2Received': False,
             'homeSwitch': False,
             'isNoiseZero': False,
             'waitSwitch': False,

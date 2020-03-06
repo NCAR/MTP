@@ -39,7 +39,6 @@ class moveMTP():
         logging.debug("dispatch2")
         # Call the method as we return it
         return method()
-        
 
 
     def readScan(self):
@@ -52,35 +51,104 @@ class moveMTP():
         # should all be done in view.py rather than here
         return 0
 
-    def initScan(self):
-        ''' copy from view '''
+        '''
+    def read(self, waitReadyReadTime, readLineTime):
+        # catch echos
+        i=0
+        for i in range(3):
+            echo = self.parent.serialPort.canReadLine(waitReadyReadTime)
+            if echo is not b'':
+                break
+            logging.debug("read: for iterator: %d",i)
+        #echo = self.parent.serialPort.readLine(readLineTime)
+        logging.debug("read: %s", echo)
+        return echo
+           '''
+    def resetInitScan(self):
+        logging.debug("resetInitScan in mtpmove")
+        # Reset initScan logic checks
+        self.parent.packetStore.setData("initSwitch", False)
+        self.parent.packetStore.setData("init1Received", False)
+        self.parent.packetStore.setData("init2Received", False)
         # change led to yellow
+        self.parent.scanStatusLED.setPixmap(self.parent.ICON_YELLOW_LED.scaled(40,40))
         # change text on button to "initializing"
-
-
+        self.parent.reInitProbe.setText("Initializing")
         # set current mode to init 
         self.parent.packetStore.setData("currentMode", "init")
-        self.parent.app.processEvents
+        # Don't call resetInitScan again, unless moved to homeScan
+        self.parent.packetStore.setData("firstInit", False)
+
+    def initScan(self):
+        if self.parent.packetStore.getData("firstInit"):
+            self.resetInitScan()
+        # self.parent.app.processEvents()
         # one time sleep, run only when probe is started up or re-initialized
-        time.sleep(0.2)
-        self.parent.app.processEvents()
+        # time.sleep(0.2)
         logging.debug("initScan in mtpmove")
+        echo = self.read(20,20)
         # initSwitch retrieved from instance of storePacket declared in view
-        if (self.parent.packetStore.getData("initSwitch")):
+        logging.debug("initScan received values 1: %s, 2: %s",self.parent.packetStore.getData("init1Received"),self.parent.packetStore.getData("init2Received"))
+        if self.parent.packetStore.getData("init1Received") and self.parent.packetStore.getData("init2Received"):
+            logging.debug("Both init commands received, moving on to home")
+            # move along and reset init
+            self.parent.packetStore.setData("initSwitch", False)
+            self.parent.packetStore.setData("home2Received", False)
+            self.parent.packetStore.setData("switchControl", 'resetHomeScan')
+        # otherwise just swap between sending the 2 init commands
+        # have to have delay otherwise they collide
+        # maybe add timeout?
+        initSwitch = self.parent.packetStore.getData("initSwitch")
+        logging.debug("initSwitch is: %s" , initSwitch)
+        if not initSwitch: 
+            logging.debug("init1 sent")
+            self.parent.serialPort.sendCommand(self.parent.commandDict.getCommand("init1"))
+            # catch echos
+            # read until receive a Step
+            # if that Step is b'Step:\xff/0@\r\n' set init1Received to true
+            # else cycle again
+            echo = self.read(100,50)
+            logging.debug("init one echo1: %s", echo)
+            echo = self.read(100,20)
+            logging.debug("init one echo2: %s", echo)
+            echo = self.read(20,20)
+            logging.debug("init one echo3: %s", echo)
+            echo = self.read(20,20)
+            logging.debug("init one echo4: %s", echo)
+            self.parent.packetStore.setData("initSwitch", False)
+        elif initSwitch: 
+            logging.debug("init2 sent")
             self.parent.serialPort.sendCommand(str.encode(self.parent.commandDict.getCommand("init2")))
-            logging.debug("move cycle2")
+            # catch echos
+            echo = self.read(20,20)
+            logging.debug("init two echo?: %s", echo)
+            echo = self.read(20,20)
+            logging.debug("init two echo?: %s", echo)
+            self.parent.packetStore.setData("initSwitch", True)
         else:
-            logging.debug("move cycle1")
-            self.parent.serialPort.sendCommand(str.encode(self.parent.commandDict.getCommand("init1")))
+            logging.debug("initSwitch is something other than true or false: ", initSwitch)
+        logging.debug("init done")
 
-    def homeScan(self):
-        # self.parent.packetStore.setData("currentMode", False)
-
+    
+    def resetHomeScan(self):
+        # move all one time resets from homeScan here
         # Resets current clk step counter
         # if this needs to be referenced downstream homescan
         # will need a check to see if it's the first time in here
         # perhaps with a homeSwitch
         self.parent.packetStore.setData("clkStep", 0)
+        # any more calls to initScan after this function will
+        # now cause initScan to be called
+        self.parent.packetStore.setData("firstInit", True)
+        # set current mode to home
+        self.parent.packetStore.setData("currentMode", "home")
+        # Restores original value to initSwitch, resetting it
+        self.parent.packetStore.setData("initSwitch", False)
+        
+
+    def homeScan(self):
+        # self.parent.packetStore.setData("currentMode", False)
+
         
         # set current elevation angle to elAngle(0)
 
@@ -88,10 +156,8 @@ class moveMTP():
         # make cycle timer sleep longer?
         # cycle timer should make this irrelevant
         # time.sleep(0.4) # to add up to the 0.7 of movWait in vb6
-        self.parent.app.processEvents()
-
-
-
+        # self.parent.app.processEvents()
+        
         if self.parent.packetStore.getData("homeSwitch"):
             # sets current mode to desired Mode if both homeSwitch and scanSet are true
             if self.parent.packetStore.getData("scanSet"):
@@ -119,20 +185,6 @@ class moveMTP():
             for i in range(0, 20, 1):
                 self.parent.app.processEvents()
                 time.sleep(0.01)
-            #time.sleep(0.7)
-            #self.parent.app.processEvents
-            # one time actions
-            if self.parent.packetStore.getData("currentMode") is not "home":
-                # set current mode to home
-                self.parent.packetStore.setData("currentMode", "home")
-                # Restores original value to initSwitch, resetting it
-                self.parent.packetStore.setData("initSwitch", False)
-                # reads in last scan (location? value?)
-                # not sure this is used for anything
-                # will keep commented out unless eline or bline use it
-                # if uncommented: note the homescan recieve will need to have one extra flag
-                # and an extra conditional for the returned read_scan step
-                #self.parent.serialPort.sendCommand(str.encode(self.parent.commandDict.getCommand("read_scan")))
         logging.debug("homeScan")
         # there may be other final looping stuff that needs to happen here
 
@@ -595,7 +647,7 @@ class moveMTP():
             datafile.write(str.encode('\n'))
         # the send Data should have the repress b' data ' 
         # additions that python adds
-        self.sendData(self.udpArray)
+        return udpArray
 
 
     def sendData(self, udpData):
