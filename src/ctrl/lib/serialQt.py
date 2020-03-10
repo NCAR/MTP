@@ -91,6 +91,23 @@ class SerialInit(object):
             if self.serialPort.canReadLine():
                 buf = self.serialPort.readLine()
                 logging.debug('canReadLine signal received')
+                return buf
+                break
+            else:
+                #logging.debug('canReadLine waiting for canreadline signal')
+                i = i + 1
+        #return b''
+
+    def canReadAllLines(self, timeVal):
+        # returns a signal when there is data to be read
+        logging.debug("can read line waiting ready read")
+        val = self.serialPort.waitForReadyRead(timeVal)
+        i=0
+        while i < timeVal:
+            self.parent.app.processEvents()
+            if self.serialPort.canReadLine():
+                buf = self.serialPort.readLine()
+                logging.debug('canReadLine signal received')
                 while self.serialPort.canReadLine():
                     logging.debug('while can readline')
                     buf = buf + self.serialPort.readLine()
