@@ -384,6 +384,8 @@ class controlWindow(QWidget):
             # save to file
             # assumes everything's been decoded from hex
             # returns UDP packet
+            # currently crashes here, either currentDateUDP or self.parent.alineStore 
+            # is nonetype trying to concatinate to string
             udp = self.mover.saveData()
 
             # send packet over UDP
@@ -402,7 +404,7 @@ class controlWindow(QWidget):
             # grab whatever is in the buffer
             # will terminate at \n if it finds one
 
-            echo = self.serialPort.canReadLine(canReadLineTimeout)#msec
+            echo = self.serialPort.canReadAllLines(canReadLineTimeout)#msec
             logging.debug("init 1 loop echo: ")
             logging.debug(binaryString)
             logging.debug(echo)
@@ -421,6 +423,7 @@ class controlWindow(QWidget):
                 i = i + 1
         logging.debug("readUntilStep timeout")
         return echo
+
 
     def tick(self, buff):
         logging.debug("tick")
@@ -698,13 +701,12 @@ class controlWindow(QWidget):
     def homeScan(self):
         self.serialPort.sendCommand(self.commandDict.getCommand("home1"))
         self.readUntilFound(b':', 100000, 20)
+        self.readUntilFound(b'S', 100000, 20)
         self.serialPort.sendCommand(self.commandDict.getCommand("home2"))
         self.readUntilFound(b':', 100000, 20)
-        echo = self.read(200,20)
-        logging.debug("home2 1st echo =:%s",echo) 
-        echo = self.read(200,20)
-        logging.debug("home2 2nd echo =:%s",echo) 
+        self.readUntilFound(b'S', 100000, 20)
         self.serialPort.sendCommand(self.commandDict.getCommand("home3"))
+        self.readUntilFound(b':', 100000, 20)
         self.readUntilFound(b'S', 100000, 20)
         echo = self.read(200,20)
         logging.debug("home3 1st echo =:%s",echo) 
@@ -732,6 +734,25 @@ class controlWindow(QWidget):
 
     def Eline(self):
         logging.debug("Eline")
+        self.homeScan()
+        # set noise 1
+        # returns echo and b"ND:01\r\n" or b"ND:00\r\n"
+        self.serialPort.sendCommand(self.commandDict.getCommand("noise1"))
+        echo = self.serialPort.canReadLine(20)
+        logging.debug(echo)
+        echo = self.serialPort.canReadLine(20)
+        logging.debug(echo)
+        #self.readUntilFound(b'N', 100000, 20)
+        
+        data = 0
+        data = self.integrate()
+        # set noise 0
+        self.serialPort.sendCommand(self.commandDict.getCommand("noise0"))
+        echo = self.serialPort.canReadLine(20)
+        logging.debug(echo)
+        echo = self.serialPort.canReadLine(20)
+        logging.debug(echo)
+        self.elineStore = data + self.integrate()
 
     def Aline(self):
         logging.debug("View Aline")
@@ -817,8 +838,10 @@ class controlWindow(QWidget):
         self.packetStore.setData("angleI", 0) # angle index
 
         self.serialPort.sendCommand((self.commandDict.getCommand("read_scan")))
-        echo = self.read(200,200)
-        logging.debug("read_scan Aline Echo: %s", echo)
+        echo = self.readUntilFound(b':', 100000, 20)
+        echo = self.readUntilFound(b'S', 100000, 20)
+        # b'Step:\xff/0`1000010\r\n'
+        # echo = self.read(200,200)
         # need to implement the better logic counters in bline
         # for scanCount and encoderCount
         self.packetStore.setData("scanCount", int(self.packetStore.getData("scanCount")) + 1)
@@ -826,9 +849,140 @@ class controlWindow(QWidget):
 
 
 
-    #def Bline(self):
-    #    logging.debug("Bline")
-    #    scanNum = 1000000 - self.readScan()
+    def Bline(self):
+        logging.debug("Bline")
+        # clear blineStore
+        self.blineStore = 'B'
+        #    scanNum = 1000000 - self.readScan()
+
+    def quickRead(self, timeout):
+        logging.debug("quickRead start")
+        echo = self.serialPort.canReadLine(timeout)
+        logging.debug(echo)
+        datum = self.serialPort.canReadLine(timeout)
+        logging.debug(datum)
+        logging.debug("quickRead end")
+        return datum
+
+    def integrate(self):
+        nfreq = self.packetStore.getData("nFreq")
+        for freq in nfreq:
+            # tune echos received in tune function
+            self.tune(freq)
+
+            self.serialPort.sendCommand((self.commandDict.getCommand("count")))
+            # clear echos 
+            dataLine = self.quickRead(25) # avg is ~9, max is currently 15
+            # ensure integrator starts so then can
+            i=0
+            while i < 50: 
+                logging.debug("integrate infinite loop 1")
+                self.serialPort.sendCommand((self.commandDict.getCommand("status")))
+                # echo is b'S\r\n'
+                status = self.readUntilFound(b'T', 100000, 10)
+                #if status[4] or 7
+                if status.size() is 10:
+                    # echo and status return concatinated
+                    num = int(status[7])
+                elif status.size() is 4:
+                    num = int(status[4])
+                else: 
+                    num = 0
+                if num is 5:
+                    # VB6 code has a bitwise and to check if this status is odd
+                    # instead of checking if it is 5
+                    # As of writing this I haven't seen anything that 
+                    # would prompt this other than speed
+                    # so I'm ignoring it
+                    logging.debug("break, integrator started")
+                    break   
+                logging.debug(status.size())
+                i = i + 1
+                self.app.processEvents()
+
+            logging.debug("integrator started")
+            # check that integrator is done
+            i=0
+            while i < 50: 
+                logging.debug("integrate infinite loop 2")
+                self.serialPort.sendCommand((self.commandDict.getCommand("status")))
+                # echo is b'S\r\n'
+                status = self.readUntilFound(b'T', 100000, 10)
+                #if status[4] or 7
+                if status.size() is 10:
+                    # echo and status return concatinated
+                    num = int(status[7])
+                elif status.size() is 4:
+                    num = int(status[4])
+                else: 
+                    num = 0
+                if num is 4:
+                    # VB6 code has a bitwise and to check if this status is even
+                    # instead of checking if it is 4
+                    # As of writing this I haven't seen anything that 
+                    # would prompt this other than speed
+                    # so I'm ignoring it
+                    logging.debug("break, integrator finished")
+                    break   
+                logging.debug(status.size())
+                i = i + 1
+                self.app.processEvents()
+
+
+            logging.debug("integrator finished")
+            # actually request the data of interest
+            self.serialPort.sendCommand((self.commandDict.getCommand("count2")))
+            echo = self.readUntilFound(b':', 100000, 20)
+            logging.debug("integrate echo 1 : %s", echo.decode(ascii))
+            echo = self.readUntilFound(b'R', 100000, 20)
+            # grab value from string, translate from hex, append to string
+            datum = echo[4:10]
+            logging.debug("r value data")
+            logging.debug(data)
+            # translate from hex:
+
+            # append to string:
+            data = data + ' ' + datum
+            
+            self.serialPort.sendCommand((self.commandDict.getCommand("read_scan")))
+            echo = self.readUntilFound(b':', 100000, 20)
+            logging.debug("integrate echo 1 : %s", echo.decode(ascii))
+            echo = self.readUntilFound(b'S', 100000, 20)
+
+    def waitForStatus(self, status):
+        # add timeout?
+        while status is not receivedStatus:
+            self.serialPort.sendCommand((self.commandDict.getCommand("status")))
+            echo = self.readUntilFound(b'S', 100000, 20)
+            logging.debug("status echo 1 : %s", echo.decode(ascii))
+            echo = self.readUntilFound(b'S', 100000, 20)
+            logging.debug("status echo 1 : %s", echo.decode(ascii))
+            logging.debug("status: %s, received Status: %s, ", status, echo)
+        
+
+
+    def tune(self, fghz):
+        # fghz is frequency in gigahertz
+        fby4 = (1000 * fghz)/4 #MHz
+        chan = fby4/0.5  # convert to SNP channel (integer) 0.5 MHz = step size
+        #logging.debug("tune: chan = %s", chan)
+
+        # either 'C' or 'F' set in packetStore
+        # F mode formatting #####.# instead of cmode formatting #####
+        # not sure it makes a difference
+
+        # mode = self.parent.packetStore.getData("tuneMode")
+
+        mode = 'C'
+        self.serialPort.sendCommand(str.encode(str(mode) + '{:.5}'.format(str(chan)) +"\r")) # \n added by encode I believe
+        #logging.debug("Tuning: currently using mode C as that's what's called in vb6")
+        # no official response, just echos
+        # and echos that are indistinguishable from each other
+        # eg: echo when buffer is sending to probe is same
+        # as echo from probe: both "C#####\r\n"
+        # catch tune echos
+        echo = self.readUntilFound(b'C', 100000, 20)
+        echo = self.readUntilFound(b'C', 100000, 20)
 
 if __name__ == '__main__':
     #    signal.signal(signal.SIGINT, ctrl_c)
