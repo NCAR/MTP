@@ -132,9 +132,9 @@ class MTPcommand():
                                       # restarts the program.
             'read_P': b'P\r\n',          # Read all 8 platinum RTD channels
                                       # Return components of P line
-            'read_M1': b'M 1\r',       # Read all 8 channels of multiplexer 1
+            'read_M1': b'M 1\r\n',       # Read all 8 channels of multiplexer 1
                                       # Return components of M1 line
-            'read_M2': b'M 2\r',       # Read all 8 channels of multiplexer 2
+            'read_M2': b'M 2\r\n',       # Read all 8 channels of multiplexer 2
                                       # Return components of M2 line
 
             # From VB6 sub integrate()

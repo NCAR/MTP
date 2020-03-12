@@ -366,7 +366,7 @@ class controlWindow(QWidget):
 
         # loop over " scan commands"
         while (1):
-            logging.debug("loop")
+            logging.debug("loop                                                                                                                 asdfasdf")
             self.m01Store = self.m01()
             self.m02Store = self.m02()
             self.ptStore = self.pt()
@@ -733,26 +733,36 @@ class controlWindow(QWidget):
         self.readUntilFound(b':', 100000, 20)
 
     def Eline(self):
+        self.elineStore = "E "
         logging.debug("Eline")
         self.homeScan()
         # set noise 1
         # returns echo and b"ND:01\r\n" or b"ND:00\r\n"
         self.serialPort.sendCommand(self.commandDict.getCommand("noise1"))
-        echo = self.serialPort.canReadLine(20)
-        logging.debug(echo)
-        echo = self.serialPort.canReadLine(20)
-        logging.debug(echo)
-        #self.readUntilFound(b'N', 100000, 20)
+        echo = self.readUntilFound(b'N',100, 4)
+        #echo = self.serialPort.canReadLine(20)
+        logging.debug(echo.size())
+        # the echo and return value concatonate to form a size of 12
+        # want to move along if we don't need to check for the second
+        # return value
+        if not(echo.size() is 12):
+            echo = self.readUntilFound(b'N',100, 4)
+        #echo = self.serialPort.canReadLine(20)
+        logging.debug(echo.size())
         
         data = 0
         data = self.integrate()
         # set noise 0
         self.serialPort.sendCommand(self.commandDict.getCommand("noise0"))
-        echo = self.serialPort.canReadLine(20)
+        echo = self.readUntilFound(b'N',100, 4)
+        #echo = self.serialPort.canReadLine(20)
         logging.debug(echo)
-        echo = self.serialPort.canReadLine(20)
+        if not(echo.size() is 12):
+            echo = self.readUntilFound(b'N',100, 4)
+        #echo = self.serialPort.canReadLine(20)
         logging.debug(echo)
         self.elineStore = data + self.integrate()
+        logging.debug(self.elineStore)
 
     def Aline(self):
         logging.debug("View Aline")
@@ -852,7 +862,25 @@ class controlWindow(QWidget):
     def Bline(self):
         logging.debug("Bline")
         # clear blineStore
+        # All R values have spaces in front
         self.blineStore = 'B'
+        angles = self.packetStore.getData("El. Angles")
+        # First element in array is the number of angles
+        # to keep the config the same 
+        numAngles = angles[0]
+        zel = angles[1]
+        elAngles = angles[2:numAngles]
+        data = ''
+        for angle in elAngles: 
+            self.mover.getAngle(angle)
+            if self.packetStore.getData("pitchCorrect"):
+                #
+                logging.debug('Pitch correct mode on')
+                data = data + integrate()
+        self.scanCount = 1000000 - self.readScan
+        self.encoderCount = (1000000 - self.readEnc) * 16
+
+            
         #    scanNum = 1000000 - self.readScan()
 
     def quickRead(self, timeout):
@@ -865,7 +893,9 @@ class controlWindow(QWidget):
         return datum
 
     def integrate(self):
+        # returns string of data values translated from hex to decimal
         nfreq = self.packetStore.getData("nFreq")
+        data = ''
         for freq in nfreq:
             # tune echos received in tune function
             self.tune(freq)
@@ -888,6 +918,7 @@ class controlWindow(QWidget):
                     num = int(status[4])
                 else: 
                     num = 0
+                logging.debug(num)
                 if num is 5:
                     # VB6 code has a bitwise and to check if this status is odd
                     # instead of checking if it is 5
@@ -900,7 +931,7 @@ class controlWindow(QWidget):
                 i = i + 1
                 self.app.processEvents()
 
-            logging.debug("integrator started")
+            logging.debug("integrator has started")
             # check that integrator is done
             i=0
             while i < 50: 
@@ -929,25 +960,27 @@ class controlWindow(QWidget):
                 self.app.processEvents()
 
 
-            logging.debug("integrator finished")
+            logging.debug("integrator has finished")
             # actually request the data of interest
             self.serialPort.sendCommand((self.commandDict.getCommand("count2")))
-            echo = self.readUntilFound(b':', 100000, 20)
-            logging.debug("integrate echo 1 : %s", echo.decode(ascii))
             echo = self.readUntilFound(b'R', 100000, 20)
+            echo = self.readUntilFound(b':', 100000, 20)
+            #logging.debug("integrate echo 1 : %s", echo.decode(ascii))
             # grab value from string, translate from hex, append to string
             datum = echo[4:10]
             logging.debug("r value data")
-            logging.debug(data)
             # translate from hex:
+            datum = str(int(datum.data().decode('ascii'), 16))
 
             # append to string:
             data = data + ' ' + datum
-            
             self.serialPort.sendCommand((self.commandDict.getCommand("read_scan")))
+            # read_scan returns b'Step:\xff/0`1000010\r\n' 
             echo = self.readUntilFound(b':', 100000, 20)
-            logging.debug("integrate echo 1 : %s", echo.decode(ascii))
+            #logging.debug("integrate echo 1 : %s", echo.decode(ascii))
             echo = self.readUntilFound(b'S', 100000, 20)
+        logging.debug (data)
+        return data
 
     def waitForStatus(self, status):
         # add timeout?
@@ -983,6 +1016,15 @@ class controlWindow(QWidget):
         # catch tune echos
         echo = self.readUntilFound(b'C', 100000, 20)
         echo = self.readUntilFound(b'C', 100000, 20)
+
+
+    def goAngle(self, targetEl, zel):
+        if self.packetStore.getData("pitchCorrect"):
+            logging.info("correcting Pitch")
+            targetClkAngle = targetEl + fec(MAM(), Pitch_Frame, Roll_Frame, targetEl, EmaxFlag)
+        else:
+            targetClkAngle = targetEl + zel
+        targetClkStep = targetClkAngle * self.parentl.getData("stepsDegree")
 
 if __name__ == '__main__':
     #    signal.signal(signal.SIGINT, ctrl_c)
