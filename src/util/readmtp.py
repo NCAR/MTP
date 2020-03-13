@@ -142,7 +142,6 @@ class readMTP:
         Read records from JSON file on disk and prepend to flightData array
         """
         # Check if file exists. If not, nothing to load, so return failed
-        print(filename)
         if not os.path.isfile(filename):
             return(False)
 
