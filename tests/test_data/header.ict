@@ -1,0 +1,74 @@
+55, 2110
+Julie Haggerty (haggerty@ucar.edu)
+NCAR, Boulder, CO
+NGV Microwave Temperature Profiler (MTP/NGV)
+DEEPWAVE
+1, 1
+2014, 06, 06, 2015, 04, 24
+60
+altitude, m, Remote_sensing_altitude_in_meters
+time, s, Elapsed_UT_seconds_from_0_hours_on_flight_date
+4
+1.0, 1.0, 1.0, 1.0
+-9999, -99, -9999, -9999
+air_temperature, K, Retrieved_air_temperature_K
+air_temperature_anomaly, K, Standard_error_of_retrieved_air_temperature
+altitude, m, Geometric_altitude_meters based on GPS altitude (meters)
+air_density, E+21 m-3, Molecular_air_density_(number_per_cubic_meter) [1E+21/m3]
+15
+1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0
+-99, -99.999, -99.9, -99.9, -999.9, -99.9, -99.9, -999.9, -999.9, -999.99, -999.999, -999.9, -99, -999.99, -99.99
+NX, #, number of altitudes in subsequent data records
+barometric_altitude, km, Pressure altitude of GV (km)
+platform_pitch, degree, Aircraft pitch (deg)
+plotform_roll, degree, Aircraft roll (deg)
+brightness_temperature, K, Horizon brightness temperature (ie, OAT, similar to SAT); avg ch1 & ch2 & ch3(K)
+tropopause_altitude_1, km, Tropopause #1 (km).
+tropopause_altitude_2, km, Tropopause #2 (km).
+tropopause_potential_temperature_1, K, Potential temperature of tropopause #1 (K).
+tropopause_potential_temperature_2, K, Potential temperature of tropopause #2 (K).
+latitude, degree_north, Latitude (deg)
+longitude, degree_east, Longitude (deg)
+air_temperature_lapse_rate, K km-1, dT/dz (K/km) for 1.0 km layer centered on aircraft flight altitude.
+MRI, #, retrieval quality metric (ranges 0-2, <1 is excellent)
+Tcp, K, Cold point temperature Tcp (K)
+Zcl, km, Cold point altitude Zcp (km)
+0  
+18
+PI_CONTACT_INFO: 303-497-xxxx haggerty@ucar.edu
+PLATFORM: N677F - NSF/NCAR GV
+LOCATION: Lat, Lon, and Alt included in the data records
+ASSOCIATED_DATA: linked from DATA_INFO page
+INSTRUMENT_INFO: lined from DATA_INFO page
+DATA_INFO: Put DOI of EMDAC landing page here
+UNCERTAINTY: Enter uncertainty description here
+ULOD_FLAG: -7777
+ULOD_VALUE: N/A
+LLOD_FLAG: -8888
+LLOD_VALUE: N/A
+DM_CONTACT_INFO: Enter Data Manager Info here
+PROJECT_INFO: lined from DATA_INFO page
+STIPULATIONS_ON_USE: We strongly encourage anyone using the MTP data to contact us regarding its use (Moved from special comment section)
+OTHER_COMMENTS: Here's a brief free-form tutorial on how to decipher the MTP data: Data groups consist of the following group of lines per 17-second observing cycle.  The 1-liners (for each cycle) can be stripped & imported into a spreadsheet for convenient plotting of trop altitude, lapse rate, etc. The tropopause altitudes are calculated by cubic spline interpolation of the retrieved altitudes using the WMO definition (that is, trop #1 is lowest altitude where average lapse rate > -2 K/km from initial -2 K/km point to any point within 2 km; trop #2 occurs above first trop after lapse rate is < -3K/km for >1 km, and then first trop definition applies, possibly from within the 1 km region.) 
+REVISION: R0
+R0: initial release
+time, NX, barometric_altitude, platform_pitch, plotform_roll, brightness_temperature, tropopause_altitude_1, tropopause_altitude_2, tropopause_potential_temperature_1, tropopause_potential_temperature_2, latitude, longitude, air_temperature_lapse_rate, MRI, Tcp, Zcl, altitude, air_temperature, air_temperature_anomaly, altitude, air_density
+  20580, 18,   0.097,  -1.2,  -0.4, 282.7,  11.4,  99.9, 333.4, 999.9, -43.484, 172.541, 1.6, 0.28, 212.14, 18.10
+  6997, 242.9, 1.6, 7035, 12235
+  5297, 255.6, 1.5, 5320, 14702
+  4097, 264.2, 1.5, 4104, 16680
+  3297, 269.8, 1.6, 3292, 18121
+  2597, 275.5, 1.7, 2578, 19412
+  2097, 279.9, 1.8, 2067, 20361
+  1697, 283.6, 1.7, 1655, 21133
+  1397, 285.0, 1.3, 1346, 21829
+  1097, 284.5, 0.9, 1039, 22677
+   797, 283.5, 0.6, 734, 23594
+   597, 283.1, 0.5, 533, 24203
+   397, 282.8, 0.5, 333, 24815
+   247, 282.7, 0.6, 184, 25269
+    97, 283.0, 0.3, 35, 25701
+    82, 283.1, 0.3, 20, 25734
+    68, 283.1, 0.3, 6, 25777
+    48, 283.1, 0.3, -13, 25835
+    29, 283.2, 0.3, -33, 25893
