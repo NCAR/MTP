@@ -160,7 +160,7 @@ class SerialInit(object):
 
     def sendCommand(self, command):
         """ Send a command to the serial port """
-        logging.debug("serial port sending command %s", command)
+        logging.debug("Qt serial port sending command %s", command)
         self.serialPort.write(command)
         self.sentCommand = str(command)
 #        logging.info('Sending command - ' + str(command))
