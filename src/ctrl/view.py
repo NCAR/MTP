@@ -869,16 +869,47 @@ class controlWindow(QWidget):
         # to keep the config the same 
         numAngles = angles[0]
         zel = angles[1]
-        elAngles = angles[2:numAngles]
+        elAngles = angles[2:numAngles+2]
+        logging.debug(elAngles)
         data = ''
         for angle in elAngles: 
+            logging.debug("el angle: %f", angle)
             self.mover.getAngle(angle)
+            # catch send move command echo from getAngle
+            echo = self.readUntilFound(b':',100, 4)
+            
+            # wait until Step:\xff/0@\r\n is received
+            # to show that probe has moved correctly
+            # this takes ~10 can read line's
+            # would be useful to not stop here to wait
+            # but going on to the integrate causes collisions
+            # echo = self.readUntilFound(b'S',100, 4) # Step
+
             if self.packetStore.getData("pitchCorrect"):
                 #
                 logging.debug('Pitch correct mode on')
-                data = data + integrate()
-        self.scanCount = 1000000 - self.readScan
-        self.encoderCount = (1000000 - self.readEnc) * 16
+            data = data + self.integrate()
+            logging.debug(data)
+        # Read Scan should only be sent 1x per bline 
+        self.serialPort.sendCommand((self.commandDict.getCommand("read_scan")))
+        # read_scan returns b'Step:\xff/0`1000010\r\n' 
+        echo = self.readUntilFound(b':', 100000, 20)
+        readScan = echo[7:14]
+        logging.debug("readScan")
+        logging.debug(readScan)
+        #logging.debug("integrate echo 1 : %s", echo.decode(ascii))
+        echo = self.readUntilFound(b'S', 100000, 20)
+
+        self.serialPort.sendCommand((self.commandDict.getCommand("read_enc")))
+        # read_scan returns b'Step:\xff/0`1000010\r\n' 
+        echo = self.readUntilFound(b':', 100000, 20)
+        readEnc = echo[8:15]
+        logging.debug("readEnc")
+        logging.debug(readEnc)
+        #logging.debug("integrate echo 1 : %s", echo.decode(ascii))
+        logging.debug(data)
+        self.scanCount = 1000000 - readScan
+        self.encoderCount = (1000000 - readEnc) * 16
 
             
         #    scanNum = 1000000 - self.readScan()
@@ -896,16 +927,20 @@ class controlWindow(QWidget):
         # returns string of data values translated from hex to decimal
         nfreq = self.packetStore.getData("nFreq")
         data = ''
+        self.at = False
         for freq in nfreq:
             # tune echos received in tune function
             self.tune(freq)
-
+            if not self.at:
+                # haven't seen the @ from the move command
+                self.readUntilFound(b'@', 100, 4)
+            
             self.serialPort.sendCommand((self.commandDict.getCommand("count")))
             # clear echos 
             dataLine = self.quickRead(25) # avg is ~9, max is currently 15
             # ensure integrator starts so then can
             i=0
-            while i < 50: 
+            while i < 20: 
                 logging.debug("integrate infinite loop 1")
                 self.serialPort.sendCommand((self.commandDict.getCommand("status")))
                 # echo is b'S\r\n'
@@ -919,12 +954,9 @@ class controlWindow(QWidget):
                 else: 
                     num = 0
                 logging.debug(num)
-                if num is 5:
+                if (num % 2) == 1:
                     # VB6 code has a bitwise and to check if this status is odd
-                    # instead of checking if it is 5
-                    # As of writing this I haven't seen anything that 
-                    # would prompt this other than speed
-                    # so I'm ignoring it
+                    # most commonly returns 7, can return 5
                     logging.debug("break, integrator started")
                     break   
                 logging.debug(status.size())
@@ -934,7 +966,7 @@ class controlWindow(QWidget):
             logging.debug("integrator has started")
             # check that integrator is done
             i=0
-            while i < 50: 
+            while i < 20: 
                 logging.debug("integrate infinite loop 2")
                 self.serialPort.sendCommand((self.commandDict.getCommand("status")))
                 # echo is b'S\r\n'
@@ -947,12 +979,9 @@ class controlWindow(QWidget):
                     num = int(status[4])
                 else: 
                     num = 0
-                if num is 4:
+                if (num % 2) == 0:
                     # VB6 code has a bitwise and to check if this status is even
-                    # instead of checking if it is 4
-                    # As of writing this I haven't seen anything that 
-                    # would prompt this other than speed
-                    # so I'm ignoring it
+                    # status returns 04 and 06 most commonly
                     logging.debug("break, integrator finished")
                     break   
                 logging.debug(status.size())
@@ -974,11 +1003,7 @@ class controlWindow(QWidget):
 
             # append to string:
             data = data + ' ' + datum
-            self.serialPort.sendCommand((self.commandDict.getCommand("read_scan")))
-            # read_scan returns b'Step:\xff/0`1000010\r\n' 
-            echo = self.readUntilFound(b':', 100000, 20)
-            #logging.debug("integrate echo 1 : %s", echo.decode(ascii))
-            echo = self.readUntilFound(b'S', 100000, 20)
+        echo = self.readUntilFound(b'S', 100000, 20)
         logging.debug (data)
         return data
 
@@ -1015,16 +1040,26 @@ class controlWindow(QWidget):
         # as echo from probe: both "C#####\r\n"
         # catch tune echos
         echo = self.readUntilFound(b'C', 100000, 20)
-        echo = self.readUntilFound(b'C', 100000, 20)
+        # check if received an @ symbol for bline
+        # if so set self.at true
+        self.at = True
+        if echo.size() < 8: # C commands not concatinated 
+            echo = self.readUntilFound(b'C', 100000, 20)
+            # check if received an @ symbol for bline
+            # if so set self.at true
+            self.at = True
+        
 
 
     def goAngle(self, targetEl, zel):
         if self.packetStore.getData("pitchCorrect"):
             logging.info("correcting Pitch")
-            targetClkAngle = targetEl + fec(MAM(), Pitch_Frame, Roll_Frame, targetEl, EmaxFlag)
+            targetClkAngle = targetEl + self.mover.fec(self.mover.configMAM(), Pitch_Frame, Roll_Frame, targetEl, EmaxFlag)
         else:
             targetClkAngle = targetEl + zel
-        targetClkStep = targetClkAngle * self.parentl.getData("stepsDegree")
+        targetClkStep = targetClkAngle * self.parent.getData("stepsDegree")
+        currentClkStep = self.parent.packetStore.getData("currentClkStep")
+
 
 if __name__ == '__main__':
     #    signal.signal(signal.SIGINT, ctrl_c)
