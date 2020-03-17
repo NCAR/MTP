@@ -345,7 +345,7 @@ class MTPclient():
                 ATP['RCFIndex'] = numpy.nan
                 ATP['RCFALT1Index'] = numpy.nan
                 ATP['RCFALT2Index'] = numpy.nan
-                ATP['RCFMRIndex'] = numpy.nan
+                ATP['RCFMRIndex']['val'] = numpy.nan
 
                 # Also set first (and only) tropopause to NAN
                 ATP['trop'][0]['idx'] = numpy.nan

@@ -21,9 +21,11 @@ AtmosphericTemperatureProfile = {
                             # profile
     'RCFALT1Index': numpy.nan,  # Flight level below aircraft from template
     'RCFALT2Index': numpy.nan,  # Flight level above aircraft from template
-    'RCFMRIndex':  numpy.nan,  # Meridional Region Index: Quality of match
-                               # between measured Brightness Temperture (TB)
-                               # and TB from template
+    'RCFMRIndex':  {          # Meridional Region Index: Quality of match
+        'val': numpy.nan,     # between measured Brightness Temperture (TB)
+        'short_name': 'MRI',  # and TB from template
+        'units': '#',
+        'long_name': 'retrieval quality metric (ranges 0-2, <1 is excellent)'},
     'trop': [copy.deepcopy(TropopauseRecord),
              copy.deepcopy(TropopauseRecord)],  # Array of 2 tropopauses
 }
