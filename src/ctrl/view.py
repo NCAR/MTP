@@ -371,7 +371,7 @@ class controlWindow(QWidget):
             self.m02Store = self.m02()
             self.ptStore = self.pt()
             # Eline: long 
-            self.elineStore = self.Eline()
+            self.elineStore = 'E' + self.Eline()
             # check here to exit cycling
 
             # use the MTPmove aline
@@ -379,7 +379,7 @@ class controlWindow(QWidget):
 
             # Bline: long
             # doesn't do any scan correcting 
-            self.blineStore = self.Bline()
+            self.blineStore = 'B' + self.Bline()
 
             # save to file
             # assumes everything's been decoded from hex
@@ -405,7 +405,7 @@ class controlWindow(QWidget):
             # will terminate at \n if it finds one
 
             echo = self.serialPort.canReadAllLines(canReadLineTimeout)#msec
-            logging.debug("init 1 loop echo: ")
+            logging.debug("read until found: ")
             logging.debug(binaryString)
             logging.debug(echo)
 
@@ -718,22 +718,28 @@ class controlWindow(QWidget):
         logging.debug("M01")
         self.serialPort.sendCommand((self.commandDict.getCommand("read_M1")))
         # echo will echo "M  1" so have to scan for the : in the M line
-        self.readUntilFound(b':', 100000, 20)
+        m = self.readUntilFound(b':', 100000, 20)
         # set a timer so m01 values get translated from hex?
+        m01 = self.mover.decode(m)
+        return m01
         
 
     def m02(self):
         logging.debug("M02")
         self.serialPort.sendCommand((self.commandDict.getCommand("read_M2")))
-        self.readUntilFound(b':', 100000, 20)
+        m = self.readUntilFound(b':', 100000, 20)
+        m02 = self.mover.decode(m)
+        return m02
 
     def pt(self):
         logging.debug("pt")
         self.serialPort.sendCommand((self.commandDict.getCommand("read_P")))
-        self.readUntilFound(b':', 100000, 20)
+        p = self.readUntilFound(b':', 100000, 20)
+        pt = self.mover.decode(p)
+
+        return pt
 
     def Eline(self):
-        self.elineStore = "E "
         logging.debug("Eline")
         self.homeScan()
         # set noise 1
@@ -761,8 +767,7 @@ class controlWindow(QWidget):
             echo = self.readUntilFound(b'N',100, 4)
         #echo = self.serialPort.canReadLine(20)
         logging.debug(echo)
-        self.elineStore = data + self.integrate()
-        logging.debug(self.elineStore)
+        return data + self.integrate()
 
     def Aline(self):
         logging.debug("View Aline")
@@ -843,7 +848,7 @@ class controlWindow(QWidget):
         aline = aline + " " + str(lonrms)
         aline = aline + " " + str(self.packetStore.getData("scanCount"))
         aline = aline + " " + str(self.packetStore.getData("encoderCount"))
-        self.alineStore = aline
+        #self.alineStore = aline
 
         self.packetStore.setData("angleI", 0) # angle index
 
@@ -856,6 +861,7 @@ class controlWindow(QWidget):
         # for scanCount and encoderCount
         self.packetStore.setData("scanCount", int(self.packetStore.getData("scanCount")) + 1)
         logging.debug("View: Aline end")
+        return aline
 
 
 
@@ -863,7 +869,7 @@ class controlWindow(QWidget):
         logging.debug("Bline")
         # clear blineStore
         # All R values have spaces in front
-        self.blineStore = 'B'
+        #self.blineStore = 'B'
         angles = self.packetStore.getData("El. Angles")
         # First element in array is the number of angles
         # to keep the config the same 
@@ -894,22 +900,27 @@ class controlWindow(QWidget):
         self.serialPort.sendCommand((self.commandDict.getCommand("read_scan")))
         # read_scan returns b'Step:\xff/0`1000010\r\n' 
         echo = self.readUntilFound(b':', 100000, 20)
-        readScan = echo[7:14]
-        logging.debug("readScan")
-        logging.debug(readScan)
         #logging.debug("integrate echo 1 : %s", echo.decode(ascii))
         echo = self.readUntilFound(b'S', 100000, 20)
+        if echo.size == 17:
+            readScan = echo[7:15]
+            logging.debug(int(readScan.decode('Ascii'), 16))
+            self.scanCount = 1000000 - int(readScan.decode('Ascii'), 16)
+        logging.debug("readScan")
 
         self.serialPort.sendCommand((self.commandDict.getCommand("read_enc")))
         # read_scan returns b'Step:\xff/0`1000010\r\n' 
         echo = self.readUntilFound(b':', 100000, 20)
-        readEnc = echo[8:15]
+        echo = self.readUntilFound(b'S', 100000, 20)
+        if echo.size == 15:
+            readEnc = echo[9:13]
+            logging.debug(int(readEnc.decode('Ascii'), 16))
+            self.encoderCount = (1000000 - int(readEnc.decode('Ascii'), 16)) * 16
         logging.debug("readEnc")
-        logging.debug(readEnc)
         #logging.debug("integrate echo 1 : %s", echo.decode(ascii))
-        logging.debug(data)
-        self.scanCount = 1000000 - readScan
-        self.encoderCount = (1000000 - readEnc) * 16
+        #self.blineStore = self.blineStore + data
+        #logging.debug(self.blineStore)
+        return data
 
             
         #    scanNum = 1000000 - self.readScan()
@@ -941,7 +952,7 @@ class controlWindow(QWidget):
             # ensure integrator starts so then can
             i=0
             while i < 20: 
-                logging.debug("integrate infinite loop 1")
+                logging.debug("integrate loop 1, checking for odd number")
                 self.serialPort.sendCommand((self.commandDict.getCommand("status")))
                 # echo is b'S\r\n'
                 status = self.readUntilFound(b'T', 100000, 10)
@@ -967,7 +978,7 @@ class controlWindow(QWidget):
             # check that integrator is done
             i=0
             while i < 20: 
-                logging.debug("integrate infinite loop 2")
+                logging.debug("integrate loop 2, checking for even number")
                 self.serialPort.sendCommand((self.commandDict.getCommand("status")))
                 # echo is b'S\r\n'
                 status = self.readUntilFound(b'T', 100000, 10)
@@ -986,8 +997,7 @@ class controlWindow(QWidget):
                     break   
                 logging.debug(status.size())
                 i = i + 1
-                self.app.processEvents()
-
+                # self.app.processEvents()
 
             logging.debug("integrator has finished")
             # actually request the data of interest
@@ -996,14 +1006,21 @@ class controlWindow(QWidget):
             echo = self.readUntilFound(b':', 100000, 20)
             #logging.debug("integrate echo 1 : %s", echo.decode(ascii))
             # grab value from string, translate from hex, append to string
+            check = echo[1:2]
+            if check == b'00':
+                logging.warning('Integrate not finished')
+                # check is usually 28 if integrate is finished
             datum = echo[4:10]
             logging.debug("r value data")
+            logging.debug(datum)
             # translate from hex:
             datum = str(int(datum.data().decode('ascii'), 16))
 
             # append to string:
             data = data + ' ' + datum
-        echo = self.readUntilFound(b'S', 100000, 20)
+            logging.debug (data)
+        # ??? what is this here for
+        #echo = self.readUntilFound(b'S', 100000, 20)
         logging.debug (data)
         return data
 
@@ -1043,7 +1060,8 @@ class controlWindow(QWidget):
         # check if received an @ symbol for bline
         # if so set self.at true
         self.at = True
-        if echo.size() < 8: # C commands not concatinated 
+        logging.debug("echo size for tune command: %s", echo.size())
+        if echo.size() <= 8: # C commands not concatinated 
             echo = self.readUntilFound(b'C', 100000, 20)
             # check if received an @ symbol for bline
             # if so set self.at true
