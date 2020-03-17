@@ -595,7 +595,7 @@ class moveMTP():
         # self.parent.app.processEvents()
         logging.debug("saving Data to file")
         # clear udp string
-        self.udpArray =  QtCore.QByteArray(str.encode(""))
+        udpArray =  QtCore.QByteArray(str.encode(""))
         # store everything locally
         t = time.gmtime();
         # yyyymmdd hhmmss in udp feed for backwards compatability
@@ -603,13 +603,13 @@ class moveMTP():
         currentDateUDP =  "%02d%02d%02d %02d%02d%02d" %(t[0], t[1], t[2],t[3], t[4], t[5])
         currentDateSave =  "%02d%02d%02d %02d:%02d:%02d" %( t[0], t[1], t[2], t[3], t[4], t[5])
         # aline = "A " + self.currentDate
-        self.udpArray.append("A " + currentDateUDP + " " + self.parent.alineStore)
-        self.udpArray.append(self.parent.iwgStore)
-        self.udpArray.append(self.parent.blineStore)
-        self.udpArray.append(self.parent.m01Store)
-        self.udpArray.append(self.parent.m02Store)
-        self.udpArray.append(self.parent.ptStore)
-        self.udpArray.append(self.parent.elineStore)
+        udpArray.append("A " + currentDateUDP + " " + self.parent.alineStore)
+        udpArray.append(self.parent.iwgStore)
+        udpArray.append(self.parent.blineStore)
+        udpArray.append(self.parent.m01Store)
+        udpArray.append(self.parent.m02Store)
+        udpArray.append(self.parent.ptStore)
+        udpArray.append(self.parent.elineStore)
         '''
         m01 = self.parent.packetStore.getData('M01')
         self.udpArray.append(m01)
@@ -627,24 +627,24 @@ class moveMTP():
             logging.info("eline size larger than expected (06): %s", self.bline.size)
         '''
         # open file in append binary mode
-        with open("MTP_data.txt", "ab") as datafile:
+        with open("MTP_data.txt", "a") as datafile:
             # may need to .append instead of +
-            datafile.write(str.encode("A " + currentDateSave + " " + self.parent.alineStore))
-            datafile.write(str.encode('\n'))
-            datafile.write(str.encode(self.parent.iwgStore))
-            datafile.write(str.encode('\n'))
+            datafile.write("A " + currentDateSave + " " + self.parent.alineStore)
+            datafile.write('\n')
+            datafile.write(self.parent.iwgStore)
+            datafile.write('\n')
             datafile.write(self.parent.blineStore)
-            datafile.write(str.encode('\n'))
-            datafile.write(str.encode(self.parent.m01Store))
-            datafile.write(str.encode('\n'))
-            datafile.write(str.encode(self.parent.m02Store))
-            datafile.write(str.encode('\n'))
-            datafile.write(str.encode(self.parent.ptStore))
-            datafile.write(str.encode('\n'))
-            datafile.write(str.encode(self.parent.elineStore))
-            datafile.write(str.encode('\n'))
+            datafile.write('\n')
+            datafile.write(self.parent.m01Store)
+            datafile.write('\n')
+            datafile.write(self.parent.m02Store)
+            datafile.write('\n')
+            datafile.write(self.parent.ptStore)
+            datafile.write('\n')
+            datafile.write(self.parent.elineStore)
+            datafile.write('\n')
             # this \n doesn't leave the ^M's
-            datafile.write(str.encode('\n'))
+            datafile.write('\n')
         # the send Data should have the repress b' data ' 
         # additions that python adds
         return udpArray
@@ -898,7 +898,7 @@ class moveMTP():
                         #if Elevation >= Emax:
                         fEc = fEc1
             return fEc
-'''
+    '''
     def ASN(self, x):
         # Take arcsine of a number
         # Valid only for +- 90 degrees
@@ -912,4 +912,32 @@ class moveMTP():
         else:
             ASN = arctan(x / sqrt(1 - x ^ 2))
         return ASN
-'''
+    '''
+    def decode(self, line):
+        # decode M01, m02, Pt
+        # translates from binary string into ascii
+        # and loops over hex values recieved from probe 
+        # changing them to decimal
+        logging.debug('decode')
+        data = line.data().decode()
+        data = data.split(' ')
+        #data = data.split(' ')
+        tmp = data[0].split(':')
+        for i in data:
+            if i == data[0]:
+                # reset the dataArray with first equal
+                stringData = str(tmp[0]) + ": " + str(int(str(tmp[1]),16)) + " "
+                logging.debug("decodeLine, 0 case")
+                #dataArray.append(str(int(str(tmp[1]).decode('ascii'),16)))
+                #dataArray.append(str.encode(' '))
+            else:
+                if i == '\r\n':
+                    stringData + '\r\n'
+                elif i == '':
+                    stringData
+                elif i == '\r':
+                    stringData
+                else:
+                    stringData = stringData + str(int(i,16)) + ' '
+            logging.debug(" data i = %s ", i)
+        return stringData
