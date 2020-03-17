@@ -16,6 +16,7 @@ from PyQt5.QtGui import QFontMetrics, QFont
 from viewer.plotScanTemp import ScanTemp
 from viewer.plotProfile import Profile
 from viewer.plotCurtain import Curtain
+from lib.icartt import ICARTT
 from Qlogger.messageHandler import QLogger as logger
 
 
@@ -95,6 +96,13 @@ class MTPviewer(QMainWindow):
         self.curtainButton.triggered.connect(self.curtainWindow)
         menubar.addAction(self.curtainButton)
         self.curtain = Curtain(self)
+
+        # Add a menu option to save final data
+        self.saveButton = QAction('Save ICARTT', self)
+        self.saveButton.setToolTip('Save Processed Data to an ICARTT file')
+        self.saveButton.triggered.connect(self.saveICARTT)
+        menubar.addAction(self.saveButton)
+        self.icartt = ICARTT(self.client)
 
         # Add a menu option to quit
         self.quitButton = QAction('Quit', self)
@@ -360,6 +368,11 @@ class MTPviewer(QMainWindow):
         self.iwg.appendPlainText("IWG1,YYYYMMDDTHHMMSS,-xx.xxxx,xxx.xxx,")
         # End temporary display block
 
+    def saveICARTT(self):
+        """ Action to take when Save ICARTT button is clicked """
+        filename = self.icartt.getICARTT()
+        self.icartt.save(filename)
+
     def curtainWindow(self):
         """ Action to take when CurtainPlot button is clicked """
         self.curtain.show()
@@ -465,7 +478,7 @@ class MTPviewer(QMainWindow):
         self.RCF1.setPlainText(self.BestWtdRCSet['RCFId'].replace('NRC', ''))
 
         # Display MRI
-        self.MRI.setPlainText('%.3f' % (self.ATP['RCFMRIndex']))
+        self.MRI.setPlainText('%.3f' % (self.ATP['RCFMRIndex']['val']))
 
         # Plot the template brightness temperatures on the scan and temp plot
         self.scantemp.plotTemplate(self.BestWtdRCSet['FL_RCs']['sOBav'])

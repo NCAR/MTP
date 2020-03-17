@@ -36,15 +36,24 @@ MTPrecord = {
                  'TIME': {  # MTP Scan Time (HHMMSS) converted to secs
                   'val': numpy.nan},
                  'SAPITCH': {  # MTP Scan Avg Pitch (degree)
-                  'val': numpy.nan, 'idx': 0},
+                  'val': numpy.nan, 'idx': 0,
+                  'short_name': 'platform_pitch',
+                  'units': 'degree',
+                  'long_name': 'Aircraft pitch (deg)'},
                  'SRPITCH': {  # MTP Scan RMSE Pitch (degree)
                   'val': numpy.nan, 'idx': 1},
                  'SAROLL':  {  # MTP Scan Avg Roll (degree)
-                  'val': numpy.nan, 'idx': 2},
+                  'val': numpy.nan, 'idx': 2,
+                  'short_name': 'platform_roll',
+                  'units': 'degree',
+                  'long_name': 'Aircraft roll (deg)'},
                  'SRROLL':  {  # MTP Scan RMSE Roll (degree)
                   'val': numpy.nan, 'idx': 3},
                  'SAPALT':  {  # MTP Scan Avg Pressure Altitude (km)
-                  'val': numpy.nan, 'idx': 4},
+                  'val': numpy.nan, 'idx': 4,
+                  'short_name': 'barometric_altitude',
+                  'units': 'km',
+                  'long_name': 'Pressure altitude of GV (km)'},
                  'SRPALT':  {  # MTP Scan RMSE Pressure Alt (km)
                   'val': numpy.nan, 'idx': 5},
                  'SAAT':    {  # MTP Scan Avg Ambient Air Temp (deg_K)
@@ -52,11 +61,17 @@ MTPrecord = {
                  'SRAT':    {  # MTP Scan RMSE Ambient Air Temp(deg_K)
                   'val': numpy.nan, 'idx': 7},
                  'SALAT':   {  # MTP Scan Avg Latitude (degree_N)
-                  'val': numpy.nan, 'idx': 8},
+                  'val': numpy.nan, 'idx': 8,
+                  'short_name': 'latitude',
+                  'units': 'degree_north',
+                  'long_name': 'Latitude (deg)'},
                  'SRLAT':   {  # MTP Scan RMSE Latitude (degree_N)
                   'val': numpy.nan, 'idx': 9},
                  'SALON':   {  # MTP Scan Avg Longitude (degree_E)
-                  'val': numpy.nan, 'idx': 10},
+                  'val': numpy.nan, 'idx': 10,
+                  'short_name': 'longitude',
+                  'units': 'degree_east',
+                  'long_name': 'Longitude (deg)'},
                  'SRLON':   {  # MTP Scan RMSE Longitude (degree_E)
                   'val': numpy.nan, 'idx': 11},
                  'SMCMD':   {  # MTP Scan Motor Commanded Position

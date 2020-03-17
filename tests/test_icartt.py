@@ -45,6 +45,11 @@ class TESTicartt(unittest.TestCase):
         self.client.readConfig(os.path.join(getrootdir(),
                                'config', 'proj.yml'))
 
+        # Set RCF dir to test dir
+        self.client.setRCFdir('tests/test_data')
+        # Now initialize the retriever (requires correct RCFdir)
+        self.client.initRetriever()
+
         # Test record
         udp = "MTP,20140606T062418,+06.49,00.19,-00.79,00.87,+04.00,0.06," + \
               "263.32,00.48,-43.290,+0.005,+172.296,+0.051,+074684," + \
@@ -57,6 +62,7 @@ class TESTicartt(unittest.TestCase):
               "13310,14460,020890,022318,022138,019200,020582,020097"
         self.client.reader.parseAsciiPacket(udp)
         self.rawscan = self.client.reader.getRawscan()
+        self.client.processMTP()
         self.client.reader.archive()
 
         sample_header = '../tests/test_data/header.ict'
