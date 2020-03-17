@@ -1,1 +1,2 @@
-python3 /Users/janine/dev/aircraft_nc2iwg1/nc2iwg1.py -i DEEPWAVErf01.nc -s 1 -u True -er True
+# This is now available in aircraft_nc_utils
+python3 /Users/janine/dev/aircraft_nc2iwg1/nc2iwg1.py DEEPWAVErf01.nc -u -er
