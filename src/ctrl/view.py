@@ -174,7 +174,7 @@ class controlWindow(QWidget):
         self.setLayout(mainbox)
         self.setGeometry(100, 100, 400, 800)
         self.setWindowTitle('MTPRealTime')
-#        self.show()
+        self.show()
 
         self.cycleTimer = QtCore.QTimer()
         self.cycleTimer.timeout.connect(self.cycle)
@@ -186,7 +186,7 @@ class controlWindow(QWidget):
         # 62 does not 
         # 142, 82 ms can cause a pause at eline 
 
-#        sys.exit(app.exec_())
+        #sys.exit(app.exec_())
         logging.debug("init ui done")
 
     def openComm(self, serialPort):
@@ -262,7 +262,11 @@ class controlWindow(QWidget):
         self.packetStore.setData("switchControl", "resetInitScan")
         self.packetStore.setData("scanStatus", False)
         self.packetStore.setData("calledFrom", "resetProbeClick")
-        self.cycleTimer.start()
+
+        self.continueCycling = False
+        self.initProbe()
+        self.homeScan()
+        self.mainloop()
         #self.cycle()
 
         self.app.processEvents()
@@ -270,6 +274,8 @@ class controlWindow(QWidget):
     def shutdownProbeClicked(self, serialPort):
         logging.debug("shutdownProbe/quit clicked")
         self.closeComm(serialPort)
+        self.continueCycling= False 
+        self.app.processEvents()
         logging.debug("Safe exit")
         app.exit(0)
 
@@ -308,6 +314,18 @@ class controlWindow(QWidget):
         self.oat15 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
         self.lat15 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
         self.lon15 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        pitchavg = self.packetStore.setData("pitchavg", 1)
+        pitchrms = self.packetStore.setData("pitchrms",1)
+        rollavg = self.packetStore.setData("rollavg",1)
+        rollrms = self.packetStore.setData("rollrms",1)
+        Zpavg = self.packetStore.setData("Zpavg",1)
+        Zprms = self.packetStore.setData("Zpavg",1)
+        oatavg = self.packetStore.setData("oatavg",1)
+        oatrms = self.packetStore.setData("oatrms",1)
+        latavg = self.packetStore.setData("latavg",1)
+        latrms = self.packetStore.setData("latrms",1)
+        lonavg = self.packetStore.setData("lonavg",1)
+        lonrms = self.packetStore.setData("lonrms",1)
         self.elAngles= [10,-179.8, 80.00, 55.00, 42.00, 25.00, 12.00, 0.00, -12.00, -25.00, -42.00, -80.00]
         self.udp = doUDP(self,self.app)
         # UDP LED's
@@ -332,40 +350,12 @@ class controlWindow(QWidget):
         # Declare instance of moveMTP class
         self.mover = moveMTP(self)
 
-
-        # init probe
-        self.serialPort.sendCommand(self.commandDict.getCommand("init1"))
-        i=0
-        echo = b''
-        while i < 100000:
-            # grab whatever is in the buffer
-            # will terminate at \n if it finds one
-
-            echo = self.serialPort.canReadLine(20)#msec
-            logging.debug("init 1 loop echo: ")
-            logging.debug(echo)
-
-            #logging.debug(echo)
-            if echo is None or echo == b'':
-                #logging.debug("checking init1")
-                self.app.processEvents()
-                i = i + 1
-            elif echo.data().find(b'S') >= 0:
-                logging.debug("received S from init1")
-                break;
-            else:
-                logging.debug("init1 loop echo else case")
-                self.app.processEvents()
-                i = i + 1
-
-
-
-        self.serialPort.sendCommand(self.commandDict.getCommand("init2"))
-        self.readUntilFound(b'S', 100000, 20)
+        self.initProbe()
         self.homeScan()
+        self.continueCycling = True
 
         # loop over " scan commands"
-        while (1):
+        while self.continueCycling:
             logging.debug("loop                                                                                                                 asdfasdf")
             self.m01Store = self.m01()
             self.m02Store = self.m02()
@@ -390,11 +380,42 @@ class controlWindow(QWidget):
 
             # send packet over UDP
 
-
-
             #time.sleep(1)
 
-        return 0
+        logging.debug("Main Loop Stopped")
+
+    def initProbe(self):
+        i=0
+        self.packetStore.setData('init1', False)
+        self.packetStore.setData('init2', False)
+        while i < 100000:
+            # keep trying to initialize the probe
+            # grab whatever is in the buffer
+            # will terminate at \n if it finds one
+            self.tryInit('init1')
+            self.tryInit('init2')
+            if self.packetStore.getData('init1') and self.packetStore.getData('init2'):
+                logging.debug('probe initialized')
+                break
+            i = i + 1
+
+    def tryInit(self, whichInit):
+        # init probe
+        self.serialPort.sendCommand(self.commandDict.getCommand("init1"))
+        echo = self.serialPort.canReadLine(20)#msec
+        logging.debug("init 1 loop echo: ")
+        logging.debug(echo)
+            #logging.debug(echo)
+        if echo is None or echo == b'':
+            #logging.debug("checking init1")
+            self.app.processEvents()
+        elif echo.data().find(b'S') >= 0:
+            logging.debug("received S from %s", whichInit)
+            self.packetStore.setData(whichInit, True)
+        else:
+            logging.debug("tryinit loop echo else case")
+            self.app.processEvents()
+
 
     def readUntilFound(self, binaryString, timeout, canReadLineTimeout):
         i=0
@@ -535,7 +556,7 @@ class controlWindow(QWidget):
 
         with open("MTP_data.txt", "ab") as datafile:
                 # this will be rewritten each time the program restarts
-                datafile.write(str.encode("Instrument on " + time.strftime("%X") + " " + time.strftime("%m-%d-%y")))
+                datafile.write(str.encode("Instrument on " + time.strftime("%X") + " " + time.strftime("%m-%d-%y") + '\r\n'))
         logging.debug("initConfig")
 
     def cycle(self):
