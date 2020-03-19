@@ -336,9 +336,9 @@ class ICARTT():
         # barometric_altitude
         data += "%5.3f, " % float(rec['Aline']['values']['SAPALT']['val'])
         # platform_pitch
-        data += "%4.1f, " % float(rec['Aline']['values']['SAPITCH']['val'])
+        data += "%6.2f, " % float(rec['Aline']['values']['SAPITCH']['val'])
         # platform_roll
-        data += "%4.1f, " % float(rec['Aline']['values']['SAROLL']['val'])
+        data += "%6.2f, " % float(rec['Aline']['values']['SAROLL']['val'])
         data += "-999.9, "  # horizontal brightness temperature
         data += "-99.9, "   # tropopause_alt_1
         data += "-99.9, "   # tropopause_alt_2
@@ -346,13 +346,13 @@ class ICARTT():
         data += "-999.9, "  # tropopause_potential_temperature_2
         # latitude
         data += \
-            "%7.3f, " % float(rec['Aline']['values']['SALAT']['_FillValue'])
+            "%7.3f, " % float(rec['Aline']['values']['SALAT']['val'])
         # longitude
         data += \
-            "%8.3f, " % float(rec['Aline']['values']['SALAT']['_FillValue'])
+            "%8.3f, " % float(rec['Aline']['values']['SALON']['val'])
         data += "-999.9, "    # air_temperature_lapse_rate
         # MRI
-        data += "%5.2f, " % float(rec['ATP']['RCFMRIndex']['_FillValue'])
+        data += "%5.2f, " % float(rec['ATP']['RCFMRIndex']['val'])
         data += "-999.99, "   # cold point temperature
         data += "-99.99"    # cold point altitude
 
