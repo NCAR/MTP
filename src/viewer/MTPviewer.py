@@ -371,7 +371,19 @@ class MTPviewer(QMainWindow):
     def saveICARTT(self):
         """ Action to take when Save ICARTT button is clicked """
         filename = self.icartt.getICARTT()
-        self.icartt.save(filename)
+        self.icartt.save(filename)  # Write the header to the output file
+
+        # Loop through flightData and save data to ICARTT file
+        fd = self.client.reader.flightData
+        for index in range(len(fd)):
+            if index < len(fd)-1:
+                endtime = fd[index+1]['Aline']['values']['TIME']['val']-1
+            else:
+                endtime = -9999
+            self.icartt.saveData(self.client.reader.flightData[index], endtime)
+
+        logger.printmsg("info", "File " + filename + " successfully written",
+                        "If file already existed, it was overwritten")
 
     def curtainWindow(self):
         """ Action to take when CurtainPlot button is clicked """
@@ -517,14 +529,15 @@ class MTPviewer(QMainWindow):
                                self.client.reader.getACAlt())
 
         # Plot the tropopause (dotted line)
-        for i in range(len(self.ATP['trop'])):
-            self.profile.plotTropopause(self.ATP['trop'][i])
+        for i in range(len(self.ATP['trop']['val'])):
+            self.profile.plotTropopause(self.ATP['trop']['val'][i])
 
         # Plot the adiabatic lapse rate
         # diagonal dashed line, fixed slope anchored to ambient temperature
         # point of first tropopause
         referenceLapseRate = -2  # This is also hardcoded in tropopause.py
-        self.profile.plotLapseRate(self.ATP['trop'][0], referenceLapseRate)
+        self.profile.plotLapseRate(self.ATP['trop']['val'][0],
+                                   referenceLapseRate)
 
         # Draw the plots
         self.profile.draw()
@@ -547,7 +560,7 @@ class MTPviewer(QMainWindow):
             self.curtain.addTime(time, temperature)
             self.curtain.addACtime(time)
             self.curtain.addACalt(thisscan['Aline']['values']['SAPALT']['val'])
-            self.curtain.addTrop(thisscan['ATP']['trop'][0])
+            self.curtain.addTrop(thisscan['ATP']['trop']['val'][0])
             self.curtain.addMRI(thisscan['BestWtdRCSet']['SumLnProb'])
 
             # addAlt and addTime have special cases for first value read into
@@ -576,7 +589,7 @@ class MTPviewer(QMainWindow):
                              self.ATP['Temperatures'])
         self.curtain.addACtime(self.client.reader.getVar('Aline', 'TIME'))
         self.curtain.addACalt(self.client.reader.getACAlt())
-        self.curtain.addTrop(self.ATP['trop'][0])
+        self.curtain.addTrop(self.ATP['trop']['val'][0])
         self.curtain.addMRI(self.BestWtdRCSet['SumLnProb'])
 
         # Generate the curtain plot
