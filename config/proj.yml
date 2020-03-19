@@ -22,6 +22,9 @@ fltno: 'RF01'
 pi: 'Julie Haggerty (haggerty@ucar.edu)'
 organization: 'NCAR, Boulder, CO'
 platform: 'NGV Microwave Temperature Profiler (MTP/NGV)'
+platformID: 'GV'
+revision: 'R0'
+revision_comment: 'initial release'
 
 # Port setting
 udp_send_port: 32106  # fron viewer to MTP

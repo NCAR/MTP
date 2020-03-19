@@ -19,7 +19,6 @@
 import os
 from datetime import datetime
 from lib.rootdir import getrootdir
-from Qlogger.messageHandler import QLogger as logger
 
 
 class ICARTT():
@@ -41,7 +40,15 @@ class ICARTT():
         """ Build name of ICARTT file to save data to """
 
         date = self.get_startdate()
-        return(os.path.join(getrootdir(), 'config/MP' + date + '.NGV'))
+        platform = self.client.configfile.getVal('platformID')
+        revision = self.client.configfile.getVal('revision')
+
+        # Return ICARTT-compliant filename
+        return(os.path.join(getrootdir(), 'config/MP_' + platform + "_" +
+               date + '_' + revision + '.ict'))
+
+        # Return MTP traditional filename
+        # return(os.path.join(getrootdir(), 'config/MP' + date + '.NGV'))
 
     def put_var(self, line, var):
         """
@@ -126,7 +133,7 @@ class ICARTT():
         # increase even when crossing over to a second day.).
         self.header += "altitude, m, Remote sensing altitude in meters\n"
         self.header += "start_time, s, Elapsed UT seconds from 0 hours on" + \
-                       " flight date\n"
+                       " flight date\n"  # Aline time
 
         # Number of dependent bounded (primary) variables
         # The MTP data format has 4 primary variables: air_temperature,
@@ -165,7 +172,29 @@ class ICARTT():
         # Missing data indicators (-9999, -99999, etc)
         # NOTE: Since I haven't started writing the data out, this may change
         # so for now just put in place-holders
-        self.header += "-999.99, " * 15 + "-999.99\n"
+        self.header += "-999.99, -99, " + \
+            "%5.3f, " % \
+            float(self.client.reader.get_metadata('Aline', 'SAPALT',
+                                                  '_FillValue')) + \
+            "%4.1f, " % \
+            float(self.client.reader.get_metadata('Aline', 'SAPITCH',
+                                                  '_FillValue')) + \
+            "%4.1f, " % \
+            float(self.client.reader.get_metadata('Aline', 'SAROLL',
+                                                  '_FillValue')) + \
+            "-999.9, -99.9, -99.9, -999.9, -999.9, " + \
+            "%7.3f, " % \
+            float(self.client.reader.get_metadata('Aline', 'SALAT',
+                                                  '_FillValue')) + \
+            "%8.3f, " % \
+            float(self.client.reader.get_metadata('Aline', 'SALON',
+                                                  '_FillValue')) + \
+            "-999.9, " + \
+            "%5.1f, " % \
+            float(self.client.reader.getATPmetadata('RCFMRIndex',
+                                                    '_FillValue')) + \
+            "-999.99, " + \
+            "-99.99\n"
 
         # Variable names, units, and descriptive name. See explanation above
         self.header += "end_time, s, Elapsed UT seconds from 0 hours on " + \
@@ -258,6 +287,7 @@ class ICARTT():
                        "region.)\n"
         self.header += "REVISION: R0\n"
         self.header += "R0: initial release\n"
+
         # Now make short_name line
         self.header += "start_time, end_time, NX, "
         for var in ['SAPALT', 'SAPITCH', 'SAROLL']:
@@ -285,10 +315,53 @@ class ICARTT():
             "\n" + self.header
 
     def save(self, filename):
-        """ Save data to ICARTT file """
+        """ Save header to ICARTT file """
+        self.filename = filename
         self.build_header(datetime.today().strftime('%Y%m%d'))
         with open(filename, 'w') as f:
+            # Write the header to the ICARTT file
             f.write(self.header)
 
-        logger.printmsg("info", "File " + filename + " successfully written",
-                        "If file already existed, it was overwritten")
+    def saveData(self, rec, endtime):
+        """ Save a record to the ICARTT file """
+        # dependent unbounded line for this record
+        data = "%7d, " % rec['Aline']['values']['TIME']['val']  # start_time
+        data += "%7d, " % endtime  # end_time
+        # NX - I think the altitudes are the MTP alts interpolated to the RCF
+        # alts, so this next line is wrong, but leave it here for now so can
+        # generate a file that passes the ICARTT checker, even thought data is
+        # all missing.
+        NX = len(rec['ATP']['Altitudes'])
+        data += "%3d, " % NX
+        # barometric_altitude
+        data += "%5.3f, " % float(rec['Aline']['values']['SAPALT']['val'])
+        # platform_pitch
+        data += "%4.1f, " % float(rec['Aline']['values']['SAPITCH']['val'])
+        # platform_roll
+        data += "%4.1f, " % float(rec['Aline']['values']['SAROLL']['val'])
+        data += "-999.9, "  # horizontal brightness temperature
+        data += "-99.9, "   # tropopause_alt_1
+        data += "-99.9, "   # tropopause_alt_2
+        data += "-999.9, "  # tropopause_potential_temperature_1
+        data += "-999.9, "  # tropopause_potential_temperature_2
+        # latitude
+        data += \
+            "%7.3f, " % float(rec['Aline']['values']['SALAT']['_FillValue'])
+        # longitude
+        data += \
+            "%8.3f, " % float(rec['Aline']['values']['SALAT']['_FillValue'])
+        data += "-999.9, "    # air_temperature_lapse_rate
+        # MRI
+        data += "%5.2f, " % float(rec['ATP']['RCFMRIndex']['_FillValue'])
+        data += "-999.99, "   # cold point temperature
+        data += "-99.99"    # cold point altitude
+
+        data += "\n"  # End of record
+
+        # dependent bounded lines for this record
+        for i in range(NX):
+            data += "-999, -999, -999, -999, -999\n"
+
+        # Write record to output file
+        with open(self.filename, 'a') as f:
+            f.write(data)

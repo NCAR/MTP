@@ -348,22 +348,25 @@ class MTPclient():
                 ATP['RCFMRIndex']['val'] = numpy.nan
 
                 # Also set first (and only) tropopause to NAN
-                ATP['trop'][0]['idx'] = numpy.nan
-                ATP['trop'][0]['altc'] = numpy.nan
-                ATP['trop'][0]['tempc'] = numpy.nan
+                ATP['trop']['val'][0]['idx'] = numpy.nan
+                ATP['trop']['val'][0]['altc'] = numpy.nan
+                ATP['trop']['val'][0]['tempc'] = numpy.nan
 
             else:
                 # Found a good MTP scan. RCF indices were set in the
                 # retrieve function above so just need to calculate
                 # tropopauses
-                [startTropIndex, ATP['trop'][0]['idx'], ATP['trop'][0]['altc'],
-                 ATP['trop'][0]['tempc']] = trop.findTropopause(startTropIndex)
+                [startTropIndex, ATP['trop']['val'][0]['idx'],
+                 ATP['trop']['val'][0]['altc'],
+                 ATP['trop']['val'][0]['tempc']] = \
+                 trop.findTropopause(startTropIndex)
 
                 # If found a tropopause, look for a second one
-                if not numpy.isnan(ATP['trop'][0]['idx']):
+                if not numpy.isnan(ATP['trop']['val'][0]['idx']):
                     # Start at previous index
-                    [startTropIndex, ATP['trop'][1]['idx'],
-                     ATP['trop'][1]['altc'], ATP['trop'][1]['tempc']] = \
+                    [startTropIndex, ATP['trop']['val'][1]['idx'],
+                     ATP['trop']['val'][1]['altc'],
+                     ATP['trop']['val'][1]['tempc']] = \
                         trop.findTropopause(startTropIndex)
 
             return(ATP)

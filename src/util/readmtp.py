@@ -443,11 +443,11 @@ class readMTP:
 
     def get_metadata(self, linetype, var, key):
         """ Get the metadata with keyword key for the variable """
-        return(self.rawscan[linetype]['values'][var][key])
+        return(self.flightData[0][linetype]['values'][var][key])
 
     def getATPmetadata(self, var, key):
         """ Get the metadata with keyword key for variable in ATP dict """
-        return(self.rawscan['ATP'][var][key])
+        return(self.flightData[0]['ATP'][var][key])
 
     def setCalcVal(self, linetype, var, value, calctype):
         """

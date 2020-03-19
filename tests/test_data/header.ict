@@ -10,14 +10,14 @@ altitude, m, Remote sensing altitude in meters
 start_time, s, Elapsed UT seconds from 0 hours on flight date
 4
 1.0, 1.0, 1.0, 1.0
--9999, -99, -9999, -9999
+-999, -999, -999, -999
 air_temperature, K, Retrieved air temperature K
 air_temperature_anomaly, K, Standard error of retrieved air temperature
 altitude, m, Geometric altitude meters based on GPS altitude (meters)
 air_density, E+21 m-3, Molecular air density (number per cubic meter) [1E+21/m3]
 16
 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0
--999.99, -99, -99.999, -99.9, -99.9, -999.9, -99.9, -99.9, -999.9, -999.9, -999.99, -999.999, -999.9, -99, -999.99, -99.99
+-999.99, -99, -99.999, -99.9, -99.9, -999.9, -99.9, -99.9, -999.9, -999.9, -99.999, -999.999, -999.9, -99.9, -999.99, -99.99
 end_time, s, Elapsed UT seconds from 0 hours on flight date
 NX, #, number of altitudes in subsequent data records
 barometric_altitude, km, Pressure altitude of GV (km)
