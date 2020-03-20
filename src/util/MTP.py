@@ -68,7 +68,7 @@ MTPrecord = {
                   'short_name': 'latitude',
                   'units': 'degree_north',
                   'long_name': 'Latitude (deg)',
-                  '_FillValue': "-99.999"},
+                  '_FillValue': "-999.99"},
                  'SRLAT':   {  # MTP Scan RMSE Latitude (degree_N)
                   'val': numpy.nan, 'idx': 9},
                  'SALON':   {  # MTP Scan Avg Longitude (degree_E)
@@ -76,7 +76,7 @@ MTPrecord = {
                   'short_name': 'longitude',
                   'units': 'degree_east',
                   'long_name': 'Longitude (deg)',
-                  '_FillValue': "-999.999"},
+                  '_FillValue': "-9999.99"},
                  'SRLON':   {  # MTP Scan RMSE Longitude (degree_E)
                   'val': numpy.nan, 'idx': 11},
                  'SMCMD':   {  # MTP Scan Motor Commanded Position

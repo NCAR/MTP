@@ -371,16 +371,8 @@ class MTPviewer(QMainWindow):
     def saveICARTT(self):
         """ Action to take when Save ICARTT button is clicked """
         filename = self.icartt.getICARTT()
-        self.icartt.save(filename)  # Write the header to the output file
-
-        # Loop through flightData and save data to ICARTT file
-        fd = self.client.reader.flightData
-        for index in range(len(fd)):
-            if index < len(fd)-1:
-                endtime = fd[index+1]['Aline']['values']['TIME']['val']-1
-            else:
-                endtime = -9999
-            self.icartt.saveData(self.client.reader.flightData[index], endtime)
+        self.icartt.saveHeader(filename)  # Write the header to the output file
+        self.icartt.saveData(filename)
 
         logger.printmsg("info", "File " + filename + " successfully written",
                         "If file already existed, it was overwritten")
