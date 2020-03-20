@@ -1,4 +1,4 @@
-57, 2110
+57, 2110, V02_2016
 Julie Haggerty (haggerty@ucar.edu)
 NCAR, Boulder, CO
 NGV Microwave Temperature Profiler (MTP/NGV)
@@ -17,9 +17,9 @@ altitude, m, Geometric altitude meters based on GPS altitude (meters)
 air_density, E+21 m-3, Molecular air density (number per cubic meter) [1E+21/m3]
 16
 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0
--999.99, -99, -99.999, -99.9, -99.9, -999.9, -99.9, -99.9, -999.9, -999.9, -99.999, -999.999, -999.9, -99.9, -999.99, -99.99
-end_time, s, Elapsed UT seconds from 0 hours on flight date
+-99, -9999, -99.999, -99.9, -99.9, -999.9, -99.9, -99.9, -999.9, -999.9, -999.99, -9999.99, -999.9, -99.9, -999.99, -99.99
 NX, #, number of altitudes in subsequent data records
+end_time, s, Elapsed UT seconds from 0 hours on flight date
 barometric_altitude, km, Pressure altitude of GV (km)
 platform_pitch, degree, Aircraft pitch (deg)
 platform_roll, degree, Aircraft roll (deg)
@@ -54,23 +54,30 @@ STIPULATIONS_ON_USE: We strongly encourage anyone using the MTP data to contact 
 OTHER_COMMENTS: Here's a brief free-form tutorial on how to decipher the MTP data: Data groups consist of the following group of lines per 17-second observing cycle.  The 1-liners (for each cycle) can be stripped & imported into a spreadsheet for convenient plotting of trop altitude, lapse rate, etc. The tropopause altitudes are calculated by cubic spline interpolation of the retrieved altitudes using the WMO definition (that is, trop #1 is lowest altitude where average lapse rate > -2 K/km from initial -2 K/km point to any point within 2 km; trop #2 occurs above first trop after lapse rate is < -3K/km for >1 km, and then first trop definition applies, possibly from within the 1 km region.)
 REVISION: R0
 R0: initial release
-start_time, end_time, NX, barometric_altitude, platform_pitch, platform_roll, brightness_temperature, tropopause_altitude_1, tropopause_altitude_2, tropopause_potential_temperature_1, tropopause_potential_temperature_2, latitude, longitude, air_temperature_lapse_rate, MRI, Tcp, Zcl, altitude, air_temperature, air_temperature_anomaly, altitude, air_density
-  20580, 20596, 18, 0.097, -1.2, -0.4, 282.7, 11.4, 99.9, 333.4, 999.9, -43.484, 172.541, 1.6, 0.28, 212.14, 18.10
-  6997, 242.9, 1.6, 7035, 12235
-  5297, 255.6, 1.5, 5320, 14702
-  4097, 264.2, 1.5, 4104, 16680
-  3297, 269.8, 1.6, 3292, 18121
-  2597, 275.5, 1.7, 2578, 19412
-  2097, 279.9, 1.8, 2067, 20361
-  1697, 283.6, 1.7, 1655, 21133
-  1397, 285.0, 1.3, 1346, 21829
-  1097, 284.5, 0.9, 1039, 22677
-   797, 283.5, 0.6, 734, 23594
-   597, 283.1, 0.5, 533, 24203
-   397, 282.8, 0.5, 333, 24815
-   247, 282.7, 0.6, 184, 25269
-    97, 283.0, 0.3, 35, 25701
-    82, 283.1, 0.3, 20, 25734
-    68, 283.1, 0.3, 6, 25777
-    48, 283.1, 0.3, -13, 25835
-    29, 283.2, 0.3, -33, 25893
+start_time, NX, end_time, barometric_altitude, platform_pitch, platform_roll, brightness_temperature, tropopause_altitude_1, tropopause_altitude_2, tropopause_potential_temperature_1, tropopause_potential_temperature_2, latitude, longitude, air_temperature_lapse_rate, MRI, Tcp, Zcl, altitude, air_temperature, air_temperature_anomaly, altitude, air_density
+  23074, 25, 23090, 4.428,  5.4, -0.3, 261.2, 10.4, 99.9, 329.0, 999.9, -43.289,  172.243, -4.3, 0.26, 216.94, 18.93
+ 11328, 220.3, 2.4, 11358,  7056
+  9628, 223.6, 2.7,  9637,  9050
+  8428, 231.7, 1.8,  8442, 10444
+  7628, 238.0, 1.3,  7643, 11415
+  6928, 243.5, 0.9,  6940, 12327
+  6428, 247.4, 0.7,  6437, 13009
+  6028, 250.4, 0.6,  6033, 13585
+  5728, 252.4, 0.5,  5730, 14039
+  5428, 254.4, 0.3,  5427, 14510
+  5128, 256.4, 0.3,  5124, 14992
+  4928, 257.8, 0.2,  4922, 15312
+  4728, 259.3, 0.2,  4720, 15637
+  4578, 260.3, 0.1,  4568, 15889
+  4428, 261.0, 0.1,  4416, 16163
+  4278, 261.2, 0.1,  4265, 16471
+  4128, 261.4, 0.2,  4114, 16786
+  3928, 262.1, 0.3,  3913, 17186
+  3728, 263.2, 0.3,  3713, 17568
+  3428, 264.9, 0.5,  3413, 18141
+  3128, 266.9, 0.6,  3112, 18715
+  2828, 268.8, 0.9,  2812, 19307
+  2428, 271.2, 1.1,  2411, 20134
+  1928, 274.0, 1.3,  1911, 21212
+  1228, 278.8, 1.6,  1211, 22745
+   619, 281.8, 2.4,   602, 24240
