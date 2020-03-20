@@ -64,7 +64,7 @@ class TESTtropopause(unittest.TestCase):
             'RCFIndex': 0,
             'RCFALT1Index': 12,
             'RCFALT2Index': 13,
-            'RCFMRIndex': { 'val': 4.539470399431716},
+            'RCFMRIndex': {'val': 4.539470399431716},
             'trop': [{'idx': numpy.nan, 'altc': numpy.nan, 'tempc': numpy.nan}]
         }
 
