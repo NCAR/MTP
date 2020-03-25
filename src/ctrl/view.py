@@ -1096,8 +1096,50 @@ class controlWindow(QWidget):
             targetClkAngle = targetEl + self.mover.fec(self.mover.configMAM(), Pitch_Frame, Roll_Frame, targetEl, EmaxFlag)
         else:
             targetClkAngle = targetEl + zel
-        targetClkStep = targetClkAngle * self.parent.getData("stepsDegree")
-        currentClkStep = self.parent.packetStore.getData("currentClkStep")
+        targetClkStep = targetClkAngle * self.packetStore.getData("stepsDegree")
+        currentClkStep = self.packetStore.getData("currentClkStep")
+        nsteps = targetClkStep - currentClkStep
+        self.packetStore.setData("Nsteps", nsteps)
+
+        # check that nsteps isn't 0
+        if nstep == 0:
+            logging.info("Nstep is zero loop!")
+            # ? set nstep to nan?
+
+        # drop anything after decimal point:
+        nstepSplit = str(nstep).split('.')
+        nstep = nstepSplit[0]
+        if self.nstep[0] is '-':
+            # nstep is negative
+            nstepSplit = str(nstep).split("-")
+            nstep = nstepSplit[1].rjust(6,'0')
+        else:
+            self.nstepSplit = str(nstep).split('+')
+            nstep = nstepSplit[0].rjust(6,'0')
+
+        if nstep is 0.0:
+            logging.error("moving 0 steps, nstep calculation returned 0")
+
+        backCommand = nstep + self.commandDict.getCommand("move_end")
+        if self.nstepSplit[0] is '-':
+            frontCommand= self.commandDict.getCommand("move_bak_front")
+        else:
+            frontCommand = self.commandDict.getCommand("move_fwd_front")
+        # return should have switch value of "Step:"
+        self.serialPort.sendCommand(str.encode(frontCommand + backCommand))
+        self.packetStore.setData("targetClkStep", targetClkStep)
+        # read echo 
+        echo = self.readUntilFound(b'C', 100, 20)
+        logging.debug("goAngle echo: %s", echo)
+
+
+        # wait until status returns @
+
+        # self.parent.packetStore.setData("currentClkStep", self.targetClkStep)
+        # set in serial to avoid infinite loop of zero nstep
+        angleI = self.packetStore.getData("angleI") # angle index, zenith at 1
+
+
 
 
 if __name__ == '__main__':
