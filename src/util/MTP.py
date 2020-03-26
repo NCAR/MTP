@@ -15,7 +15,6 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
-import re
 import numpy
 
 MTPrecord = {
@@ -26,7 +25,7 @@ MTPrecord = {
     # a set of 7 different line types
     'Aline': {
         # Regular expressions to match the various scan lines
-        're': re.compile("^A (........) (..):(..):(..) (.*)"),
+        're': "^A (........) (..):(..):(..) (.*)",
         'found': False,
         'date': "",  # YYYYMMDDTHHMMSS
         'data': [],  # A string containing the data values after date/time
@@ -37,15 +36,27 @@ MTPrecord = {
                  'TIME': {  # MTP Scan Time (HHMMSS) converted to secs
                   'val': numpy.nan},
                  'SAPITCH': {  # MTP Scan Avg Pitch (degree)
-                  'val': numpy.nan, 'idx': 0},
+                  'val': numpy.nan, 'idx': 0,
+                  'short_name': 'platform_pitch',
+                  'units': 'degree',
+                  'long_name': 'Aircraft pitch (deg)',
+                  '_FillValue': "-99.9"},
                  'SRPITCH': {  # MTP Scan RMSE Pitch (degree)
                   'val': numpy.nan, 'idx': 1},
                  'SAROLL':  {  # MTP Scan Avg Roll (degree)
-                  'val': numpy.nan, 'idx': 2},
+                  'val': numpy.nan, 'idx': 2,
+                  'short_name': 'platform_roll',
+                  'units': 'degree',
+                  'long_name': 'Aircraft roll (deg)',
+                  '_FillValue': "-99.9"},
                  'SRROLL':  {  # MTP Scan RMSE Roll (degree)
                   'val': numpy.nan, 'idx': 3},
                  'SAPALT':  {  # MTP Scan Avg Pressure Altitude (km)
-                  'val': numpy.nan, 'idx': 4},
+                  'val': numpy.nan, 'idx': 4,
+                  'short_name': 'barometric_altitude',
+                  'units': 'km',
+                  'long_name': 'Pressure altitude of GV (km)',
+                  '_FillValue': "-99.999"},
                  'SRPALT':  {  # MTP Scan RMSE Pressure Alt (km)
                   'val': numpy.nan, 'idx': 5},
                  'SAAT':    {  # MTP Scan Avg Ambient Air Temp (deg_K)
@@ -53,11 +64,19 @@ MTPrecord = {
                  'SRAT':    {  # MTP Scan RMSE Ambient Air Temp(deg_K)
                   'val': numpy.nan, 'idx': 7},
                  'SALAT':   {  # MTP Scan Avg Latitude (degree_N)
-                  'val': numpy.nan, 'idx': 8},
+                  'val': numpy.nan, 'idx': 8,
+                  'short_name': 'latitude',
+                  'units': 'degree_north',
+                  'long_name': 'Latitude (deg)',
+                  '_FillValue': "-999.99"},
                  'SRLAT':   {  # MTP Scan RMSE Latitude (degree_N)
                   'val': numpy.nan, 'idx': 9},
                  'SALON':   {  # MTP Scan Avg Longitude (degree_E)
-                  'val': numpy.nan, 'idx': 10},
+                  'val': numpy.nan, 'idx': 10,
+                  'short_name': 'longitude',
+                  'units': 'degree_east',
+                  'long_name': 'Longitude (deg)',
+                  '_FillValue': "-9999.99"},
                  'SRLON':   {  # MTP Scan RMSE Longitude (degree_E)
                   'val': numpy.nan, 'idx': 11},
                  'SMCMD':   {  # MTP Scan Motor Commanded Position
@@ -68,7 +87,7 @@ MTPrecord = {
     },
     'IWG1line': {
         # From project "ascii_parms" file
-        're': re.compile("^IWG1,(........T......),(.*)"),
+        're': "^IWG1,(........T......),(.*)",
         'found': False,
         'date': "",
         'asciiPacket': "",
@@ -83,7 +102,7 @@ MTPrecord = {
     },
 
     'Bline': {
-        're': re.compile("(^B) (.*)"),
+        're': "(^B) (.*)",
         'found': False,
         'data': [],
         'values': {'SCNT': {  # MTP Scan Counts[Angle,Channel]
@@ -92,7 +111,7 @@ MTPrecord = {
                  },
     },
     'M01line': {  # MTP Engineering Multiplxr
-        're': re.compile("(^M01): (.*)"),
+        're': "(^M01): (.*)",
         'found': False,
         'data': [],
         'values': {'VM08CNTE': {  # Vm08 Counts
@@ -140,7 +159,7 @@ MTPrecord = {
     },
 
     'M02line': {  # MTP Engineering Multiplxr
-        're': re.compile("(^M02): (.*)"),
+        're': "(^M02): (.*)",
         'found': False,
         'data': [],
         'values': {'ACCPCNTE': {  # Acceler Counts
@@ -178,7 +197,7 @@ MTPrecord = {
                    },
     },
     'Ptline': {  # MTP Platinum Multiplxr
-        're': re.compile("(^Pt): (.*)"),
+        're': "(^Pt): (.*)",
         'found': False,
         'data': [],
         'values': {'TR350CNTP': {  # R350 Counts
@@ -224,7 +243,7 @@ MTPrecord = {
                    },
     },
     'Eline': {
-        're': re.compile("(^E) (.*)"),
+        're': "(^E) (.*)",
         'found': False,
         'data': [],
         # The vector of counts produced by the MTP target. This vector is of
@@ -234,4 +253,7 @@ MTPrecord = {
                     'val': [numpy.nan]*6}
                    },
     },
+    'tbi': "",  # Will hold a tbi array
+    'BestWtdRCSet': "",  # Will hold an RC_Set_4Retrieval dictionary
+    'ATP': "",  # Will hold an AtmosphericTemperatureProfile dictionary
 }
