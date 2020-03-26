@@ -108,7 +108,7 @@ class Retriever():
         # Index of flight level above aircraft Altitude
         self.ATP['RCFALT2Index'] = BestWtdRCSet['FL_RCs']['RCFALT2Index']
         # Meridional Region Index: quality of match
-        self.ATP['RCFMRIndex'] = BestWtdRCSet['SumLnProb']
+        self.ATP['RCFMRIndex']['val'] = BestWtdRCSet['SumLnProb']
 
         # Any Temperature with Altitude <= 0 is not valid (nor is altitude)
         # If Temperature is NAN (regardless of Alt, set Alt to NAN. Do this

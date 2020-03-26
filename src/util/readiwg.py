@@ -38,13 +38,13 @@ class readIWG:
         try:
             ascii_parms = open(ascii_parms_file, 'r')
         except OSError as err:
-            print(err)
-            print("Copy ascii_parms for project into config/ dir in order to" +
-                  " parse IWG packet correctly then rerun code.")
+            logger.printmsg("ERROR", str(err) + " Copy ascii_parms for " +
+                            "project into config/ dir in order to parse IWG" +
+                            " packet correctly then rerun code.")
             return(False)
-        except Exception:
-            print("Unexpected error occurred while trying to open " +
-                  "ascii_parms file")
+        except Exception as error:
+            logger.printmsg("ERROR", str(error) + " Unexpected error " +
+                            "occurred while trying to open ascii_parms file")
             return(False)
 
         i = 2  # index of each variable in IWG1 line (after dateTtime)
@@ -76,7 +76,7 @@ class readIWG:
         this function throw an error, don't parse any more packets that arrive.
         Ignore them when self.ERROR_FLAG = True
         """
-        if self.ERROR_FLAG == True:
+        if self.ERROR_FLAG is True:
             return(False)  # Did not succeed in reading IWG packet
 
         separator = ','
@@ -98,11 +98,12 @@ class readIWG:
         if len(self.rawscan['IWG1line']['values']) != len(values):
             self.ERROR_FLAG = True
             logger.printmsg("ERROR", "IWG packet being received on UDP feed " +
-                  "has a different number of values (" + str(len(values)) +
-                  ") than listed in ascii_parms file (" +
-                  str(len(self.rawscan['IWG1line']['values'])) +
-                  ") in config dir " + self.ascii_parms_file + ". Should be" +
-                  " 33.")
+                            "has a different number of values (" +
+                            str(len(values)) + ") than listed in ascii_parms" +
+                            " file (" +
+                            str(len(self.rawscan['IWG1line']['values'])) +
+                            ") in config dir " + self.ascii_parms_file +
+                            ". Should be 33.")
             exit(1)
 
         # Parse the rest of the line and assign variables to the data

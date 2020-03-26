@@ -46,24 +46,53 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
+import os
 import re
 import numpy
+import json
 import copy
 from util.MTP import MTPrecord
+from lib.rootdir import getrootdir
+from Qlogger.messageHandler import QLogger as logger
 
 
 class readMTP:
 
     def __init__(self):
-        self.rawscan = MTPrecord  # Instantiate dictionary to hold the MTP data
+        self.curscan = MTPrecord  # Instantiate dictionary to hold the MTP data
 
         # An array of MTP data dictionaries - used to display a single variable
         # across time.
         self.flightData = []
 
+        # Set the scan we are working with to be the current scan
+        self.rawscan = self.curscan
+
+    def getJson(self, proj, fltno):
+        """ Build name of json file to save flight data to """
+        # This is used if the code is restarted mid-flight to provide access
+        # to previous data.
+        return(os.path.join(getrootdir(), 'config',
+                            proj+fltno.lower()+'.mtpRealTime.json'))
+
+    def setRawscan(self, index):
+        """ Set the MTP data dictionary we want to read a scan from """
+        # The current scan is in self.rawscan and in the last scan in
+        # self.flightData. Sometimes we might want this class to read from
+        # a scan other than the current scan. Set that scan here.
+        self.rawscan = self.flightData[index]
+
+    def resetRawscan(self):
+        """ Set the data dictionary back to the current scan """
+        self.rawscan = self.curscan
+
     def getRawscan(self):
-        """ Return a pointer to the MTP data dictionary """
+        """ Return a pointer to the MTP data dictionary of the current scan """
         return(self.rawscan)
+
+    def getRecord(self, index):
+        """ Return a pointer to the MTP data dictionary for a specific scan """
+        return(self.flightData[index])
 
     def readRawScan(self, raw_data_file):
         """
@@ -88,13 +117,47 @@ class readMTP:
 
             if (foundall):
                 # Have a complete scan. Save this record to the flight library
-                self.flightData.append(copy.deepcopy(self.rawscan))
+                # This will be useful for post-processing. Not needed in real-
+                # time
+                self.archive()
 
                 # Reset found to False for all and return
                 for linetype in self.rawscan:
                     if 'found' in self.rawscan[linetype]:
                         self.rawscan[linetype]['found'] = False
                 return(True)  # Not at EOF
+
+    def archive(self):
+        """ Save the current record to the flight library (flightData[]) """
+        self.flightData.append(copy.deepcopy(self.rawscan))
+
+    def save(self, filename):
+        """ Append the current record to a JSON file on disk """
+        with open(filename, 'a') as f:
+            json.dump(self.rawscan, f)
+            f.write(os.linesep)
+
+    def load(self, filename):
+        """
+        Read records from JSON file on disk and prepend to flightData array
+        """
+        # Check if file exists. If not, nothing to load, so return failed
+        if not os.path.isfile(filename):
+            return(False)
+
+        with open(filename, 'r') as f:
+            previous_data = [json.loads(line) for line in f]
+
+        # There does not appear to be a list.prepend() python function so
+        # extend the previous_data array with any data written to flightData
+        # since restart, and then replace flightData with the previous_data.
+        # This could potentially cause us to loose a *display* record if
+        # flightData is written to between the two commands below. No actual
+        # data is lost - everything collected is in the JSON file.
+        previous_data.extend(self.flightData)
+        self.flightData = previous_data
+
+        return(True)
 
     def parseLine(self, line):
         """
@@ -103,7 +166,7 @@ class readMTP:
         """
         for linetype in self.rawscan:
             if 're' in self.rawscan[linetype]:
-                m = re.match(self.rawscan[linetype]['re'], line)
+                m = re.match(re.compile(self.rawscan[linetype]['re']), line)
                 if (m):
                     # Store data. Handle special case of date in A line
                     if (linetype == 'Aline'):  # Reformat date/time
@@ -228,7 +291,7 @@ class readMTP:
         separator = ' '
         Adata = separator.join(packet)  # Join the components into a string
 
-        # Save the generated a line to the dictionary
+        # Save the generated A line to the dictionary
         self.rawscan['Aline']['data'] = Adata
 
     def createBdata(self):
@@ -378,6 +441,14 @@ class readMTP:
                                                                  var)))
         return(self.varArray)
 
+    def get_metadata(self, linetype, var, key):
+        """ Get the metadata with keyword key for the variable """
+        return(self.flightData[0][linetype]['values'][var][key])
+
+    def getATPmetadata(self, var, key):
+        """ Get the metadata with keyword key for variable in ATP dict """
+        return(self.flightData[0]['ATP'][var][key])
+
     def setCalcVal(self, linetype, var, value, calctype):
         """
         Set the calculated value of type calctype for a given var to value.
@@ -391,8 +462,9 @@ class readMTP:
            (calctype == 'volts' and linetype == 'M01line')):
             self.rawscan[linetype]['values'][var][calctype] = value
         else:
-            print("linetype " + linetype + " doesn't have a " + calctype +
-                  " entry in the MTP dictionary. Ignored.")
+            logger.printmsg("WARNING", " linetype " + linetype + " doesn't " +
+                            "have a " + calctype + " entry in the MTP " +
+                            "dictionary. Ignored.")
 
     def getCalcVal(self, linetype, var, calctype):
         """
@@ -412,3 +484,21 @@ class readMTP:
 
     def getName(self, linetype, var):
         return(self.rawscan[linetype]['values'][var]['name'])
+
+    def saveTBI(self, tbi):
+        self.rawscan['tbi'] = tbi
+
+    def getTBI(self):
+        return(self.rawscan['tbi'])
+
+    def saveATP(self, ATP):
+        self.rawscan['ATP'] = ATP
+
+    def getATP(self):
+        return(self.rawscan['ATP'])
+
+    def saveBestWtdRCSet(self, BestWtdRCSet):
+        self.rawscan['BestWtdRCSet'] = BestWtdRCSet
+
+    def getBestWtdRCSet(self):
+        return(self.rawscan['BestWtdRCSet'])

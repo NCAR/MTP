@@ -21,6 +21,8 @@ from util.retriever import Retriever
 from util.tropopause import Tropopause
 from lib.rootdir import getrootdir
 from lib.config import config
+from EOLpython.fileselector import FileSelector
+from Qlogger.messageHandler import QLogger as logger
 
 
 class MTPclient():
@@ -36,7 +38,7 @@ class MTPclient():
         self.readConfig(configfile)
         self.checkRCF()  # Check that RCF file exists
 
-        # Instantiate and IWG reader. Needs path to ascii_parms file.
+        # Instantiate an IWG reader. Needs path to ascii_parms file.
         self.initIWG()
 
         # Instantiate an RCF retriever
@@ -100,16 +102,19 @@ class MTPclient():
         self.RCFdir = self.configfile.getPath('RCFdir')
 
     def checkRCF(self):
-        # Check if self.RCFdir exists. If not, call readConfig.
-        # TBD
-
-        # Check if RCFdir exists. If not, don't create Profile plot but let
-        # real-time code continue
+        """
+        Check if RCFdir exists. If not, prompt user to select correct RCFdir
+        """
         if not os.path.isdir(self.RCFdir):
+            logger.printmsg("ERROR", "RCF dir " + self.RCFdir + " doesn't " +
+                            "exist.", "Click OK to select correct dir. Don't" +
+                            " forget to update config file with correct dir " +
+                            "path")
             # Launch a file selector for user to select correct RCFdir
-            # Temporarily...
-            print("RCF dir " + self.RCFdir + " doesn't exist. Quitting.")
-            exit(1)
+            # This should really be done in MTPviewer, with a non-GUI option
+            # for command-line mode.
+            self.loader = FileSelector("loadRCFdir", getrootdir())
+            self.RCFdir = os.path.join(getrootdir(), self.loader.get_file())
 
     def getAsciiParms(self):
         """ Return path to ascii_parms file """
@@ -157,9 +162,49 @@ class MTPclient():
 
         # Invert the brightness temperature to column major storage
         tb = self.getTB()
-        tbi = self.invertArray(tb)
+        self.tbi = self.invertArray(tb)  # inverted brightness temperature
 
-        return(tbi)
+    def getTBI(self):
+        """ Return the inverted brightness temperature array """
+        return(self.reader.getTBI())
+
+    def processMTP(self):
+        # Perform line calculations on latest scan
+        self.doCalcs()
+        self.reader.saveTBI(self.tbi)
+
+        # Generate the data lines for current scan and save to dictionary
+        self.createRecord()
+
+        # Perform retrieval
+        try:
+            self.BestWtdRCSet = self.doRetrieval(self.getTBI())
+        except Exception:
+            raise  # Pass error back up to calling function
+
+        # If retrieval succeeded, get the physical temperature profile (and
+        # find the tropopause)
+        self.reader.saveBestWtdRCSet(self.BestWtdRCSet)
+
+        self.ATP = self.getProfile(self.getTBI(), self.BestWtdRCSet)
+        self.reader.saveATP(self.ATP)
+
+    def getBestWtdRCSet(self):
+        """ Return the best weighted RC set """
+        return(self.reader.getBestWtdRCSet())
+
+    def getATP(self):
+        """ Return the ATP profile and metadata """
+        return(self.reader.getATP())
+
+    def createRecord(self):
+        """ Generate the data strings for each data line and save to dict """
+        self.reader.createAdata()  # Create the A data string
+        self.reader.createBdata()  # Create the B data string
+        self.reader.createM01data()  # Create the M01 data string
+        self.reader.createM02data()  # Create the M02 data string
+        self.reader.createPtdata()  # Create the Pt data string
+        self.reader.createEdata()  # Create the E data string
 
     def doRetrieval(self, tbi):
         """ Perform retrieval """
@@ -300,25 +345,28 @@ class MTPclient():
                 ATP['RCFIndex'] = numpy.nan
                 ATP['RCFALT1Index'] = numpy.nan
                 ATP['RCFALT2Index'] = numpy.nan
-                ATP['RCFMRIndex'] = numpy.nan
+                ATP['RCFMRIndex']['val'] = numpy.nan
 
                 # Also set first (and only) tropopause to NAN
-                ATP['trop'][0]['idx'] = numpy.nan
-                ATP['trop'][0]['altc'] = numpy.nan
-                ATP['trop'][0]['tempc'] = numpy.nan
+                ATP['trop']['val'][0]['idx'] = numpy.nan
+                ATP['trop']['val'][0]['altc'] = numpy.nan
+                ATP['trop']['val'][0]['tempc'] = numpy.nan
 
             else:
                 # Found a good MTP scan. RCF indices were set in the
                 # retrieve function above so just need to calculate
                 # tropopauses
-                [startTropIndex, ATP['trop'][0]['idx'], ATP['trop'][0]['altc'],
-                 ATP['trop'][0]['tempc']] = trop.findTropopause(startTropIndex)
+                [startTropIndex, ATP['trop']['val'][0]['idx'],
+                 ATP['trop']['val'][0]['altc'],
+                 ATP['trop']['val'][0]['tempc']] = \
+                 trop.findTropopause(startTropIndex)
 
                 # If found a tropopause, look for a second one
-                if not numpy.isnan(ATP['trop'][0]['idx']):
+                if not numpy.isnan(ATP['trop']['val'][0]['idx']):
                     # Start at previous index
-                    [startTropIndex, ATP['trop'][1]['idx'],
-                     ATP['trop'][1]['altc'], ATP['trop'][1]['tempc']] = \
+                    [startTropIndex, ATP['trop']['val'][1]['idx'],
+                     ATP['trop']['val'][1]['altc'],
+                     ATP['trop']['val'][1]['tempc']] = \
                         trop.findTropopause(startTropIndex)
 
             return(ATP)
@@ -351,7 +399,7 @@ class MTPclient():
 
         # Store IWG record to data dictionary
         status = self.iwg.parseIwgPacket(dataI)   # Store to values
-        if status == True:  # Successful parse if IWG packet
+        if status is True:  # Successful parse if IWG packet
             self.reader.parseLine(dataI)  # Store to date, data, & asciiPacket
 
     def readSocket(self):
@@ -361,7 +409,6 @@ class MTPclient():
 
         # Store data to data dictionary
         self.reader.parseAsciiPacket(data)  # Store to values
-        self.reader.parseLine(data)   # Store to date and data
 
     def close(self):
         """ Close UDP socket connections """
