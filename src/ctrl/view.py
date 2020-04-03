@@ -972,7 +972,9 @@ class controlWindow(QWidget):
             dataLine = self.quickRead(25) # avg is ~9, max is currently 15
             # ensure integrator starts so then can
             i=0
-            while i < 20: 
+            looptimeMS = 50
+            looping = True
+            while i < looptimeMS: 
                 logging.debug("integrate loop 1, checking for odd number")
                 self.serialPort.sendCommand((self.commandDict.getCommand("status")))
                 # echo is b'S\r\n'
@@ -981,10 +983,10 @@ class controlWindow(QWidget):
                 if status.size() is 10:
                     # echo and status return concatinated
                     num = int(status[7])
-                elif status.size() is 4:
+                elif status.size() is 7:
                     num = int(status[4])
                 else: 
-                    num = 0
+                    num = 525600
                 logging.debug(num)
                 if (num % 2) == 1:
                     # VB6 code has a bitwise and to check if this status is odd
@@ -993,12 +995,21 @@ class controlWindow(QWidget):
                     break   
                 logging.debug(status.size())
                 i = i + 1
-                self.app.processEvents()
+                if  i == looptimeMS and looping:
+                    #send integrate again
+                    self.serialPort.sendCommand((self.commandDict.getCommand("count")))
+                    #reset i, but only once
+                    i = 0
+                    looping = False
+                    #wait for read
+                    status = self.readUntilFound(b'I', 100000, 10)
+                    logging.debug("INtegrate 1, resend count command")
+                    logging.debug(status)
 
             logging.debug("integrator has started")
             # check that integrator is done
             i=0
-            while i < 20: 
+            while i < 90: 
                 logging.debug("integrate loop 2, checking for even number")
                 self.serialPort.sendCommand((self.commandDict.getCommand("status")))
                 # echo is b'S\r\n'
@@ -1009,8 +1020,11 @@ class controlWindow(QWidget):
                     num = int(status[7])
                 elif status.size() is 4:
                     num = int(status[4])
+                    logging.debug("num 2nd integrate, length 4: %s", num)
                 else: 
-                    num = 0
+                    # must be odd, but exact value shouldn't matter
+                    # for munged, concantonated and other transmit issues 
+                    num = 1
                 if (num % 2) == 0:
                     # VB6 code has a bitwise and to check if this status is even
                     # status returns 04 and 06 most commonly
