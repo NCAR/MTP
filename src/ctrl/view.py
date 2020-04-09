@@ -81,9 +81,9 @@ class controlWindow(QWidget):
         self.planeNameBox.insertPlainText('NGV')
 
         # Push Buttons
-        self.reInitProbe = QPushButton("Reset Probe", self)
+        self.reInitProbe = QPushButton("Re-initialize Probe", self)
         self.reInitProbe.clicked.connect(self.reInitProbeClicked)
-        self.scanStatusButton = QPushButton("Scan Status", self)
+        self.scanStatusButton = QPushButton("Stop Scanning", self)
         self.scanStatusButton.clicked.connect(self.scanStatusClicked)
         self.shutdownProbe = QPushButton("Quit", self)
         self.shutdownProbe.clicked.connect(self.shutdownProbeClicked)
@@ -1049,7 +1049,7 @@ class controlWindow(QWidget):
             logging.debug("r value data")
             logging.debug(datum)
             # translate from hex:
-            datum = str(int(datum.data().decode('ascii'), 16))
+            datum = '%06d' % int(datum.data().decode('ascii'), 16)
 
             # append to string:
             data = data + ' ' + datum
