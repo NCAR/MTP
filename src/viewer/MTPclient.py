@@ -64,6 +64,9 @@ class MTPclient():
         parser.add_argument(
             '--logmod', type=str, default=None, help="Limit logging to " +
             "given module")
+        parser.add_argument(
+            '--cnts', dest='cnts', action='store_const', const=True,
+            help='Plot counts instead of scan/template. Useful for testing')
         args = parser.parse_args()
 
         return(args)
@@ -266,7 +269,6 @@ class MTPclient():
         rawscan = self.reader.getRawscan()
         Tifa = rawscan['Ptline']['values']['TMIXCNTP']['temperature']
         OAT = rawscan['Aline']['values']['SAAT']['val']  # Kelvin
-        scnt = rawscan['Bline']['values']['SCNT']['val']
 
         # Check if self.configfile exists. If not, call readConfig.
         # TBD
@@ -275,7 +277,7 @@ class MTPclient():
         # Calculate the brightness temperatures for the latest scan counts
         # and save them back to the MTP data dictionary.
         rawscan['Bline']['values']['SCNT']['tb'] = \
-            tb.TBcalculationRT(Tifa, OAT, scnt)
+            tb.TBcalculationRT(Tifa, OAT, self.getSCNT())
 
     def invertArray(self, array):
         """

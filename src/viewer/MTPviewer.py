@@ -22,11 +22,12 @@ from Qlogger.messageHandler import QLogger as logger
 
 class MTPviewer(QMainWindow):
 
-    def __init__(self, client, app, mtpRealTimeFile):
+    def __init__(self, client, app, mtpRealTimeFile, cnts):
 
         self.client = client
         self.app = app
         self.mtpRealTimeFile = mtpRealTimeFile
+        self.cnts = cnts
         self.cell = [[numpy.nan for j in range(10)] for i in range(3)]
 
         self.clicked = False  # Only show error msg once
@@ -467,7 +468,11 @@ class MTPviewer(QMainWindow):
         self.scantemp.clear()
 
         # Plot scan brightness temperatures.
-        self.scantemp.plotTB(self.client.getTBI())
+        if self.cnts:  # Plot counts if requested on command line
+            self.scantemp.plotDataScnt(
+                self.client.invertArray(self.client.getSCNT()))
+        else:  # Plot scan/template of brightness temperatures
+            self.scantemp.plotTB(self.client.getTBI())
         self.scantemp.draw()
 
         # If retrieval failed, go no further

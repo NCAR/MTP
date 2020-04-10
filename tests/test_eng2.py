@@ -32,6 +32,7 @@ from logger.messageHandler import Logger as logger
 class TESTeng2(unittest.TestCase):
 
     def setUp(self):
+        self.cnts = False
         # Location of default ascii_parms file
         self.ascii_parms = os.path.join(getrootdir(), 'config', 'ascii_parms')
         self.configfile = os.path.join(getrootdir(), 'config', 'proj.yml')
@@ -53,14 +54,14 @@ class TESTeng2(unittest.TestCase):
 
         # Test with no JSON file
         filename = ""
-        self.viewer = MTPviewer(self.client, self.app, filename)
+        self.viewer = MTPviewer(self.client, self.app, filename, self.cnts)
         self.assertEqual(self.viewer.eng2.toPlainText(),
                          "Channel\tCounts  Volts")
 
     def test_eng2_JSON(self):
         # Test with JSON file
         filename = "../tests/test_data/DEEPWAVErf01.mtpRealTime.json"
-        self.viewer = MTPviewer(self.client, self.app, filename)
+        self.viewer = MTPviewer(self.client, self.app, filename, self.cnts)
         self.assertEqual(self.viewer.eng2.toPlainText(),
                          "Channel\tCounts  Volts\n" +
                          "-8V  PS\t2928  -07.99V\n" +
