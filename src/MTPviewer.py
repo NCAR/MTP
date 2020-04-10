@@ -38,7 +38,7 @@ def main():
     filename = client.reader.getJson(client.getProj(), client.getFltno())
 
     # Instantiate the GUI
-    viewer = MTPviewer(client, app, filename)
+    viewer = MTPviewer(client, app, filename, args.cnts)
     viewer.show()
 
     # Run the application until the user closes it.
