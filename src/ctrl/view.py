@@ -927,11 +927,14 @@ class controlWindow(QWidget):
             # then returns b'Step:\xff/0`1378147\r\n' 
             echo = self.readUntilFound(b':', 100000, 20)
             #logging.debug("integrate echo 1 : %s", echo.decode(ascii))
-            echo = self.readUntilFound(b'S', 100000, 20)
+            #echo = self.readUntilFound(b':', 100000, 20)
             # have a does string contain bactic `
             logging.debug(echo.size())
-            if echo.size() == 18 and echo.data().find(b'`') > 0:
-                readScan = echo.data()[9:15]
+            # 17 or 18 depending on size of value returned
+            findBactic = echo.data().find(b'`') 
+            if findBactic > 0:
+                readScan = echo.data()[findBactic + 1: echo.size() - 2]
+                # readScan = echo.data()[9:15]
                 logging.debug("readScan is: ")
                 logging.debug(readScan)
                 logging.debug(int(readScan.decode('Ascii'), 16))
