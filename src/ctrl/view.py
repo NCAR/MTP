@@ -436,7 +436,7 @@ class controlWindow(QWidget):
                 self.app.processEvents()
                 i = i + 1
             elif echo.data().find(binaryString) >= 0:
-                logging.debug("received S")
+                logging.debug("received binary string")
                 return echo
             else:
                 logging.debug("init1 loop echo else case")
@@ -880,7 +880,7 @@ class controlWindow(QWidget):
         # echo = self.read(200,200)
         # need to implement the better logic counters in bline
         # for scanCount and encoderCount
-        self.packetStore.setData("scanCount", int(self.packetStore.getData("scanCount")) + 1)
+        #self.packetStore.setData("scanCount", int(self.packetStore.getData("scanCount")) + 1)
         logging.debug("View: Aline end")
         return aline
 
@@ -917,27 +917,61 @@ class controlWindow(QWidget):
                 logging.debug('Pitch correct mode on')
             data = data + self.integrate()
             logging.debug(data)
-        # Read Scan should only be sent 1x per bline 
-        self.serialPort.sendCommand((self.commandDict.getCommand("read_scan")))
-        # read_scan returns b'Step:\xff/0`1000010\r\n' 
-        echo = self.readUntilFound(b':', 100000, 20)
-        #logging.debug("integrate echo 1 : %s", echo.decode(ascii))
-        echo = self.readUntilFound(b'S', 100000, 20)
-        if echo.size == 17:
-            readScan = echo[7:15]
-            logging.debug(int(readScan.decode('Ascii'), 16))
-            self.scanCount = 1000000 - int(readScan.decode('Ascii'), 16)
-        logging.debug("readScan")
+        
+        i =0
+        while i < 11:
+            self.serialPort.sendCommand((self.commandDict.getCommand("read_scan")))
+            # first there's the echo, then there's the probe's echo of that echo then
+            echo = self.readUntilFound(b':', 100000, 20)
+            # read_scan returns b'Step:\xff/0c1378147\r\n' 
+            # then returns b'Step:\xff/0`1378147\r\n' 
+            echo = self.readUntilFound(b':', 100000, 20)
+            #logging.debug("integrate echo 1 : %s", echo.decode(ascii))
+            echo = self.readUntilFound(b'S', 100000, 20)
+            # have a does string contain bactic `
+            logging.debug(echo.size())
+            if echo.size() == 18 and echo.data().find(b'`') > 0:
+                readScan = echo.data()[9:15]
+                logging.debug("readScan is: ")
+                logging.debug(readScan)
+                logging.debug(int(readScan.decode('Ascii'), 16))
+                # despite the first echo being formated 0c123456
+                # The return echo turns the 0c into ` (proper hex translation)
+                # and leaves the rest of the numbers alone
+                # I'm forced to assume this and encoderCount are 
+                # the only case where numbers return in decimal, not hex
+                # given that is the only way to get near the correct numbers
+                # from previous flight data
+                #
+                # Also note that while the VB6 does append a ">>" to the data
+                # that is only used as a deliminator, not a bit shift,
+                # and only locally in the vb6 for these two cases. 
+                # So in intrest of sanity, and because python can manage
+                # without a deliminator in this case, I'm not
+                # going to re-implement that. 
+                self.scanCount = (1000000 - int(readScan.decode('Ascii')))
+                if self.scanCount >=0:
+                    self.scanCount = '+' +'%06d' % self.scanCount
+                self.packetStore.setData('scanCount', self.scanCount)
 
+                break
+            i = i+1
+        logging.debug('readencoder size: %d', echo.size())
         self.serialPort.sendCommand((self.commandDict.getCommand("read_enc")))
-        # read_scan returns b'Step:\xff/0`1000010\r\n' 
+        # read_scan returns eg. b'Step:\xff/0`1378147\r\n' 
         echo = self.readUntilFound(b':', 100000, 20)
-        echo = self.readUntilFound(b'S', 100000, 20)
-        if echo.size == 15:
-            readEnc = echo[9:13]
-            logging.debug(int(readEnc.decode('Ascii'), 16))
-            self.encoderCount = (1000000 - int(readEnc.decode('Ascii'), 16)) * 16
-        logging.debug("readEnc")
+        echo = self.readUntilFound(b'`', 100000, 20)
+        if echo.size() == 18 and echo.data().find(b'`') > 0:
+            readEnc = echo.data()[9:13]
+            logging.debug("readEnc is:")
+            logging.debug(readEnc)
+            logging.debug(int(readEnc.decode('Ascii')))
+            self.encoderCount = ((1000000 - int(readEnc.decode('Ascii'))) * 16)
+            if self.encoderCount >= 0:
+                self.encoderCount = '+' + '%06d' % self.encoderCount
+            
+            self.packetStore.setData('encoderCount', self.encoderCount)
+        logging.debug('readscan size: %d', echo.size())
         #logging.debug("integrate echo 1 : %s", echo.decode(ascii))
         #self.blineStore = self.blineStore + data
         #logging.debug(self.blineStore)
