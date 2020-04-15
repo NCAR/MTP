@@ -918,6 +918,9 @@ class controlWindow(QWidget):
             data = data + self.integrate()
             logging.debug(data)
         
+        self.updateRead("read_scan")
+        self.updateRead("read_enc")
+        '''
         i =0
         while i < 11:
             self.serialPort.sendCommand((self.commandDict.getCommand("read_scan")))
@@ -975,6 +978,7 @@ class controlWindow(QWidget):
             
             self.packetStore.setData('encoderCount', self.encoderCount)
         logging.debug('readscan size: %d', echo.size())
+        '''
         #logging.debug("integrate echo 1 : %s", echo.decode(ascii))
         #self.blineStore = self.blineStore + data
         #logging.debug(self.blineStore)
@@ -982,6 +986,55 @@ class controlWindow(QWidget):
 
             
         #    scanNum = 1000000 - self.readScan()
+    def updateRead (self, scanOrEncode):
+        i =0 
+        while i < 11:
+            self.serialPort.sendCommand((self.commandDict.getCommand(scanOrEncode)))
+            # first there's the echo, then there's the probe's echo of that echo then
+            echo = self.readUntilFound(b':', 100000, 20)
+            # read_scan returns b'Step:\xff/0c1378147\r\n' 
+            # then returns b'Step:\xff/0`1378147\r\n' 
+            echo = self.readUntilFound(b':', 100000, 20)
+            #logging.debug("integrate echo 1 : %s", echo.decode(ascii))
+            #echo = self.readUntilFound(b':', 100000, 20)
+            # have a does string contain bactic `
+            logging.debug(echo.size())
+            # 17 or 18 depending on size of value returned
+            findBactic = echo.data().find(b'`') 
+            if findBactic > 0: 
+                readScan = echo.data()[findBactic + 1: echo.size() - 2] 
+                # readScan = echo.data()[9:15]
+                logging.debug("readScan is: ")
+                logging.debug(readScan)
+                logging.debug(int(readScan.decode('Ascii'), 16)) 
+                # despite the first echo being formated 0c123456
+                # The return echo turns the 0c into ` (proper hex translation)
+                # and leaves the rest of the numbers alone
+                # I'm forced to assume this and encoderCount are 
+                # the only case where numbers return in decimal, not hex
+                # given that is the only way to get near the correct numbers
+                # from previous flight data
+                #    
+                # Also note that while the VB6 does append a ">>" to the data
+                # that is only used as a deliminator, not a bit shift,
+                # and only locally in the vb6 for these two cases. 
+                # So in intrest of sanity, and because python can manage
+                # without a deliminator in this case, I'm not
+                # going to re-implement that. 
+                if scanOrEncode is "read_scan":
+                    self.scanCount = (1000000 - int(readScan.decode('Ascii')))
+                    self.packetStore.setData('scanCount', self.scanCount)
+                else:
+                    self.scanCount = ((1000000 - int(readEnc.decode('Ascii'))) * 16)
+                    self.packetStore.setData('encoderCount', self.scanCount)
+
+                if self.scanCount >=0: 
+                    self.scanCount = '+' +'%06d' % self.scanCount
+
+                break
+            i = i+1
+        logging.debug('readencoder size: %d', echo.size())
+
 
     def quickRead(self, timeout):
         logging.debug("quickRead start")
