@@ -273,7 +273,7 @@ class doUDP(object):
 
         #keeping these in the packet store because they are single values
         # may remove if time still an issue
-        logging.debug("Got IWG, but pitchrms still not in packet store, name = %s",str(name) + 'avg')
+        logging.debug("Got IWG,name = %s",str(name) + 'avg or rms')
         self.parent.packetStore.setData(str(name) + 'avg', avg)
         self.parent.packetStore.setData(str(name) + 'rms', rms)
         
