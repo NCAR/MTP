@@ -42,8 +42,8 @@ class StorePacket():
             # except not really, pitchavg/pitchrms added as
             # temp vars from udp averageVal
             # but we do need this in here if there is no iwg packet
-            'scanCount': 0,
-            'encoderCount': 0,
+            'scanCount': '+074146',
+            'encoderCount':'+073392',
             'saved': False,   
             'newFrame': False,
             'isCycling': False,
