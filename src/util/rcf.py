@@ -30,7 +30,7 @@ import copy
 import struct
 import inspect
 from util.rcf_structs import RCF_HDR, RCF_FL
-from Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
 class RetrievalCoefficientFile():

@@ -9,7 +9,7 @@ import sys
 from PyQt5.QtWidgets import QApplication
 from viewer.MTPviewer import MTPviewer
 from viewer.MTPclient import MTPclient
-from Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
 def main():
@@ -34,11 +34,13 @@ def main():
     # This also connects to the MTP and IWG feeds
     client.config(args.config)
 
-    # Get name of file JSON data (potentially) saved to
+    # Get name of file JSON data (potentially) saved to. The name of the JSON
+    # file is aotumatically generated and includes the project and flight
+    # number.
     filename = client.reader.getJson(client.getProj(), client.getFltno())
 
     # Instantiate the GUI
-    viewer = MTPviewer(client, app, filename, args.cnts)
+    viewer = MTPviewer(client, app, filename, args)
     viewer.show()
 
     # Run the application until the user closes it.

@@ -10,8 +10,8 @@ import re
 import numpy
 import yaml
 from lib.rootdir import getrootdir
-from EOLpython.fileselector import FileSelector
-from Qlogger.messageHandler import QLogger as logger
+from EOLpython.util.fileselector import FileSelector
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
 class config():

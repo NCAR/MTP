@@ -8,7 +8,7 @@
 ###############################################################################
 import re
 import numpy
-from Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
 class readIWG:

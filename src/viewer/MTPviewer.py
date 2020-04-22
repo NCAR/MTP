@@ -17,17 +17,18 @@ from viewer.plotScanTemp import ScanTemp
 from viewer.plotProfile import Profile
 from viewer.plotCurtain import Curtain
 from lib.icartt import ICARTT
-from Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.util.fileselector import FileSelector
 
 
 class MTPviewer(QMainWindow):
 
-    def __init__(self, client, app, mtpRealTimeFile, cnts):
+    def __init__(self, client, app, mtpRealTimeFile, args):
 
         self.client = client
         self.app = app
+        self.args = args
         self.mtpRealTimeFile = mtpRealTimeFile
-        self.cnts = cnts
         self.cell = [[numpy.nan for j in range(10)] for i in range(3)]
 
         self.clicked = False  # Only show error msg once
@@ -468,7 +469,7 @@ class MTPviewer(QMainWindow):
         self.scantemp.clear()
 
         # Plot scan brightness temperatures.
-        if self.cnts:  # Plot counts if requested on command line
+        if self.args.cnts:  # Plot counts if requested on command line
             self.scantemp.plotDataScnt(
                 self.client.invertArray(self.client.getSCNT()))
         else:  # Plot scan/template of brightness temperatures

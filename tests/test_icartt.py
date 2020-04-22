@@ -27,7 +27,7 @@ from viewer.MTPclient import MTPclient
 
 import sys
 import logging
-from logger.messageHandler import Logger as logger
+from EOLpython.logger.messageHandler import Logger as logger
 
 
 class TESTicartt(unittest.TestCase):

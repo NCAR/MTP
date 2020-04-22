@@ -21,8 +21,8 @@ from util.retriever import Retriever
 from util.tropopause import Tropopause
 from lib.rootdir import getrootdir
 from lib.config import config
-from EOLpython.fileselector import FileSelector
-from Qlogger.messageHandler import QLogger as logger
+from EOLpython.util.fileselector import FileSelector
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
 class MTPclient():
