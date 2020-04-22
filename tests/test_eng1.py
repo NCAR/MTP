@@ -17,6 +17,7 @@
 ###############################################################################
 import os
 import unittest
+import argparse
 from PyQt5.QtWidgets import QApplication
 
 from viewer.MTPviewer import MTPviewer
@@ -26,13 +27,12 @@ from lib.rootdir import getrootdir
 
 import sys
 import logging
-from logger.messageHandler import Logger as logger
+from EOLpython.logger.messageHandler import Logger as logger
 
 
 class TESTeng1(unittest.TestCase):
 
     def setUp(self):
-        self.cnts = False
         # Location of default ascii_parms file
         self.ascii_parms = os.path.join(getrootdir(), 'config', 'ascii_parms')
         self.configfile = os.path.join(getrootdir(), 'config', 'proj.yml')
@@ -44,6 +44,8 @@ class TESTeng1(unittest.TestCase):
         self.client = MTPclient()
         self.client.config(self.configfile)
 
+        self.args = argparse.Namespace(cnts=False, postprocess=False)
+
     def test_eng1_noJSON(self):
         """ Test Engineering 1 display window shows what we expect """
         # This first emgineering window shows the Pt line
@@ -54,14 +56,14 @@ class TESTeng1(unittest.TestCase):
 
         # Test with no JSON file
         filename = ""
-        self.viewer = MTPviewer(self.client, self.app, filename, self.cnts)
+        self.viewer = MTPviewer(self.client, self.app, filename, self.args)
         self.assertEqual(self.viewer.eng1.toPlainText(),
                          "Channel\tCounts  Ohms  Temp  ")
 
     def test_eng1_JSON(self):
         # Test with JSON file
         filename = "../tests/test_data/DEEPWAVErf01.mtpRealTime.json"
-        self.viewer = MTPviewer(self.client, self.app, filename, self.cnts)
+        self.viewer = MTPviewer(self.client, self.app, filename, self.args)
         self.assertEqual(self.viewer.eng1.toPlainText(),
                          "Channel\tCounts  Ohms  Temp  \n" +
                          "Rref 350\t02174  350.00  \n" +

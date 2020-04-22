@@ -53,7 +53,7 @@ import json
 import copy
 from util.MTP import MTPrecord
 from lib.rootdir import getrootdir
-from Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
 class readMTP:

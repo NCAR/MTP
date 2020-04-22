@@ -30,7 +30,7 @@ import math
 import inspect
 from util.rcf_structs import RC_Set_4Retrieval
 from util.rcf import RetrievalCoefficientFile
-from Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
 class RetrievalCoefficientFileSet():
