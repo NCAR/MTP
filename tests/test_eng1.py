@@ -26,7 +26,7 @@ from lib.rootdir import getrootdir
 
 import sys
 import logging
-from logger.messageHandler import Logger as logger
+from EOLpython.logger.messageHandler import Logger as logger
 
 
 class TESTeng1(unittest.TestCase):

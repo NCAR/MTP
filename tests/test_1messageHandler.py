@@ -24,7 +24,7 @@ import logging
 from io import StringIO
 from unittest.mock import patch
 from PyQt5.QtWidgets import QApplication
-from Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
 class TESTprintmsg(unittest.TestCase):

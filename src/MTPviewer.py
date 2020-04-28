@@ -9,7 +9,7 @@ import sys
 from PyQt5.QtWidgets import QApplication
 from viewer.MTPviewer import MTPviewer
 from viewer.MTPclient import MTPclient
-from Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
 def main():
