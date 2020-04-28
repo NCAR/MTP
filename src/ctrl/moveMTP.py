@@ -784,7 +784,8 @@ class moveMTP():
         beta = -1 * (-cR * sP * self.setMAM(1, 3) + sR * self.setMAM(2, 3) + cR * cP * self.setMAM(3, 3))
         fSe = -ASN(alpha * cos(E) + beta * sin(E)) / rpd
 
-    def fEc(self):
+    def fEc(self, pitch, roll, targetEl, EmaxFlag):
+        # Pitch and roll can be either by frame (post) or instantaneous (realtime)
         """ Needed by goAngle in cycle in move.py """
         # Calculate commanded elevation angle needed to be at a specified
         # elevation angle (Elevation) with respect to the horizon
@@ -800,14 +801,15 @@ class moveMTP():
         # difference in solutions
         
         # Then fEc = 180#: Return
-        if Elevation is 180: 
+        if targetEl is 180: 
             return 180
 
-        # rpd = Atn(1) / 45#       'Radians per degree 3.14159265358979
+        rpd = atan(1) / 45#       'Radians per degree 3.14159265358979
 
-        P = Pd * rpd
-        R = Rd * rpd
-        E = Elevation * rpd
+        # convert
+        P = pitch * rpd
+        R = roll * rpd
+        E = targetEl * rpd
 
         cP = cos(P)
         sP = sin(P)
@@ -828,14 +830,15 @@ class moveMTP():
             else:
                 Ec_at_Emax = -90
         else:
-            Ec_at_Emax = Atn(beta / alpha) / rpd
+            Ec_at_Emax = atan(beta / alpha) / rpd
 
-        E_max = -ASN(alpha * cos(Ec_at_Emax * rpd) + beta * sin(Ec_at_Emax * rpd))
+        # VB6 has a less accurate, but presumably faster ASN function for arcsin
+        E_max = -asin(alpha * cos(Ec_at_Emax * rpd) + beta * sin(Ec_at_Emax * rpd))
         Emax = E_max / rpd #Always + since it is maximum elevation angle
         #Debug.Print alpha; beta; Ec_at_Emax; alpha * cos(Ec_at_Emax) + beta * sin(Ec_at_Emax)
-        Ep90 = abs(-ASN(beta) / rpd)
+        Ep90 = abs(-asin(beta) / rpd)
         Em90 = -Ep90
-        E_Ec_0 = -ASN(alpha) / rpd  #Elevation at which Ec=0
+        E_Ec_0 = -asin(alpha) / rpd  #Elevation at which Ec=0
 
         EmaxFlag = False
         
@@ -856,8 +859,8 @@ class moveMTP():
             if Arg < 0:
                 Arg = 0
                 # next two lines ambiguously indented in vb6
-                fEc1 = ASN((-B - sqrt(Arg)) / (2 * A)) / rpd
-                fEc2 = ASN((-B + sqrt(Arg)) / (2 * A)) / rpd
+                fEc1 = asin((-B - sqrt(Arg)) / (2 * A)) / rpd
+                fEc2 = asin((-B + sqrt(Arg)) / (2 * A)) / rpd
                 if E_Ec_0 < 0:
                     # logical equivalent of Vb6 that follows 
                     if Elevation >= E_Ec_0 and Elevation >= Ep90:
