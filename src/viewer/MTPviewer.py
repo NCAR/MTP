@@ -16,7 +16,7 @@ from PyQt5.QtGui import QFontMetrics, QFont
 from viewer.plotScanTemp import ScanTemp
 from viewer.plotProfile import Profile
 from viewer.plotCurtain import Curtain
-from Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
 class MTPviewer(QMainWindow):
