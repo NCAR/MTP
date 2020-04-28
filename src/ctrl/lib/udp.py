@@ -188,6 +188,10 @@ class doUDP(object):
             templist[nval-i] = templist[nval-(i+1)]
             i = i+1
         templist[0] = latestValue
+        if name is 'pitch':
+            self.setData(name+ 'Instant', latestValue)
+        elif name is 'roll':
+            self.setData(name+ 'Instant', latestValue)
         self.setArray(name, templist)
         self.averageVal(name)
 
