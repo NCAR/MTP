@@ -872,6 +872,7 @@ class controlWindow(QWidget):
         #self.alineStore = aline
 
         self.packetStore.setData("angleI", 0) # angle index
+        # update instantanious angle frame?
 
         self.serialPort.sendCommand((self.commandDict.getCommand("read_scan")))
         echo = self.readUntilFound(b':', 100000, 20)
@@ -1004,9 +1005,6 @@ class controlWindow(QWidget):
             if findBactic > 0: 
                 readScan = echo.data()[findBactic + 1: echo.size() - 2] 
                 # readScan = echo.data()[9:15]
-                logging.debug("readScan is: ")
-                logging.debug(readScan)
-                logging.debug(int(readScan.decode('Ascii'), 16)) 
                 # despite the first echo being formated 0c123456
                 # The return echo turns the 0c into ` (proper hex translation)
                 # and leaves the rest of the numbers alone
@@ -1022,14 +1020,23 @@ class controlWindow(QWidget):
                 # without a deliminator in this case, I'm not
                 # going to re-implement that. 
                 if scanOrEncode is "read_scan":
+                    logging.debug("readScan is: ")
+                    logging.debug(readScan)
+                    logging.debug(int(readScan.decode('Ascii'))) 
                     self.scanCount = (1000000 - int(readScan.decode('Ascii')))
+                    if self.scanCount >=0: 
+                        self.scanCount = '+' +'%06d' % self.scanCount
                     self.packetStore.setData('scanCount', self.scanCount)
                 else:
-                    self.scanCount = ((1000000 - int(readEnc.decode('Ascii'))) * 16)
+                    logging.debug("readEncode is: ")
+                    logging.debug(readScan)
+                    logging.debug(int(readScan.decode('Ascii'))) 
+                    logging.debug(int(readScan.decode('Ascii'),16)) 
+                    
+                    self.scanCount = ((1000000 - int(readScan.decode('Ascii'), 16)))
+                    if self.scanCount >=0: 
+                        self.scanCount = '+' +'%06d' % self.scanCount
                     self.packetStore.setData('encoderCount', self.scanCount)
-
-                if self.scanCount >=0: 
-                    self.scanCount = '+' +'%06d' % self.scanCount
 
                 break
             i = i+1
@@ -1195,11 +1202,13 @@ class controlWindow(QWidget):
 
 
     def goAngle(self, targetEl, zel):
+        # pitch and roll need to be instant values from IWG, updated 1x per cycle (??!?) in Aline
         if self.packetStore.getData("pitchCorrect"):
-            logging.info("correcting Pitch")
-            targetClkAngle = targetEl + self.mover.fec(self.mover.configMAM(), Pitch_Frame, Roll_Frame, targetEl, EmaxFlag)
+            targetClkAngle = targetEl + self.mover.fEc(Pitch_Frame, Roll_Frame, targetEl, EmaxFlag)
         else:
-            targetClkAngle = targetEl + zel
+            logging.info("correcting Pitch")
+            targetClkAngle = targetEl + self.mover.fEc(Pitch_Frame, Roll_Frame, targetEl, EmaxFlag)
+            #targetClkAngle = targetEl + zel
         targetClkStep = targetClkAngle * self.packetStore.getData("stepsDegree")
         currentClkStep = self.packetStore.getData("currentClkStep")
         nsteps = targetClkStep - currentClkStep
