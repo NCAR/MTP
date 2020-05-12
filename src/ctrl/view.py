@@ -398,6 +398,13 @@ class controlWindow(QWidget):
                 logging.debug('probe initialized')
                 break
             i = i + 1
+        i=0
+        for i < 3: 
+            self.serialPort.sendCommand(b'\r\n')
+            logging.debug("init vbcr equivalent return1 ")
+            echo = self.serialPort.canReadLine(20)#msec
+            i = i+1
+        
 
     def tryInit(self, whichInit):
         # init probe
