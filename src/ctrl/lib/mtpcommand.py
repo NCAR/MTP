@@ -176,6 +176,7 @@ class MTPcommand():
             'init1': b'U/1f1j256V50000R\r\n',  # direction,top speed, uSteps/step
             'init2': b'U/1L4000h30m100R\r\n',  # acceration, holding current,
                                             # motor current
+            'init3':b'U/1j8v800V3000L20m70R\r\n' # from WFP_Init.txt believe to be unused
 
             # From VB6 sub homeScan() - These three step down in resolution, so
             # maybe finer and finer adjustment of home position?
