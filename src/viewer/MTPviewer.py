@@ -16,9 +16,7 @@ from PyQt5.QtGui import QFontMetrics, QFont
 from viewer.plotScanTemp import ScanTemp
 from viewer.plotProfile import Profile
 from viewer.plotCurtain import Curtain
-from lib.icartt import ICARTT
 from EOLpython.Qlogger.messageHandler import QLogger as logger
-from EOLpython.util.fileselector import FileSelector
 
 
 class MTPviewer(QMainWindow):
@@ -98,13 +96,6 @@ class MTPviewer(QMainWindow):
         self.curtainButton.triggered.connect(self.curtainWindow)
         menubar.addAction(self.curtainButton)
         self.curtain = Curtain(self)
-
-        # Add a menu option to save final data
-        self.saveButton = QAction('Save ICARTT', self)
-        self.saveButton.setToolTip('Save Processed Data to an ICARTT file')
-        self.saveButton.triggered.connect(self.saveICARTT)
-        menubar.addAction(self.saveButton)
-        self.icartt = ICARTT(self.client)
 
         # Add a menu option to quit
         self.quitButton = QAction('Quit', self)
@@ -369,15 +360,6 @@ class MTPviewer(QMainWindow):
         # look. Remove this when get data parsing coded.
         self.iwg.appendPlainText("IWG1,YYYYMMDDTHHMMSS,-xx.xxxx,xxx.xxx,")
         # End temporary display block
-
-    def saveICARTT(self):
-        """ Action to take when Save ICARTT button is clicked """
-        filename = self.icartt.getICARTT()
-        self.icartt.saveHeader(filename)  # Write the header to the output file
-        self.icartt.saveData(filename)
-
-        logger.printmsg("info", "File " + filename + " successfully written",
-                        "If file already existed, it was overwritten")
 
     def curtainWindow(self):
         """ Action to take when CurtainPlot button is clicked """
