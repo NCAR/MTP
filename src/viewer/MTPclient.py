@@ -113,7 +113,8 @@ class MTPclient():
             # Launch a file selector for user to select correct RCFdir
             # This should really be done in MTPviewer, with a non-GUI option
             # for command-line mode.
-            self.loader = FileSelector("loadRCFdir", getrootdir())
+            self.loader = FileSelector()
+            self.loader.set_filename("loadRCFdir", getrootdir())
             self.RCFdir = os.path.join(getrootdir(), self.loader.get_file())
 
     def getAsciiParms(self):

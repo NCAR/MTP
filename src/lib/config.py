@@ -50,7 +50,8 @@ class config():
                         "exist.", "Click OK to select correct file.")
 
         # Launch a file selector for user to select correct config file
-        self.loader = FileSelector("loadConfig", getrootdir())
+        self.loader = FileSelector()
+        self.loader.set_filename("loadConfig", getrootdir())
         self.yamlfile = os.path.join(getrootdir(), self.loader.get_file())
 
         # Try read again
