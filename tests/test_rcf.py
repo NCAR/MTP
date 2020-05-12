@@ -48,8 +48,8 @@ class TESTrcf(unittest.TestCase):
 
     def testBadOpen(self):
         """ Test initialization with a bogus directory """
-        # Error raised differs between MacOS and Windows
-        if platform.system() == "Darwin":  # MacOS
+        # Error raised differs between MacOS, Linux and Windows
+        if platform.system() == "Darwin" or platform.system() == "Linux":
             with self.assertRaises(IsADirectoryError):
                 RetrievalCoefficientFile("../")
         else:
