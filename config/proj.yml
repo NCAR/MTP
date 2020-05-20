@@ -65,4 +65,4 @@ GEC: [[19.87, 0.1], [23.1, 0.1], [26.05, 0.1]]  # Per channel slope, intercept
 ascii_parms: 'config/ascii_parms'
 
 # Location of RCF dir
-RCFdir: 'config/RCF'
+RCFdir: 'Data/NGV/DEEPWAVE/RC'
