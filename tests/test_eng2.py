@@ -43,8 +43,10 @@ class TESTeng2(unittest.TestCase):
         self.app = QApplication([])
         self.client = MTPclient()
         self.client.config(self.configfile)
+        self.client.connect_udp()
 
-        self.args = argparse.Namespace(cnts=False, postprocess=False)
+        self.args = argparse.Namespace(cnts=False, postprocess=False,
+                                       realtime=True)
 
     def test_eng2_noJSON(self):
         """ Test Engineering 2 display window shows what we expect """
@@ -56,14 +58,16 @@ class TESTeng2(unittest.TestCase):
 
         # Test with no JSON file
         filename = ""
-        self.viewer = MTPviewer(self.client, self.app, filename, self.args)
+        self.viewer = MTPviewer(self.client, None, self.app, filename,
+                                self.args)
         self.assertEqual(self.viewer.eng2.toPlainText(),
                          "Channel\tCounts  Volts")
 
     def test_eng2_JSON(self):
         # Test with JSON file
         filename = "../tests/test_data/DEEPWAVErf01.mtpRealTime.json"
-        self.viewer = MTPviewer(self.client, self.app, filename, self.args)
+        self.viewer = MTPviewer(self.client, None, self.app, filename,
+                                self.args)
         self.assertEqual(self.viewer.eng2.toPlainText(),
                          "Channel\tCounts  Volts\n" +
                          "-8V  PS\t2928  -07.99V\n" +

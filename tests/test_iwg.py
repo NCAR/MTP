@@ -1,5 +1,5 @@
 ###############################################################################
-# readIWG-specifi unit tests.
+# readiwg-specific unit tests.
 #
 # To run these tests:
 #     cd src/
@@ -19,7 +19,7 @@
 import os
 import unittest
 from util.readmtp import readMTP
-from util.readiwg import readIWG
+from util.readiwg import IWG
 from util.MTP import MTPrecord
 from lib.rootdir import getrootdir
 
@@ -32,12 +32,9 @@ class TESTreadiwg(unittest.TestCase):
 
     def test_IWG(self):
         """ Test the IWG line parses as expected """
-        # Test that code finds ascii_parms file or exits with useful error
         mtp = readMTP()
         self.rawscan = MTPrecord
-        iwg = readIWG(self.ascii_parms, self.rawscan)
-        status = iwg.readAsciiParms("nonexistentFile")
-        self.assertFalse(status)
+        iwg = IWG(self.rawscan)
 
         # Test that return correct IWG line
         iwgrec = "IWG1,20140606T062250,-43.3061,172.455,3281.97,,10508.5,," + \
@@ -51,7 +48,7 @@ class TESTreadiwg(unittest.TestCase):
 
         # Test that parse correctly (this tests assumes the default ascii_parms
         # file in config/ascii_parms
-        iwg.parseIwgPacket(iwgrec)
+        iwg.parseIwgPacket(iwgrec, self.ascii_parms)
         self.assertEqual(self.rawscan['IWG1line']['date'], '20140606T062250')
         self.assertEqual(self.rawscan['IWG1line']['values']['DATE']['val'],
                          '20140606')
