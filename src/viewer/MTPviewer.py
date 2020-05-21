@@ -21,9 +21,10 @@ from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 class MTPviewer(QMainWindow):
 
-    def __init__(self, client, app, mtpRealTimeFile, args):
+    def __init__(self, client, processor, app, mtpRealTimeFile, args):
 
         self.client = client
+        self.processor = processor
         self.app = app
         self.args = args
         self.mtpRealTimeFile = mtpRealTimeFile
@@ -53,15 +54,16 @@ class MTPviewer(QMainWindow):
             self.updateDisplay()
             self.calcCurtain()
 
-        # When data appears on the MTP socket, call processData()
-        self.readNotifier = QSocketNotifier(
+        if self.args.realtime:  # GUI started in real-time mode
+            # When data appears on the MTP socket, call processData()
+            self.readNotifier = QSocketNotifier(
                 self.client.getSocketFileDescriptor(), QSocketNotifier.Read)
-        self.readNotifier.activated.connect(lambda: self.processData())
+            self.readNotifier.activated.connect(lambda: self.processData())
 
-        # When data appears on the IWG socket, call processIWG()
-        self.readNotifierI = QSocketNotifier(
+            # When data appears on the IWG socket, call processIWG()
+            self.readNotifierI = QSocketNotifier(
                 self.client.getSocketFileDescriptorI(), QSocketNotifier.Read)
-        self.readNotifierI.activated.connect(lambda: self.processIWG())
+            self.readNotifierI.activated.connect(lambda: self.processIWG())
 
     def initUI(self):
         """ Initialize the GUI UI """
@@ -96,6 +98,13 @@ class MTPviewer(QMainWindow):
         self.curtainButton.triggered.connect(self.curtainWindow)
         menubar.addAction(self.curtainButton)
         self.curtain = Curtain(self)
+
+        # Add a menu option to process final data if NOT in real-time mode
+        if not self.args.realtime:  # GUI started in post-processing mode
+            self.processButton = QAction('postProcess', self)
+            self.processButton.setToolTip('Generate final data from raw data')
+            self.processButton.triggered.connect(self.processor.process)
+            menubar.addAction(self.processButton)
 
         # Add a menu option to quit
         self.quitButton = QAction('Quit', self)
@@ -367,8 +376,9 @@ class MTPviewer(QMainWindow):
 
     def close(self):
         """ Actions to take when Quit button is clicked """
-        self.client.close()  # Close UDP connection
-        self.client.closeI()  # Close IWG connection
+        if self.args.realtime:  # GUI started in real-time mode
+            self.client.close()  # Close UDP connection
+            self.client.closeI()  # Close IWG connection
         self.app.quit()      # Close app
 
     def processIWG(self):

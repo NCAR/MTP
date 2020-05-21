@@ -12,7 +12,8 @@ import numpy
 import logging
 import argparse
 from util.readmtp import readMTP
-from util.readiwg import readIWG
+from util.readiwg import IWG
+from util.readascii_parms import AsciiParms
 from util.decodePt import decodePt
 from util.decodeM01 import decodeM01
 from util.decodeM02 import decodeM02
@@ -36,6 +37,7 @@ class MTPclient():
         """ Read in config file and set up a bunch of stuff """
         # Read the config file. Gets path to RCF dir
         self.readConfig(configfile)
+
         self.checkRCF()  # Check that RCF file exists
 
         # Instantiate an IWG reader. Needs path to ascii_parms file.
@@ -44,6 +46,7 @@ class MTPclient():
         # Instantiate an RCF retriever
         self.initRetriever()
 
+    def connect_udp(self):
         # Connect to the MTP and IWG UDP feeds
         self.connectMTP()
         self.connectIWG()
@@ -58,6 +61,10 @@ class MTPclient():
             help='File containing project-specific MTP configuration info. ' +
             'Defaults to config/proj.yml in code checkout for testing')
         parser.add_argument(
+            '--prod_dir', type=str,
+            default=os.path.join(getrootdir(), 'config', 'Production'),
+            help='Dir containing post-processing setup files')
+        parser.add_argument(
             '--debug', dest='loglevel', action='store_const',
             const=logging.DEBUG, default=logging.INFO,
             help="Show debug log messages")
@@ -67,6 +74,9 @@ class MTPclient():
         parser.add_argument(
             '--cnts', dest='cnts', action='store_const', const=True,
             help='Plot counts instead of scan/template. Useful for testing')
+        parser.add_argument(
+            '--rt', dest='realtime', action='store_const', const=True,
+            default=False, help='Run in real-time monitoring mode.')
         args = parser.parse_args()
 
         return(args)
@@ -78,10 +88,29 @@ class MTPclient():
         return(args)
 
     def initIWG(self):
-        # Instantiate an instance of an IWG reader. Have it point to the same
-        # MTP dictionary as the MTP reader. Requires the location of the
-        # ascii_parms file.
-        self.iwg = readIWG(self.getAsciiParms(), self.reader.getRawscan())
+        """
+        Instantiate an instance of an IWG reader. Have it point to the same MTP
+        dictionary as the MTP reader. Requires the location of the ascii_parms
+        file.
+        """
+        # Initialize the IWG reader
+        self.iwg = IWG(self.reader.getRawscan())
+
+        # Init and open ascii parms file
+        status = True
+        self.ascii_parms = AsciiParms(self.getAsciiParms())
+        # Attempt to open ascii_parms file. Exit on failure.
+        if self.ascii_parms.open() is False:
+            exit(1)
+
+        while status:
+            # Read var from ascii_parms file
+            newVar = self.ascii_parms.readVar()
+
+            # Save to IWG section of dictionary
+            status = self.iwg.createPacket(newVar)
+
+        self.ascii_parms.close()
 
     def readConfig(self, filename):
         # Read config from config file
@@ -400,8 +429,8 @@ class MTPclient():
         # Listen for IWG packets
         dataI = self.sockI.recv(1024).decode()
 
-        # Store IWG record to data dictionary
-        status = self.iwg.parseIwgPacket(dataI)   # Store to values
+        # Store IWG record to values field in data dictionary
+        status = self.iwg.parseIwgPacket(dataI, self.getAsciiParms())
         if status is True:  # Successful parse if IWG packet
             self.reader.parseLine(dataI)  # Store to date, data, & asciiPacket
 
