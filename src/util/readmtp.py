@@ -83,7 +83,7 @@ class readMTP:
         try:
             self.rawscan = self.flightData[index]
         except Exception as e:
-            logger.printmsg("ERROR", "No data available. ",
+            logger.printmsg("ERROR", "No data available: " + e,
                             "Try loading some raw data")
             self.rawscan = None
 

@@ -86,11 +86,11 @@ class TESTreadgvnc(unittest.TestCase):
 #        run this test, retrieve version 0.0 of the DEEPWAVE RF01 LRT file from
 #        the EOL data archive and put it in the dir indicated by the filename
 #        below, or change the filename path, and then uncomment this test.
-        
+
 #        For reference, this test confirms that the values of PALT_A in this
 #        file match the values in the .asc file that was used in processing,
-#        but the ATRL values do NOT match, indicating that this was NOT the file
-#        used, but maybe some other preliminary file was???
+#        but the ATRL values do NOT match, indicating that this was NOT the
+#        file used, but maybe some other preliminary file was???
 #        """
 #        # Load preliminary (field-phase) data file
 #        filename = "../tests/test_data/DEEPWAVE/LRT/V0.0_20140905/" + \
