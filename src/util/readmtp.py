@@ -80,7 +80,12 @@ class readMTP:
         # The current scan is in self.rawscan and in the last scan in
         # self.flightData. Sometimes we might want this class to read from
         # a scan other than the current scan. Set that scan here.
-        self.rawscan = self.flightData[index]
+        try:
+            self.rawscan = self.flightData[index]
+        except Exception as e:
+            logger.printmsg("ERROR", "No data available. ",
+                            "Try loading some raw data")
+            self.rawscan = None
 
     def resetRawscan(self):
         """ Set the data dictionary back to the current scan """
@@ -427,18 +432,25 @@ class readMTP:
 
     def getVar(self, linetype, var):
         """ Get the value of a variable from the data dictionary """
-        return(self.rawscan[linetype]['values'][var]['val'])
+        if self.rawscan is not None:
+            return(self.rawscan[linetype]['values'][var]['val'])
+        else:
+            return(None)
 
     def getVarList(self, linetype):
         """ Get the list of variable names that are in the dictionary """
-        return(list(self.rawscan[linetype]['values']))
+        if self.rawscan is not None:
+            return(list(self.rawscan[linetype]['values']))
+        else:
+            return(None)
 
     def getVarArray(self, linetype, var):
         """ Get an array containing all measured values of a variable """
         self.varArray = []
-        for i in range(len(self.flightData)-1):
-            self.varArray.append(float(self.flightData[i].getVar(linetype,
-                                                                 var)))
+        if self.rawscan is not None:
+            for i in range(len(self.flightData)-1):
+                self.varArray.append(float(self.flightData[i].getVar(linetype,
+                                                                     var)))
         return(self.varArray)
 
     def get_metadata(self, linetype, var, key):
