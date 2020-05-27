@@ -93,4 +93,14 @@ class config():
         path_components = re.split(r'/W', val)
         # Join correctly for OS we are running on. The splat operator (*)
         # unpacks a list - who knew?
-        return(os.path.join(getrootdir(), *path_components))
+        newpath = os.path.join(getrootdir(), *path_components)
+
+        # Check that new path exists. If not, warn user
+        if not os.path.exists(newpath):
+            logger.printmsg('ERROR', 'Invalid path given in config file: ' +
+                            val, "Edit config file " + self.yamlfile +
+                            " then click OK to reload it")
+            self.readConfig(self.yamlfile)
+            self.getPath(key)  # Try again. Will loop until user fixes issue.
+
+        return(newpath)
