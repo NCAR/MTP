@@ -54,13 +54,17 @@ GEC: [[19.87, 0.1], [23.1, 0.1], [26.05, 0.1]]  # Per channel slope, intercept
 # GEC: [[19.43, 0.2], [22.44, 0.2],[25.29, 0.2]]
 
 ###############################################################################
-# Locations of required files. Dir must either be absolute, or relative to dir
-# you are running MTPviewer from. During testing, run:
-#     python3 src/MTPviewer.py
-# and use paths relative to the src dir, i.e. beginning with config. During
-# deployment, copy the config dir to your project dir and use absolute paths
-# here.
+# Locations of required files. Dir must either be absolute, or relative to
+# projdir. During testing, set projdir relative to inside src dir ('../'):
+#     cd src
+#     python3 MTPviewer.py
+# and use paths relative to projdir, i.e. beginning with config or Data.
+# You can use either '\' or '/' to separate path components. Code will adjust
+# it for OS you are running on.
 ###############################################################################
+# Project directory to hold data and config info
+projdir: '/Users/janine/Desktop/MTPtest'
+
 # Location of ascii_parms file
 ascii_parms: 'config/ascii_parms'
 

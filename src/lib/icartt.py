@@ -19,6 +19,7 @@
 import os
 from datetime import datetime
 from lib.rootdir import getrootdir
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
 class ICARTT():
@@ -45,13 +46,24 @@ class ICARTT():
         else:
             platform = self.client.configfile.getVal('platformID')
             revision = self.client.configfile.getVal('revision')
+            projdir = self.client.configfile.getPath('projdir')
 
-            # Return ICARTT-compliant filename
-            return(os.path.join(getrootdir(), 'config/MP_' + platform + "_" +
-                   date + '_' + revision + '.ict'))
+            # Create path to write ICARTT file - this is final data so put in
+            # 'final' dir.
+            filepath = os.path.join(getrootdir(), projdir, 'final')
 
-            # Return MTP traditional filename
-            # return(os.path.join(getrootdir(), 'config/MP' + date + '.NGV'))
+            # Check that filepath exists
+            if not os.path.exists(filepath):
+                logger.printmsg('ERROR', 'Dir ' + filepath + ' does not ' +
+                                'exist. Create dir and click OK to continue,' +
+                                'or click Quit to exit.')
+
+            # Create ICARTT-compliant filename
+            filename = 'MP_' + platform + "_" + date + '_' + revision + '.ict'
+            # -or- Create MTP traditional filename
+            # filename = 'MP' + date + '.NGV'
+
+            return(os.path.join(filepath, filename))
 
     def put_var(self, line, var):
         """

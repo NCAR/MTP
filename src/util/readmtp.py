@@ -68,11 +68,11 @@ class readMTP:
         # Set the scan we are working with to be the current scan
         self.rawscan = self.curscan
 
-    def getJson(self, proj, fltno):
+    def getJson(self, projdir, proj, fltno):
         """ Build name of json file to save flight data to """
         # This is used if the code is restarted mid-flight to provide access
         # to previous data.
-        return(os.path.join(getrootdir(), 'config',
+        return(os.path.join(getrootdir(), projdir,
                             proj+fltno.lower()+'.mtpRealTime.json'))
 
     def setRawscan(self, index):
