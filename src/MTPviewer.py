@@ -44,7 +44,9 @@ def main():
     # Get name of file JSON data (potentially) saved to. The name of the JSON
     # file is aotumatically generated and includes the project and flight
     # number.
-    filename = client.reader.getJson(client.getProj(), client.getFltno())
+    projdir = client.configfile.getVal('projdir')
+    filename = client.reader.getJson(projdir, client.getProj(),
+                                     client.getFltno())
 
     # Instantiate the GUI
     viewer = MTPviewer(client, processor, app, filename, args)
