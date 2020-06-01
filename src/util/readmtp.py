@@ -52,7 +52,6 @@ import numpy
 import json
 import copy
 from util.MTP import MTPrecord
-from lib.rootdir import getrootdir
 from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
@@ -72,8 +71,7 @@ class readMTP:
         """ Build name of json file to save flight data to """
         # This is used if the code is restarted mid-flight to provide access
         # to previous data.
-        return(os.path.join(getrootdir(), projdir,
-                            proj+fltno.lower()+'.mtpRealTime.json'))
+        return(os.path.join(projdir, proj+fltno.lower()+'.mtpRealTime.json'))
 
     def setRawscan(self, index):
         """ Set the MTP data dictionary we want to read a scan from """
@@ -82,8 +80,8 @@ class readMTP:
         # a scan other than the current scan. Set that scan here.
         try:
             self.rawscan = self.flightData[index]
-        except Exception as e:
-            logger.printmsg("ERROR", "No data available: " + e,
+        except Exception as err:
+            logger.printmsg("ERROR", "No data available: " + str(err),
                             "Try loading some raw data")
             self.rawscan = None
 

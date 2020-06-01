@@ -46,11 +46,11 @@ class ICARTT():
         else:
             platform = self.client.configfile.getVal('platformID')
             revision = self.client.configfile.getVal('revision')
-            projdir = self.client.configfile.getPath('projdir')
+            datadir = self.client.configfile.getPath('datadir')
 
             # Create path to write ICARTT file - this is final data so put in
             # 'final' dir.
-            filepath = os.path.join(getrootdir(), projdir, 'final')
+            filepath = os.path.join(getrootdir(), datadir)
 
             # Check that filepath exists
             if not os.path.exists(filepath):

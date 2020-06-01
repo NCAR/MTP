@@ -54,19 +54,27 @@ GEC: [[19.87, 0.1], [23.1, 0.1], [26.05, 0.1]]  # Per channel slope, intercept
 # GEC: [[19.43, 0.2], [22.44, 0.2],[25.29, 0.2]]
 
 ###############################################################################
-# Locations of required files. Dir must either be absolute, or relative to
-# projdir. During testing, set projdir relative to inside src dir ('../'):
+# Locations of required files. Project dir (projdir) must be an absolute path,
+# and all other paths are relative to projdir. During testing, comment out
+# projdir and add 'Data/NGV/DEEPWAVE' to beginning of all other file paths.
+# Then:
 #     cd src
 #     python3 MTPviewer.py
-# and use paths relative to projdir, i.e. beginning with config or Data.
 # You can use either '\' or '/' to separate path components. Code will adjust
 # it for OS you are running on.
 ###############################################################################
-# Project directory to hold data and config info
-projdir: '/Users/janine/Desktop/MTPtest'
+# Project directory to hold data and config info. If commented out, defaults to
+# top dir of code checkout, e.g. .../MTP/
+#projdir: '<put absolute path here>'
 
-# Location of ascii_parms file
-ascii_parms: 'config/ascii_parms'
+# Location of ascii_parms file relative to projdir
+ascii_parms: 'Data/NGV/DEEPWAVE/config/ascii_parms'
 
-# Location of RCF dir
+# Location of RCF dir relative to projdir
 RCFdir: 'Data/NGV/DEEPWAVE/RC'
+
+# Dir holding production processing configuration stuff relative to projdir
+PRODdir: 'Data/NGV/DEEPWAVE/config/Production'
+
+# Dir to hold final data (ICARTT, etc)
+datadir: 'Data/NGV/DEEPWAVE/final'
