@@ -28,7 +28,8 @@ class TESTreadiwg(unittest.TestCase):
 
     def setUp(self):
         # Location of default ascii_parms file
-        self.ascii_parms = os.path.join(getrootdir(), 'config/ascii_parms')
+        self.ascii_parms = os.path.join(getrootdir(), 'Data', 'NGV',
+                                        'DEEPWAVE', 'config', 'ascii_parms')
 
     def test_IWG(self):
         """ Test the IWG line parses as expected """

@@ -34,8 +34,10 @@ class TESTeng3(unittest.TestCase):
 
     def setUp(self):
         # Location of default ascii_parms file
-        self.ascii_parms = os.path.join(getrootdir(), 'config', 'ascii_parms')
-        self.configfile = os.path.join(getrootdir(), 'config', 'proj.yml')
+        self.ascii_parms = os.path.join(getrootdir(), 'Data', 'NGV',
+                                        'DEEPWAVE', 'config', 'ascii_parms')
+        self.configfile = os.path.join(getrootdir(), 'Data', 'NGV',
+                                       'DEEPWAVE', 'config', 'proj.yml')
         self.stream = sys.stdout  # Send log messages to stdout
         loglevel = logging.INFO
         logger.initLogger(self.stream, loglevel)

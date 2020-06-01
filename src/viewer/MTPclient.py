@@ -51,19 +51,16 @@ class MTPclient():
         self.connectMTP()
         self.connectIWG()
 
-    def parse(self):
+    def parse(self, testDataDir):
         """ Define command line arguments which can be provided """
         parser = argparse.ArgumentParser(
             description="Script to display and process MTP scans")
         parser.add_argument(
             '--config', type=str,
-            default=os.path.join(getrootdir(), 'config', 'proj.yml'),
+            default=os.path.join(getrootdir(), testDataDir,
+                                 'config', 'proj.yml'),
             help='File containing project-specific MTP configuration info. ' +
             'Defaults to config/proj.yml in code checkout for testing')
-        parser.add_argument(
-            '--prod_dir', type=str,
-            default=os.path.join(getrootdir(), 'config', 'Production'),
-            help='Dir containing post-processing setup files')
         parser.add_argument(
             '--debug', dest='loglevel', action='store_const',
             const=logging.DEBUG, default=logging.INFO,
@@ -81,9 +78,9 @@ class MTPclient():
 
         return(args)
 
-    def get_args(self):
+    def get_args(self, testDataDir):
         """ Parse the command line arguments """
-        args = self.parse()
+        args = self.parse(testDataDir)
 
         return(args)
 

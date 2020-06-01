@@ -33,8 +33,8 @@ class TESTMTPclient(unittest.TestCase):
         self.client = MTPclient()
 
         # Read the config file. Gets path to RCF dir
-        self.client.readConfig(os.path.join(getrootdir(),
-                               'config', 'proj.yml'))
+        self.client.readConfig(os.path.join(getrootdir(), 'Data', 'NGV',
+                               'DEEPWAVE', 'config', 'proj.yml'))
         self.client.checkRCF()
         self.client.initIWG()
 

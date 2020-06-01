@@ -55,7 +55,8 @@ class TESTcalcTBs(unittest.TestCase):
         scnt = self.rawscan['Bline']['values']['SCNT']['val']
 
         # Read gain constants from the config file
-        self.config = os.path.join(getrootdir(), 'config', 'proj.yml')
+        self.config = os.path.join(getrootdir(), 'Data', 'NGV', 'DEEPWAVE',
+                                   'config', 'proj.yml')
         configfile = config()
         configfile.read(self.config)
 

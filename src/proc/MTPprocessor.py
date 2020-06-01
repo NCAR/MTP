@@ -118,7 +118,6 @@ class MTPprocessor(QMainWindow):
                             selectedRawFile):
                     selectedRawFile = flight["rawFile"]
                     selectedNCfile = flight["ncFile"]
-                    print(selectedNCfile)
 
             self.gvreader = readGVnc()
             self.gvreader.getNGvalues(selectedNCfile)
@@ -157,9 +156,12 @@ class MTPprocessor(QMainWindow):
                 self.setupfile.read(filename)
 
                 # Save files needed for post-processing to post-processing dict
+                # Prepend root dir to filename
+                projdir = self.client.configfile.getProjDir()
                 self.filelist[filenum]["rawFile"] = \
-                    self.setupfile.getPath('raw_file')
+                    self.setupfile.prependDir('raw_file', projdir)
+
                 self.filelist[filenum]["ncFile"] = \
-                    self.setupfile.getPath('nc_file')
+                    self.setupfile.prependDir('nc_file', projdir)
 
                 filenum += 1
