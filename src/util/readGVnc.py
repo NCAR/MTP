@@ -68,8 +68,8 @@ class readGVnc:
                         pd.concat([self.ncdata, pd.DataFrame(output)],
                                   axis=1, ignore_index=True)
                 else:
-                    print(nc.variables.keys())
-                    logger.printmsg("ERROR", "Error exracting variable " +
+                    # print(nc.variables.keys())
+                    logger.printmsg("ERROR", "Error extracting variable " +
                                     var + " from " + ncfile + ". Variable " +
                                     "not found. Click OK to continue or " +
                                     "Quit to exit.")
