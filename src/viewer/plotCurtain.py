@@ -25,7 +25,7 @@ class Curtain(QMainWindow):
 
         self.maxAltkm = 32  # The maximum altitude to plot
 
-        super(Curtain, self).__init__(parent)
+        super().__init__(parent)
         self.initUI()
 
         self.data = []    # 2-D array of temperatures
