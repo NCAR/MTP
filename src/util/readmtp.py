@@ -113,7 +113,7 @@ class readMTP:
             self.parseLine(line)
 
             # Check if we have a complete scan (all linetypes have found = True
-            foundall = True  # Init so can boolean & per rawscan line
+            foundall = True  # Init so can boolean '&' each rawscan line
             for linetype in self.rawscan:
                 if 'found' in self.rawscan[linetype]:
                     foundall = foundall & self.rawscan[linetype]['found']
