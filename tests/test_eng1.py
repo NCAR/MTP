@@ -45,7 +45,6 @@ class TESTeng1(unittest.TestCase):
         self.app = QApplication([])
         self.client = MTPclient()
         self.client.config(self.configfile)
-        self.client.connect_udp()
 
         self.args = argparse.Namespace(cnts=False, postprocess=False,
                                        realtime=True)
@@ -60,16 +59,16 @@ class TESTeng1(unittest.TestCase):
 
         # Test with no JSON file
         filename = ""
-        self.viewer = MTPviewer(self.client, None, self.app, filename,
-                                self.args)
+        self.viewer = MTPviewer(self.client, self.app, self.args)
+        self.viewer.loadJson(filename)
         self.assertEqual(self.viewer.eng1.toPlainText(),
                          "Channel\tCounts  Ohms  Temp  ")
 
     def test_eng1_JSON(self):
         # Test with JSON file
         filename = "../tests/test_data/DEEPWAVErf01.mtpRealTime.json"
-        self.viewer = MTPviewer(self.client, None, self.app, filename,
-                                self.args)
+        self.viewer = MTPviewer(self.client, self.app, self.args)
+        self.viewer.loadJson(filename)
         self.assertEqual(self.viewer.eng1.toPlainText(),
                          "Channel\tCounts  Ohms  Temp  \n" +
                          "Rref 350\t02174  350.00  \n" +
@@ -113,4 +112,3 @@ class TESTeng1(unittest.TestCase):
 
     def tearDown(self):
         self.viewer.close()
-        self.app.quit()

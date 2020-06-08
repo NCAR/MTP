@@ -62,7 +62,8 @@ class TESTicartt(unittest.TestCase):
               "13222,14451,020858,022285,022115,019171,020547,020064"
         self.client.reader.parseAsciiPacket(udp)
         self.rawscan = self.client.reader.getRawscan()
-        self.client.processMTP()
+        self.client.processScan()
+        self.client.createProfile()
         self.client.reader.archive()
 
         sample_header = '../tests/test_data/header.ict'

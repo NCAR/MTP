@@ -184,6 +184,12 @@ class ICARTT():
         # Scale factors (1 for most cases, except where grossly inconvenient)
         self.header += "1.0, " * 15 + "1.0\n"  # No comma space after last 1
 
+        # ATP metadata is not available until a temperature profile has been
+        # calculated, which causes an AtmosphericTemperatureProfile dictionary
+        # to be linked to the MTPrecord dictionary. So check for that here.
+        if self.client.reader.testATP() is False:
+            return(False)  # Failed to build header
+
         # Missing data indicators (-9999, -99999, etc)
         # NOTE: Since I haven't started writing the data out, this may change
         # so for now just put in place-holders
@@ -331,12 +337,19 @@ class ICARTT():
         self.header = str(self.numlines) + ", " + self.file_format_index + \
             "\n" + self.header
 
+        return(True)  # Succeeded in building ICARTT header
+
     def saveHeader(self, filename):
         """ Save header to ICARTT file """
-        self.build_header(datetime.today().strftime('%Y%m%d'))
-        with open(filename, 'w') as f:
-            # Write the header to the ICARTT file
-            f.write(self.header)
+        # If successfully build header, write header to output file and
+        # return success
+        if self.build_header(datetime.today().strftime('%Y%m%d')):
+            with open(filename, 'w') as f:
+                # Write the header to the ICARTT file
+                f.write(self.header)
+            return(True)
+        else:
+            return(False)
 
     def saveData(self, filename):
         """ Loop through flightData and save to ICARTT file """

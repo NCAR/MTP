@@ -33,6 +33,14 @@ class MTPclient():
         # Instantiate an instance of an MTP reader
         self.reader = readMTP()
 
+    def getTestDataDir(self):
+        # For testing purposes, data and configuration information for the
+        # DEEPWAVE project have been copied to Data/NGV/DEEPWAVE within this
+        # code checkout. For transparency, set that hardcoded path here.
+        self.testDataDir = os.path.join(getrootdir(),
+                                        'Data', 'NGV', 'DEEPWAVE')
+        return(self.testDataDir)
+
     def config(self, configfile):
         """ Read in config file and set up a bunch of stuff """
         # Read the config file. Gets path to RCF dir
@@ -44,6 +52,7 @@ class MTPclient():
         self.initIWG()
 
         # Instantiate an RCF retriever
+        # If this fails, code will crash. Need to capture error. TBD
         self.initRetriever()
 
     def connect_udp(self):
@@ -51,13 +60,13 @@ class MTPclient():
         self.connectMTP()
         self.connectIWG()
 
-    def parse(self, testDataDir):
+    def parse(self):
         """ Define command line arguments which can be provided """
         parser = argparse.ArgumentParser(
             description="Script to display and process MTP scans")
         parser.add_argument(
             '--config', type=str,
-            default=os.path.join(getrootdir(), testDataDir,
+            default=os.path.join(getrootdir(), self.getTestDataDir(),
                                  'config', 'proj.yml'),
             help='File containing project-specific MTP configuration info. ' +
             'Defaults to config/proj.yml in code checkout for testing')
@@ -78,9 +87,9 @@ class MTPclient():
 
         return(args)
 
-    def get_args(self, testDataDir):
+    def get_args(self):
         """ Parse the command line arguments """
-        args = self.parse(testDataDir)
+        args = self.parse()
 
         return(args)
 
@@ -167,7 +176,10 @@ class MTPclient():
 
     def initRetriever(self):
         """ instantiate an RCF retriever """
-        self.retriever = Retriever(self.RCFdir)
+        try:
+            self.retriever = Retriever(self.RCFdir)
+        except Exception:
+            raise
 
     def setRCFdir(self, Dir):
         """ Only used during testing """
@@ -198,7 +210,33 @@ class MTPclient():
         """ Return the inverted brightness temperature array """
         return(self.reader.getTBI())
 
-    def processMTP(self):
+    def saveData(self):
+        """ Save data to flight dictionaries and to JSON file on disk """
+        # Copy to array of dictionaries that holds entire flight
+        self.reader.archive()
+
+        # Append to JSON file on disk
+        self.reader.save(self.getMtpRealTimeFilename())
+
+    def getMtpRealTimeFilename(self):
+        """
+        Automatically generate JSON filename that includes the project and
+        flight number.
+        """
+
+        # Get project dir from config. If dir not set, default to test dir
+        projdir = self.configfile.getProjDir()
+        if projdir is None:
+            projdir = self.getTestDataDir()
+
+        return(self.reader.getJson(projdir, self.getProj(), self.getFltno()))
+
+    def processScan(self):
+        """
+        Perform calculations on latest scan to convert counts to brightness
+        temperature. Slice and dice the raw scan to save it and TB values to
+        dictionary for current scan.
+        """
         # Perform line calculations on latest scan
         self.doCalcs()
         self.reader.saveTBI(self.tbi)
@@ -206,6 +244,8 @@ class MTPclient():
         # Generate the data lines for current scan and save to dictionary
         self.createRecord()
 
+    def createProfile(self):
+        """ Perform retrieval and derive the physical temperature profile """
         # Perform retrieval
         try:
             self.BestWtdRCSet = self.doRetrieval(self.getTBI())
@@ -213,7 +253,7 @@ class MTPclient():
             raise  # Pass error back up to calling function
 
         # If retrieval succeeded, get the physical temperature profile (and
-        # find the tropopause)
+        # find the tropopause). Save everything to current rawscan dictionary
         self.reader.saveBestWtdRCSet(self.BestWtdRCSet)
 
         self.ATP = self.getProfile(self.getTBI(), self.BestWtdRCSet)
