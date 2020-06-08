@@ -45,7 +45,6 @@ class TESTeng3(unittest.TestCase):
         self.app = QApplication([])
         self.client = MTPclient()
         self.client.config(self.configfile)
-        self.client.connect_udp()
 
         self.args = argparse.Namespace(cnts=False, postprocess=False,
                                        realtime=True)
@@ -60,16 +59,16 @@ class TESTeng3(unittest.TestCase):
 
         # Test with no JSON file
         filename = ""
-        self.viewer = MTPviewer(self.client, None, self.app, filename,
-                                self.args)
+        self.viewer = MTPviewer(self.client, self.app, self.args)
+        self.viewer.loadJson(filename)
         self.assertEqual(self.viewer.eng3.toPlainText(),
                          "Channel\tCounts  Value")
 
     def test_eng3_JSON(self):
         # Test with JSON file
         filename = "../tests/test_data/DEEPWAVErf01.mtpRealTime.json"
-        self.viewer = MTPviewer(self.client, None, self.app, filename,
-                                self.args)
+        self.viewer = MTPviewer(self.client, self.app, self.args)
+        self.viewer.loadJson(filename)
         self.assertEqual(self.viewer.eng3.toPlainText(),
                          "Channel\tCounts  Value\n" +
                          "Acceler\t2061  +01.10 g\n" +
@@ -105,7 +104,6 @@ class TESTeng3(unittest.TestCase):
                          "T N/C\t4095  N/A\n" +
                          "T Synth\t1491  +34.80 C")
         self.viewer.close()
-        self.app.quit()
 
     # def ():
         # Test plotting of scnt

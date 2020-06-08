@@ -119,11 +119,6 @@ class readMTP:
                     foundall = foundall & self.rawscan[linetype]['found']
 
             if (foundall):
-                # Have a complete scan. Save this record to the flight library
-                # This will be useful for post-processing. Not needed in real-
-                # time
-                self.archive()
-
                 # Reset found to False for all and return
                 for linetype in self.rawscan:
                     if 'found' in self.rawscan[linetype]:
@@ -457,7 +452,26 @@ class readMTP:
 
     def getATPmetadata(self, var, key):
         """ Get the metadata with keyword key for variable in ATP dict """
-        return(self.flightData[0]['ATP'][var][key])
+        try:
+            metadata = self.flightData[0]['ATP'][var][key]
+        except Exception:
+            raise
+
+        return(metadata)
+
+    def testATP(self):
+        # ATP metadata is not available until a temperature profile has been
+        # calculated, which causes an AtmosphericTemperatureProfile dictionary
+        # to be linked to the MTPrecord dictionary. So check for that here.
+        try:
+            self.getATPmetadata('RCFMRIndex', '_FillValue')
+        except Exception:
+            logger.printmsg("ERROR", "A temperature profile doesn't exist " +
+                            "in the MTP dictionary.", "Maybe scan hasn't " +
+                            "been processed yet? Can't create ICARTT file")
+            return(False)
+
+        return(True)
 
     def setCalcVal(self, linetype, var, value, calctype):
         """
@@ -496,9 +510,11 @@ class readMTP:
         return(self.rawscan[linetype]['values'][var]['name'])
 
     def saveTBI(self, tbi):
+        """ Save the inverted brightness temperature to the scan """
         self.rawscan['tbi'] = tbi
 
     def getTBI(self):
+        """ Retrieve the brightness temperatures for the current scan """
         return(self.rawscan['tbi'])
 
     def saveATP(self, ATP):
