@@ -22,7 +22,6 @@ from PyQt5.QtWidgets import QApplication
 
 from viewer.MTPviewer import MTPviewer
 from viewer.MTPclient import MTPclient
-from util.readmtp import readMTP
 from lib.rootdir import getrootdir
 
 import sys
@@ -49,6 +48,8 @@ class TESTeng3(unittest.TestCase):
         self.args = argparse.Namespace(cnts=False, postprocess=False,
                                        realtime=True)
 
+        self.viewer = MTPviewer(self.client, self.app, self.args)
+
     def test_eng3_noJSON(self):
         """ Test Engineering 3 display window shows what we expect """
         # The third engineering window displays the M02 line
@@ -59,7 +60,6 @@ class TESTeng3(unittest.TestCase):
 
         # Test with no JSON file
         filename = ""
-        self.viewer = MTPviewer(self.client, self.app, self.args)
         self.viewer.loadJson(filename)
         self.assertEqual(self.viewer.eng3.toPlainText(),
                          "Channel\tCounts  Value")
@@ -67,7 +67,6 @@ class TESTeng3(unittest.TestCase):
     def test_eng3_JSON(self):
         # Test with JSON file
         filename = "../tests/test_data/DEEPWAVErf01.mtpRealTime.json"
-        self.viewer = MTPviewer(self.client, self.app, self.args)
         self.viewer.loadJson(filename)
         self.assertEqual(self.viewer.eng3.toPlainText(),
                          "Channel\tCounts  Value\n" +
@@ -79,19 +78,18 @@ class TESTeng3(unittest.TestCase):
                          "T Pwr Sup\t1591  +32.27 C\n" +
                          "T N/C\t4095  N/A\n" +
                          "T Synth\t1535  +33.67 C")
-        self.viewer.close()
 
         # Send an MTP packet to the parser and confirm it gets parsed
         # correctly.
         line = "M02: 2510 1277 1835 1994 1926 1497 4095 1491"
-        mtp = readMTP()
+        mtp = self.client.reader
         mtp.parseLine(line)
         values = mtp.rawscan['M02line']['data'].split(' ')
         mtp.assignM02values(values)
         self.assertEqual(mtp.getVar('M02line', 'ACCPCNTE'), '2510')
 
         # Then check the window display values
-        self.viewer.client.calcM02()
+        self.client.calcM02()
         self.viewer.writeEng3()
         self.assertEqual(self.viewer.eng3.toPlainText(),
                          "Channel\tCounts  Value\n" +
@@ -103,10 +101,13 @@ class TESTeng3(unittest.TestCase):
                          "T Pwr Sup\t1497  +34.65 C\n" +
                          "T N/C\t4095  N/A\n" +
                          "T Synth\t1491  +34.80 C")
-        self.viewer.close()
 
     # def ():
         # Test plotting of scnt
         # scan1 = self.scnt_inv[0:10]
         # scan2 = self.scnt_inv[10:20]
         # scan3 = self.scnt_inv[20:30]
+
+    def tearDown(self):
+        self.viewer.close()
+        self.app.quit()

@@ -113,6 +113,8 @@ class TESTprintmsg(unittest.TestCase):
         box = logger.msgbox("ERROR", "test app", None)
         self.assertEqual(box.icon(), 3)  # 3 = error
 
+        self.app.quit()
+
     def tearDown(self):
         logger.delHandler()
         if "TEST_FLAG" in os.environ:

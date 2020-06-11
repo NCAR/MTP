@@ -48,6 +48,7 @@
 ###############################################################################
 import os
 import re
+import copy
 import numpy
 import json
 import copy
@@ -58,7 +59,8 @@ from EOLpython.Qlogger.messageHandler import QLogger as logger
 class readMTP:
 
     def __init__(self):
-        self.curscan = MTPrecord  # Instantiate dictionary to hold the MTP data
+        # Instantiate dictionary to hold the MTP data.
+        self.curscan = MTPrecord()
 
         # An array of MTP data dictionaries - used to display a single variable
         # across time.
