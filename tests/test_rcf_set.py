@@ -20,13 +20,29 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
+import os
 import unittest
 from util.rcf_set import RetrievalCoefficientFileSet
+from PyQt5.QtWidgets import QApplication
+
+import sys
+import logging
+from EOLpython.logger.messageHandler import Logger as logger
 
 
 class TESTrcfSet(unittest.TestCase):
 
     def setUp(self):
+
+        # Set environment var to indicate we are in testing mode
+        # Need this to logger won't try to open message boxes
+        os.environ["TEST_FLAG"] = "true"
+
+        # Set up logging
+        self.stream = sys.stdout  # Send log messages to stdout
+        loglevel = logging.INFO
+        logger.initLogger(self.stream, loglevel)
+
         self.Directory = "../tests/test_data"
         # Constants the apply specifically to the CSET RCF file in the dir
         # above - NRCKA068.RCF
@@ -40,7 +56,9 @@ class TESTrcfSet(unittest.TestCase):
 
         # Test error handling for setting of flight levels on uninitialized
         # set fails
-        self.rcf.setFlightLevelsKm(self.flightLevelsKm, self.numFlightLevels)
+        status = self.rcf.setFlightLevelsKm(self.flightLevelsKm,
+                                            self.numFlightLevels)
+        self.assertFalse(status)
 
     def testgetRCFs(self):
         """ Make sure get expected RCFs """
@@ -92,3 +110,7 @@ class TESTrcfSet(unittest.TestCase):
         self.assertEqual('%7.5f' % BestWtdRCSet['FL_RCs']['Src'][0],
                          '-1.63965')
         self.assertEqual(len(BestWtdRCSet['FL_RCs']['Src']), 990)
+
+    def tearDown(self):
+        if "TEST_FLAG" in os.environ:
+            del os.environ['TEST_FLAG']
