@@ -41,7 +41,7 @@ PI_CONTACT_INFO: 303-497-xxxx haggerty@ucar.edu
 PLATFORM: N677F - NSF/NCAR GV
 LOCATION: Lat, Lon, and Alt included in the data records
 ASSOCIATED_DATA: linked from DATA_INFO page
-INSTRUMENT_INFO: lined from DATA_INFO page
+INSTRUMENT_INFO: linked from DATA_INFO page
 DATA_INFO: Put DOI of EMDAC landing page here
 UNCERTAINTY: Enter uncertainty description here
 ULOD_FLAG: -7777
