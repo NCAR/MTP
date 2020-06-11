@@ -301,19 +301,22 @@ class controlWindow(QWidget):
         self.packetStore = StorePacket()
         # global storage for values collected from probe
         # storing them in dict introduced slowness
-        self.alineStore = 'A 20101002 19:47:30 -00.59 00.13 -00.26 00.13 +04.37 0.04 270.99 00.38 +39.123 +0.016 -103.967 +0.044 +072727 +071776'
-        self.blineStore = 'B 017828 019041 018564 017846 019061 018572 017874 019069 018603 017906 019095 018625 017932 019124 018637 017949 019139 018655 017968 019151 018665 017979 019164 018665 017997 019161 018691 018029 019181 018705'
         self.iwgStore = 'IWG1,20101002T194729,39.1324,-103.978,4566.43,,14127.9,,180.827,190.364,293.383,0.571414,-8.02806,318.85,318.672,-0.181879,-0.417805,-0.432257,-0.0980951,2.36793,-1.66016,-35.8046,16.3486,592.062,146.734,837.903,9.55575,324.104,1.22603,45.2423,,-22    .1676,'
-        self.m01Store = 'M01: 2928 2457 3023 3085 1925 2923 2434 2948'
-        self.m02Store = 'M02: 2109 1299 2860 2691 2962 1116 4095 1805'
-        self.ptStore = 'Pt: 2157 13804 13796 10311 13383 13327 13144 14440'
-        self.elineStore = 'E 020541 021894 021874 018826 020158 019813 '
+        '''
         self.pitch15 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]    # Arrays of last 15 s
         self.roll15 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]     # taken from iwg
         self.Zp15 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
         self.oat15 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
         self.lat15 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
         self.lon15 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        '''
+        '''
+        self.alineStore = 'A 20101002 19:47:30 -00.59 00.13 -00.26 00.13 +04.37 0.04 270.99 00.38 +39.123 +0.016 -103.967 +0.044 +072727 +071776'
+        self.blineStore = 'B 017828 019041 018564 017846 019061 018572 017874 019069 018603 017906 019095 018625 017932 019124 018637 017949 019139 018655 017968 019151 018665 017979 019164 018665 017997 019161 018691 018029 019181 018705'
+        self.m01Store = 'M01: 2928 2457 3023 3085 1925 2923 2434 2948'
+        self.m02Store = 'M02: 2109 1299 2860 2691 2962 1116 4095 1805'
+        self.ptStore = 'Pt: 2157 13804 13796 10311 13383 13327 13144 14440'
+        self.elineStore = 'E 020541 021894 021874 018826 020158 019813 '
         pitchavg = self.packetStore.setData("pitchavg", 1)
         pitchrms = self.packetStore.setData("pitchrms",1)
         rollavg = self.packetStore.setData("rollavg",1)
@@ -327,6 +330,7 @@ class controlWindow(QWidget):
         lonavg = self.packetStore.setData("lonavg",1)
         lonrms = self.packetStore.setData("lonrms",1)
         self.elAngles= [10,-179.8, 80.00, 55.00, 42.00, 25.00, 12.00, 0.00, -12.00, -25.00, -42.00, -80.00]
+        '''
         self.udp = doUDP(self,self.app)
         # UDP LED's
         # need to figure out the logic behind making them red if they aren't
@@ -398,8 +402,8 @@ class controlWindow(QWidget):
                 logging.debug('probe initialized')
                 break
             i = i + 1
-        i=0
-        for i < 3: 
+        i = 0
+        while i < 3: 
             self.serialPort.sendCommand(b'\r\n')
             logging.debug("init vbcr equivalent return1 ")
             echo = self.serialPort.canReadLine(20)#msec
@@ -1029,7 +1033,7 @@ class controlWindow(QWidget):
                 if scanOrEncode is "read_scan":
                     logging.debug("readScan is: ")
                     logging.debug(readScan)
-                    logging.debug(int(readScan.decode('Ascii'))) 
+                    logging.debug(int(readScan.decode('Ascii'),16)) 
                     self.scanCount = (1000000 - int(readScan.decode('Ascii')))
                     if self.scanCount >=0: 
                         self.scanCount = '+' +'%06d' % self.scanCount
@@ -1040,7 +1044,7 @@ class controlWindow(QWidget):
                     logging.debug(int(readScan.decode('Ascii'))) 
                     logging.debug(int(readScan.decode('Ascii'),16)) 
                     
-                    self.scanCount = ((1000000 - int(readScan.decode('Ascii'), 16)))
+                    self.scanCount = ((1000000 - int(readScan.decode('Ascii'))*16))
                     if self.scanCount >=0: 
                         self.scanCount = '+' +'%06d' % self.scanCount
                     self.packetStore.setData('encoderCount', self.scanCount)

@@ -20,25 +20,24 @@ class StorePacket():
             #'M02':'M02: 2109 1299 2860 2691 2962 1116 4095 1805',    
             #'Pt':'Pt: 2157 13804 13796 10311 13383 13327 13144 14440',    
             #'Eline': 'E 020541 021894 021874 018826 020158 019813 ',    
-            #'IWGSplit':[],
-            #'pitch':[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],    # Arrays of last 15 s
-            #'roll':[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],     # taken from iwg
-            #'Zp':[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-            #'oat':[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-            #'lat':[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-            #'lon':[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-            'pitchavg':[1,0], # Array containing average of 
-            'rollavg':[1,0],  # last 15 seconds array
-            'Zpavg':[1,0],    # and the root mean square error
-            'oatavg':[1,0],   # default is 1 to not zero out
-            'latavg':[1,0],   # goAngle calculation from pitch
-            'lonavg':[1,0] ,  # and roll avg's
-            'pitchrms':[1,0], # Array containing average of 
-            'rollrms':[1,0],  # last 15 seconds array
-            'Zprms':[1,0],    # and the root mean square error
-            'oatrms':[1,0],   # default is 1 to not zero out
-            'latrms':[1,0],   # goAngle calculation from pitch
-            'lonrms':[1,0] ,  # and roll avg's
+            'pitch15':0, # Array containing  
+            'roll15':0,  # last 15 seconds 
+            'Zp15':0,   
+            'oat15':0, 
+            'lat15':0,  
+            'lon15':0 ,
+            'pitchavg':0, # Value containing average of 
+            'rollavg':0,  # last 15 seconds array
+            'Zpavg':0,    # and the root mean square error
+            'oatavg':0,   # default is 1 to not zero out
+            'latavg':0,   # goAngle calculation from pitch
+            'lonavg':0 ,  # and roll avg's
+            'pitchrms':0, # Array containing average of 
+            'rollrms':0,  # last 15 seconds array
+            'Zprms':0,    # and the root mean square error
+            'oatrms':0,   # default is 1 to not zero out
+            'latrms':0,   # goAngle calculation from pitch
+            'lonrms':0 ,  # and roll avg's
             # except not really, pitchavg/pitchrms added as
             # temp vars from udp averageVal
             # but we do need this in here if there is no iwg packet
@@ -84,7 +83,8 @@ class StorePacket():
             # need to keep these arrays formatted the same
             # to keep things backward compatable
       
-            'El. Angles':[10,-179.8, 80.00, 55.00, 42.00, 25.00, 12.00, 0.00, -12.00, -25.00, -42.00, -80.00],
+            #'El. Angles':[10,-179.8, 80.00, 55.00, 42.00, 25.00, 12.00, 0.00, -12.00, -25.00, -42.00, -80.00],
+            'El. Angles':[10,-179.8, 80.00, 80.00, 80.00, 80.00, 80.00, 80.00, 80.00, 80.00, 80.00, 80.00],
             'nFreq':[55.51, 56.65, 58.8],
 
             'angleI': 0, # bline angle iterator

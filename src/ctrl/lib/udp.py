@@ -189,9 +189,9 @@ class doUDP(object):
             i = i+1
         templist[0] = latestValue
         if name is 'pitch':
-            self.setData(name+ 'Instant', latestValue)
+            self.parent.packetStore.setData(name+ 'Instant', latestValue)
         elif name is 'roll':
-            self.setData(name+ 'Instant', latestValue)
+            self.parent.packetStore.setData(name+ 'Instant', latestValue)
         self.setArray(name, templist)
         self.averageVal(name)
 
@@ -199,35 +199,35 @@ class doUDP(object):
 
     def getArray(self, name):
         if name is 'pitch':
-            templist = self.parent.pitch15
+            templist = self.parent.packetStore.pitch15
         elif name is 'roll':
-            templist = self.parent.roll15
+            templist = self.parent.packetStore.roll15
         elif name is 'Zp':
-            templist = self.parent.Zp15
+            templist = self.parent.packetStore.Zp15
         elif name is 'oat':
-            templist = self.parent.oat15
+            templist = self.parent.packetStore.oat15
         elif name is 'lat':
-            templist = self.parent.lat15
+            templist = self.parent.packetStore.lat15
         elif name is 'lon':
-            templist = self.parent.lon15
+            templist = self.parent.packetStore.lon15
         else: 
             logging.error("Undefined arrayName in udp keep15")
-            templist  = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+            templist  = []
         return templist
 
     def setArray(self, name, data):
         if name is 'pitch':
-            self.parent.pitch15 = data 
+            self.parent.packetStore.pitch15 = data 
         elif name is 'roll':
-            self.parent.roll15 = data 
+            self.parent.packetStore.roll15 = data 
         elif name is 'Zp':
-            self.parent.Zp15 = data 
+            self.parent.packetStore.Zp15 = data 
         elif name is 'oat':
-            self.parent.oat15 = data 
+            self.parent.packetStore.oat15 = data 
         elif name is 'lat':
-            self.parent.lat15 = data 
+            self.parent.packetStore.lat15 = data 
         elif name is 'lon':
-            self.parent.lon15 = data 
+            self.parent.packetStore.lon15 = data 
         else: 
             logging.error("Undefined arrayName in udp keep15")
         #self.parent.packetStore.setData(name, self.list)
@@ -257,7 +257,7 @@ class doUDP(object):
             avg = avg + datum
             rms = rms + (datum * datum)
             i = i + 1 
-        avg = avg/nval
+        avg = avg/len(data15)
         # logging.debug("avg %f", avg)
         if rms - (avg * avg) * nval >0:
             if nval > 1:
