@@ -23,7 +23,6 @@
 import os
 import unittest
 from util.rcf_set import RetrievalCoefficientFileSet
-from PyQt5.QtWidgets import QApplication
 
 import sys
 import logging

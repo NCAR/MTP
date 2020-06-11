@@ -18,14 +18,13 @@
 ###############################################################################
 import os
 import unittest
-from util.readiwg import IWG
-from util.MTP import MTPrecord
 from lib.rootdir import getrootdir
 from viewer.MTPclient import MTPclient
 
 import sys
 import logging
 from EOLpython.logger.messageHandler import Logger as logger
+
 
 class TESTreadiwg(unittest.TestCase):
 

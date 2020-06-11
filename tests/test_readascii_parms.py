@@ -18,7 +18,6 @@
 ##############################################################################
 import os
 import unittest
-from unittest.mock import patch
 from util.readascii_parms import AsciiParms
 
 import sys

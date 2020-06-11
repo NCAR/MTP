@@ -62,21 +62,22 @@ class TESTMTPprocessor(unittest.TestCase):
 
     def test_ReadSetup(self):
         """ Test accuracy of read of setup files in config/Production dir """
-        self.assertEqual(self.args.PRODdir, 'Data/NGV/DEEPWAVE/config/Production')
+        self.assertEqual(self.args.PRODdir,
+                         'Data/NGV/DEEPWAVE/config/Production')
 
         self.processor.readSetup(self.client.configfile.getPath("PRODdir"))
         self.assertEqual(self.processor.filelist[0]['rawFile'],
-            os.path.join(getrootdir(), 'Data', 'NGV', 'DEEPWAVE', 'Raw',
-                         'N2014060606.22'))
+                         os.path.join(getrootdir(), 'Data', 'NGV', 'DEEPWAVE',
+                                      'Raw', 'N2014060606.22'))
         self.assertEqual(self.processor.filelist[0]['ncFile'],
-            os.path.join(getrootdir(), 'Data', 'NGV', 'DEEPWAVE', 'NG',
-                         'DEEPWAVErf01.nc'))
+                         os.path.join(getrootdir(), 'Data', 'NGV', 'DEEPWAVE',
+                                      'NG', 'DEEPWAVErf01.nc'))
         self.assertEqual(self.processor.filelist[1]['rawFile'],
-            os.path.join(getrootdir(), 'Data', 'NGV', 'DEEPWAVE', 'Raw',
-                         'N2014061107.33'))
+                         os.path.join(getrootdir(), 'Data', 'NGV', 'DEEPWAVE',
+                                      'Raw', 'N2014061107.33'))
         self.assertEqual(self.processor.filelist[1]['ncFile'],
-            os.path.join(getrootdir(), 'Data', 'NGV', 'DEEPWAVE', 'NG',
-                         'DEEPWAVErf02.nc'))
+                         os.path.join(getrootdir(), 'Data', 'NGV', 'DEEPWAVE',
+                                      'NG', 'DEEPWAVErf02.nc'))
 
     def test_setFile(self):
         """
@@ -87,11 +88,11 @@ class TESTMTPprocessor(unittest.TestCase):
 
         # Test that dictionary and JSON are successfully cleared
         # self.processor.clearDictionary()
-        #self.assertDictEqual(self.client.reader.rawscan, self.dict)
-        #self.assertEqual(self.client.reader.flightData, [])
+        # self.assertDictEqual(self.client.reader.rawscan, self.dict)
+        # self.assertEqual(self.client.reader.flightData, [])
         # self.processor.removeJSON()
-        #self.assertEqual(os.path.exists(self.client.getMtpRealTimeFilename()),
-        #                                False)
+        # self.assertEqual(os.path.exists(self.client.getMtpRealTimeFilename()),
+        #                                 False)
 
         # selectedRawFile is the Raw file listed in the Production dir setup
         # file for the flight the user selected. Hardcode it here for testing
@@ -167,13 +168,13 @@ class TESTMTPprocessor(unittest.TestCase):
         self.dict['Aline']['values']['SMCMD']['val'] = '+074146'
         self.dict['Aline']['values']['SMENC']['val'] = '+073392'
         self.dict['Bline']['values']['SCNT']['val'] =  \
-            ['018963','020184','019593','018971','020181','019593','018970',
-             '020170','019587','018982','020193','019589','018992','020223',
-             '019617','019001','020229','019623','018992','020208','019601',
-             '018972','020181','019572','018979','020166','019558','018977',
-             '020161','019554']
+            ['018963', '020184', '019593', '018971', '020181', '019593',
+             '018970', '020170', '019587', '018982', '020193', '019589',
+             '018992', '020223', '019617', '019001', '020229', '019623',
+             '018992', '020208', '019601', '018972', '020181', '019572',
+             '018979', '020166', '019558', '018977', '020161', '019554']
         self.dict['Eline']['values']['TCNT']['val'] = \
-            ['021506','022917','022752','019806','021164','020697']
+            ['021506', '022917', '022752', '019806', '021164', '020697']
         self.dict['M01line']['values']['VM08CNTE']['val'] = '2928'
         self.dict['M01line']['values']['VVIDCNTE']['val'] = '2321'
         self.dict['M01line']['values']['VP08CNTE']['val'] = '2898'
