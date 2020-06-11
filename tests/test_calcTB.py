@@ -28,10 +28,18 @@ from util.readmtp import readMTP
 from util.decodePt import decodePt
 from util.calcTBs import BrightnessTemperature
 
+import sys
+import logging
+from EOLpython.logger.messageHandler import Logger as logger
+
 
 class TESTcalcTBs(unittest.TestCase):
 
     def setUp(self):
+        self.stream = sys.stdout  # Send log messages to stdout
+        loglevel = logging.INFO
+        logger.initLogger(self.stream, loglevel)
+
         udp = "MTP,20140606T062418,+06.49,00.19,-00.79,00.87,+04.00,0.06," + \
               "263.32,00.48,-43.290,+0.005,+172.296,+0.051,+074684," + \
               "+073904,018089,019327,018696,018110,019321,018704,018113," + \
