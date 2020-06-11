@@ -29,7 +29,7 @@ class TESTMTPclient(unittest.TestCase):
 
         os.environ["TEST_FLAG"] = "true"
 
-        # Instantiate and MTP controller
+        # Instantiate an MTP controller
         self.client = MTPclient()
 
         # Read the config file. Gets path to RCF dir
