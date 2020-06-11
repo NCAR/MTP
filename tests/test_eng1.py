@@ -22,7 +22,6 @@ from PyQt5.QtWidgets import QApplication
 
 from viewer.MTPviewer import MTPviewer
 from viewer.MTPclient import MTPclient
-from util.readmtp import readMTP
 from lib.rootdir import getrootdir
 
 import sys
@@ -49,6 +48,8 @@ class TESTeng1(unittest.TestCase):
         self.args = argparse.Namespace(cnts=False, postprocess=False,
                                        realtime=True)
 
+        self.viewer = MTPviewer(self.client, self.app, self.args)
+
     def test_eng1_noJSON(self):
         """ Test Engineering 1 display window shows what we expect """
         # This first emgineering window shows the Pt line
@@ -59,7 +60,6 @@ class TESTeng1(unittest.TestCase):
 
         # Test with no JSON file
         filename = ""
-        self.viewer = MTPviewer(self.client, self.app, self.args)
         self.viewer.loadJson(filename)
         self.assertEqual(self.viewer.eng1.toPlainText(),
                          "Channel\tCounts  Ohms  Temp  ")
@@ -67,7 +67,6 @@ class TESTeng1(unittest.TestCase):
     def test_eng1_JSON(self):
         # Test with JSON file
         filename = "../tests/test_data/DEEPWAVErf01.mtpRealTime.json"
-        self.viewer = MTPviewer(self.client, self.app, self.args)
         self.viewer.loadJson(filename)
         self.assertEqual(self.viewer.eng1.toPlainText(),
                          "Channel\tCounts  Ohms  Temp  \n" +
@@ -83,7 +82,7 @@ class TESTeng1(unittest.TestCase):
         # Send an MTP packet to the parser and confirm it gets parsed
         # correctly
         line = "Pt: 2165 13811 13820 03894 13415 13342 13230 14450"
-        mtp = readMTP()
+        mtp = self.client.reader  # Just done so lines aren't to long below
         mtp.parseLine(line)
         values = mtp.rawscan['Ptline']['data'].split(' ')
         mtp.assignPtvalues(values)
@@ -97,7 +96,7 @@ class TESTeng1(unittest.TestCase):
         self.assertEqual(mtp.getVar('Ptline', 'TR600CNTP'), '14450')
 
         # Then check that window displays correct values.
-        self.viewer.client.calcPt()
+        self.client.calcPt()
         self.viewer.writeEng1()
         self.assertEqual(self.viewer.eng1.toPlainText(),
                          "Channel\tCounts  Ohms  Temp  \n" +
@@ -112,3 +111,4 @@ class TESTeng1(unittest.TestCase):
 
     def tearDown(self):
         self.viewer.close()
+        self.app.quit()
