@@ -83,13 +83,14 @@ class readGVnc:
         """
         # Extract date and time from dataframe into datetime object
         datetime = self.ncdata.iloc[:, 0]  # [all rows, column 0]
+        dt_array = datetime.str.split()  # Array of [date, time] rows
 
         # Convert time from HHMMSS to sec.
-        dtime = datetime.str.split().str[1]  # Get just time from datetime
+        dtime = dt_array.str[1]  # Get just time from datetime
         dtime = pd.to_timedelta(dtime).dt.total_seconds().astype(int)  # to sec
 
         # Handle midnight rollover
-        date = datetime.str.split().str[0]  # Get just date from datetime
+        date = dt_array.str[0]  # Get just date from datetime
         date = pd.to_datetime(date)  # Convert to datetime object
         start_date = date.iloc[0]  # Date of first record in file
         # Now calculate difference between record date, and first date, in secs
