@@ -59,7 +59,7 @@ class readMTP:
 
     def __init__(self):
         # Instantiate dictionary to hold the MTP data.
-        self.curscan = MTPrecord()
+        self.curscan = copy.deepcopy(MTPrecord)
 
         # An array of MTP data dictionaries - used to display a single variable
         # across time.
