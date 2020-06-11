@@ -48,7 +48,6 @@
 ###############################################################################
 import os
 import re
-import copy
 import numpy
 import json
 import copy
