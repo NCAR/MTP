@@ -20,6 +20,8 @@ class StorePacket():
             #'M02':'M02: 2109 1299 2860 2691 2962 1116 4095 1805',    
             #'Pt':'Pt: 2157 13804 13796 10311 13383 13327 13144 14440',    
             #'Eline': 'E 020541 021894 021874 018826 020158 019813 ',    
+            'firstUDP': True, # first udp packet needs to cast these to list
+            # if there is no UDP, they need to have integer values
             'pitch15':0, # Array containing  
             'roll15':0,  # last 15 seconds 
             'Zp15':0,   
