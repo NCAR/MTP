@@ -58,6 +58,7 @@ class doUDP(object):
 
         # Connect getIwg to socket
         self.sock_read.readyRead.connect(self.getIWG)
+        return
 
 
     def getIWG(self):
@@ -153,63 +154,77 @@ class doUDP(object):
     def keep15(self, name, latestValue): 
         # self.list = self.parent.packetStore.getData(name)
         # logging.debug("list: %s", self.list) # more like a qbyte array
-        templist = self.getArray(name)
-        # logging.debug(templist)
-        nval = len(templist)
-        #logging.debug("nval: %s", nval)
-
-        # Sometimes IWG packet doesn't fill out values
-        # check if roll/pitch is zero in goAngle
-        if latestValue is '':
-            latestValue = float(0) # try and figure out nan value instead
-        elif latestValue is b'':
-            latestValue = float(0) # try and figure out nan value instead
-        if name == "Zp":
-            latestValue = float(latestValue)/3280.8 # ft/km value from vb6
-        elif name is "oat":
-            latestValue = float(latestValue) + 273.15 # C to K value from vb6
-
-        # only want to keep 16 values in each array
-        if nval > 15:
-            nval = 15
         
-        # removes oldest value if there are more than 15
-        # want to shuffle last value, 
-        # then second last value
-        # so that the list[0] is empty
-        # but others are full
-        i = 0
-        while i < nval: 
-            # shuffle list
-            # logging.debug("nval :: i " )
-            #logging.debug( nval-i )
-            #logging.debug( nval-(i+1))
+        if self.parent.packetStore.getData("firstUDP"):
+            templist = [0]
+            if name == 'lon':
+                self.parent.packetStore.setData("firstUDP", False)
+            self.setArray(name, [0])
 
-            templist[nval-i] = templist[nval-(i+1)]
-            i = i+1
-        templist[0] = latestValue
-        if name is 'pitch':
-            self.parent.packetStore.setData(name+ 'Instant', latestValue)
-        elif name is 'roll':
-            self.parent.packetStore.setData(name+ 'Instant', latestValue)
-        self.setArray(name, templist)
-        self.averageVal(name)
+        else:
+            templist = self.getArray(name)
+           
+            # logging.debug(templist)
+            nval = len(templist)
+            #logging.debug("nval: %s", nval)
+    
+            # Sometimes IWG packet doesn't fill out values
+            # check if roll/pitch is zero in goAngle
+            if latestValue is '':
+                latestValue = float(0) # try and figure out nan value instead
+            elif latestValue is b'':
+                latestValue = float(0) # try and figure out nan value instead
+            if name == "Zp":
+                latestValue = float(latestValue)/3280.8 # ft/km value from vb6
+            elif name is "oat":
+                latestValue = float(latestValue) + 273.15 # C to K value from vb6
 
-        # logging.debug("in keep15")
+            # only want to keep 16 values in each array
+            if nval > 15:
+                nval = 15
+                
+                # removes oldest value if there are more than 15
+                # want to shuffle last value, 
+                # then second last value
+                # so that the list[0] is 'empty'
+                # but others are full
+                i = 0
+                while i < nval: 
+                    # shuffle list
+                    # logging.debug("nval :: i " )
+                    #logging.debug( nval-i )
+                    #logging.debug( nval-(i+1))
+
+                    templist[nval-i] = templist[nval-(i+1)]
+                    i = i+1
+            else:
+                # if there are less than or equal to 15 values, havent received enough
+                # IWG packets to necessitate shuffling
+                templist.append(templist[0])
+            templist[0] = latestValue
+            if name is 'pitch':
+                self.parent.packetStore.setData(name+ 'Instant', latestValue)
+            elif name is 'roll':
+                self.parent.packetStore.setData(name+ 'Instant', latestValue)
+            self.setArray(name, templist)
+            self.averageVal(name)
+
+            # logging.debug("in keep15")
 
     def getArray(self, name):
+        logging.debug( name)
         if name is 'pitch':
-            templist = self.parent.packetStore.pitch15
+            templist = self.parent.packetStore.getData('pitch15')
         elif name is 'roll':
-            templist = self.parent.packetStore.roll15
+            templist = self.parent.packetStore.getData('roll15')
         elif name is 'Zp':
-            templist = self.parent.packetStore.Zp15
+            templist = self.parent.packetStore.getData('Zp15')
         elif name is 'oat':
-            templist = self.parent.packetStore.oat15
+            templist = self.parent.packetStore.getData('oat15')
         elif name is 'lat':
-            templist = self.parent.packetStore.lat15
+            templist = self.parent.packetStore.getData('lat15')
         elif name is 'lon':
-            templist = self.parent.packetStore.lon15
+            templist = self.parent.packetStore.getData('lon15')
         else: 
             logging.error("Undefined arrayName in udp keep15")
             templist  = []
@@ -217,17 +232,17 @@ class doUDP(object):
 
     def setArray(self, name, data):
         if name is 'pitch':
-            self.parent.packetStore.pitch15 = data 
+            self.parent.packetStore.setData('pitch15', data)
         elif name is 'roll':
-            self.parent.packetStore.roll15 = data 
+            self.parent.packetStore.setData('roll15', data) 
         elif name is 'Zp':
-            self.parent.packetStore.Zp15 = data 
+            self.parent.packetStore.setData('Zp15', data)
         elif name is 'oat':
-            self.parent.packetStore.oat15 = data 
+            self.parent.packetStore.setData('oat15', data)
         elif name is 'lat':
-            self.parent.packetStore.lat15 = data 
+            self.parent.packetStore.setData('lat15', data)
         elif name is 'lon':
-            self.parent.packetStore.lon15 = data 
+            self.parent.packetStore.setData('lon15', data)
         else: 
             logging.error("Undefined arrayName in udp keep15")
         #self.parent.packetStore.setData(name, self.list)

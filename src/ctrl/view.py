@@ -304,6 +304,7 @@ class controlWindow(QWidget):
         self.iwgStore = 'IWG1,20101002T194729,39.1324,-103.978,4566.43,,14127.9,,180.827,190.364,293.383,0.571414,-8.02806,318.85,318.672,-0.181879,-0.417805,-0.432257,-0.0980951,2.36793,-1.66016,-35.8046,16.3486,592.062,146.734,837.903,9.55575,324.104,1.22603,45.2423,,-22    .1676,'
         '''
         self.pitch15 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]    # Arrays of last 15 s
+
         self.roll15 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]     # taken from iwg
         self.Zp15 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
         self.oat15 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
@@ -329,9 +330,9 @@ class controlWindow(QWidget):
         latrms = self.packetStore.setData("latrms",1)
         lonavg = self.packetStore.setData("lonavg",1)
         lonrms = self.packetStore.setData("lonrms",1)
-        self.elAngles= [10,-179.8, 80.00, 55.00, 42.00, 25.00, 12.00, 0.00, -12.00, -25.00, -42.00, -80.00]
+        #self.elAngles= [10,-179.8, 80.00, 55.00, 42.00, 25.00, 12.00, 0.00, -12.00, -25.00, -42.00, -80.00]
         '''
-        self.udp = doUDP(self,self.app)
+        self.udp = doUDP(self, app)
         # UDP LED's
         # need to figure out the logic behind making them red if they aren't
         # actually sending/recieving data
@@ -1146,7 +1147,8 @@ class controlWindow(QWidget):
             # actually request the data of interest
             self.serialPort.sendCommand((self.commandDict.getCommand("count2")))
             echo = self.readUntilFound(b'R', 100000, 20)
-            echo = self.readUntilFound(b':', 100000, 20)
+            if echo.size() <6:
+                echo = self.readUntilFound(b':', 100000, 20)
             #logging.debug("integrate echo 1 : %s", echo.decode(ascii))
             # grab value from string, translate from hex, append to string
             check = echo[1:2]
