@@ -734,7 +734,7 @@ class controlWindow(QWidget):
     def moveWait(self):
         logging.debug("IN moveWait")
         i = 0
-        while i< 100:
+        while i< 20:
             self.serialPort.sendCommand(self.commandDict.getCommand("status"))
             echo = self.readUntilFound(b'S', 100000, 20)
             # do instring of ST:0#
@@ -1189,9 +1189,10 @@ class controlWindow(QWidget):
             check = echo[1:2]
             if check == b'00':
                 logging.warning('Integrate not finished')
-                # check is usually 28 if integrate is finished
-            datum = echo[4:10]
-            logging.debug("r value data")
+                # check is 28 if integrate is finished
+            findSemicolon = echo.data().find(b':')
+            logging.debug("r value data: %s, %s, %s",echo[findSemicolon], echo[findSemicolon+1], echo[findSemicolon+6])
+            datum = echo[findSemicolon+1: findSemicolon+7] # generally 4:10, ocasionally not. up to, not include last val
             logging.debug(datum)
             # translate from hex:
             datum = '%06d' % int(datum.data().decode('ascii'), 16)
