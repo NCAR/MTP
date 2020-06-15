@@ -737,20 +737,22 @@ class controlWindow(QWidget):
         while i< 100:
             self.serialPort.sendCommand(self.commandDict.getCommand("status"))
             echo = self.readUntilFound(b'S', 100000, 20)
-            if len( echo)< 7:
-                logging.debug("moveWait less than 7 echo %s", echo)
+            # do instring of ST:0#
+            # location of T +3
+            findTheT = echo.data().find(b'T')
+            if findTheT >=0:
+                # move along if status is not 2, 6, 10 or 14
+                # status 04 is correct status to move along for
+                logging.debug(echo[findTheT + 3])
+                if(echo[findTheT +3].isalpha()):
+                    #sometimes there's an s that shows up here
+                    logging.debug("moveWait ST:0S4\r\n case + %s", echo)
+                elif (int(echo[findTheT +3]) &2):
+                    return
 
             else: 
-                logging.debug("moveWait more = 7 echo %s", echo)
-                # move along if status is 2, 6, 10 or 14
-                # believe that 6 is really the status being checked for
-                # as I've only seen 6 and 7
-                logging.debug(echo[6])
-                '''
-                if (echo[6] & b'2'):
-                    logging.debug("move wait status correct, move along")
-                    return
-                '''
+                logging.debug("moveWait not = 7 echo %s", echo)
+                logging.debug("moveWait len echo %s", len(echo))
             i = i + 1
         logging.debug("move wait timeout, move along")
 
