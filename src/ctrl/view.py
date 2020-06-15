@@ -731,16 +731,49 @@ class controlWindow(QWidget):
     '''
 
 
+    def moveWait(self):
+        logging.debug("IN moveWait")
+        i = 0
+        while i< 100:
+            self.serialPort.sendCommand(self.commandDict.getCommand("status"))
+            echo = self.readUntilFound(b'S', 100000, 20)
+            if len( echo)< 7:
+                logging.debug("moveWait less than 7 echo %s", echo)
+
+            else: 
+                logging.debug("moveWait more = 7 echo %s", echo)
+                # move along if status is 2, 6, 10 or 14
+                # believe that 6 is really the status being checked for
+                # as I've only seen 6 and 7
+                logging.debug(echo[6])
+                '''
+                if (echo[6] & b'2'):
+                    logging.debug("move wait status correct, move along")
+                    return
+                '''
+            i = i + 1
+        logging.debug("move wait timeout, move along")
+
+
+
+
     def homeScan(self):
         self.serialPort.sendCommand(self.commandDict.getCommand("home1"))
         self.readUntilFound(b':', 100000, 20)
-        self.readUntilFound(b'S', 100000, 20)
+        echo = self.readUntilFound(b'S', 100000, 20)
+        logging.debug("home1 after step =:%s",echo) 
+        self.moveWait()
+
         self.serialPort.sendCommand(self.commandDict.getCommand("home2"))
         self.readUntilFound(b':', 100000, 20)
-        self.readUntilFound(b'S', 100000, 20)
+        echo = self.readUntilFound(b'S', 100000, 20)
+        logging.debug("home1 after step =:%s",echo) 
+        self.moveWait()
+        
         self.serialPort.sendCommand(self.commandDict.getCommand("home3"))
         self.readUntilFound(b':', 100000, 20)
         self.readUntilFound(b'S', 100000, 20)
+        self.moveWait()
         echo = self.read(200,20)
         logging.debug("home3 1st echo =:%s",echo) 
         echo = self.read(200,20)
