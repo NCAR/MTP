@@ -1207,14 +1207,19 @@ class controlWindow(QWidget):
 
     def waitForStatus(self, status):
         # add timeout?
-        while status is not receivedStatus:
+        i = 0
+        while i < 20 :
             self.serialPort.sendCommand((self.commandDict.getCommand("status")))
+            logging.debug("sent status request")
             echo = self.readUntilFound(b'S', 100000, 20)
-            logging.debug("status echo 1 : %s", echo.decode(ascii))
-            echo = self.readUntilFound(b'S', 100000, 20)
-            logging.debug("status echo 1 : %s", echo.decode(ascii))
             logging.debug("status: %s, received Status: %s, ", status, echo)
-        
+            statusFound = echo.data().find(status)
+            if statusFound >= 0:
+                logging.debug("status searched: %s , found: %s", int(status), int(echo[statusFound])) 
+                return
+            i = i +1
+        logging.warning(" waitForStatus timed out: %s", int(status))
+        return
 
 
     def tune(self, fghz):
@@ -1230,7 +1235,7 @@ class controlWindow(QWidget):
         # mode = self.parent.packetStore.getData("tuneMode")
 
         mode = 'C'
-        self.serialPort.sendCommand(str.encode(str(mode) + '{:.5}'.format(str(chan)) +"\r")) # \n added by encode I believe
+        self.serialPort.sendCommand(str.encode(str(mode) + '{:.5}'.format(str(chan)) +"\r\n")) # \n added by encode I believe
         #logging.debug("Tuning: currently using mode C as that's what's called in vb6")
         # no official response, just echos
         # and echos that are indistinguishable from each other
@@ -1247,6 +1252,8 @@ class controlWindow(QWidget):
             # check if received an @ symbol for bline
             # if so set self.at true
             self.at = True
+        # wait for tune status to be 4
+        self.waitForStatus(b'4')
         
 
 
