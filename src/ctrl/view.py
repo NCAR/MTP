@@ -64,6 +64,11 @@ class controlWindow(QWidget):
         self.saveLocation = QLabel("Raw data saved to:")
         self.logLocation = QLabel("Log data saved to:")
 
+        self.loopTimer= QLabel("Time since last frame")
+        self.totalNumFrames = QLabel("Total frames")
+        self.numFramesSinceLastReset = QLabel("Frames since reset")
+        self.elAngle = QLabel("Current El. Angle")
+
         # Text boxes
 
         self.configFile = QPlainTextEdit()
@@ -79,6 +84,16 @@ class controlWindow(QWidget):
         self.projectNameBox.insertPlainText('ACCLIP_TEST')
         self.planeNameBox = QPlainTextEdit()
         self.planeNameBox.insertPlainText('NGV')
+
+
+        self.loopTimerBox = QPlainTextEdit()
+        self.loopTimerBox.insertPlainText('Start')
+        self.totalNumFramesBox = QPlainTextEdit()
+        self.totalNumFramesBox.insertPlainText('0')
+        self.numFramesSinceLastResetBox = QPlainTextEdit()
+        self.numFramesSinceLastResetBox.insertPlainText('0')
+        self.elAngleBox = QPlainTextEdit()
+        self.elAngleBox.insertPlainText('Target')
 
         # Push Buttons
         self.reInitProbe = QPushButton("Re-initialize Probe", self)
@@ -126,7 +141,21 @@ class controlWindow(QWidget):
         LineScanStatus = QHBoxLayout()
         LineScanStatus.addWidget(self.scanStatusLED)
         LineScanStatus.addWidget(self.scanStatus)
+        LineScanStatus.addWidget(self.loopTimer)
+        LineScanStatus.addWidget(self.loopTimerBox)
         LineScanStatus.addStretch()
+
+        LineNumFrames = QHBoxLayout()
+        LineNumFrames.addWidget(self.totalNumFramesBox)
+        LineNumFrames.addWidget(self.totalNumFrames)
+        LineNumFrames.addWidget(self.numFramesSinceLastReset)
+        LineNumFrames.addWidget(self.numFramesSinceLastResetBox)
+        LineNumFrames.addStretch()
+
+        LineElAngle = QHBoxLayout()
+        LineElAngle.addWidget(self.elAngleBox)
+        LineElAngle.addWidget(self.elAngle)
+        LineElAngle.addStretch()
 
         LineReceivingUDP = QHBoxLayout()
         LineReceivingUDP.addWidget(self.receivingUDPLED)
@@ -159,6 +188,8 @@ class controlWindow(QWidget):
         mainbox.addWidget(self.reInitProbe)
         mainbox.addLayout(LineScanStatus)
         mainbox.addWidget(self.scanStatusButton)
+        mainbox.addLayout(LineNumFrames)
+        mainbox.addLayout(LineElAngle)
         mainbox.addLayout(LineReceivingUDP)
         mainbox.addLayout(LineSendingUDP)
         mainbox.addLayout(LineRunningLocation)
@@ -263,6 +294,8 @@ class controlWindow(QWidget):
         self.packetStore.setData("scanStatus", False)
         self.packetStore.setData("calledFrom", "resetProbeClick")
 
+        self.totalCycles = 0
+
         self.continueCycling = False
         self.initProbe()
         self.homeScan()
@@ -358,6 +391,8 @@ class controlWindow(QWidget):
         self.initProbe()
         self.homeScan()
         self.continueCycling = True
+        self.previousTime = time.clock() 
+        self.cyclesSinceLastStop = 0
 
         # loop over " scan commands"
         while self.continueCycling:
@@ -384,10 +419,37 @@ class controlWindow(QWidget):
             udp = self.mover.saveData()
 
             # send packet over UDP
+            
+
+            # collect, update, display loop stats
+            self.cycleStats()
 
             #time.sleep(1)
 
         logging.debug("Main Loop Stopped")
+
+   def cycleStats(self):
+        logging.debug("cycleStats")
+
+        # loop timer
+        nowTime = time.clock()
+        elapsedTime = nowTime - self.prevousTime
+        logging.debug("elapsed Loop Time: %s", elapsedTime)
+        self.previousTime = nowTime
+        
+        # total frames(m01,m02,pt,Eline,aline,bline, IWG) taken since startup
+        self.totalCycles = self.totalCycles + 1 
+        
+        # frames taken since last "stop probe"
+        self.cyclesSinceLastStop = self.cyclesSinceLastStop + 1
+
+        # Update GUI
+        self.loopTimerBox.insertPlainText(elapsedTime)
+        self.totalNumFramesBox.insertPlainText(self.totalCycles)
+        self.numFramesSinceLastResetBox.insertPlainText(self.cyclesSinceLastStop)
+
+
+
 
     def initProbe(self):
         i=0
@@ -780,6 +842,8 @@ class controlWindow(QWidget):
         logging.debug("home3 1st echo =:%s",echo) 
         echo = self.read(200,20)
         logging.debug("home3 2nd echo =:%s",echo) 
+        # Update GUI
+        self.elAngleBox.insertPlainText("Target")
 
 
     def m01(self):
@@ -948,7 +1012,11 @@ class controlWindow(QWidget):
         logging.debug(elAngles)
         data = ''
         for angle in elAngles: 
+            # update GUI
+            self.elAngleBox.insertPlainText(angle)
             logging.debug("el angle: %f", angle)
+
+            # get pitch corrected angle
             self.mover.getAngle(angle)
             # catch send move command echo from getAngle
             echo = self.readUntilFound(b':',100, 4)
