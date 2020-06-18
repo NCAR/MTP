@@ -88,12 +88,20 @@ class controlWindow(QWidget):
 
         self.loopTimerBox = QPlainTextEdit()
         self.loopTimerBox.insertPlainText('Start')
+        self.loopTimerBox.setOverwriteMode(True)
         self.totalNumFramesBox = QPlainTextEdit()
         self.totalNumFramesBox.insertPlainText('0')
+        self.totalNumFramesBox.setOverwriteMode(True)
         self.numFramesSinceLastResetBox = QPlainTextEdit()
         self.numFramesSinceLastResetBox.insertPlainText('0')
+        self.numFramesSinceLastResetBox.setOverwriteMode(True)
         self.elAngleBox = QPlainTextEdit()
         self.elAngleBox.insertPlainText('Target')
+        self.elAngleBox.setOverwriteMode(True)
+
+
+
+
 
         # Push Buttons
         self.reInitProbe = QPushButton("Re-initialize Probe", self)
@@ -293,8 +301,8 @@ class controlWindow(QWidget):
         self.packetStore.setData("switchControl", "resetInitScan")
         self.packetStore.setData("scanStatus", False)
         self.packetStore.setData("calledFrom", "resetProbeClick")
+        self.packetStore.setData("totalCycles",0) 
 
-        self.totalCycles = 0
 
         self.continueCycling = False
         self.initProbe()
@@ -391,7 +399,7 @@ class controlWindow(QWidget):
         self.initProbe()
         self.homeScan()
         self.continueCycling = True
-        self.previousTime = time.clock() 
+        previousTime = time.perf_counter()
         self.cyclesSinceLastStop = 0
 
         # loop over " scan commands"
@@ -422,32 +430,37 @@ class controlWindow(QWidget):
             
 
             # collect, update, display loop stats
-            self.cycleStats()
+            previousTime = self.cycleStats(previousTime)
 
             #time.sleep(1)
 
         logging.debug("Main Loop Stopped")
 
-   def cycleStats(self):
+    def cycleStats(self, previousTime):
         logging.debug("cycleStats")
 
         # loop timer
-        nowTime = time.clock()
-        elapsedTime = nowTime - self.prevousTime
+        nowTime = time.perf_counter()
+        elapsedTime = nowTime - previousTime
         logging.debug("elapsed Loop Time: %s", elapsedTime)
-        self.previousTime = nowTime
+        previousTime = nowTime
         
         # total frames(m01,m02,pt,Eline,aline,bline, IWG) taken since startup
-        self.totalCycles = self.totalCycles + 1 
+        totalCycles = self.packetStore.getData("totalCycles") + 1 
+        self.packetStore.setData("totalCycles", totalCycles) 
         
         # frames taken since last "stop probe"
         self.cyclesSinceLastStop = self.cyclesSinceLastStop + 1
 
         # Update GUI
-        self.loopTimerBox.insertPlainText(elapsedTime)
-        self.totalNumFramesBox.insertPlainText(self.totalCycles)
-        self.numFramesSinceLastResetBox.insertPlainText(self.cyclesSinceLastStop)
-
+        self.loopTimerBox.clear()
+        self.loopTimerBox.insertPlainText(str(elapsedTime))
+        self.totalNumFramesBox.clear()
+        self.totalNumFramesBox.insertPlainText(str(totalCycles))
+        self.numFramesSinceLastResetBox.clear()
+        self.numFramesSinceLastResetBox.insertPlainText(str(self.cyclesSinceLastStop))
+        
+        return previousTime
 
 
 
@@ -1013,7 +1026,8 @@ class controlWindow(QWidget):
         data = ''
         for angle in elAngles: 
             # update GUI
-            self.elAngleBox.insertPlainText(angle)
+            self.elAngleBox.clear()
+            self.elAngleBox.insertPlainText(str(angle))
             logging.debug("el angle: %f", angle)
 
             # get pitch corrected angle
