@@ -98,6 +98,7 @@ class StorePacket():
             'Nsteps': 0,
             'currentClkStep':0, 
             'targetClkStep':0, 
+            'totalCycles':0, 
 
         }
 
