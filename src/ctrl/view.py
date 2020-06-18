@@ -104,7 +104,7 @@ class controlWindow(QWidget):
 
 
         # Push Buttons
-        self.reInitProbe = QPushButton("Re-initialize Probe", self)
+        self.reInitProbe = QPushButton("Re-initialize Probe/restart Scanning", self)
         self.reInitProbe.clicked.connect(self.reInitProbeClicked)
         self.scanStatusButton = QPushButton("Stop Scanning", self)
         self.scanStatusButton.clicked.connect(self.scanStatusClicked)
@@ -306,6 +306,9 @@ class controlWindow(QWidget):
 
         self.continueCycling = False
         self.initProbe()
+
+        self.reInitProbe.setText("Re-initialize Probe/Restart Scanning")
+        #self.reInitProbe.setText("Reset Probe")
         self.homeScan()
         self.mainloop()
         #self.cycle()
@@ -318,6 +321,8 @@ class controlWindow(QWidget):
         self.continueCycling= False 
         self.app.processEvents()
         logging.debug("Safe exit")
+        # need a timer in here to continue sending app.exits
+
         app.exit(0)
 
     def readClear(self, waitReadyReadTime, readLineTime):
@@ -403,7 +408,10 @@ class controlWindow(QWidget):
         self.cyclesSinceLastStop = 0
 
         # loop over " scan commands"
+        self.probeStatusLED.setPixmap(self.ICON_GREEN_LED.scaled(40, 40))
+        self.scanStatusLED.setPixmap(self.ICON_GREEN_LED.scaled(40, 40))
         while self.continueCycling:
+
             logging.debug("loop                                                                                                                 asdfasdf")
             self.m01Store = self.m01()
             self.m02Store = self.m02()
@@ -435,6 +443,7 @@ class controlWindow(QWidget):
             #time.sleep(1)
 
         logging.debug("Main Loop Stopped")
+        self.scanStatusLED.setPixmap(self.ICON_RED_LED.scaled(40, 40))
 
     def cycleStats(self, previousTime):
         logging.debug("cycleStats")
@@ -479,6 +488,7 @@ class controlWindow(QWidget):
                 break
             i = i + 1
         i = 0
+        # Think this was supposed to send ctrl-c, but re-init does that
         while i < 3: 
             self.serialPort.sendCommand(b'\r\n')
             logging.debug("init vbcr equivalent return1 ")
@@ -549,6 +559,9 @@ class controlWindow(QWidget):
         return 0
 
     def scanStatusClicked(self):
+        
+        self.continueCycling= False 
+        '''
         logging.debug("scanStatusClicked")
         if self.packetStore.getData("isCycling"): 
             self.packetStore.setData("isCycling", False)
@@ -561,7 +574,8 @@ class controlWindow(QWidget):
         #self.cycleTimer.start()
         #self.cycle()
         #logging.debug(self.commandDict.getCommand(""))
-        self.serialPort.sendCommand(str.encode(self.commandDict.getCommand("read_M1")))
+        self.serialPort.sendCommand(self.commandDict.getCommand("read_M1"))
+        '''
         '''
         self.safeSleep()
         self.app.processEvents()
@@ -579,7 +593,6 @@ class controlWindow(QWidget):
             #put it there if not
             #self.doScan()
 
-        return 0
 
     def tick(self):
         self.serialPort.sendCommand(str.encode(self.commandDict.getCommand("status")))
