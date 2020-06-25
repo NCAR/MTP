@@ -118,6 +118,8 @@ class MTPclient():
 
         self.ascii_parms.close()
 
+        return(self.iwg)
+
     def readConfig(self, filename):
         # Read config from config file
         self.configfile = config()
