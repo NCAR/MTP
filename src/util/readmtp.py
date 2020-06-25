@@ -103,6 +103,9 @@ class readMTP:
         Read in a scan (a group of lines) from an MTP .RAW file and store them
         to a dictionary
         """
+        # If read an entire file and never get foundall = True, report to user
+        # status of all found fields as a hint to what went wrong. TBD**
+
         while True:
 
             # Read in a single line
@@ -440,11 +443,26 @@ class readMTP:
 
     def getVarArray(self, linetype, var):
         """ Get an array containing all measured values of a variable """
+        # This works for the A, IWG1, M01, M02, and Pt lines, which contain one
+        # value per time
         self.varArray = []
         if self.rawscan is not None:
             for i in range(len(self.flightData)-1):
-                self.varArray.append(float(self.flightData[i].getVar(linetype,
-                                                                     var)))
+                self.varArray.append(self.flightData[i][linetype]
+                                     ['values'][var]['val'])
+        return(self.varArray)
+
+    def getVarArrayi(self, linetype, var, index):
+        """ Get an array containing all measured values of a variable """
+        # This works for the B and E lines, which contain an array of values
+        # for each time. Pass in the index of the value you want
+        # For the E line, there are 6 values: Ch1NDon, Ch2NDon, Ch3NDon,
+        # Ch1NDoff, Ch2NDoff, and Ch3NDoff
+        self.varArray = []
+        if self.rawscan is not None:
+            for i in range(len(self.flightData)-1):
+                self.varArray.append(float(self.flightData[i][linetype]
+                                           ['values'][var]['val'][index]))
         return(self.varArray)
 
     def get_metadata(self, linetype, var, key):
