@@ -43,6 +43,7 @@ class MTPprocessor(QMainWindow):
         # Initialize window pointers - allows more generic code
         self.ts = False
         self.dropdown = False
+        self.toolbar = False
 
     def initUI(self):
         """ Initialize the processing window """
