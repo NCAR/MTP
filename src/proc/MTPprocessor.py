@@ -10,8 +10,11 @@ import re
 import copy
 from lib.config import config
 from lib.icartt import ICARTT
+from matplotlib.backends.backend_qt5agg import (
+       NavigationToolbar2QT as NavigationToolbar)
 from util.readGVnc import readGVnc
 from proc.file_struct import data_files
+from proc.plotTimeSeries import TimeSeries
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMainWindow, QGridLayout, QWidget, QAction, \
                             QListWidget, QLabel
@@ -36,6 +39,10 @@ class MTPprocessor(QMainWindow):
         self.raw_data_file = None
 
         self.initUI()
+
+        # Initialize window pointers - allows more generic code
+        self.ts = False
+        self.dropdown = False
 
     def initUI(self):
         """ Initialize the processing window """
@@ -62,26 +69,44 @@ class MTPprocessor(QMainWindow):
         """ Create the menu bar and add options and dropdowns """
 
         # A Menu bar will show menus at the top of the QMainWindow
-        menubar = self.menuBar()
+        self.menubar = self.menuBar()
 
         # Mac OS treats menubars differently. To get a similar outcome, we can
         # add the following line: menubar.setNativeMenuBar(False).
-        menubar.setNativeMenuBar(False)
+        self.menubar.setNativeMenuBar(False)
 
         # Add a menu option to load a flight file to process
         self.loadFlight = QAction('LoadFlight', self)
         self.loadFlight.setToolTip('Load data for a single flight')
         self.loadFlight.triggered.connect(self.flightSelectWindow)
-        menubar.addAction(self.loadFlight)
+        self.menubar.addAction(self.loadFlight)
+
+        # Add menu option to process loaded data  TBD**
+
+        # Add menu option to plot timeseries
+        self.plotSeries = QAction('Plot Timeseries', self)
+        self.plotSeries.setToolTip('Plot time series for a variable')
+        self.plotSeries.triggered.connect(self.plotTimeseries)
+        self.menubar.addAction(self.plotSeries)
 
         # Add a menu option to save final data
         self.saveButton = QAction('Save ICARTT', self)
         self.saveButton.setToolTip('Save Processed Data to an ICARTT file')
         self.saveButton.triggered.connect(self.saveICARTT)
-        menubar.addAction(self.saveButton)
+        self.menubar.addAction(self.saveButton)
         self.icartt = ICARTT(self.client)
 
     def flightSelectWindow(self):
+
+        # Close timeseries window and dropdown in case  'Plot Timeseries' was
+        # previously selected.
+        if self.ts:
+            self.ts.close()
+        if self.dropdown:
+            self.dropdown.close()
+        if self.toolbar:
+            self.removeToolBar(self.toolbar)
+
         # Create a QListWidget to hold the possible flights
         self.textbox = QListWidget(self)
         self.textbox.show()
@@ -92,9 +117,9 @@ class MTPprocessor(QMainWindow):
         self.textbox.setFont(font)
 
         # # Add a title above the source station list
-        lbl = QLabel("Available Flights")
-        lbl.setAlignment(Qt.AlignCenter | Qt.AlignCenter)
-        self.layout.addWidget(lbl, 0, 0)
+        self.lbl = QLabel("Available Flights")
+        self.lbl.setAlignment(Qt.AlignCenter | Qt.AlignCenter)
+        self.layout.addWidget(self.lbl, 0, 0)
 
         # Display stations in textbox
         for flight in self.filelist:
@@ -107,6 +132,24 @@ class MTPprocessor(QMainWindow):
         # them to fix the setup file for future use.
         self.textbox.clicked.connect(self.setFile)
 
+    def plotTimeseries(self):
+        """ Add a timeseries plot window """
+        self.timeseries = TimeSeries(self.client)
+        self.ts = self.timeseries.getWindow()
+        self.layout.addWidget(self.ts, 1, 0)
+
+        # Add toolbar that lets users zoom, pan, save, etc
+        self.toolbar = NavigationToolbar(self.ts, self)
+        self.addToolBar(self.toolbar)
+
+        # Add a dropdown menu to select variable to plot
+        # NEED TO ADD OTHER VALS BESIDES ELINE. What would Julie like? TBD**
+        # SA values from Aline? Definitely want temperature a flight level
+        # Don't hardcode Eline. Make generic. TBD**
+        self.dropdown = \
+            self.timeseries.varSelector(self.client.reader.getVarList('Eline'))
+        self.layout.addWidget(self.dropdown, 0, 0)
+
     def closeRawFile(self):
         """ If raw_data_file is open, close it """
         if self.raw_data_file:
@@ -114,7 +157,9 @@ class MTPprocessor(QMainWindow):
 
     def setFile(self):
         # If have already read in JSON data, or another file, clear it!!!
-        # TBD
+        # self.clearDictionary()
+        # self.removeJSON()
+        # TBD**
 
         # The user should only be able to select one file at a time, but out
         # of an abundance of caution, check and warn user if not true.
@@ -139,8 +184,8 @@ class MTPprocessor(QMainWindow):
         self.raw_data_file = open(selectedRawFile, 'r')
 
         # Have the flight selection box change somehow to show that the
-        # user has sucessfully selected a flight.
-        # TBD
+        # user has sucessfully selected a flight
+        # TBD**
 
         # Loop and read in all the raw data
         haveData = True
@@ -171,7 +216,7 @@ class MTPprocessor(QMainWindow):
                 # Skip doing retrievals and speed up reading in raw data file.
                 # The idea then is to wait until after doing a tbfit to process
                 # the data. May change this later. To be decided. Leave code
-                # here for now so can uncomment later if change my mind. TBD
+                # here for now so can uncomment later if change my mind. TBD**
                 # try:
                 #     self.client.createProfile()
                 # except Exception as err:
@@ -190,7 +235,7 @@ class MTPprocessor(QMainWindow):
                 # For now, don't plot data because it slows down reading in
                 # raw data file. This is post-processing mode, so in theory
                 # Julie already saw all the scans during the flight. But
-                # confirm her preference. TBD
+                # confirm her preference. TBD**
                 # self.viewer.plotData()
                 # If processScan is called with False, don't have data to
                 # create a curtain plot.
@@ -200,6 +245,12 @@ class MTPprocessor(QMainWindow):
 
         self.viewer.setScanIndex()
         self.closeRawFile()  # Done reading raw file, so close it
+
+        # Now that selected file has been successfully loaded, replace the file
+        # selection box with a timeseries plot widget
+        self.textbox.close()
+        self.lbl.close()
+        self.plotTimeseries()
 
     def saveICARTT(self):
         """ Action to take when Save ICARTT button is clicked """
