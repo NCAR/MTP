@@ -98,6 +98,10 @@ class readMTP:
         """ Return a pointer to the MTP data dictionary for a specific scan """
         return(self.flightData[index])
 
+    def getNumRecs(self):
+        """ Return the number of records in the array of scans """
+        return(len(self.flightData))
+
     def readRawScan(self, raw_data_file):
         """
         Read in a scan (a group of lines) from an MTP .RAW file and store them
