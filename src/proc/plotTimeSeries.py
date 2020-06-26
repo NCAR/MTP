@@ -6,12 +6,12 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
 import datetime
-import numpy
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from matplotlib.backends.backend_qt5agg import (
        FigureCanvasQTAgg as FigureCanvas)
 from PyQt5.QtWidgets import QComboBox
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
 class TimeSeries():
@@ -54,19 +54,28 @@ class TimeSeries():
         When the user selects a timeseries variable from the dropdown, clear
         the plot window, initialize the data with values for the selected
         variable, reset the y-axis label to display the selected variable
-
-        WHAT WILL HAPPEN IF SECONDS ROLL OVER MIDNIGHT?  TBD**
         """
         self.configureAxis(text)
 
-        # Find the first date in the data (YYYYMMDD) and convert to base
+        # Test and make sure there is data in the flightData array. If empty,
+        # prompt user to load some data and return.
+        if self.client.reader.getNumRecs() == 0:
+            logger.printmsg("ERROR", "No data available: ",
+                            "Try loading some raw data")
+            return()
+
+        # Find the date in the data (YYYYMMDD) and convert to base
         # datetime object
-        startdate = self.client.reader.getVarArray('Aline', 'DATE')[0]
-        base = datetime.datetime.strptime(startdate, "%Y%m%d")
+        startdate = self.client.reader.getVarArray('Aline', 'DATE')
+        base = []
+        for date in startdate:
+            base.append(datetime.datetime.strptime(date, "%Y%m%d"))
 
         # Convert seconds in file to numpy datetime object
         x = self.client.reader.getVarArray('Aline', 'TIME')  # seconds
-        dates = numpy.array([base + datetime.timedelta(seconds=i) for i in x])
+        dates = []
+        for i in range(len(x)):
+            dates.append(base[i] + datetime.timedelta(seconds=x[i]))
 
         # Format the ticks
         minutes = mdates.MinuteLocator(byminute=[0])  # every hour on the hour
