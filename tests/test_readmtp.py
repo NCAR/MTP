@@ -143,6 +143,51 @@ class TESTreadmtp(unittest.TestCase):
         self.mtp.createEdata()
         self.assertEqual(self.mtp.getEline(), self.Eline)
 
+    def test_getVarArray(self):
+        """ Test getting an array of values for a variable """
+        # Save some test data to the dictionary
+        self.mtp.parseLine(self.Aline)  # Save Aline to rawscan 'data' var
+        # Parse 'data' line into vars in Aline
+        self.mtp.assignAvalues(self.mtp.rawscan['Aline']['data'].split())
+        self.mtp.parseLine(self.Eline)  # Save Eline to rawscan 'data' var
+        # Parse 'data' line into vars in Eline
+        self.mtp.assignEvalues(self.mtp.rawscan['Eline']['data'].split())
+
+        # Copy rawscan to flightData[0]
+        self.mtp.flightData = []
+        self.mtp.flightData.append(self.mtp.rawscan)
+
+        # Get back list of vals for SAPITCH - will be one val since we only
+        # loaded one record
+        vals = self.mtp.getVarArray('Aline', 'SAPITCH')
+        # Test getVarArray with timeseries line
+        self.assertEqual(vals, ['+06.49'])
+
+        # Try to get back using getVarArrayi - will fail
+        vals = self.mtp.getVarArrayi('Aline', 'SAPITCH', 0)
+        # Test getVarArray with timeseries line
+        self.assertEqual(vals, None)
+
+        # Test getVarArrayi with timeseries of lists
+        # Get back list of vals for TCNT[0] - will be one val since we only
+        # loaded one record
+        vals = self.mtp.getVarArrayi('Eline', 'TCNT', 0)
+        self.assertEqual(vals, [20890])
+
+        # Try to get back using getVarArray - will fail
+        vals = self.mtp.getVarArray('Eline', 'TCNT')
+        self.assertEqual(vals, None)
+
+    def test_getVarList(self):
+        """ Test getting list of vars from an MTP line """
+        vars = self.mtp.getVarList('Eline')
+        self.assertEqual(vars, ['TCNT'])
+        vars = self.mtp.getVarList('Aline')
+        self.assertEqual(vars, ['DATE', 'timestr', 'TIME', 'SAPITCH',
+                                'SRPITCH', 'SAROLL', 'SRROLL', 'SAPALT',
+                                'SRPALT', 'SAAT', 'SRAT', 'SALAT', 'SRLAT',
+                                'SALON', 'SRLON', 'SMCMD', 'SMENC'])
+
     def test_readRawScan(self):
         """
         Test reading a scan from an MTP Raw data file and storing them to a
