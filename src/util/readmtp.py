@@ -447,7 +447,10 @@ class readMTP:
         # value per time
         self.varArray = []
         if self.rawscan is not None:
-            for i in range(len(self.flightData)-1):
+            if type(self.flightData[0][linetype]['values'][var]
+                    ['val']) is list:
+                return(None)
+            for i in range(len(self.flightData)):
                 self.varArray.append(self.flightData[i][linetype]
                                      ['values'][var]['val'])
         return(self.varArray)
@@ -460,7 +463,10 @@ class readMTP:
         # Ch1NDoff, Ch2NDoff, and Ch3NDoff
         self.varArray = []
         if self.rawscan is not None:
-            for i in range(len(self.flightData)-1):
+            if type(self.flightData[0][linetype]['values'][var]
+                    ['val']) is not list:
+                return(None)
+            for i in range(len(self.flightData)):
                 self.varArray.append(float(self.flightData[i][linetype]
                                            ['values'][var]['val'][index]))
         return(self.varArray)
