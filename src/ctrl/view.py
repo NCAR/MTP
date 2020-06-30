@@ -305,11 +305,11 @@ class controlWindow(QWidget):
 
 
         self.continueCycling = False
-        self.initProbe()
+        #self.initProbe()
 
         self.reInitProbe.setText("Re-initialize Probe/Restart Scanning")
         #self.reInitProbe.setText("Reset Probe")
-        self.homeScan()
+        #/self.homeScan()
         self.mainloop()
         #self.cycle()
 
@@ -319,6 +319,7 @@ class controlWindow(QWidget):
         logging.debug("shutdownProbe/quit clicked")
         self.closeComm(serialPort)
         self.continueCycling= False 
+        self.packetStore.setData("quitClicked", True)
         self.app.processEvents()
         logging.debug("Safe exit")
         # need a timer in here to continue sending app.exits
@@ -444,6 +445,8 @@ class controlWindow(QWidget):
 
         logging.debug("Main Loop Stopped")
         self.scanStatusLED.setPixmap(self.ICON_RED_LED.scaled(40, 40))
+        if self.packetStore.setData("quitClicked"):
+            app.exit(0)
 
     def cycleStats(self, previousTime):
         logging.debug("cycleStats")
