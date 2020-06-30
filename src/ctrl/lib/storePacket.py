@@ -99,6 +99,7 @@ class StorePacket():
             'currentClkStep':0, 
             'targetClkStep':0, 
             'totalCycles':0, 
+            'quitClicked': False, 
 
         }
 
