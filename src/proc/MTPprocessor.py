@@ -98,7 +98,7 @@ class MTPprocessor(QMainWindow):
         self.icartt = ICARTT(self.client)
 
     def flightSelectWindow(self):
-
+        """ Create list of available data files and allow user to load one """
         # Close timeseries window and dropdown in case  'Plot Timeseries' was
         # previously selected.
         if self.ts:
@@ -158,9 +158,7 @@ class MTPprocessor(QMainWindow):
 
     def setFile(self):
         # If have already read in JSON data, or another file, clear it!!!
-        # self.clearDictionary()
-        # self.removeJSON()
-        # TBD**
+        self.client.clearData()
 
         # The user should only be able to select one file at a time, but out
         # of an abundance of caution, check and warn user if not true.

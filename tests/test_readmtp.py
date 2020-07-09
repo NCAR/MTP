@@ -23,6 +23,7 @@ import unittest
 from unittest.mock import mock_open, patch
 from util.readmtp import readMTP
 from lib.rootdir import getrootdir
+from pathlib import Path
 
 
 class TESTreadmtp(unittest.TestCase):
@@ -304,3 +305,30 @@ class TESTreadmtp(unittest.TestCase):
             for i in range(6):
                 self.assertTrue(numpy.isnan(self.mtp.rawscan['Eline']
                                 ['values'][key]['val'][i]))
+
+    def testClearFlightData(self):
+        # Read in some data
+        # selectedRawFile is the Raw file listed in the Production dir setup
+        # file for the flight the user selected. Hardcode it here for testing
+        selectedRawFile = os.path.join(getrootdir(), 'Data', 'NGV', 'DEEPWAVE',
+                                       'Raw', 'N2014060606.22')
+        self.mtp.flightData = []
+        with patch('__main__.open', mock_open()):
+            with open(selectedRawFile) as raw_data_file:
+                status = self.mtp.readRawScan(raw_data_file)
+
+                # Copy rawscan to flightData
+                self.mtp.flightData.append(self.mtp.rawscan)
+
+        self.assertEqual(status, True)  # Successful read of a raw data record
+        self.assertNotEqual(len(self.mtp.flightData), 0)
+
+        self.mtp.clearFlightData()
+        self.assertEqual(len(self.mtp.flightData), 0)
+
+    def testRemoveJSON(self):
+
+        testFile = "./test.json"
+        Path(testFile).touch()
+
+        self.mtp.removeJSON(testFile)
