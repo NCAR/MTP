@@ -133,9 +133,21 @@ class readMTP:
                         self.rawscan[linetype]['found'] = False
                 return(True)  # Not at EOF
 
+    def clearFlightData(self):
+        """ clear the flightData list of dictionaries """
+        self.flightData.clear()
+
     def archive(self):
         """ Save the current record to the flight library (flightData[]) """
         self.flightData.append(copy.deepcopy(self.rawscan))
+
+    def removeJSON(self, filename):
+        """ Delete the JSON file on disk """
+        try:
+            if os.path.exists(filename):
+                os.remove(filename)
+        except Exception as e:
+            logger.printmsg('ERROR', "Failed to remove JSON file " + e)
 
     def save(self, filename):
         """ Append the current record to a JSON file on disk """

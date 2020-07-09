@@ -212,6 +212,14 @@ class MTPclient():
         """ Return the inverted brightness temperature array """
         return(self.reader.getTBI())
 
+    def clearData(self):
+        """ Clear the flight dictionary and JSON file on disk """
+        # Remove everything from flightData
+        self.reader.clearFlightData()
+
+        # Delete the JSON file on disk
+        self.reader.removeJSON(self.getMtpRealTimeFilename())
+
     def saveData(self):
         """ Save data to flight dictionaries and to JSON file on disk """
         # Copy to array of dictionaries that holds entire flight
