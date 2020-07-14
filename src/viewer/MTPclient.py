@@ -221,8 +221,10 @@ class MTPclient():
         self.reader.removeJSON(self.getMtpRealTimeFilename())
 
     def saveData(self):
-        """ Save data to flight dictionaries and to JSON file on disk """
-        # Copy to array of dictionaries that holds entire flight
+        """
+        Save current record to flight dictionaries and to JSON file on disk
+        """
+        # Append to array of dictionaries that holds entire flight
         self.reader.archive()
 
         # Append to JSON file on disk
@@ -256,7 +258,7 @@ class MTPclient():
 
     def createProfile(self):
         """ Perform retrieval and derive the physical temperature profile """
-        # Perform retrieval
+        # Perform retrieval for a single scan
         try:
             self.BestWtdRCSet = self.doRetrieval(self.getTBI())
         except Exception:
