@@ -22,12 +22,25 @@ import numpy
 from viewer.MTPclient import MTPclient
 from lib.rootdir import getrootdir
 
+import logging
+from io import StringIO
+from EOLpython.Qlogger.messageHandler import QLogger as logger
+
 
 class TESTMTPclient(unittest.TestCase):
 
     def setUp(self):
 
+        # Set environment var to indicate we are in testing mode
+        # Need this to logger won't try to open message boxes
         os.environ["TEST_FLAG"] = "true"
+
+        # For testing, we want to capture the log messages in a buffer so we
+        # can compare the log output to what we expect.
+        self.stream = StringIO()  # Set output stream to buffer
+
+        # Instantiate a logger
+        self.log = logger.initLogger(self.stream, logging.INFO)
 
         # Instantiate an MTP controller
         self.client = MTPclient()
@@ -67,14 +80,21 @@ class TESTMTPclient(unittest.TestCase):
         """ Test accurate conversion of brightness temperature to profile """
         tbi = self.client.invertArray(self.tb)
 
-        # If acaltkm is missing or negative, getTemplate returns False
+        # If acaltkm is missing or negative, getTemplate returns an exception
+        # message.
         acaltkm = numpy.nan
-        BestWtdRCSet = self.client.getTemplate(acaltkm, tbi)
-        self.assertEqual(BestWtdRCSet, False)
+        try:
+            BestWtdRCSet = self.client.getTemplate(acaltkm, tbi)
+        except Exception as err:
+            self.assertEqual(str(err), "Aircraft altitude must exist and be " +
+                             "greater than zero to match template to scan")
 
         acaltkm = -1.0
-        BestWtdRCSet = self.client.getTemplate(acaltkm, tbi)
-        self.assertEqual(BestWtdRCSet, False)
+        try:
+            BestWtdRCSet = self.client.getTemplate(acaltkm, tbi)
+        except Exception as err:
+            self.assertEqual(str(err), "Aircraft altitude must exist and be " +
+                             "greater than zero to match template to scan")
 
         acaltkm = 8.206
         BestWtdRCSet = self.client.getTemplate(acaltkm, tbi)

@@ -79,12 +79,17 @@ class readMTP:
         # The current scan is in self.rawscan and in the last scan in
         # self.flightData. Sometimes we might want this class to read from
         # a scan other than the current scan. Set that scan here.
+        # Returns True or False to indicate if scan was sucessfully set to
+        # index or not.
         try:
             self.rawscan = self.flightData[index]
         except Exception as err:
             logger.printmsg("ERROR", "No data available: " + str(err),
                             "Try loading some raw data")
             self.rawscan = None
+            raise
+
+        return(True)
 
     def resetRawscan(self):
         """ Set the data dictionary back to the current scan """
@@ -138,7 +143,7 @@ class readMTP:
         self.flightData.clear()
 
     def archive(self):
-        """ Save the current record to the flight library (flightData[]) """
+        """ Append the current record to the flight library (flightData[]) """
         self.flightData.append(copy.deepcopy(self.rawscan))
 
     def removeJSON(self, filename):
@@ -491,26 +496,23 @@ class readMTP:
         """ Get the metadata with keyword key for the variable """
         return(self.flightData[0][linetype]['values'][var][key])
 
-    def getATPmetadata(self, var, key):
+    def getATPmetadata(self, var, key, index=0):
         """ Get the metadata with keyword key for variable in ATP dict """
         try:
-            metadata = self.flightData[0]['ATP'][var][key]
+            metadata = self.flightData[index]['ATP'][var][key]
         except Exception:
             raise
 
         return(metadata)
 
-    def testATP(self):
+    def testATP(self, index):
         # ATP metadata is not available until a temperature profile has been
         # calculated, which causes an AtmosphericTemperatureProfile dictionary
         # to be linked to the MTPrecord dictionary. So check for that here.
         try:
-            self.getATPmetadata('RCFMRIndex', '_FillValue')
+            self.getATPmetadata('RCFMRIndex', '_FillValue', index)
         except Exception:
-            logger.printmsg("ERROR", "A temperature profile doesn't exist " +
-                            "in the MTP dictionary.", "Maybe scan hasn't " +
-                            "been processed yet? Can't create ICARTT file")
-            return(False)
+            raise
 
         return(True)
 
@@ -559,13 +561,13 @@ class readMTP:
         return(self.rawscan['tbi'])
 
     def saveATP(self, ATP):
-        self.rawscan['ATP'] = ATP
+        self.rawscan['ATP'] = copy.deepcopy(ATP)
 
     def getATP(self):
         return(self.rawscan['ATP'])
 
     def saveBestWtdRCSet(self, BestWtdRCSet):
-        self.rawscan['BestWtdRCSet'] = BestWtdRCSet
+        self.rawscan['BestWtdRCSet'] = copy.deepcopy(BestWtdRCSet)
 
     def getBestWtdRCSet(self):
         return(self.rawscan['BestWtdRCSet'])

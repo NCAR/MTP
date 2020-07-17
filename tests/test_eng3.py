@@ -65,9 +65,16 @@ class TESTeng3(unittest.TestCase):
                          "Channel\tCounts  Value")
 
     def test_eng3_JSON(self):
+        """ Test Engineering 3 display window shows what we expect """
         # Test with JSON file
         filename = "../tests/test_data/DEEPWAVErf01.mtpRealTime.json"
         self.viewer.loadJson(filename)
+        # Compare to the data from the last record in the above test json file
+        # which is record 47.
+        self.viewer.viewScanIndex = 47
+        self.viewer.client.reader.setRawscan(self.viewer.viewScanIndex)
+        # Update data displayed to be data from record 47
+        self.viewer.updateDisplay()
         self.assertEqual(self.viewer.eng3.toPlainText(),
                          "Channel\tCounts  Value\n" +
                          "Acceler\t2061  +01.10 g\n" +

@@ -50,7 +50,7 @@ class Retriever():
 
     def getRCSet(self, ScanBTs, ACAltKm):
         """
-        Get the gest weighter RC Set that matches this scan
+        Get the best weighted RC Set that matches this scan
 
         ScanBTs is an array of floating point values indicating the brightness
         temperature values in Degrees Kelvin from the scan.  The first 10
@@ -63,7 +63,8 @@ class Retriever():
         # If PALT is missing or negative, can't calculate altc, tempc, rcfidx,
         # rfalt1idx, etc. Return False
         if (numpy.isnan(ACAltKm) or ACAltKm < 0):
-            return(False)
+            raise Exception("Aircraft altitude must exist and be greater " +
+                            "than zero to match template to scan")
 
         # If fileset created successfully, find the best template to match
         # the scanned brightness temperatures

@@ -27,7 +27,10 @@ class Curtain(QMainWindow):
 
         super().__init__(parent)
         self.initUI()
+        self.initData()  # instantiate empty data lists
 
+    def initData(self):
+        """ Create empty lists to hold plot data """
         self.data = []    # 2-D array of temperatures
         self.alt = []     # 2-D array of altitudes
         self.time = []    # 1-D array of times (to label X-axis)
