@@ -52,8 +52,11 @@ class MTPclient():
         self.initIWG()
 
         # Instantiate an RCF retriever
-        # If this fails, code will crash. Need to capture error. TBD
-        self.initRetriever()
+        # If this fails, code will crash, so exit gracefully
+        try:
+            self.initRetriever()
+        except Exception:
+            exit(1)
 
     def connect_udp(self):
         # Connect to the MTP and IWG UDP feeds
@@ -141,6 +144,9 @@ class MTPclient():
         # Location of RCF dir
         self.RCFdir = self.configfile.getPath('RCFdir')
 
+        # List of RCF files, if defined
+        self.filelist = self.configfile.getVal('filelist')
+
     def checkRCF(self):
         """
         Check if RCFdir exists. If not, prompt user to select correct RCFdir
@@ -179,7 +185,7 @@ class MTPclient():
     def initRetriever(self):
         """ instantiate an RCF retriever """
         try:
-            self.retriever = Retriever(self.RCFdir)
+            self.retriever = Retriever(self.RCFdir, self.filelist)
         except Exception:
             raise
 

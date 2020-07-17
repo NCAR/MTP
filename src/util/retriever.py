@@ -33,7 +33,7 @@ from util.profile_structs import AtmosphericTemperatureProfile
 
 class Retriever():
 
-    def __init__(self, Directory):
+    def __init__(self, Directory, filelist=None):
         """
         Directory is directory name containing the RCF files to be used.
         """
@@ -44,7 +44,7 @@ class Retriever():
 
         # Create a file set - this should only be called once at init
         try:
-            self.rcf_set.getRCFs(self.Directory)
+            self.rcf_set.getRCFs(self.Directory, filelist)
         except Exception:
             raise
 

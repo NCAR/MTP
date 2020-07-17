@@ -26,6 +26,7 @@
 # VB6 and Algorithm Copyright MJ Mahoney, NASA Jet Propulsion Laboratory
 ###############################################################################
 import os
+import re
 import math
 import inspect
 from util.rcf_structs import RC_Set_4Retrieval
@@ -48,7 +49,7 @@ class RetrievalCoefficientFileSet():
         """
         self._RCFs = []  # Array of RCF files
 
-    def getRCFs(self, Directory, filelist=""):
+    def getRCFs(self, Directory, filelist=None):
         """ Get a list of available RCF files in the Directory """
         i = 0
         # Iterate over files in a directory
@@ -59,8 +60,9 @@ class RetrievalCoefficientFileSet():
                filename.endswith(".RCF")):
                 try:
                     rcf = RetrievalCoefficientFile(Directory + "/" + filename)
-                except Exception:
-                    # Error opening RCF file. Failure to make fileset
+                except Exception as err:
+                    logger.printmsg("ERROR", "Error opening RCF file. " +
+                                    "Failure to make fileset", str(err))
                     raise
 
                 # If success making fileset, append to list of RCFs
@@ -68,7 +70,7 @@ class RetrievalCoefficientFileSet():
 
                 #  Only include files that are in the requested filelist
                 #  If filelist is empty, then get everything.
-                if (len(filelist) == 0):
+                if filelist is None:
                     # If in debug mode, print out names of RCF files that
                     # will be loaded.
                     logger.printmsg("DEBUG", "Found RCF file:" + filename +
@@ -89,10 +91,36 @@ class RetrievalCoefficientFileSet():
                         self._RCFs.pop()
 
         # Test if got complete fileset
-        if ((len(self._RCFs) == len(filelist)) or (len(filelist) == 0)):
+        if ((filelist is None) or (len(self._RCFs) == len(filelist))):
             return(True)  # Success
         else:
-            return(False)  # Failed to make a fileset
+            # Try to give user a helpful error message.
+            # Cases:
+            #     Look for each requested file in directory. If can't find it
+            #     then let user know.
+            #     If somehow above error didn't trigger, then give default err
+            errmsg = False  # Have not given user a useful error message yet
+            for j in range(len(filelist)):
+                found = False
+                for filename in os.listdir(Directory):
+                    if re.match(re.compile(filelist[j]), filename):
+                        found = True
+                if not found:
+                    logger.printmsg("ERROR", "Failed to make fileset. " +
+                                    "Requested RCF file " +
+                                    str(filelist[j]) + " does not " +
+                                    "exist in RCFdir " + Directory)
+                    errmsg = True
+            if errmsg:  # User got some useful info, so return
+                raise Exception()
+
+            # If get here, user still doesn't have a useful msg. Default to..
+            logger.printmsg("ERROR", "Failed to make fileset. " +
+                            "Number of requested RCF files, " +
+                            str(len(filelist)) +
+                            ", does not match number loaded, " +
+                            str(len(self._RCFs)))
+            raise Exception()
 
     def getRCFVector(self):
         """ Return a list of available RCF files """
@@ -209,11 +237,10 @@ class RetrievalCoefficientFileSet():
             # BestlnP is the sum of the ln of Probabilities for the BestRCIndex
             # BestRCIndex is the index of "best" template (so far)
             # What should BestlnP, BestRCIndex default to?
+            BestlnP = thislnP
             if (RCFit == self._RCFs[0]):
-                BestlnP = thislnP
                 BestRCIndex = 0
             elif (thislnP < BestlnP):
-                BestlnP = thislnP
                 BestRCIndex = thisRCFIndex
             thisRCFIndex += 1
 
