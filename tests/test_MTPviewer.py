@@ -54,7 +54,6 @@ class TESTMTPviewer(unittest.TestCase):
         self.app = QApplication([])
         self.client.config(self.configfile)
 
-
         self.viewer = MTPviewer(self.client, self.app, self.args)
 
     def test_clickBack(self):
@@ -96,7 +95,7 @@ class TESTMTPviewer(unittest.TestCase):
         self.viewer.loadJson(filename)
 
         # If on last scan and try to go fwd, should get error
-        self.viewer.viewScanIndex =47 
+        self.viewer.viewScanIndex = 47
         self.viewer.clickFwd()
         logger.flushHandler()
         self.assertRegex(self.stream.getvalue(),

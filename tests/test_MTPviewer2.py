@@ -54,7 +54,6 @@ class TESTMTPviewer(unittest.TestCase):
         self.app = QApplication([])
         self.client.config(self.configfile)
 
-
         self.viewer = MTPviewer(self.client, self.app, self.args)
 
     def test_clickGo(self):
@@ -64,21 +63,21 @@ class TESTMTPviewer(unittest.TestCase):
         self.viewer.loadJson(filename)
 
         # If test field is empty return without doing anything
-        #status = self.viewer.clickGo()
-        #self.assertEqual(status, None)
+        status = self.viewer.clickGo()
+        self.assertEqual(status, None)
 
         # If user entered a zero, assume they meant 1
-        #self.viewer.index.setText(str(0))
-        #self.viewer.clickGo()
-        #self.assertEqual(self.viewer.index.text(), str(1))
+        self.viewer.index.setText(str(0))
+        self.viewer.clickGo()
+        self.assertEqual(self.viewer.index.text(), str(1))
 
         # Set index > than last scan
-        #self.viewer.index.setText(str(49))
-        #self.viewer.clickGo()
-        #logger.flushHandler()
-        #self.assertRegex(self.stream.getvalue(),
-        #                 r"ERROR:.*Select scan in range 1 - " + \
-                #                 str(self.viewer.currentScanIndex))
+        self.viewer.index.setText(str(49))
+        self.viewer.clickGo()
+        logger.flushHandler()
+        self.assertRegex(self.stream.getvalue(),
+                         r"ERROR:.*Select scan in range 1 - " +
+                         str(self.viewer.currentScanIndex+1))
 
     def tearDown(self):
         self.client.clearData()
