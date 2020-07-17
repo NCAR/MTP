@@ -323,6 +323,11 @@ class MTPprocessor(QMainWindow):
                 # responsive to the user.
                 self.viewer.app.processEvents()
 
+        # If viewScanIndex is still zero, there were no complete scans in the
+        # raw data file.
+        if self.viewer.viewScanIndex == 0:
+            self.client.reader.reportScanStatus(selectedRawFile)
+
         # Set scan index to last scan in flightData
         self.viewer.setScanIndex()
         self.closeRawFile()  # Done reading raw file, so close it

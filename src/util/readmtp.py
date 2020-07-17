@@ -112,9 +112,6 @@ class readMTP:
         Read in a scan (a group of lines) from an MTP .RAW file and store them
         to a dictionary
         """
-        # If read an entire file and never get foundall = True, report to user
-        # status of all found fields as a hint to what went wrong. TBD**
-
         while True:
 
             # Read in a single line
@@ -137,6 +134,20 @@ class readMTP:
                     if 'found' in self.rawscan[linetype]:
                         self.rawscan[linetype]['found'] = False
                 return(True)  # Not at EOF
+
+    def reportScanStatus(self, selectedRawFile):
+        """
+        If read an entire file and never get foundall = True, report to user
+        status of all found fields as a hint to what went wrong.
+        """
+        status = "Line types found:\n"
+        for linetype in self.rawscan:
+            if 'found' in self.rawscan[linetype]:
+                status += linetype + ": " + \
+                          str(self.rawscan[linetype]['found']) + "\n"
+
+        logger.printmsg('ERROR', "No complete scans found in" +
+                        selectedRawFile, status)
 
     def clearFlightData(self):
         """ clear the flightData list of dictionaries """
