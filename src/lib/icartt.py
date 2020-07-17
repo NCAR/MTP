@@ -32,6 +32,7 @@ class ICARTT():
 
     def get_startdate(self):
         # Get date of first record in flightData array
+        # If no data (list index out of range), code will crash. Catch. TBD
         self.client.reader.setRawscan(0)
         date = self.client.reader.getVar('Aline', 'DATE')
         self.client.reader.resetRawscan()
@@ -85,6 +86,8 @@ class ICARTT():
         Build the ICARTT data header by gathering information from the MTP data
         and config dictionaries
         """
+        # If values are missing from proj.yml, code will crash. Need to catch
+        # these returned exceptions to getVal and getPath and handle them. TBD
 
         # PI last name, first name/initial
         self.header += self.client.configfile.getVal('pi') + "\n"
