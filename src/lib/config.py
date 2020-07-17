@@ -70,6 +70,12 @@ class config():
         if key in self.projConfig.keys():
             return(self.projConfig[key])
         else:
+            # Projdir defaults so OK. If no filelist, all RCF files are used
+            if key != 'projdir' and key != 'filelist':
+                logger.printmsg("ERROR", key + " not defined in configfile " +
+                                self.yamlfile)
+                raise Exception()
+
             return(None)
 
     def getInt(self, key):

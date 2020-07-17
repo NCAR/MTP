@@ -41,10 +41,11 @@ class MTPclient():
                                         'Data', 'NGV', 'DEEPWAVE')
         return(self.testDataDir)
 
-    def config(self, configfile):
+    def config(self, configfile_name):
         """ Read in config file and set up a bunch of stuff """
+        self.configfile_name = configfile_name
         # Read the config file. Gets path to RCF dir
-        self.readConfig(configfile)
+        self.readConfig(configfile_name)
 
         self.checkRCF()  # Check that RCF file exists
 
@@ -165,22 +166,24 @@ class MTPclient():
 
     def getAsciiParms(self):
         """ Return path to ascii_parms file """
-
-        # Check if self.configfile exists. If not, call readConfig.
-        # TBD
-        return(self.configfile.getPath('ascii_parms'))
+        try:
+            return(self.configfile.getPath('ascii_parms'))
+        except Exception:
+            exit(1)
 
     def getProj(self):
         """ Return the project name of the current project from config file """
-        # Check if self.configfile exists. If not, call readConfig.
-        # TBD
-        return(self.configfile.getVal('project'))
+        try:
+            return(self.configfile.getVal('project'))
+        except Exception:
+            exit(1)
 
     def getFltno(self):
         """ Return the flight number of the current flight from config file """
-        # Check if self.configfile exists. If not, call readConfig.
-        # TBD
-        return(self.configfile.getVal('fltno'))
+        try:
+            return(self.configfile.getVal('fltno'))
+        except Exception:
+            exit(1)
 
     def initRetriever(self):
         """ instantiate an RCF retriever """
@@ -356,7 +359,11 @@ class MTPclient():
         OAT = rawscan['Aline']['values']['SAAT']['val']  # Kelvin
 
         # Check if self.configfile exists. If not, call readConfig.
-        # TBD
+        try:
+            self.configfile
+        except NameError:
+            self.readConfig(self.configfile_name)
+
         tb = BrightnessTemperature(self.configfile)
 
         # Calculate the brightness temperatures for the latest scan counts
