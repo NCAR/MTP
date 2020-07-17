@@ -72,6 +72,7 @@ ascii_parms: 'Data/NGV/DEEPWAVE/config/ascii_parms'
 
 # Location of RCF dir relative to projdir
 RCFdir: 'Data/NGV/DEEPWAVE/RC'
+#filelist: ["NRCDE067", "NRCDA067"]
 
 # Dir holding production processing configuration stuff relative to projdir
 PRODdir: 'Data/NGV/DEEPWAVE/config/Production'

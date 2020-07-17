@@ -24,8 +24,8 @@ import os
 import unittest
 from util.rcf_set import RetrievalCoefficientFileSet
 
-import sys
 import logging
+from io import StringIO
 from EOLpython.logger.messageHandler import Logger as logger
 
 
@@ -38,7 +38,7 @@ class TESTrcfSet(unittest.TestCase):
         os.environ["TEST_FLAG"] = "true"
 
         # Set up logging
-        self.stream = sys.stdout  # Send log messages to stdout
+        self.stream = StringIO()  # Set output stream to buffer
         loglevel = logging.INFO
         logger.initLogger(self.stream, loglevel)
 
@@ -83,6 +83,61 @@ class TESTrcfSet(unittest.TestCase):
         self.assertTrue(self.rcf.setFlightLevelsKm(self.flightLevelsKm,
                                                    self.numFlightLevels))
 
+        # Initialize with a valid RCF directory and empty filelist so get
+        # everything
+        self.rcf = RetrievalCoefficientFileSet()
+        self.rcf.getRCFs(self.Directory+"/RC")
+
+        # Iterate over found RCF files.
+        files = []
+        for RCFs in self.rcf.getRCFVector():
+            files.append(RCFs.getFileName())
+
+        # Expect to find:
+        testfiles = ["../tests/test_data/RC/NRCDE067.RCF",
+                     "../tests/test_data/RC/NRCDF067.RCF",
+                     "../tests/test_data/RC/NRCDG067.RCF"]
+        self.assertEqual(sorted(files), sorted(testfiles))
+
+        # Now just ask for two of three files
+        self.rcf = RetrievalCoefficientFileSet()
+        self.rcf.getRCFs(self.Directory+"/RC", ["NRCDE067", "NRCDF067"])
+
+        # Iterate over found RCF files.
+        files = []
+        for RCFs in self.rcf.getRCFVector():
+            files.append(RCFs.getFileName())
+
+        # Expect to find:
+        testfiles = ["../tests/test_data/RC/NRCDE067.RCF",
+                     "../tests/test_data/RC/NRCDF067.RCF"]
+        self.assertEqual(sorted(files), sorted(testfiles))
+
+    def testgetRCFsERR(self):
+        """ Test that correct error msgs are triggered """
+        # Simulate a typo in one filename.
+        self.rcfset = RetrievalCoefficientFileSet()
+        try:
+            self.rcfset.getRCFs(self.Directory+"/RC", ["NRCDE067", "NRCDA067"])
+        except Exception:
+            # Iterate over found RCF files.
+            files = []
+            for RCFs in self.rcfset.getRCFVector():
+                files.append(RCFs.getFileName())
+            # Should find one of the two files
+            self.assertEqual(len(files), 1)
+
+            # Expect to find:
+            testfiles = ["../tests/test_data/RC/NRCDE067.RCF"]
+            self.assertEqual(sorted(files), sorted(testfiles))
+
+            # Test that user was shown appropriate error message
+            logger.flushHandler()
+            self.assertRegex(self.stream.getvalue(),
+                             "ERROR:.*Failed to make fileset. Requested " +
+                             "RCF file NRCDA067 does not exist in RCFdir" +
+                             " ../tests/test_data/RC")
+
     def testgetBestWeightedRCSet(self):
         """ Validate the function for selecting an RCF (template) from the set
         Provide scan values to getVestWeightedRCSet and verify that the
@@ -111,5 +166,6 @@ class TESTrcfSet(unittest.TestCase):
         self.assertEqual(len(BestWtdRCSet['FL_RCs']['Src']), 990)
 
     def tearDown(self):
+        logger.delHandler()
         if "TEST_FLAG" in os.environ:
             del os.environ['TEST_FLAG']
