@@ -327,8 +327,10 @@ class TESTreadmtp(unittest.TestCase):
         self.assertEqual(len(self.mtp.flightData), 0)
 
     def testRemoveJSON(self):
-
+        """ Test that JSON file is actually removed """
+        # Create a json file to run test on
         testFile = "./test.json"
         Path(testFile).touch()
 
         self.mtp.removeJSON(testFile)
+        self.assertFalse(os.path.exists(testFile))

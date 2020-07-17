@@ -187,7 +187,13 @@ class ICARTT():
         # ATP metadata is not available until a temperature profile has been
         # calculated, which causes an AtmosphericTemperatureProfile dictionary
         # to be linked to the MTPrecord dictionary. So check for that here.
-        if self.client.reader.testATP() is False:
+        try:
+            # Test existence of ATP metadata using first record
+            self.client.reader.testATP(0)
+        except Exception:
+            logger.printmsg("ERROR", "Temperature profiles don't exist for" +
+                            " this scan. Maybe data hasn't been processed " +
+                            "yet?", " Can't create ICARTT file.")
             return(False)  # Failed to build header
 
         # Missing data indicators (-9999, -99999, etc)

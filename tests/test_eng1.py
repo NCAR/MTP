@@ -65,9 +65,16 @@ class TESTeng1(unittest.TestCase):
                          "Channel\tCounts  Ohms  Temp  ")
 
     def test_eng1_JSON(self):
+        """ Test Engineering 1 display window shows what we expect """
         # Test with JSON file
         filename = "../tests/test_data/DEEPWAVErf01.mtpRealTime.json"
         self.viewer.loadJson(filename)
+        # Compare to the data from the last record in the above test json file
+        # which is record 47.
+        self.viewer.viewScanIndex = 47
+        self.viewer.client.reader.setRawscan(self.viewer.viewScanIndex)
+        # Update data displayed to be data from record 47
+        self.viewer.updateDisplay()
         self.assertEqual(self.viewer.eng1.toPlainText(),
                          "Channel\tCounts  Ohms  Temp  \n" +
                          "Rref 350\t02174  350.00  \n" +
