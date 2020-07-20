@@ -237,10 +237,11 @@ class RetrievalCoefficientFileSet():
             # BestlnP is the sum of the ln of Probabilities for the BestRCIndex
             # BestRCIndex is the index of "best" template (so far)
             # What should BestlnP, BestRCIndex default to?
-            BestlnP = thislnP
             if (RCFit == self._RCFs[0]):
+                BestlnP = thislnP
                 BestRCIndex = 0
             elif (thislnP < BestlnP):
+                BestlnP = thislnP
                 BestRCIndex = thisRCFIndex
             thisRCFIndex += 1
 
