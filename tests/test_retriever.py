@@ -64,7 +64,8 @@ class TESTretriever(unittest.TestCase):
         self.assertEqual(BestWtdRcSet['FL_RCs']['RCFALT1Index'], 12)  # Topit
         self.assertEqual(BestWtdRcSet['FL_RCs']['RCFALT2Index'], 13)  # Botit
 
-        # Test that if acaltkm is missing or negative, getRCSet returns False
+        # Test that if acaltkm is missing or negative, getRCSet returns an
+        # exception
         ACAltKm = numpy.nan
         try:
             BestWtdRcSet = Rtr.getRCSet(self.scanBTs, ACAltKm)

@@ -172,7 +172,7 @@ class MTPprocessor(QMainWindow):
             except Exception as err:
                 # retrieval failed
                 # warn user profile will not be generated.
-                self.viewer.reportFailedRetrieval(err)
+                self.viewer.reportFailedRetrieval(err, index)
 
         # Set display to first scan
         self.viewer.displayScan(0)

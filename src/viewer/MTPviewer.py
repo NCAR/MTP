@@ -457,7 +457,9 @@ class MTPviewer(QMainWindow):
 
     def processSocket(self):
         """
-        Tell client to read latest data and to update all plots in the GUI.
+        Each time a new UDP packet appears on the MTP socket, tell the client
+        to read this latest data, perform calcs,  and update all plots in the
+        GUI.
         """
         # Ask client to read MTP data from the UDP feed and save it to the data
         # dictionaries - one for current scan and one for all scans in flight
@@ -479,9 +481,12 @@ class MTPviewer(QMainWindow):
 
         self.updateDataDisplay()  # Update the display
 
-    def reportFailedRetrieval(self, err):
+    def reportFailedRetrieval(self, err, index=None):
         if not self.clicked:
-            QMessageBox.warning(self, '', "Could not perform retrieval --" +
+            msg = "Could not perform retrieval"
+            if index is not None:
+                msg = msg + " on scan " + str(index+1)
+            QMessageBox.warning(self, '', msg + " -- " +
                                 str(err) + "\nClick OK to stop " +
                                 "seeing this message ", QMessageBox.Ok)
             # Do not get to this point until user clicks OK
@@ -548,6 +553,7 @@ class MTPviewer(QMainWindow):
             self.profile.clear()
             self.profile.configure()  # Layout the profile plot
             self.profile.draw()
+            self.RCF1.setPlainText('')  # Clear display of last RCF used
             return()
 
         # ---------- Retrieval succeeded ----------
@@ -646,10 +652,10 @@ class MTPviewer(QMainWindow):
                 # profile was not generated - only warn user once
                 if not self.clicked:
                     logger.printmsg("ERROR", "While generating curtain plot," +
-                                    "found that temperature profile doesn't " +
-                                    "exist for scan." + str(index+1), "Click" +
-                                    " OK to stop seeing this message for " +
-                                    "future scans.")
+                                    " found that temperature profile doesn't" +
+                                    " exist for scan " + str(index+1),
+                                    "Click OK to stop seeing this message " +
+                                    "for future scans.")
                     self.clicked = True
 
                 # Add missing vals for this scan
