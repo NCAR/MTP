@@ -18,7 +18,6 @@
 ###############################################################################
 import os
 import unittest
-import numpy
 from viewer.MTPclient import MTPclient
 from lib.rootdir import getrootdir
 
@@ -80,24 +79,8 @@ class TESTMTPclient(unittest.TestCase):
         """ Test accurate conversion of brightness temperature to profile """
         tbi = self.client.invertArray(self.tb)
 
-        # If acaltkm is missing or negative, getTemplate returns an exception
-        # message.
-        acaltkm = numpy.nan
-        try:
-            BestWtdRCSet = self.client.getTemplate(acaltkm, tbi)
-        except Exception as err:
-            self.assertEqual(str(err), "Aircraft altitude must exist and be " +
-                             "greater than zero to match template to scan")
-
-        acaltkm = -1.0
-        try:
-            BestWtdRCSet = self.client.getTemplate(acaltkm, tbi)
-        except Exception as err:
-            self.assertEqual(str(err), "Aircraft altitude must exist and be " +
-                             "greater than zero to match template to scan")
-
         acaltkm = 8.206
-        BestWtdRCSet = self.client.getTemplate(acaltkm, tbi)
+        BestWtdRCSet = self.client.retriever.getRCSet(tbi, acaltkm)
         ATP = self.client.getProfile(tbi, BestWtdRCSet)
 
         tempc = [201.6476707, 214.7501833, 293.0145730,

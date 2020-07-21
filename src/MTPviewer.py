@@ -18,7 +18,7 @@ def main():
     client = MTPclient()
 
     # Process command line arguments.
-    args = client.get_args()
+    args = client.parse_args()
 
     # Configure logging
     stream = sys.stdout

@@ -64,8 +64,10 @@ class MTPclient():
         self.connectMTP()
         self.connectIWG()
 
-    def parse(self):
-        """ Define command line arguments which can be provided """
+    def parse_args(self):
+        """ Instantiate a command line argument parser """
+
+        # Define command line arguments which can be provided
         parser = argparse.ArgumentParser(
             description="Script to display and process MTP scans")
         parser.add_argument(
@@ -87,13 +89,9 @@ class MTPclient():
         parser.add_argument(
             '--rt', dest='realtime', action='store_const', const=True,
             default=False, help='Run in real-time monitoring mode.')
+
+        # Parse the command line arguments
         args = parser.parse_args()
-
-        return(args)
-
-    def get_args(self):
-        """ Parse the command line arguments """
-        args = self.parse()
 
         return(args)
 
@@ -269,7 +267,7 @@ class MTPclient():
         """ Perform retrieval and derive the physical temperature profile """
         # Perform retrieval for a single scan
         try:
-            self.BestWtdRCSet = self.doRetrieval(self.getTBI())
+            self.BestWtdRCSet = self.getTemplate(self.getTBI())
         except Exception:
             raise  # Pass error back up to calling function
 
@@ -297,14 +295,16 @@ class MTPclient():
         self.reader.createPtdata()  # Create the Pt data string
         self.reader.createEdata()  # Create the E data string
 
-    def doRetrieval(self, tbi):
-        """ Perform retrieval """
-        # Get the template brightness temperatures that best correspond to scan
-        # brightness temperatures
+    def getTemplate(self, tbi):
+        """
+        Get the template brightness temperatures that best correspond to scan
+        brightness temperatures.
+        BestWtdRCSet will be False if acaltkm is missing or negative
+        """
         rawscan = self.reader.getRawscan()
         acaltkm = float(rawscan['Aline']['values']['SAPALT']['val'])  # km
         try:
-            BestWtdRCSet = self.getTemplate(acaltkm, tbi)
+            BestWtdRCSet = self.retriever.getRCSet(tbi, acaltkm)
             return(BestWtdRCSet)
         except Exception:
             raise
@@ -393,19 +393,6 @@ class MTPclient():
                     array_inv[i*self.NUM_SCAN_ANGLES+j] = \
                         array[j*self.NUM_CHANNELS+i]
         return(array_inv)
-
-    def getTemplate(self, acaltkm, tbi):
-        """
-        Get the template brightness temperatures that best fit current scan
-
-        BestWtdRCSet will be False if acaltkm is missing or negative
-        """
-        try:
-            BestWtdRCSet = self.retriever.getRCSet(tbi, acaltkm)
-        except Exception:
-            raise
-
-        return(BestWtdRCSet)
 
     def getProfile(self, tbi, BestWtdRCSet):
         """
