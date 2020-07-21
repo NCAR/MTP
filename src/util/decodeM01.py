@@ -24,7 +24,10 @@ class decodeM01():
         self.reader = reader
 
     def calcVolts(self):
+        """ Convert engineering mulltiplxr counts to voltages """
 
+        # Volts = constant * cnts/1000
+        # Constants for each engineering value are hardcoded in MTP.py
         for var in self.reader.getVarList('M01line'):
             fact = self.reader.rawscan['M01line']['values'][var]['fact']
             val = self.reader.rawscan['M01line']['values'][var]['val']
