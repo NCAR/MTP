@@ -23,13 +23,13 @@ The MTPviewer software currently uses the following versions of code:
  * python3 -m pip install PyQt5
  * pip3 install pyserial
  * pip3 install psycopg2
- * Install the EOL-Python packages per instructions in src/EOL-Python submodule
+ * Install the EOL-Python packages per instructions in https://github.com/NCAR/EOL-Python
  
 ## To install on Windows10
  
  * See installation instructions for RAOBget: https://github.com/NCAR/RAOBget
  * Copy bat files from windows10 dir to Desktop
- * Install the EOL-Python packages per instructions in src/EOL-Python submodule
+ * Install the EOL-Python packages per instructions in https://github.com/NCAR/EOL-Python
  
 ## To operate the MTP from Windows10
 
