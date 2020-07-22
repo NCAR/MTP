@@ -99,7 +99,7 @@ class config():
     def prependDir(self, key, projdir):
         val = self.getVal(key)
         # Split the path into components - OS-independent
-        path_components = re.split(r'/W', val)
+        path_components = val.split('/')
         # Join correctly for OS we are running on. The splat operator (*)
         # unpacks a list - who knew?
         if projdir is None:
