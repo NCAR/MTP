@@ -27,7 +27,7 @@ The MTPviewer software currently uses the following versions of code:
  * pip3 install pyserial
  * pip3 install psycopg2
  * Install the EOL-Python packages per instructions in https://github.com/NCAR/EOL-Python
- * Install netCDF4-Python per https://github.com/Unidata/netcdf4-python
+ * pip3 install netCDF4
  
 ## To install on Windows10
  
@@ -53,9 +53,9 @@ Use miniconda to install all needed packages:
    > conda install -c conda-forge pyyaml
    > conda install netcdf4
 ```
-Change you environment variable and add a PYTHONPATH that points to netCDF installation (You will also the path to EOL-Python to this env var below.)
-
 If the packages are not available via the conda-forge channel, you can search for alternative channels at https://anaconda.org
+
+Change you environment variable and add a PYTHONPATH that points to netCDF installation (You will also the path to EOL-Python to this env var below.)
 
 Then install Git (if not already there) and download MTP:
  * https://git-scm.com/ -> Download latest per automatic OS detection. Run .exe file to install. I used default settings as suggested by installer, except that I asked to install a desktop icon for “Git Bash”
@@ -63,7 +63,7 @@ Then install Git (if not already there) and download MTP:
  * At the prompt
 ```
     git clone http://github.com/NCAR/MTP
-
+```
  * Copy bat files from windows10 dir to Desktop
  * Install the EOL-Python packages per instructions in https://github.com/NCAR/EOL-Python
  
