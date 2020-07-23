@@ -6,7 +6,6 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
 import os
-import re
 import yaml
 from lib.rootdir import getrootdir
 from EOLpython.util.fileselector import FileSelector
