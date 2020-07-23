@@ -34,8 +34,7 @@ class BrightnessTemperature():
         self.Geqn = [None] * self.channels
         self.tb = [None] * self.channels * self.angles
 
-        # From DEEPWAVE RF01 post-processing (so can compare with nimbus and
-        # VB6 results to confirm these calcs are OK)
+        # Gain OFfset and per channel Gain Eqn Constants (slope and intercept)
         self.GOF = float(configfile.getVal('GOF'))
         self.GEC = configfile.getVal('GEC')
 

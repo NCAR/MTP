@@ -17,8 +17,8 @@ def main():
     # Instantiate an MTP controller
     client = MTPclient()
 
-    # Process command line arguments
-    args = client.get_args()
+    # Process command line arguments.
+    args = client.parse_args()
 
     # Configure logging
     stream = sys.stdout
@@ -34,11 +34,9 @@ def main():
     # This also connects to the MTP and IWG feeds
     client.config(args.config)
 
-    # Get name of file JSON data (potentially) saved to
-    filename = client.reader.getJson(client.getProj(), client.getFltno())
-
     # Instantiate the GUI
-    viewer = MTPviewer(client, app, filename)
+    viewer = MTPviewer(client, app, args)
+    viewer.loadJson(client.getMtpRealTimeFilename())
     viewer.show()
 
     # Run the application until the user closes it.

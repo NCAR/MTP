@@ -6,8 +6,6 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
 import os
-import re
-import numpy
 import yaml
 from lib.rootdir import getrootdir
 from EOLpython.util.fileselector import FileSelector
@@ -71,7 +69,13 @@ class config():
         if key in self.projConfig.keys():
             return(self.projConfig[key])
         else:
-            return(numpy.nan)
+            # Projdir defaults so OK. If no filelist, all RCF files are used
+            if key != 'projdir' and key != 'filelist':
+                logger.printmsg("ERROR", key + " not defined in configfile " +
+                                self.yamlfile)
+                raise Exception()
+
+            return(None)
 
     def getInt(self, key):
         """ Read a param from the config file that should be an integer """
@@ -88,9 +92,33 @@ class config():
 
     def getPath(self, key):
         """ Read a param from the config file that should be a path """
+        newpath = self.prependDir(key, self.getProjDir())
+        return(newpath)
+
+    def prependDir(self, key, projdir):
         val = self.getVal(key)
         # Split the path into components - OS-independent
-        path_components = re.split(r'/W', val)
+        path_components = val.split('/')
         # Join correctly for OS we are running on. The splat operator (*)
         # unpacks a list - who knew?
-        return(os.path.join(getrootdir(), *path_components))
+        if projdir is None:
+            # Assume paths are relative to code checkout - for testing
+            newpath = os.path.join(getrootdir(), *path_components)
+        else:
+            # Use project directory given in config file as rootdir for data
+            # and config files.
+            newpath = os.path.join(projdir, *path_components)
+
+        # Check that new path exists. If not, warn user
+        if not os.path.exists(newpath):
+            logger.printmsg('ERROR', 'Invalid path given in config file: ' +
+                            newpath, "Edit config file " + self.yamlfile +
+                            " then click OK to reload it")
+            self.readConfig(self.yamlfile)
+            self.prependDir(key, projdir)  # Loop until user fixes issue
+
+        return(newpath)
+
+    def getProjDir(self):
+        """ Read proj dir, if defined, from config file. """
+        return(self.getVal("projdir"))

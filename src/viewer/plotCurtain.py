@@ -25,9 +25,12 @@ class Curtain(QMainWindow):
 
         self.maxAltkm = 32  # The maximum altitude to plot
 
-        super(Curtain, self).__init__(parent)
+        super().__init__(parent)
         self.initUI()
+        self.initData()  # instantiate empty data lists
 
+    def initData(self):
+        """ Create empty lists to hold plot data """
         self.data = []    # 2-D array of temperatures
         self.alt = []     # 2-D array of altitudes
         self.time = []    # 1-D array of times (to label X-axis)

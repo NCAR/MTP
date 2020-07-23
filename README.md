@@ -15,6 +15,9 @@ The MTPviewer software currently uses the following versions of code:
  * pyserial 3.4
  * psycopg2 2.7.7
  * pyqtgraph 0.10.0
+ * pyyaml 5.3.1
+ * metpy
+ * netCDF4
 
 ## To install on a MAC
 
@@ -23,13 +26,46 @@ The MTPviewer software currently uses the following versions of code:
  * python3 -m pip install PyQt5
  * pip3 install pyserial
  * pip3 install psycopg2
- * Install the EOL-Python packages per instructions in src/EOL-Python submodule
+ * Install the EOL-Python packages per instructions in https://github.com/NCAR/EOL-Python
+ * pip3 install netCDF4
  
 ## To install on Windows10
  
- * See installation instructions for RAOBget: https://github.com/NCAR/RAOBget
+Use miniconda to install all needed packages:
+ * https://docs.conda.io/en/latest/miniconda.html
+   * download win 64 bit installer for python3.7 and install
+ * (Optional) Add Miniconda3 and Miniconda3\condabin to your path
+   * Windows search -> type "env" -> click "Edit the system environment variables"
+   * In lower "System variables" window, click the "Path" row and click edit
+   * Click "New" and add the new paths, e.g.
+     * C:\Users\lroot\Miniconda3
+     * C:\Users\lroot\Miniconda3\condabin
+ * Activate a conda environment (I used the default base environment) - see - https://conda.io/activation
+```
+   > conda activate
+```
+ * Update conda if warned following instructions
+ * Install packages
+```
+   > conda install -c conda-forge metpy
+     - Drags in pyqt5 and cartopy. If it doesn't...
+   > conda install -c conda-forge pyqt
+   > conda install -c conda-forge pyyaml
+   > conda install netcdf4
+```
+If the packages are not available via the conda-forge channel, you can search for alternative channels at https://anaconda.org
+
+Change you environment variable and add a PYTHONPATH that points to netCDF installation (You will also the path to EOL-Python to this env var below.)
+
+Then install Git (if not already there) and download MTP:
+ * https://git-scm.com/ -> Download latest per automatic OS detection. Run .exe file to install. I used default settings as suggested by installer, except that I asked to install a desktop icon for “Git Bash”
+ * Launch “Git Bash”
+ * At the prompt
+```
+    git clone http://github.com/NCAR/MTP
+```
  * Copy bat files from windows10 dir to Desktop
- * Install the EOL-Python packages per instructions in src/EOL-Python submodule
+ * Install the EOL-Python packages per instructions in https://github.com/NCAR/EOL-Python
  
 ## To operate the MTP from Windows10
 
@@ -47,6 +83,7 @@ Information on operating the MTP, and other documentation, can be found on the (
 
 ## To run this code:
  * Copy project ascii_parms file from proj dir to config/
+ * Create/update config/<project>.yml
  * cd src
  * On Windows10:
  ```
