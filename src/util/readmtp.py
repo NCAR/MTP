@@ -169,7 +169,7 @@ class readMTP:
         """ Append the current record to a JSON file on disk """
         with open(filename, 'a') as f:
             json.dump(self.rawscan, f)
-            f.write(os.linesep)
+            f.write('\n')
 
     def load(self, filename):
         """
