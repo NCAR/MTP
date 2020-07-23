@@ -383,6 +383,12 @@ class ICARTT():
         A record consists of a single dependent unbounded line followed by NX
         dependent bounded lines
         """
+        # On Windows, sometimes there is an empty flightData rec at the end
+        # of the array, which wreaks havoc in this routine. So check for it
+        # and return.
+        if rec['ATP'] == "":
+            return()
+
         # -- dependent unbounded line for this record --
         # start_time
         self.data = "  %5d, " % rec['Aline']['values']['TIME']['val']
