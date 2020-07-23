@@ -12,7 +12,8 @@ import numpy
 import logging
 import argparse
 from util.readmtp import readMTP
-from util.readiwg import readIWG
+from util.readiwg import IWG
+from util.readascii_parms import AsciiParms
 from util.decodePt import decodePt
 from util.decodeM01 import decodeM01
 from util.decodeM02 import decodeM02
@@ -32,29 +33,47 @@ class MTPclient():
         # Instantiate an instance of an MTP reader
         self.reader = readMTP()
 
-    def config(self, configfile):
+    def getTestDataDir(self):
+        # For testing purposes, data and configuration information for the
+        # DEEPWAVE project have been copied to Data/NGV/DEEPWAVE within this
+        # code checkout. For transparency, set that hardcoded path here.
+        self.testDataDir = os.path.join(getrootdir(),
+                                        'Data', 'NGV', 'DEEPWAVE')
+        return(self.testDataDir)
+
+    def config(self, configfile_name):
         """ Read in config file and set up a bunch of stuff """
+        self.configfile_name = configfile_name
         # Read the config file. Gets path to RCF dir
-        self.readConfig(configfile)
+        self.readConfig(configfile_name)
+
         self.checkRCF()  # Check that RCF file exists
 
         # Instantiate an IWG reader. Needs path to ascii_parms file.
         self.initIWG()
 
         # Instantiate an RCF retriever
-        self.initRetriever()
+        # If this fails, code will crash, so exit gracefully
+        try:
+            self.initRetriever()
+        except Exception:
+            exit(1)
 
+    def connect_udp(self):
         # Connect to the MTP and IWG UDP feeds
         self.connectMTP()
         self.connectIWG()
 
-    def parse(self):
-        """ Define command line arguments which can be provided """
+    def parse_args(self):
+        """ Instantiate a command line argument parser """
+
+        # Define command line arguments which can be provided
         parser = argparse.ArgumentParser(
             description="Script to display and process MTP scans")
         parser.add_argument(
             '--config', type=str,
-            default=os.path.join(getrootdir(), 'config', 'proj.yml'),
+            default=os.path.join(getrootdir(), self.getTestDataDir(),
+                                 'config', 'proj.yml'),
             help='File containing project-specific MTP configuration info. ' +
             'Defaults to config/proj.yml in code checkout for testing')
         parser.add_argument(
@@ -64,21 +83,44 @@ class MTPclient():
         parser.add_argument(
             '--logmod', type=str, default=None, help="Limit logging to " +
             "given module")
+        parser.add_argument(
+            '--cnts', dest='cnts', action='store_const', const=True,
+            help='Plot counts instead of scan/template. Useful for testing')
+        parser.add_argument(
+            '--rt', dest='realtime', action='store_const', const=True,
+            default=False, help='Run in real-time monitoring mode.')
+
+        # Parse the command line arguments
         args = parser.parse_args()
 
         return(args)
 
-    def get_args(self):
-        """ Parse the command line arguments """
-        args = self.parse()
-
-        return(args)
-
     def initIWG(self):
-        # Instantiate an instance of an IWG reader. Have it point to the same
-        # MTP dictionary as the MTP reader. Requires the location of the
-        # ascii_parms file.
-        self.iwg = readIWG(self.getAsciiParms(), self.reader.getRawscan())
+        """
+        Instantiate an instance of an IWG reader. Have it point to the same MTP
+        dictionary as the MTP reader. Requires the location of the ascii_parms
+        file.
+        """
+        # Initialize the IWG reader
+        self.iwg = IWG(self.reader.getRawscan())
+
+        # Init and open ascii parms file
+        status = True
+        self.ascii_parms = AsciiParms(self.getAsciiParms())
+        # Attempt to open ascii_parms file. Exit on failure.
+        if self.ascii_parms.open() is False:
+            exit(1)
+
+        while status:
+            # Read var from ascii_parms file
+            newVar = self.ascii_parms.readVar()
+
+            # Save to IWG section of dictionary
+            status = self.iwg.createPacket(newVar)
+
+        self.ascii_parms.close()
+
+        return(self.iwg)
 
     def readConfig(self, filename):
         # Read config from config file
@@ -101,6 +143,9 @@ class MTPclient():
         # Location of RCF dir
         self.RCFdir = self.configfile.getPath('RCFdir')
 
+        # List of RCF files, if defined
+        self.filelist = self.configfile.getVal('filelist')
+
     def checkRCF(self):
         """
         Check if RCFdir exists. If not, prompt user to select correct RCFdir
@@ -119,26 +164,31 @@ class MTPclient():
 
     def getAsciiParms(self):
         """ Return path to ascii_parms file """
-
-        # Check if self.configfile exists. If not, call readConfig.
-        # TBD
-        return(self.configfile.getPath('ascii_parms'))
+        try:
+            return(self.configfile.getPath('ascii_parms'))
+        except Exception:
+            exit(1)
 
     def getProj(self):
         """ Return the project name of the current project from config file """
-        # Check if self.configfile exists. If not, call readConfig.
-        # TBD
-        return(self.configfile.getVal('project'))
+        try:
+            return(self.configfile.getVal('project'))
+        except Exception:
+            exit(1)
 
     def getFltno(self):
         """ Return the flight number of the current flight from config file """
-        # Check if self.configfile exists. If not, call readConfig.
-        # TBD
-        return(self.configfile.getVal('fltno'))
+        try:
+            return(self.configfile.getVal('fltno'))
+        except Exception:
+            exit(1)
 
     def initRetriever(self):
         """ instantiate an RCF retriever """
-        self.retriever = Retriever(self.RCFdir)
+        try:
+            self.retriever = Retriever(self.RCFdir, self.filelist)
+        except Exception:
+            raise
 
     def setRCFdir(self, Dir):
         """ Only used during testing """
@@ -169,7 +219,43 @@ class MTPclient():
         """ Return the inverted brightness temperature array """
         return(self.reader.getTBI())
 
-    def processMTP(self):
+    def clearData(self):
+        """ Clear the flight dictionary and JSON file on disk """
+        # Remove everything from flightData
+        self.reader.clearFlightData()
+
+        # Delete the JSON file on disk
+        self.reader.removeJSON(self.getMtpRealTimeFilename())
+
+    def saveData(self):
+        """
+        Save current record to flight dictionaries and to JSON file on disk
+        """
+        # Append to array of dictionaries that holds entire flight
+        self.reader.archive()
+
+        # Append to JSON file on disk
+        self.reader.save(self.getMtpRealTimeFilename())
+
+    def getMtpRealTimeFilename(self):
+        """
+        Automatically generate JSON filename that includes the project and
+        flight number.
+        """
+
+        # Get project dir from config. If dir not set, default to test dir
+        projdir = self.configfile.getProjDir()
+        if projdir is None:
+            projdir = self.getTestDataDir()
+
+        return(self.reader.getJson(projdir, self.getProj(), self.getFltno()))
+
+    def processScan(self):
+        """
+        Perform calculations on latest scan to convert counts to brightness
+        temperature. Slice and dice the raw scan to save it and TB values to
+        dictionary for current scan.
+        """
         # Perform line calculations on latest scan
         self.doCalcs()
         self.reader.saveTBI(self.tbi)
@@ -177,14 +263,16 @@ class MTPclient():
         # Generate the data lines for current scan and save to dictionary
         self.createRecord()
 
-        # Perform retrieval
+    def createProfile(self):
+        """ Perform retrieval and derive the physical temperature profile """
+        # Perform retrieval for a single scan
         try:
-            self.BestWtdRCSet = self.doRetrieval(self.getTBI())
+            self.BestWtdRCSet = self.getTemplate(self.getTBI())
         except Exception:
             raise  # Pass error back up to calling function
 
         # If retrieval succeeded, get the physical temperature profile (and
-        # find the tropopause)
+        # find the tropopause). Save everything to current rawscan dictionary
         self.reader.saveBestWtdRCSet(self.BestWtdRCSet)
 
         self.ATP = self.getProfile(self.getTBI(), self.BestWtdRCSet)
@@ -207,14 +295,16 @@ class MTPclient():
         self.reader.createPtdata()  # Create the Pt data string
         self.reader.createEdata()  # Create the E data string
 
-    def doRetrieval(self, tbi):
-        """ Perform retrieval """
-        # Get the template brightness temperatures that best correspond to scan
-        # brightness temperatures
+    def getTemplate(self, tbi):
+        """
+        Get the template brightness temperatures that best correspond to scan
+        brightness temperatures.
+        BestWtdRCSet will be False if acaltkm is missing or negative
+        """
         rawscan = self.reader.getRawscan()
         acaltkm = float(rawscan['Aline']['values']['SAPALT']['val'])  # km
         try:
-            BestWtdRCSet = self.getTemplate(acaltkm, tbi)
+            BestWtdRCSet = self.retriever.getRCSet(tbi, acaltkm)
             return(BestWtdRCSet)
         except Exception:
             raise
@@ -267,16 +357,19 @@ class MTPclient():
         rawscan = self.reader.getRawscan()
         Tifa = rawscan['Ptline']['values']['TMIXCNTP']['temperature']
         OAT = rawscan['Aline']['values']['SAAT']['val']  # Kelvin
-        scnt = rawscan['Bline']['values']['SCNT']['val']
 
         # Check if self.configfile exists. If not, call readConfig.
-        # TBD
+        try:
+            self.configfile
+        except NameError:
+            self.readConfig(self.configfile_name)
+
         tb = BrightnessTemperature(self.configfile)
 
         # Calculate the brightness temperatures for the latest scan counts
         # and save them back to the MTP data dictionary.
         rawscan['Bline']['values']['SCNT']['tb'] = \
-            tb.TBcalculationRT(Tifa, OAT, scnt)
+            tb.TBcalculationRT(Tifa, OAT, self.getSCNT())
 
     def invertArray(self, array):
         """
@@ -300,19 +393,6 @@ class MTPclient():
                     array_inv[i*self.NUM_SCAN_ANGLES+j] = \
                         array[j*self.NUM_CHANNELS+i]
         return(array_inv)
-
-    def getTemplate(self, acaltkm, tbi):
-        """
-        Get the template brightness temperatures that best fit current scan
-
-        BestWtdRCSet will be False if acaltkm is missing or negative
-        """
-        try:
-            BestWtdRCSet = self.retriever.getRCSet(tbi, acaltkm)
-        except Exception:
-            raise
-
-        return(BestWtdRCSet)
 
     def getProfile(self, tbi, BestWtdRCSet):
         """
@@ -398,8 +478,8 @@ class MTPclient():
         # Listen for IWG packets
         dataI = self.sockI.recv(1024).decode()
 
-        # Store IWG record to data dictionary
-        status = self.iwg.parseIwgPacket(dataI)   # Store to values
+        # Store IWG record to values field in data dictionary
+        status = self.iwg.parseIwgPacket(dataI, self.getAsciiParms())
         if status is True:  # Successful parse if IWG packet
             self.reader.parseLine(dataI)  # Store to date, data, & asciiPacket
 

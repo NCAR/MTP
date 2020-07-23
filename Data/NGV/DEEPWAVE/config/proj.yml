@@ -1,0 +1,81 @@
+###############################################################################
+# This is the configuration file required to run the MTPviewer application. The
+# format of this file is YAML. What this means to you is that each
+# configuration variable is stored on a single line as a key, followed by a
+# colon, and then a value:
+#    key: value
+# where the value is in single quotes if it is a string, or not if it is a
+# number. GEC is the one exception. It is an array with three slope intercept
+# pairs so the value is in nested square brackets:
+# [[CH1slope, CH1intercpt], [CH2slope, CH2intercpt], [CH3slope, CH3intercpt]]
+#
+# Written in YAML (https://yaml.org)
+#
+# COPYRIGHT:   University Corporation for Atmospheric Research, 2020
+###############################################################################
+
+# Project info
+project: 'DEEPWAVE'  # 20140606
+fltno: 'RF01'
+
+# ICARTT header info
+pi: 'Julie Haggerty (haggerty@ucar.edu)'
+organization: 'NCAR, Boulder, CO'
+platform: 'NGV Microwave Temperature Profiler (MTP/NGV)'
+platformID: 'GV'
+revision: 'R0'
+revision_comment: 'initial release'
+
+# Port setting
+udp_send_port: 32106  # fron viewer to MTP
+udp_read_port: 32107  # from MTP to viewer
+iwg1_port: 7071       # IWG1 packets from GV
+
+# Current MTP scan setup
+NUM_SCAN_ANGLES: 10   # Number of scan angles being read
+NUM_CHANNELS: 3       # Number of channels being read
+LOC_HOR: 5            # Scan Angle Index of horizontal scan. Index starts at 0
+
+# Gain equation constants
+GeqnMin: 10           # Minimum acceptable gain
+GeqnMax: 40           # Maximum acceptable gain
+
+###############################################################################
+# The constants GOF and GEC don't change in real-time mode. To initialize
+# a new project, copy the latest values from the previous project.
+###############################################################################
+# For testing, use the constants from DEEPWAVE RF01 post-processing (so can
+# compare with nimbus and VB6 results to confirm these calcs are OK)
+GOF: 40.6             # Gain offset to subtract from Mixer Temperature Counts
+GEC: [[19.87, 0.1], [23.1, 0.1], [26.05, 0.1]]  # Per channel slope, intercept
+
+# From CSET
+# GOF: 42
+# GEC: [[19.43, 0.2], [22.44, 0.2],[25.29, 0.2]]
+
+###############################################################################
+# Locations of required files. Project dir (projdir) must be an absolute path,
+# and all other paths are relative to projdir. During testing, comment out
+# projdir and add 'Data/NGV/DEEPWAVE' to beginning of all other file paths.
+# Then:
+#     cd src
+#     python3 MTPviewer.py
+# You can use either '\' or '/' to separate path components. Code will adjust
+# it for OS you are running on.
+###############################################################################
+# Project directory to hold data and config info. If commented out, defaults to
+# top dir of code checkout, e.g. .../MTP/
+#projdir: '<put absolute path here>'
+
+# Location of ascii_parms file relative to projdir
+ascii_parms: 'Data/NGV/DEEPWAVE/config/ascii_parms'
+
+# Location of RCF dir relative to projdir
+RCFdir: 'Data/NGV/DEEPWAVE/RC'
+#filelist: ["NRCDE067", "NRCDA067"]
+
+# Dir holding production processing configuration stuff relative to projdir
+PRODdir: 'Data/NGV/DEEPWAVE/config/Production'
+
+# Dir to hold final data (ICARTT, etc)
+datadir: 'Data/NGV/DEEPWAVE/final'

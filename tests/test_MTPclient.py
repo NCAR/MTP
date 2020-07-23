@@ -18,23 +18,35 @@
 ###############################################################################
 import os
 import unittest
-import numpy
 from viewer.MTPclient import MTPclient
 from lib.rootdir import getrootdir
+
+import logging
+from io import StringIO
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
 class TESTMTPclient(unittest.TestCase):
 
     def setUp(self):
 
+        # Set environment var to indicate we are in testing mode
+        # Need this to logger won't try to open message boxes
         os.environ["TEST_FLAG"] = "true"
 
-        # Instantiate and MTP controller
+        # For testing, we want to capture the log messages in a buffer so we
+        # can compare the log output to what we expect.
+        self.stream = StringIO()  # Set output stream to buffer
+
+        # Instantiate a logger
+        self.log = logger.initLogger(self.stream, logging.INFO)
+
+        # Instantiate an MTP controller
         self.client = MTPclient()
 
         # Read the config file. Gets path to RCF dir
-        self.client.readConfig(os.path.join(getrootdir(),
-                               'config', 'proj.yml'))
+        self.client.readConfig(os.path.join(getrootdir(), 'Data', 'NGV',
+                               'DEEPWAVE', 'config', 'proj.yml'))
         self.client.checkRCF()
         self.client.initIWG()
 
@@ -67,17 +79,8 @@ class TESTMTPclient(unittest.TestCase):
         """ Test accurate conversion of brightness temperature to profile """
         tbi = self.client.invertArray(self.tb)
 
-        # If acaltkm is missing or negative, getTemplate returns False
-        acaltkm = numpy.nan
-        BestWtdRCSet = self.client.getTemplate(acaltkm, tbi)
-        self.assertEqual(BestWtdRCSet, False)
-
-        acaltkm = -1.0
-        BestWtdRCSet = self.client.getTemplate(acaltkm, tbi)
-        self.assertEqual(BestWtdRCSet, False)
-
         acaltkm = 8.206
-        BestWtdRCSet = self.client.getTemplate(acaltkm, tbi)
+        BestWtdRCSet = self.client.retriever.getRCSet(tbi, acaltkm)
         ATP = self.client.getProfile(tbi, BestWtdRCSet)
 
         tempc = [201.6476707, 214.7501833, 293.0145730,
