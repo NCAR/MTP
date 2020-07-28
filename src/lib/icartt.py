@@ -191,11 +191,12 @@ class ICARTT():
         # calculated, which causes an AtmosphericTemperatureProfile dictionary
         # to be linked to the MTPrecord dictionary. So check for that here.
         try:
-            # Test existence of ATP metadata using first record
-            self.client.reader.testATP(0)
+            # Test existence of ATP metadata. Return pointer to first
+            # record that has ATP metadata, or an exception if none found
+            ATPindex = self.client.reader.testATP()
         except Exception:
             logger.printmsg("ERROR", "Temperature profiles don't exist for" +
-                            " this scan. Maybe data hasn't been processed " +
+                            " this flight. Maybe data hasn't been processed " +
                             "yet?", " Can't create ICARTT file.")
             return(False)  # Failed to build header
 
@@ -221,8 +222,8 @@ class ICARTT():
                                                   '_FillValue')) + \
             "-999.9, " + \
             "%5.1f, " % \
-            float(self.client.reader.getATPmetadata('RCFMRIndex',
-                                                    '_FillValue')) + \
+            float(self.client.reader.getATPmetadata('RCFMRIndex', '_FillValue',
+                                                    ATPindex)) + \
             "-999.99, " + \
             "-99.99\n"
 
@@ -253,9 +254,12 @@ class ICARTT():
                        "altitude.\n"
         for var in ['RCFMRIndex']:
             self.header += \
-                self.client.reader.getATPmetadata(var, 'short_name') + ", " + \
-                self.client.reader.getATPmetadata(var, 'units') + ", " + \
-                self.client.reader.getATPmetadata(var, 'long_name') + "\n"
+                self.client.reader.getATPmetadata(var, 'short_name',
+                                                  ATPindex) + ", " + \
+                self.client.reader.getATPmetadata(var, 'units',
+                                                  ATPindex) + ", " + \
+                self.client.reader.getATPmetadata(var, 'long_name',
+                                                  ATPindex) + "\n"
         self.header += "Tcp, K, Cold point temperature Tcp (K)\n"
         self.header += "Zcl, km, Cold point altitude Zcp (km)\n"
 
@@ -336,7 +340,8 @@ class ICARTT():
                 ", "
 
         self.header += "air_temperature_lapse_rate, " + \
-            self.client.reader.getATPmetadata('RCFMRIndex', 'short_name') + \
+            self.client.reader.getATPmetadata('RCFMRIndex', 'short_name',
+                                              ATPindex) + \
             ", Tcp, Zcl, altitude, air_temperature, " + \
             "air_temperature_anomaly, altitude, air_density\n"
 
