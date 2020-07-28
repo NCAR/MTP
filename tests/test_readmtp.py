@@ -18,6 +18,7 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
 import os
+import copy
 import numpy
 import unittest
 from unittest.mock import mock_open, patch
@@ -334,3 +335,104 @@ class TESTreadmtp(unittest.TestCase):
 
         self.mtp.removeJSON(testFile)
         self.assertFalse(os.path.exists(testFile))
+
+    def test_testATP(self):
+        """ Test checking if ATP data exists """
+
+        # Save some test data to the dictionary
+        self.mtp.parseLine(self.Aline)  # Save Aline to rawscan 'data' var
+        # Parse 'data' line into vars in Aline
+        self.mtp.assignAvalues(self.mtp.rawscan['Aline']['data'].split())
+        self.mtp.parseLine(self.Eline)  # Save Eline to rawscan 'data' var
+        # Parse 'data' line into vars in Eline
+        self.mtp.assignEvalues(self.mtp.rawscan['Eline']['data'].split())
+
+        # Copy rawscan to flightData[0]
+        self.mtp.flightData = []
+        self.mtp.flightData.append(self.mtp.rawscan)
+
+        # At this point, record does not have a temperature profile, so testATP
+        # should raise an exception.
+        try:  # Test with index explicitely given
+            ATPindex = self.mtp.testATP(0)
+            self.fail("test did not raise exception when it should")
+        except Exception:
+            self.assertRaises(TypeError)
+
+        # Add a second record
+        self.mtp.flightData.append(copy.deepcopy(self.mtp.rawscan))
+
+        try:  # Test where it loops through available indices (currenty only 2)
+            ATPindex = self.mtp.testATP()
+            self.fail("test did not raise exception when it should")
+        except Exception:
+            self.assertRaises(TypeError)
+
+        # Save some ATP data to the second record
+        self.ATP = {
+            "Temperatures": [numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+                             numpy.nan, 285.991221599588, 282.1991538448363,
+                             276.91784151018356, 271.93707879815145,
+                             268.4843641965844, 265.79099333858017,
+                             263.9570950783439, 263.93676566278367,
+                             265.12858811974337, 266.7712908670056,
+                             267.74539400934407, 267.3757391329155,
+                             266.92210215323735, 266.52477149578095,
+                             266.27152317630976, 265.27666823297903,
+                             263.69450395801283, 262.07832135889896,
+                             259.7527727573438, 255.9491328577825,
+                             250.659604934907, 243.35775430806373,
+                             232.14908495942655, 216.6290491888501,
+                             212.8365762810815, 214.23430412364627,
+                             212.83876584311477, 214.86413289929013],
+            "Altitudes": [numpy.nan, numpy.nan, numpy.nan, numpy.nan,
+                          numpy.nan, 0.2353068904202467, 0.7783906486897896,
+                          1.161080854973117, 1.5608247489892135,
+                          1.860750042842486, 2.160582615859046,
+                          2.4604135247808356, 2.6603578130517613,
+                          2.860261197429454, 3.010216730638362,
+                          3.1600564313081194, 3.3100040496335597,
+                          3.459984892374451, 3.6598287921095545,
+                          3.8597621787929426, 4.159582654826694,
+                          4.45944384947284, 4.7593441904534615,
+                          5.159098030323642, 5.65873774918837,
+                          6.358469372343037, 7.157905247467961,
+                          8.357191105968385, 10.056147508372693,
+                          12.149115325855126, 14.548906190772062,
+                          17.649503602691457, 21.148526183448475],
+            "RCFIndex": 52, "RCFALT1Index": 12, "RCFALT2Index": 13,
+            "RCFMRIndex": {"val": 0.6341593516079854, "short_name": "MRI",
+                           "units": "#", "long_name": "retrieval quality \
+                           metric (ranges 0-2, <1 is excellent)",
+                           "_FillValue": "-99.9"},
+            "trop": {"val": [{"idx": 28, "altc": 10.056147508372693,
+                              "tempc": 216.6290491888501},
+                             {"idx": numpy.nan, "altc": numpy.nan,
+                              "tempc": numpy.nan}],
+                     "short_name": "tropopause_altitude", "units": "km",
+                     "long_name": "Tropopause", "_FillValue": "-99.9"}
+        }
+        self.mtp.flightData[1]['ATP'] = copy.deepcopy(self.ATP)
+
+        # Test first rec
+        try:  # Test with index explicitely given
+            ATPindex = self.mtp.testATP(0)
+            self.fail("test did not raise exception when it should")
+        except Exception:
+            self.assertRaises(TypeError)
+
+        # Test second rec
+        try:  # Test with index explicitely given
+            ATPindex = self.mtp.testATP(1)
+            self.assertEqual(ATPindex, 1)
+        except Exception:
+            # Should not get here
+            self.fail("test raised Exception when it shouldn't")
+
+        # Test looping through recs
+        try:
+            ATPindex = self.mtp.testATP()
+            self.assertEqual(ATPindex, 1)
+        except Exception:
+            # Should not get here
+            self.fail("test raised Exception when it shouldn't")

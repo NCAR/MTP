@@ -516,16 +516,33 @@ class readMTP:
 
         return(metadata)
 
-    def testATP(self, index):
-        # ATP metadata is not available until a temperature profile has been
-        # calculated, which causes an AtmosphericTemperatureProfile dictionary
-        # to be linked to the MTPrecord dictionary. So check for that here.
-        try:
-            self.getATPmetadata('RCFMRIndex', '_FillValue', index)
-        except Exception:
-            raise
+    def testATP(self, index=None):
+        """
+        ATP metadata is not available until a temperature profile has been
+        calculated, which causes an AtmosphericTemperatureProfile dictionary
+        to be linked to the MTPrecord dictionary. So check for that here.
+        """
 
-        return(True)
+        # If index provided, test that index
+        if index is not None:
+            try:
+                self.getATPmetadata('RCFMRIndex', '_FillValue', index)
+                return(index)
+            except Exception:
+                raise
+        else:
+            for index in range(len(self.flightData)):  # Loop through scans
+                try:
+                    self.getATPmetadata('RCFMRIndex', '_FillValue', index)
+                    return(index)
+                except Exception:
+                    # found exception for this scan, but might not for the
+                    # next. Just looking for one good scan, so keep going.
+                    pass
+
+            # If get here, went through entire file without finding ATP data
+            # so raise exception
+            raise
 
     def setCalcVal(self, linetype, var, value, calctype):
         """
