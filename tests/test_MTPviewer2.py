@@ -21,9 +21,9 @@ import unittest
 import argparse
 import logging
 from io import StringIO
-from PyQt5.QtWidgets import QApplication
 from viewer.MTPclient import MTPclient
 from viewer.MTPviewer import MTPviewer
+from PyQt5.QtWidgets import QApplication
 from lib.rootdir import getrootdir
 from EOLpython.Qlogger.messageHandler import QLogger as logger
 
