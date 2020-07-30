@@ -7,3 +7,6 @@ config/RCF/NRCF*057.RCF
 config/RCF/NRCF*067.RCF
 config/RCF/NRCG*067.RCF
 src/emulator/test_sock.py
+
+tests/test_data/CSET/LRT/CSETrf09.nc
+tests/test_data/DEEPWAVE/LRT/V0.0_20140905/DEEPWAVErf01.nc

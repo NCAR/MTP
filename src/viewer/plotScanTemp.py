@@ -79,13 +79,14 @@ class ScanTemp():
 
         This is not done in the VB code. I added this during development so
         I would have something to plot before I added the brightness
-        temperature calcs. Keep it in case it's useful in the future.
+        temperature calcs.
 
-        As of Nov 13, 2019, this function is not called.
+        It is not called during standard use, but can be accessed via the
+        --cnts command line option to vet counts without processing them.
         """
         # set limits and label for X axis specific to counts
         self.ax.set_xlabel('Counts')
-        self.ax.set_xlim(16000, 21000)
+        self.ax.set_xlim(16000, 22000)
 
         # Plot the three channel counts on the right axis
         # channel 1 is red, channel 2 is white, and channel 3 is blue
@@ -95,7 +96,6 @@ class ScanTemp():
         self.axR.plot(scnt_inv[0:10], self.getAngles(), color='red')
         self.axR.plot(scnt_inv[10:20], self.getAngles(), color="grey")
         self.axR.plot(scnt_inv[20:30], self.getAngles(), color="blue")
-        self.canvas.draw()
 
     def plotTB(self, tb):
         """
