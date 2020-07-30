@@ -200,21 +200,6 @@ class MTPclient():
     def getUDPport(self):
         return(self.udp_read_port)
 
-    def doCalcs(self):
-        """ Perform calculations on latest scan """
-        self.calcPt()  # Calculate resistance and temperatures from the Pt line
-        self.calcM01()  # Calculate the voltage from the M01 line
-        self.calcM02()  # Calculate the values from the M02 line
-
-        # Calculate the brightness temperature from the Bline.
-        # Uses the temperature from the Pt line so must be called after
-        # calcPt()
-        self.calcTB()
-
-        # Invert the brightness temperature to column major storage
-        tb = self.getTB()
-        self.tbi = self.invertArray(tb)  # inverted brightness temperature
-
     def getTBI(self):
         """ Return the inverted brightness temperature array """
         return(self.reader.getTBI())
@@ -256,12 +241,19 @@ class MTPclient():
         temperature. Slice and dice the raw scan to save it and TB values to
         dictionary for current scan.
         """
-        # Perform line calculations on latest scan
-        self.doCalcs()
-        self.reader.saveTBI(self.tbi)
+        self.calcPt()  # Calculate resistance and temperatures from the Pt line
+        self.calcM01()  # Calculate the voltage from the M01 line
+        self.calcM02()  # Calculate the values from the M02 line
 
-        # Generate the data lines for current scan and save to dictionary
-        self.createRecord()
+        # Calculate the brightness temperature from the Bline.
+        # Uses the temperature from the Pt line so must be called after
+        # callling calcPt()
+        self.calcTB()
+
+        # Invert the brightness temperature to column major storage
+        tb = self.getTB()
+        self.tbi = self.invertArray(tb)  # inverted brightness temperature
+        self.reader.saveTBI(self.tbi)
 
     def createProfile(self):
         """ Perform retrieval and derive the physical temperature profile """
