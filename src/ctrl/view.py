@@ -1306,7 +1306,14 @@ class controlWindow(QWidget):
     def waitForStatus(self, status):
         # add timeout?
         i = 0
-        while i < 20 :
+        # While loop checks to ensure tune has been properly applied
+        # VB6 checks for move along status with a
+        #"if (status And 4) == 0 goto continue looping"
+        # But the find requires a single number
+        # most often it's 6, but sometimes it's 2
+        # so the while shouldn't be done more than 5 times to keep 
+        # time between packets down.
+        while i < 5 :
             self.serialPort.sendCommand((self.commandDict.getCommand("status")))
             logging.debug("sent status request")
             echo = self.readUntilFound(b'S', 100000, 20)
@@ -1350,8 +1357,9 @@ class controlWindow(QWidget):
             # check if received an @ symbol for bline
             # if so set self.at true
             self.at = True
-        # wait for tune status to be 4
-        self.waitForStatus(b'4')
+        # wait for tune status to be not 4
+        # see comment in waitForStatus for frustration
+        self.waitForStatus(b'6')
         
 
 
