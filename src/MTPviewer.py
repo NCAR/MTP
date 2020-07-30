@@ -6,8 +6,8 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
 import sys
-from PyQt5.QtWidgets import QApplication
 from viewer.MTPviewer import MTPviewer
+from PyQt5.QtWidgets import QApplication
 from viewer.MTPclient import MTPclient
 from EOLpython.Qlogger.messageHandler import QLogger as logger
 
