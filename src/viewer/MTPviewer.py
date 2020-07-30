@@ -468,6 +468,7 @@ class MTPviewer(QMainWindow):
             # Perform calcs on raw MTP data - converts counts to brightness
             # temperatures and stores everything in a rawscan dictionary
             self.client.processScan()
+            self.client.createRecord()
 
             self.client.createProfile()
 
