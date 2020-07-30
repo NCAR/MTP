@@ -33,7 +33,7 @@ from util.profile_structs import AtmosphericTemperatureProfile
 
 class Retriever():
 
-    def __init__(self, Directory):
+    def __init__(self, Directory, filelist=None):
         """
         Directory is directory name containing the RCF files to be used.
         """
@@ -44,13 +44,13 @@ class Retriever():
 
         # Create a file set - this should only be called once at init
         try:
-            self.rcf_set.getRCFs(self.Directory)
+            self.rcf_set.getRCFs(self.Directory, filelist)
         except Exception:
             raise
 
     def getRCSet(self, ScanBTs, ACAltKm):
         """
-        Get the gest weighter RC Set that matches this scan
+        Get the best weighted RC Set that matches this scan
 
         ScanBTs is an array of floating point values indicating the brightness
         temperature values in Degrees Kelvin from the scan.  The first 10
@@ -63,7 +63,8 @@ class Retriever():
         # If PALT is missing or negative, can't calculate altc, tempc, rcfidx,
         # rfalt1idx, etc. Return False
         if (numpy.isnan(ACAltKm) or ACAltKm < 0):
-            return(False)
+            raise Exception("Aircraft altitude must exist and be greater " +
+                            "than zero to match template to scan")
 
         # If fileset created successfully, find the best template to match
         # the scanned brightness temperatures
@@ -108,7 +109,7 @@ class Retriever():
         # Index of flight level above aircraft Altitude
         self.ATP['RCFALT2Index'] = BestWtdRCSet['FL_RCs']['RCFALT2Index']
         # Meridional Region Index: quality of match
-        self.ATP['RCFMRIndex'] = BestWtdRCSet['SumLnProb']
+        self.ATP['RCFMRIndex']['val'] = BestWtdRCSet['SumLnProb']
 
         # Any Temperature with Altitude <= 0 is not valid (nor is altitude)
         # If Temperature is NAN (regardless of Alt, set Alt to NAN. Do this

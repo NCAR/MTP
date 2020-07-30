@@ -16,7 +16,8 @@ from optparse import OptionParser
 
 sys.path.append('../')  # so can run this from inside emulator dir
 from util.readmtp import readMTP
-# from util.readiwg import readIWG
+# from util.readiwg import IWG
+# from util.readascii_parms import AsciiParms
 # from lib.rootdir import getrootdir
 
 
@@ -34,10 +35,10 @@ def main(args):
     # iwg1_port = 7071       # IWG1 packets from GV
     udp_send_port = 32107  # Communication from MTP
     # udp_read_port = 30106  # Communication to MTP; not used by this emulator
-    udp_ip = "127.0.0.1"
+    udp_ip = socket.gethostname()
 
     # Location of default ascii_parms file
-    # ascii_parms = os.path.join(getrootdir(), 'config', 'ascii_parms')
+    # ascii_parms_file = os.path.join(getrootdir(), 'config', 'ascii_parms')
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -53,7 +54,19 @@ def main(args):
 
     # Instantiate an instance of an IWG reader. Have it point to the same
     # MTP dictionary as the MTP reader
-    # iwg = readIWG(ascii_parms, reader.getRawscan())
+    # iwg = IWG(reader.getRawscan())
+    # Init and open ascii parms file
+    # status = True
+    # ascii_parms = AsciiParms(ascii_parms_file)
+    # Attempt to open ascii_parms file. Exit on failure.
+    # if ascii_parms.open() is False:
+    #     exit(1)
+
+    # while status:
+    #     newVar = ascii_parms.readVar()  # Read var from ascii_parms file
+    #     status = iwg.createPacket(newVar)
+
+    # ascii_parms.close()
 
     haveData = True
 

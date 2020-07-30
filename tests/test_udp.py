@@ -28,7 +28,8 @@ from lib.rootdir import getrootdir
 class TESTparseAsciiPacket(unittest.TestCase):
 
     def setUp(self):
-        self.ascii_parms = os.path.join(getrootdir(), 'config/ascii_parms')
+        self.ascii_parms = os.path.join(getrootdir(), 'Data', 'NGV',
+                                        'DEEPWAVE', 'config', 'ascii_parms')
 
         udp = "MTP,20140606T062418,+06.49,00.19,-00.79,00.87,+04.00,0.06," + \
               "263.32,00.48,-43.290,+0.005,+172.296,+0.051,+074684," + \

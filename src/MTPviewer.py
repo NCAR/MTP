@@ -8,17 +8,35 @@
 import sys
 from PyQt5.QtWidgets import QApplication
 from viewer.MTPviewer import MTPviewer
+from viewer.MTPclient import MTPclient
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
 def main():
+
+    # Instantiate an MTP controller
+    client = MTPclient()
+
+    # Process command line arguments.
+    args = client.parse_args()
+
+    # Configure logging
+    stream = sys.stdout
+    logger.initLogger(stream, args.loglevel, args.logmod)
 
     # Every GUI app must have exactly one instance of QApplication. The
     # QApplication class manages the GUI application's control flow and
     # main settings.
     app = QApplication(sys.argv)
 
+    # Read in config file and set up MTP controller. Needs app to be
+    # instantiated first in case it needs to call a fileselector.
+    # This also connects to the MTP and IWG feeds
+    client.config(args.config)
+
     # Instantiate the GUI
-    viewer = MTPviewer(app)
+    viewer = MTPviewer(client, app, args)
+    viewer.loadJson(client.getMtpRealTimeFilename())
     viewer.show()
 
     # Run the application until the user closes it.

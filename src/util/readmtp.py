@@ -46,24 +46,66 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
+import os
 import re
 import numpy
+import json
 import copy
 from util.MTP import MTPrecord
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
 class readMTP:
 
     def __init__(self):
-        self.rawscan = MTPrecord  # Instantiate dictionary to hold the MTP data
+        # Instantiate dictionary to hold the MTP data.
+        self.curscan = copy.deepcopy(MTPrecord)
 
         # An array of MTP data dictionaries - used to display a single variable
         # across time.
         self.flightData = []
 
+        # Set the scan we are working with to be the current scan
+        self.rawscan = self.curscan
+
+    def getJson(self, projdir, proj, fltno):
+        """ Build name of json file to save flight data to """
+        # This is used if the code is restarted mid-flight to provide access
+        # to previous data.
+        return(os.path.join(projdir, proj+fltno.lower()+'.mtpRealTime.json'))
+
+    def setRawscan(self, index):
+        """ Set the MTP data dictionary we want to read a scan from """
+        # The current scan is in self.rawscan and in the last scan in
+        # self.flightData. Sometimes we might want this class to read from
+        # a scan other than the current scan. Set that scan here.
+        # Returns True or False to indicate if scan was sucessfully set to
+        # index or not.
+        try:
+            self.rawscan = self.flightData[index]
+        except Exception as err:
+            logger.printmsg("ERROR", "No data available: " + str(err),
+                            "Try loading some raw data")
+            self.rawscan = None
+            raise
+
+        return(True)
+
+    def resetRawscan(self):
+        """ Set the data dictionary back to the current scan """
+        self.rawscan = self.curscan
+
     def getRawscan(self):
-        """ Return a pointer to the MTP data dictionary """
+        """ Return a pointer to the MTP data dictionary of the current scan """
         return(self.rawscan)
+
+    def getRecord(self, index):
+        """ Return a pointer to the MTP data dictionary for a specific scan """
+        return(self.flightData[index])
+
+    def getNumRecs(self):
+        """ Return the number of records in the array of scans """
+        return(len(self.flightData))
 
     def readRawScan(self, raw_data_file):
         """
@@ -81,20 +123,75 @@ class readMTP:
             self.parseLine(line)
 
             # Check if we have a complete scan (all linetypes have found = True
-            foundall = True  # Init so can boolean & per rawscan line
+            foundall = True  # Init so can boolean '&' each rawscan line
             for linetype in self.rawscan:
                 if 'found' in self.rawscan[linetype]:
                     foundall = foundall & self.rawscan[linetype]['found']
 
             if (foundall):
-                # Have a complete scan. Save this record to the flight library
-                self.flightData.append(copy.deepcopy(self.rawscan))
-
                 # Reset found to False for all and return
                 for linetype in self.rawscan:
                     if 'found' in self.rawscan[linetype]:
                         self.rawscan[linetype]['found'] = False
                 return(True)  # Not at EOF
+
+    def reportScanStatus(self, selectedRawFile):
+        """
+        If read an entire file and never get foundall = True, report to user
+        status of all found fields as a hint to what went wrong.
+        """
+        status = "Line types found:\n"
+        for linetype in self.rawscan:
+            if 'found' in self.rawscan[linetype]:
+                status += linetype + ": " + \
+                          str(self.rawscan[linetype]['found']) + "\n"
+
+        logger.printmsg('ERROR', "No complete scans found in" +
+                        selectedRawFile, status)
+
+    def clearFlightData(self):
+        """ clear the flightData list of dictionaries """
+        self.flightData.clear()
+
+    def archive(self):
+        """ Append the current record to the flight library (flightData[]) """
+        self.flightData.append(copy.deepcopy(self.rawscan))
+
+    def removeJSON(self, filename):
+        """ Delete the JSON file on disk """
+        try:
+            if os.path.exists(filename):
+                os.remove(filename)
+        except Exception as e:
+            logger.printmsg('ERROR', "Failed to remove JSON file " + e)
+
+    def save(self, filename):
+        """ Append the current record to a JSON file on disk """
+        with open(filename, 'a') as f:
+            json.dump(self.rawscan, f)
+            f.write('\n')
+
+    def load(self, filename):
+        """
+        Read records from JSON file on disk and prepend to flightData array
+        """
+        # Check if file exists. If not, nothing to load, so return failed
+        if not os.path.isfile(filename):
+            return(False)
+
+        with open(filename, 'r') as f:
+            previous_data = [json.loads(line) for line in f]
+
+        # There does not appear to be a list.prepend() python function so
+        # extend the previous_data array with any data written to flightData
+        # since restart, and then replace flightData with the previous_data.
+        # This could potentially cause us to loose a *display* record if
+        # flightData is written to between the two commands below. No actual
+        # data is lost - everything collected is in the JSON file.
+        previous_data.extend(self.flightData)
+        self.flightData = previous_data
+
+        return(True)
 
     def parseLine(self, line):
         """
@@ -103,7 +200,7 @@ class readMTP:
         """
         for linetype in self.rawscan:
             if 're' in self.rawscan[linetype]:
-                m = re.match(self.rawscan[linetype]['re'], line)
+                m = re.match(re.compile(self.rawscan[linetype]['re']), line)
                 if (m):
                     # Store data. Handle special case of date in A line
                     if (linetype == 'Aline'):  # Reformat date/time
@@ -228,7 +325,7 @@ class readMTP:
         separator = ' '
         Adata = separator.join(packet)  # Join the components into a string
 
-        # Save the generated a line to the dictionary
+        # Save the generated A line to the dictionary
         self.rawscan['Aline']['data'] = Adata
 
     def createBdata(self):
@@ -364,19 +461,88 @@ class readMTP:
 
     def getVar(self, linetype, var):
         """ Get the value of a variable from the data dictionary """
-        return(self.rawscan[linetype]['values'][var]['val'])
+        if self.rawscan is not None:
+            return(self.rawscan[linetype]['values'][var]['val'])
+        else:
+            return(None)
 
     def getVarList(self, linetype):
         """ Get the list of variable names that are in the dictionary """
-        return(list(self.rawscan[linetype]['values']))
+        if self.rawscan is not None:
+            return(list(self.rawscan[linetype]['values']))
+        else:
+            return(None)
 
     def getVarArray(self, linetype, var):
         """ Get an array containing all measured values of a variable """
+        # This works for the A, IWG1, M01, M02, and Pt lines, which contain one
+        # value per time
         self.varArray = []
-        for i in range(len(self.flightData)-1):
-            self.varArray.append(float(self.flightData[i].getVar(linetype,
-                                                                 var)))
+        if self.rawscan is not None:
+            if type(self.flightData[0][linetype]['values'][var]
+                    ['val']) is list:
+                return(None)
+            for i in range(len(self.flightData)):
+                self.varArray.append(self.flightData[i][linetype]
+                                     ['values'][var]['val'])
         return(self.varArray)
+
+    def getVarArrayi(self, linetype, var, index):
+        """ Get an array containing all measured values of a variable """
+        # This works for the B and E lines, which contain an array of values
+        # for each time. Pass in the index of the value you want
+        # For the E line, there are 6 values: Ch1NDon, Ch2NDon, Ch3NDon,
+        # Ch1NDoff, Ch2NDoff, and Ch3NDoff
+        self.varArray = []
+        if self.rawscan is not None:
+            if type(self.flightData[0][linetype]['values'][var]
+                    ['val']) is not list:
+                return(None)
+            for i in range(len(self.flightData)):
+                self.varArray.append(float(self.flightData[i][linetype]
+                                           ['values'][var]['val'][index]))
+        return(self.varArray)
+
+    def get_metadata(self, linetype, var, key):
+        """ Get the metadata with keyword key for the variable """
+        return(self.flightData[0][linetype]['values'][var][key])
+
+    def getATPmetadata(self, var, key, index=0):
+        """ Get the metadata with keyword key for variable in ATP dict """
+        try:
+            metadata = self.flightData[index]['ATP'][var][key]
+        except Exception:
+            raise
+
+        return(metadata)
+
+    def testATP(self, index=None):
+        """
+        ATP metadata is not available until a temperature profile has been
+        calculated, which causes an AtmosphericTemperatureProfile dictionary
+        to be linked to the MTPrecord dictionary. So check for that here.
+        """
+
+        # If index provided, test that index
+        if index is not None:
+            try:
+                self.getATPmetadata('RCFMRIndex', '_FillValue', index)
+                return(index)
+            except Exception:
+                raise
+        else:
+            for index in range(len(self.flightData)):  # Loop through scans
+                try:
+                    self.getATPmetadata('RCFMRIndex', '_FillValue', index)
+                    return(index)
+                except Exception:
+                    # found exception for this scan, but might not for the
+                    # next. Just looking for one good scan, so keep going.
+                    pass
+
+            # If get here, went through entire file without finding ATP data
+            # so raise exception
+            raise
 
     def setCalcVal(self, linetype, var, value, calctype):
         """
@@ -391,8 +557,9 @@ class readMTP:
            (calctype == 'volts' and linetype == 'M01line')):
             self.rawscan[linetype]['values'][var][calctype] = value
         else:
-            print("linetype " + linetype + " doesn't have a " + calctype +
-                  " entry in the MTP dictionary. Ignored.")
+            logger.printmsg("WARNING", " linetype " + linetype + " doesn't " +
+                            "have a " + calctype + " entry in the MTP " +
+                            "dictionary. Ignored.")
 
     def getCalcVal(self, linetype, var, calctype):
         """
@@ -412,3 +579,23 @@ class readMTP:
 
     def getName(self, linetype, var):
         return(self.rawscan[linetype]['values'][var]['name'])
+
+    def saveTBI(self, tbi):
+        """ Save the inverted brightness temperature to the scan """
+        self.rawscan['tbi'] = tbi
+
+    def getTBI(self):
+        """ Retrieve the brightness temperatures for the current scan """
+        return(self.rawscan['tbi'])
+
+    def saveATP(self, ATP):
+        self.rawscan['ATP'] = copy.deepcopy(ATP)
+
+    def getATP(self):
+        return(self.rawscan['ATP'])
+
+    def saveBestWtdRCSet(self, BestWtdRCSet):
+        self.rawscan['BestWtdRCSet'] = copy.deepcopy(BestWtdRCSet)
+
+    def getBestWtdRCSet(self):
+        return(self.rawscan['BestWtdRCSet'])

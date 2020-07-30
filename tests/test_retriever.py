@@ -64,14 +64,21 @@ class TESTretriever(unittest.TestCase):
         self.assertEqual(BestWtdRcSet['FL_RCs']['RCFALT1Index'], 12)  # Topit
         self.assertEqual(BestWtdRcSet['FL_RCs']['RCFALT2Index'], 13)  # Botit
 
-        # Test that if acaltkm is missing or negative, getRCSet returns False
+        # Test that if acaltkm is missing or negative, getRCSet returns an
+        # exception
         ACAltKm = numpy.nan
-        BestWtdRcSet = Rtr.getRCSet(self.scanBTs, ACAltKm)
-        self.assertEqual(BestWtdRcSet, False)
+        try:
+            BestWtdRcSet = Rtr.getRCSet(self.scanBTs, ACAltKm)
+        except Exception as err:
+            self.assertEqual(str(err), "Aircraft altitude must exist and be " +
+                             "greater than zero to match template to scan")
 
         ACAltKm = -1
-        BestWtdRcSet = Rtr.getRCSet(self.scanBTs, ACAltKm)
-        self.assertEqual(BestWtdRcSet, False)
+        try:
+            BestWtdRcSet = Rtr.getRCSet(self.scanBTs, ACAltKm)
+        except Exception as err:
+            self.assertEqual(str(err), "Aircraft altitude must exist and be " +
+                             "greater than zero to match template to scan")
 
         # Should only read in the RCF dir once, so check than len still just 1
         self.assertEqual(len(Rtr.rcf_set._RCFs), 1)
