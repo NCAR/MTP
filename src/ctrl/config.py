@@ -49,7 +49,7 @@ class MTPconfig():
                 -80.00	#last skyview 
              ],
                                   
-            'Project': 'ACCLIP_TEST',    
+            'Project': 'METHANE_AIR',    
                                 
 
             # From VB6 sub Noise() - called by Eline(). Noise diode.
