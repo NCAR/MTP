@@ -21,9 +21,8 @@ import copy
 import unittest
 from unittest.mock import mock_open, patch
 import argparse
-from PyQt5.QtWidgets import QApplication
-
 from viewer.MTPviewer import MTPviewer
+from PyQt5.QtWidgets import QApplication
 from viewer.MTPclient import MTPclient
 from proc.MTPprocessor import MTPprocessor
 from lib.rootdir import getrootdir

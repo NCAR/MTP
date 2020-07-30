@@ -172,7 +172,12 @@ class TESTreadgvnc(unittest.TestCase):
         # Convert random filetime to seconds
         date, time = ncdata.iloc[row, 0].split(' ')
         h, m, s = time.split(':')
-        sec, millisec = s.split('.')
+        # Pandas generates time with milliseconds on Mac and Windows, and
+        # without on Linux. Handle both.
+        if '.' in s:
+            sec, millisec = s.split('.')
+        else:
+            sec = s
         testtime = int(h) * 3600 + int(m) * 60 + int(sec)
 
         # Compare to seconds from dataframe routine
