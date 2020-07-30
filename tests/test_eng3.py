@@ -18,9 +18,8 @@
 import os
 import unittest
 import argparse
-from PyQt5.QtWidgets import QApplication
-
 from viewer.MTPviewer import MTPviewer
+from PyQt5.QtWidgets import QApplication
 from viewer.MTPclient import MTPclient
 from lib.rootdir import getrootdir
 
