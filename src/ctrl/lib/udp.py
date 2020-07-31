@@ -305,9 +305,11 @@ class doUDP(object):
 
     def sendUDP(self, packet):
         """ Send a packet out the udp port """
-        self.sock_write.writeDatagram(packet, udp_ip, udp_write_port)
+        self.sock_write.writeDatagram(packet, self.udp_ip, self.udp_write_port)
+        logging.debug("sent UDP")
         # or out both udp ports if we want R.I.C. involved
-        # self.sock_write_ric.writeDatagram(packet, udp_ip, udp_write_ric_port)
+        self.sock_write_ric.writeDatagram(packet, self.udp_ip, self.udp_write_ric_port)
+        logging.debug("sent ric UDP")
 
         #logging.debug("sending udp packet %s", packet)
         self.parent.sendingUDPLED.setPixmap(self.parent.ICON_GREEN_LED.scaled(40,40))
