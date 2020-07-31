@@ -433,10 +433,11 @@ class controlWindow(QWidget):
             # returns UDP packet
             # currently crashes here, either currentDateUDP or self.parent.alineStore 
             # is nonetype trying to concatinate to string
-            udp = self.mover.saveData()
+            udpPacket = self.mover.saveData()
 
             # send packet over UDP
-            
+            self.udp.sendUDP(udpPacket)
+            logging.debug("sent UDP packet")
 
             # collect, update, display loop stats
             previousTime = self.cycleStats(previousTime)
