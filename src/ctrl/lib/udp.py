@@ -38,13 +38,12 @@ class doUDP(object):
         #self.parent.receivingUDPLED.setPixmap(self.parent.ICON_YELLOW_LED.scaled(40,40))
 
         # initialize the udp writer 
+        # Binding is unnecessary and counterproductive to write ports
         self.sock_write = QUdpSocket()
-        self.sock_write.bind(self.udp_ip, self.udp_write_port, QUdpSocket.ReuseAddressHint)
         self.parent.sendingUDPLED.setPixmap(self.parent.ICON_YELLOW_LED.scaled(40,40))
 
         # RIC socket
         self.sock_write_ric= QUdpSocket()
-        self.sock_write_ric.bind(self.udp_ip, self.udp_write_ric_port, QUdpSocket.ReuseAddressHint)
         
         # Set up timer to call timeoutIWG ~5 seconds
         self.iwgTimer = QTimer()
