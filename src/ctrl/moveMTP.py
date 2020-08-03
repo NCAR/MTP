@@ -598,17 +598,11 @@ class moveMTP():
         t = time.gmtime();
 
         # yyyymmddhhmmss in UDP send feed
-        currentDateUDP =  "%02d%02d%02d%02d%02d%02d," %(t[0], t[1], t[2],t[3], t[4], t[5])
+        #currentDateUDP =  "%02d%02d%02d%02d%02d%02d," %(t[0], t[1], t[2],t[3], t[4], t[5])
 
         # yyyymmdd hh:mm:ss in save feed
         currentDateSave =  "%02d%02d%02d %02d:%02d:%02d" %( t[0], t[1], t[2], t[3], t[4], t[5])
 
-        '''
-        if self.bline.size > 30:
-            logging.info("bline size larger than expected (30): %s", self.bline.size)
-        if self.eline.size > 06:
-            logging.info("eline size larger than expected (06): %s", self.bline.size)
-        '''
         # open file in append binary mode
         with open("MTP_data.txt", "a") as datafile:
             # may need to .append instead of +
