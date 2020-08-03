@@ -634,7 +634,7 @@ class moveMTP():
         # get time
         t = time.gmtime();
         # yyyymmddhhmmss in UDP send feed
-        currentDateUDP =  "%02d%02d%02d%02d%02d%02d" %(t[0], t[1], t[2],t[3], t[4], t[5])
+        currentDateUDP =  "%02d%02d%02dT%02d%02d%02d" %(t[0], t[1], t[2],t[3], t[4], t[5])
 
         udpArray.append("MTP," + currentDateUDP + self.udpFormat(self.parent.alineStore, 'a'))
         udpArray.append(self.udpFormat(self.parent.blineStore, 'b'))
