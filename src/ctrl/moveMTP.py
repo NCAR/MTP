@@ -626,9 +626,9 @@ class moveMTP():
         # additions that python adds
 
         #udpArray = self.formUdp()
-        #return udpArray
+        return
 
-   def formUDP(self):
+    def formUDP(self):
         # new udp string
         udpArray =  QtCore.QByteArray(str.encode(""))
         # get time
@@ -636,8 +636,8 @@ class moveMTP():
         # yyyymmddhhmmss in UDP send feed
         currentDateUDP =  "%02d%02d%02d%02d%02d%02d" %(t[0], t[1], t[2],t[3], t[4], t[5])
 
-        udpArray.append("MTP," + currentDateUDP + ',' + self.udpFormat(self.parent.alineStore))
-        udpArray.append(self.udpFormat(self.parent.blineStore, 'a'))
+        udpArray.append("MTP," + currentDateUDP + self.udpFormat(self.parent.alineStore, 'a'))
+        udpArray.append(self.udpFormat(self.parent.blineStore, 'b'))
         udpArray.append(self.udpFormat(self.parent.m01Store, 'm'))
         udpArray.append(self.udpFormat(self.parent.m02Store, 'm'))
         udpArray.append(self.udpFormat(self.parent.ptStore, 'p'))
@@ -652,26 +652,32 @@ class moveMTP():
         # commas always after, including end line comma
         arrayToFormat = str.replace(arrayToFormat, ' ', ',')
         logging.debug(arrayToFormat)
-        end = len(arrayToFormat -1)
+        end = int(len(arrayToFormat)-1)
+        logging.debug(end)
         if identifier == 'm':
             # remove "M0#:"
-            arrayToFormat = arrayToFormat[4, len)
+            arrayToFormat = arrayToFormat[4:end]
             return arrayToFormat
         elif identifier == 'a':
             # as is
             return arrayToFormat
+        elif identifier == 'b':
+            # remove b
+            arrayToFormat = arrayToFormat[1:end]
+            return arrayToFormat
 
         elif identifier == 'p':
             # remove p:
-            arrayToFormat = arrayToFormat[2, len)
+            arrayToFormat = arrayToFormat[3:end]
             return arrayToFormat
 
         elif identifier == 'e':
-            # remove e:
-            arrayToFormat = arrayToFormat[1, len)
+            # remove e
+            arrayToFormat = arrayToFormat[1:end]
             return arrayToFormat
 
-        else logging.error('udpFormat, foreign identifier: %f', identifier)
+        else:
+            logging.error('udpFormat, foreign identifier: %f', identifier)
 
 
     def getAngle(self, targetEl):
