@@ -390,6 +390,10 @@ class readMTP:
         """
         Parse an Ascii packet and store it's values in the data dictionary
         """
+        # Save the entire UDP packet to the dictionary. Useful for figuring out
+        # what happened if something goes wrong downstream during processing.
+        self.rawscan['asciiPacket'] = UDPpacket
+
         # Split string on commas
         separator = ','
         values = UDPpacket.split(separator)
