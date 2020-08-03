@@ -290,6 +290,7 @@ class MTPprocessor(QMainWindow):
 
                 # Perform calcs on the raw MTP data
                 self.client.processScan()
+                self.client.createRecord()
 
                 # Skip doing retrievals and speed up reading in raw data file.
                 # The idea then is to wait until after doing a tbfit to process
