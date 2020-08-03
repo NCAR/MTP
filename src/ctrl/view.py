@@ -437,6 +437,7 @@ class controlWindow(QWidget):
             # speed may be an issue here
             self.udp.sendUDP(self.mover.formUDP())
             logging.debug("sent UDP packet")
+            logging.debug(udpPacket)
 
             # collect, update, display loop stats
             previousTime = self.cycleStats(previousTime)
