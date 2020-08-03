@@ -594,38 +594,15 @@ class moveMTP():
     def saveData(self):
         # self.parent.app.processEvents()
         logging.debug("saving Data to file")
-        # clear udp string
-        udpArray =  QtCore.QByteArray(str.encode(""))
-        # store everything locally
+
         t = time.gmtime();
-        # yyyymmdd hhmmss in udp feed for backwards compatability
+
+        # yyyymmddhhmmss in UDP send feed
+        #currentDateUDP =  "%02d%02d%02d%02d%02d%02d," %(t[0], t[1], t[2],t[3], t[4], t[5])
+
         # yyyymmdd hh:mm:ss in save feed
-        currentDateUDP =  "%02d%02d%02d %02d%02d%02d" %(t[0], t[1], t[2],t[3], t[4], t[5])
         currentDateSave =  "%02d%02d%02d %02d:%02d:%02d" %( t[0], t[1], t[2], t[3], t[4], t[5])
-        # aline = "A " + self.currentDate
-        udpArray.append("A " + currentDateUDP + " " + self.parent.alineStore)
-        udpArray.append(self.parent.iwgStore)
-        udpArray.append(self.parent.blineStore)
-        udpArray.append(self.parent.m01Store)
-        udpArray.append(self.parent.m02Store)
-        udpArray.append(self.parent.ptStore)
-        udpArray.append(self.parent.elineStore)
-        '''
-        m01 = self.parent.packetStore.getData('M01')
-        self.udpArray.append(m01)
-        m02 = self.parent.packetStore.getData('M02')
-        self.udpArray.append(m02)
-        pt = self.parent.packetStore.getData('Pt')
-        self.udpArray.append(pt)
-        self.eline = self.parent.packetStore.getData('Eline')
-        self.udpArray.append(self.eline)
-        '''
-        '''
-        if self.bline.size > 30:
-            logging.info("bline size larger than expected (30): %s", self.bline.size)
-        if self.eline.size > 06:
-            logging.info("eline size larger than expected (06): %s", self.bline.size)
-        '''
+
         # open file in append binary mode
         with open("MTP_data.txt", "a") as datafile:
             # may need to .append instead of +
@@ -647,11 +624,61 @@ class moveMTP():
             datafile.write('\n')
         # the send Data should have the repress b' data ' 
         # additions that python adds
+
+        #udpArray = self.formUdp()
+        return
+
+    def formUDP(self):
+        # new udp string
+        udpArray =  QtCore.QByteArray(str.encode(""))
+        # get time
+        t = time.gmtime();
+        # yyyymmddhhmmss in UDP send feed
+        currentDateUDP =  "%02d%02d%02dT%02d%02d%02d" %(t[0], t[1], t[2],t[3], t[4], t[5])
+
+        udpArray.append("MTP," + currentDateUDP + self.udpFormat(self.parent.alineStore, 'a'))
+        udpArray.append(self.udpFormat(self.parent.blineStore, 'b'))
+        udpArray.append(self.udpFormat(self.parent.m01Store, 'm'))
+        udpArray.append(self.udpFormat(self.parent.m02Store, 'm'))
+        udpArray.append(self.udpFormat(self.parent.ptStore, 'p'))
+        udpArray.append(self.udpFormat(self.parent.elineStore, 'e'))
+        logging.debug(udpArray)
         return udpArray
 
+    def udpFormat(self, arrayToFormat, identifier):
+        logging.debug("udpFormater")
+        logging.debug(arrayToFormat)
+        # remove spaces, add commas, remove a/b/m01:/m02:/pt:/e
+        # commas always after, including end line comma
+        arrayToFormat = str.replace(arrayToFormat, ' ', ',')
+        logging.debug(arrayToFormat)
+        end = int(len(arrayToFormat)-1)
+        logging.debug(end)
+        if identifier == 'm':
+            # remove "M0#:"
+            arrayToFormat = arrayToFormat[4:end]
+            return arrayToFormat
+        elif identifier == 'a':
+            # as is
+            return arrayToFormat
+        elif identifier == 'b':
+            # remove b
+            arrayToFormat = arrayToFormat[1:end]
+            return arrayToFormat
 
-    def sendData(self, udpData):
-        logging.debug("sendingDataUDP")
+        elif identifier == 'p':
+            # remove p:
+            arrayToFormat = arrayToFormat[3:end]
+            return arrayToFormat
+
+        elif identifier == 'e':
+            # remove e
+            arrayToFormat = arrayToFormat[1:end]
+            return arrayToFormat
+
+        else:
+            logging.error('udpFormat, foreign identifier: %f', identifier)
+
 
     def getAngle(self, targetEl):
         # changed from goAngle because editor says that would be overriding something

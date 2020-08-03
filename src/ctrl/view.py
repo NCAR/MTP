@@ -430,13 +430,13 @@ class controlWindow(QWidget):
 
             # save to file
             # assumes everything's been decoded from hex
-            # returns UDP packet
-            # currently crashes here, either currentDateUDP or self.parent.alineStore 
-            # is nonetype trying to concatinate to string
-            udp = self.mover.saveData()
+            self.mover.saveData()
 
             # send packet over UDP
-            
+            # also replaces spaces with commas and removes start strings
+            # speed may be an issue here
+            self.udp.sendUDP(self.mover.formUDP())
+            logging.debug("sent UDP packet")
 
             # collect, update, display loop stats
             previousTime = self.cycleStats(previousTime)

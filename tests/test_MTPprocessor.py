@@ -62,7 +62,8 @@ class TESTMTPprocessor(unittest.TestCase):
     def test_ReadSetup(self):
         """ Test accuracy of read of setup files in config/Production dir """
         self.assertEqual(self.args.PRODdir,
-                         'Data/NGV/DEEPWAVE/config/Production')
+                         os.path.join('Data', 'NGV', 'DEEPWAVE', 'config',
+                        'Production'))
 
         self.processor.readSetup(self.client.configfile.getPath("PRODdir"))
         self.assertEqual(self.processor.filelist[0]['rawFile'],

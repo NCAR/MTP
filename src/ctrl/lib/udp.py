@@ -26,8 +26,11 @@ class doUDP(object):
         self.udp_write_port = 32107
         self.udp_write_ric_port = 32106
         self.udp_read_port = 7071 # from IWG server 
-        self.udp_ip="192.168.84.255" # subnet mask
-        self.udp_ip=QHostAddress('0.0.0.0') # subnet mask
+        # plane
+        #self.udp_ip="192.168.84.255" # subnet mask
+        #self.udp_ip=QHostAddress('0.0.0.0') # subnet mask
+        # lab
+        self.udp_ip=QHostAddress.LocalHost 
 
         # initialize the reader
         self.sock_read = QUdpSocket()
@@ -38,13 +41,12 @@ class doUDP(object):
         #self.parent.receivingUDPLED.setPixmap(self.parent.ICON_YELLOW_LED.scaled(40,40))
 
         # initialize the udp writer 
+        # Binding is unnecessary and counterproductive to write ports
         self.sock_write = QUdpSocket()
-        self.sock_write.bind(self.udp_ip, self.udp_write_port)
         self.parent.sendingUDPLED.setPixmap(self.parent.ICON_YELLOW_LED.scaled(40,40))
 
         # RIC socket
         self.sock_write_ric= QUdpSocket()
-        self.sock_write_ric.bind(self.udp_ip, self.udp_write_ric_port)
         
         # Set up timer to call timeoutIWG ~5 seconds
         self.iwgTimer = QTimer()
@@ -305,9 +307,11 @@ class doUDP(object):
 
     def sendUDP(self, packet):
         """ Send a packet out the udp port """
-        self.sock_write.writeDatagram(packet, udp_ip, udp_write_port)
+        self.sock_write.writeDatagram(packet, self.udp_ip, self.udp_write_port)
+        logging.debug("sent UDP")
         # or out both udp ports if we want R.I.C. involved
-        # self.sock_write_ric.writeDatagram(packet, udp_ip, udp_write_ric_port)
+        self.sock_write_ric.writeDatagram(packet, self.udp_ip, self.udp_write_ric_port)
+        logging.debug("sent ric UDP")
 
         #logging.debug("sending udp packet %s", packet)
         self.parent.sendingUDPLED.setPixmap(self.parent.ICON_GREEN_LED.scaled(40,40))
