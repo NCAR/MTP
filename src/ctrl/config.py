@@ -29,7 +29,7 @@ class MTPconfig():
             'OffsetYi': -1.600, 
             'OffsetPi': -3.576, 
             'OffsetRi': -0.123, 
-            'Frequencies': [3,55.51,56.65,58.8],    
+            'Frequencies': [3,56.363,57.612,58.363],    
                                       
             'Integ. Time': '200.0',           #mS  
 
