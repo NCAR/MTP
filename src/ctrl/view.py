@@ -1204,10 +1204,14 @@ class controlWindow(QWidget):
         self.at = False
         for freq in nfreq:
             # tune echos received in tune function
+            logging.debug("Frequency/channel:"+ str(freq))
             self.tune(freq)
-            if not self.at:
+            logging.debug("at status in integrate: " + str(self.at))
+            # appears to never actually see the at
+            # try waiting for after move?
+            #if not self.at:
                 # haven't seen the @ from the move command
-                self.readUntilFound(b'@', 100, 4)
+            #    self.readUntilFound(b'@', 100, 4)
             
             self.serialPort.sendCommand((self.commandDict.getCommand("count")))
             # clear echos 
@@ -1311,9 +1315,9 @@ class controlWindow(QWidget):
         #"if (status And 4) == 0 goto continue looping"
         # But the find requires a single number
         # most often it's 6, but sometimes it's 2
-        # so the while shouldn't be done more than 5 times to keep 
+        # so the while shouldn't be done more than a few times to keep 
         # time between packets down.
-        while i < 5 :
+        while i < 30 :
             self.serialPort.sendCommand((self.commandDict.getCommand("status")))
             logging.debug("sent status request")
             echo = self.readUntilFound(b'S', 100000, 20)
@@ -1331,7 +1335,7 @@ class controlWindow(QWidget):
         # fghz is frequency in gigahertz
         fby4 = (1000 * fghz)/4 #MHz
         chan = fby4/0.5  # convert to SNP channel (integer) 0.5 MHz = step size
-        #logging.debug("tune: chan = %s", chan)
+        logging.debug("tune: chan = %s", chan)
 
         # either 'C' or 'F' set in packetStore
         # F mode formatting #####.# instead of cmode formatting #####
@@ -1349,14 +1353,20 @@ class controlWindow(QWidget):
         # catch tune echos
         echo = self.readUntilFound(b'C', 100000, 20)
         # check if received an @ symbol for bline
-        # if so set self.at true
-        self.at = True
+        statusFound = echo.data().find(b'@')
+        if statusFound >= 0:
+            # if so set self.at true
+            logging.debug("Found @1")
+            self.at = True
         logging.debug("echo size for tune command: %s", echo.size())
         if echo.size() <= 8: # C commands not concatinated 
             echo = self.readUntilFound(b'C', 100000, 20)
             # check if received an @ symbol for bline
-            # if so set self.at true
-            self.at = True
+            statusFound = echo.data().find(b'@')
+            if statusFound >= 0:
+                # if so set self.at true
+                logging.debug("Found @1")
+                self.at = True
         # wait for tune status to be not 4
         # see comment in waitForStatus for frustration
         self.waitForStatus(b'6')
