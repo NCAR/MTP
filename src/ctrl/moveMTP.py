@@ -357,7 +357,7 @@ class moveMTP():
             self.parent.packetStore.setData("integrateSwitch", 'done')
 
 
-
+            '''
 
 
 
@@ -382,7 +382,7 @@ class moveMTP():
         # eg: echo when buffer is sending to probe is same 
         # as echo from probe: both "C#####\r\n"
         self.parent.packetStore.setData("tuneSwitch", False)
-
+            '''
 
 
 
@@ -652,11 +652,11 @@ class moveMTP():
         # commas always after, including end line comma
         arrayToFormat = str.replace(arrayToFormat, ' ', ',')
         logging.debug(arrayToFormat)
-        end = int(len(arrayToFormat)-1)
+        end = int(len(arrayToFormat))
         logging.debug(end)
         if identifier == 'm':
             # remove "M0#:"
-            arrayToFormat = arrayToFormat[4:end]
+            arrayToFormat = arrayToFormat[4:end-1]
             return arrayToFormat
         elif identifier == 'a':
             # as is
@@ -668,7 +668,7 @@ class moveMTP():
 
         elif identifier == 'p':
             # remove p:
-            arrayToFormat = arrayToFormat[3:end]
+            arrayToFormat = arrayToFormat[3:end-1]
             return arrayToFormat
 
         elif identifier == 'e':
