@@ -254,7 +254,6 @@ class controlWindow(QWidget):
     def readCommData(self):
 
         self.saveProbeData()
-        self.writeUDP()
         return 0
     
     def saveProbeData(self):
@@ -268,10 +267,6 @@ class controlWindow(QWidget):
     # will need to close other udp connections first
     def openUDP(self):
         return 0
-
-    # write udp string to main program
-    def writeUDP(self):
-        return 0 
 
     # read in and save iwg packet to dict
     def readUDP():
@@ -435,7 +430,10 @@ class controlWindow(QWidget):
             # send packet over UDP
             # also replaces spaces with commas and removes start strings
             # speed may be an issue here
-            self.udp.sendUDP(self.mover.formUDP())
+            #self.udp.sendUDP(self.mover.formUDP())
+            updPacket = self.mover.formUDP()
+            print(udpPacket)
+            self.udp.sendUDP(udpPacket)
             logging.debug("sent UDP packet")
 
             # collect, update, display loop stats
@@ -1047,16 +1045,13 @@ class controlWindow(QWidget):
             logging.debug("el angle: %f", angle)
 
             # get pitch corrected angle
+            # sends move command
             self.mover.getAngle(angle)
-            # catch send move command echo from getAngle
-            echo = self.readUntilFound(b':',100, 4)
-            
-            # wait until Step:\xff/0@\r\n is received
-            # to show that probe has moved correctly
-            # this takes ~10 can read line's
-            # would be useful to not stop here to wait
-            # but going on to the integrate causes collisions
-            # echo = self.readUntilFound(b'S',100, 4) # Step
+            # Hmmm. Not seeing the @, and timing out.
+            # Might be related to channel setting?
+            #echo = self.readUntilFound(b'@',100000, 20)
+            #logging.debug("Bline find the @: %r", echo)
+            # wait until Step:\xddff/0@\r\n is received
 
             if self.packetStore.getData("pitchCorrect"):
                 #
@@ -1066,68 +1061,6 @@ class controlWindow(QWidget):
         
         self.updateRead("read_scan")
         self.updateRead("read_enc")
-        '''
-        i =0
-        while i < 11:
-            self.serialPort.sendCommand((self.commandDict.getCommand("read_scan")))
-            # first there's the echo, then there's the probe's echo of that echo then
-            echo = self.readUntilFound(b':', 100000, 20)
-            # read_scan returns b'Step:\xff/0c1378147\r\n' 
-            # then returns b'Step:\xff/0`1378147\r\n' 
-            echo = self.readUntilFound(b':', 100000, 20)
-            #logging.debug("integrate echo 1 : %s", echo.decode(ascii))
-            #echo = self.readUntilFound(b':', 100000, 20)
-            # have a does string contain bactic `
-            logging.debug(echo.size())
-            # 17 or 18 depending on size of value returned
-            findBactic = echo.data().find(b'`') 
-            if findBactic > 0:
-                readScan = echo.data()[findBactic + 1: echo.size() - 2]
-                # readScan = echo.data()[9:15]
-                logging.debug("readScan is: ")
-                logging.debug(readScan)
-                logging.debug(int(readScan.decode('Ascii'), 16))
-                # despite the first echo being formated 0c123456
-                # The return echo turns the 0c into ` (proper hex translation)
-                # and leaves the rest of the numbers alone
-                # I'm forced to assume this and encoderCount are 
-                # the only case where numbers return in decimal, not hex
-                # given that is the only way to get near the correct numbers
-                # from previous flight data
-                #
-                # Also note that while the VB6 does append a ">>" to the data
-                # that is only used as a deliminator, not a bit shift,
-                # and only locally in the vb6 for these two cases. 
-                # So in intrest of sanity, and because python can manage
-                # without a deliminator in this case, I'm not
-                # going to re-implement that. 
-                self.scanCount = (1000000 - int(readScan.decode('Ascii')))
-                if self.scanCount >=0:
-                    self.scanCount = '+' +'%06d' % self.scanCount
-                self.packetStore.setData('scanCount', self.scanCount)
-
-                break
-            i = i+1
-        logging.debug('readencoder size: %d', echo.size())
-        self.serialPort.sendCommand((self.commandDict.getCommand("read_enc")))
-        # read_scan returns eg. b'Step:\xff/0`1378147\r\n' 
-        echo = self.readUntilFound(b':', 100000, 20)
-        echo = self.readUntilFound(b'`', 100000, 20)
-        if echo.size() == 18 and echo.data().find(b'`') > 0:
-            readEnc = echo.data()[9:13]
-            logging.debug("readEnc is:")
-            logging.debug(readEnc)
-            logging.debug(int(readEnc.decode('Ascii')))
-            self.encoderCount = ((1000000 - int(readEnc.decode('Ascii'))) * 16)
-            if self.encoderCount >= 0:
-                self.encoderCount = '+' + '%06d' % self.encoderCount
-            
-            self.packetStore.setData('encoderCount', self.encoderCount)
-        logging.debug('readscan size: %d', echo.size())
-        '''
-        #logging.debug("integrate echo 1 : %s", echo.decode(ascii))
-        #self.blineStore = self.blineStore + data
-        #logging.debug(self.blineStore)
         return data
 
             
@@ -1199,19 +1132,16 @@ class controlWindow(QWidget):
 
     def integrate(self):
         # returns string of data values translated from hex to decimal
+        # recepit of the @ from the move command has to occur before 
+        # entry into this function
         nfreq = self.packetStore.getData("nFreq")
         data = ''
-        self.at = False
+        isFirst = True
         for freq in nfreq:
             # tune echos received in tune function
             logging.debug("Frequency/channel:"+ str(freq))
-            self.tune(freq)
-            logging.debug("at status in integrate: " + str(self.at))
-            # appears to never actually see the at
-            # try waiting for after move?
-            #if not self.at:
-                # haven't seen the @ from the move command
-            #    self.readUntilFound(b'@', 100, 4)
+            self.tune(freq, isFirst)
+            isFirst = False
             
             self.serialPort.sendCommand((self.commandDict.getCommand("count")))
             # clear echos 
@@ -1317,6 +1247,8 @@ class controlWindow(QWidget):
         # most often it's 6, but sometimes it's 2
         # so the while shouldn't be done more than a few times to keep 
         # time between packets down.
+        # in Tune status 0 is an error that requires resending the C
+        # 
         while i < 30 :
             self.serialPort.sendCommand((self.commandDict.getCommand("status")))
             logging.debug("sent status request")
@@ -1326,12 +1258,15 @@ class controlWindow(QWidget):
             if statusFound >= 0:
                 logging.debug("status searched: %s , found: %s", int(status), int(echo[statusFound])) 
                 return
+            else:
+                logging.debug("status searched for: %r , found: %r", status, echo)
             i = i +1
         logging.warning(" waitForStatus timed out: %s", int(status))
         return
 
 
-    def tune(self, fghz):
+    def tune(self, fghz, isFirst):
+        #these are static and can be removed from loop
         # fghz is frequency in gigahertz
         fby4 = (1000 * fghz)/4 #MHz
         chan = fby4/0.5  # convert to SNP channel (integer) 0.5 MHz = step size
@@ -1351,25 +1286,16 @@ class controlWindow(QWidget):
         # eg: echo when buffer is sending to probe is same
         # as echo from probe: both "C#####\r\n"
         # catch tune echos
+        # official response is a status of 4
         echo = self.readUntilFound(b'C', 100000, 20)
-        # check if received an @ symbol for bline
-        statusFound = echo.data().find(b'@')
-        if statusFound >= 0:
-            # if so set self.at true
-            logging.debug("Found @1")
-            self.at = True
-        logging.debug("echo size for tune command: %s", echo.size())
-        if echo.size() <= 8: # C commands not concatinated 
-            echo = self.readUntilFound(b'C', 100000, 20)
-            # check if received an @ symbol for bline
-            statusFound = echo.data().find(b'@')
-            if statusFound >= 0:
-                # if so set self.at true
-                logging.debug("Found @1")
-                self.at = True
-        # wait for tune status to be not 4
+        
+        # if it's the first channel, resend C
+        # that seems to fail with status 0
+        if isFirst:
+            self.serialPort.sendCommand(str.encode(str(mode) + '{:.5}'.format(str(chan)) +"\r\n"))
+        # wait for tune status to be 4
         # see comment in waitForStatus for frustration
-        self.waitForStatus(b'6')
+        self.waitForStatus(b'4')
         
 
 
@@ -1419,6 +1345,8 @@ class controlWindow(QWidget):
 
 
         # wait until status returns @
+        echo = self.readUntilFound(b'@', 10000, 20)
+        logging.warning("goAngle, @ echo %r", echo)
 
         # self.parent.packetStore.setData("currentClkStep", self.targetClkStep)
         # set in serial to avoid infinite loop of zero nstep

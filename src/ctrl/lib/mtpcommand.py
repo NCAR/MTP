@@ -138,20 +138,20 @@ class MTPcommand():
                                       # Return components of M2 line
 
             # From VB6 sub integrate()
-            'count': b'I 40\r',        # Count up the chCounts array; integrate
+            'count': b'I 40\r\n',        # Count up the chCounts array; integrate
                                       # for 40 * 20mS
-            'count2': b'R\r',          # Read results of last integration from
+            'count2': b'R\r\n',          # Read results of last integration from
                                       # counter (counts for each channel)
 
             # From VB6 sub Noise() - called by Eline(). Noise diode.
-            'noise1': b'N 1\r',  # Set Noise Diode On  ( I may have these )
-            'noise0': b'N 0\r',  # Set Noise Diode Off ( backward - TBD   )
+            'noise1': b'N 1\r\n',  # Set Noise Diode On  ( I may have these )
+            'noise0': b'N 0\r\n',  # Set Noise Diode Off ( backward - TBD   )
 
             # The next set of commands are passed to the stepper motor as-is.
 
-            'terminate': b'U/1TR\r',   # Terminate the stepper motion
-            'read_scan': b'U/1?0R\r',  # Read a scan
-            'read_enc': b'U/1?8R\r',   # Read encoder
+            'terminate': b'U/1TR\r\n',   # Terminate the stepper motion
+            'read_scan': b'U/1?0R\r\n',  # Read a scan
+            'read_enc': b'U/1?8R\r\n',   # Read encoder
 
             # VB6 sub tune(); set frequency for synthesizer, in MHz - 7 digits,
             # decimal always required.
@@ -169,7 +169,7 @@ class MTPcommand():
             # 'tuneF': 'F ' + chan + '\r',
             
             # From VB6 sub Init()
-            'init': b'U/1f1j256V5000L5000h30m100R\r',  # initialize
+            'init': b'U/1f1j256V5000L5000h30m100R\r\n',  # initialize
 
             # From VB6 sub initScan() - looks like these two togeter accomplish
             # same set of commands as one above - with different values.
@@ -189,7 +189,7 @@ class MTPcommand():
             # placeholder.
             'move_fwd_front': 'U/1J0P', # + Nsteps + 'J3R\r',  # If Nsteps >= 0
             'move_bak_front': 'U/1J0D', #+ Nsteps + 'J3R\r',  # If Nsteps < 0
-            'move_end': 'j3R\r',
+            'move_end': 'J3R\r\n',
         }
 
         self.command = command_list  # dictionary to hold all MTP commands

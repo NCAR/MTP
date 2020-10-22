@@ -163,7 +163,7 @@ class SerialInit(object):
         logging.debug("Qt serial port sending command %s", command)
         self.serialPort.write(command)
         self.sentCommand = str(command)
-#        logging.info('Sending command - ' + str(command))
+        logging.info('Serialqt:sendCommand: Sending command - ' + str(command))
         return
 
     def tickSerial(self):

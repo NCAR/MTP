@@ -90,10 +90,11 @@ class SerialInst(object):
         byte = ""
         while True:
             byte = self.sport.read()
+            logging.debug("serial port read byte r: %r, byte.decode(utf-8): %r", byte, byte.decode("utf-8"))
             if byte.decode("utf-8") == "\n":
                 break
             message += byte.decode("utf-8")
-        logger.debug("read data: " + message.rstrip())
+        logger.debug("read data: %r, rstrip read data:  ", message,  message.rstrip())
         return(message.rstrip())
 
     def close(self):

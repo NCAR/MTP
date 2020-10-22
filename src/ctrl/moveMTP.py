@@ -737,12 +737,9 @@ class moveMTP():
             self.frontCommand = self.parent.commandDict.getCommand("move_fwd_front")  
         # return should have switch value of "Step:"
         self.parent.serialPort.sendCommand(str.encode(self.frontCommand + self.backCommand))
-        self.parent.packetStore.setData("targetClkStep", self.targetClkStep)
-        # self.parent.packetStore.setData("currentClkStep", self.targetClkStep)
-        # set in serial to avoid infinite loop of zero nstep
         self.angleI = self.parent.packetStore.getData("angleI") # angle index, zenith at 1
-        #moveDone flag?
 
+        
     
     def configMAM(self):
         """ 
