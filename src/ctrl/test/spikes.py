@@ -1,6 +1,7 @@
 
 
-f = open("../MTP_data.txt", 'r')
+#f = open("../MTP_data.txt", 'r')
+f = open("testData.txt", 'r')
 
 oldline = 0
 
