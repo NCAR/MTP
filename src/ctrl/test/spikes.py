@@ -1,7 +1,9 @@
+from sys import argv
 
-
+script, fieName = argv
 #f = open("../MTP_data.txt", 'r')
-f = open("testData.txt", 'r')
+#f = open("testData.txt", 'r')
+f = open(fieName, 'r')
 
 oldline = 0
 
