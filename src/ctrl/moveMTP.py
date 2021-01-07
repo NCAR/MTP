@@ -732,9 +732,9 @@ class moveMTP():
         # move to moveScan/ check logic against that
         self.backCommand = self.nstep + self.parent.commandDict.getCommand("move_end")
         if self.nstepSplit[0] is '-':
-            self.frontCommand= self.parent.commandDict.getCommand("move_bak_front")
+            self.frontCommand= self.parent.commandDict.getCommand("move_fwd_front")
         else:
-            self.frontCommand = self.parent.commandDict.getCommand("move_fwd_front")  
+            self.frontCommand = self.parent.commandDict.getCommand("move_bak_front")  
         # return should have switch value of "Step:"
         self.parent.serialPort.sendCommand(str.encode(self.frontCommand + self.backCommand))
         self.angleI = self.parent.packetStore.getData("angleI") # angle index, zenith at 1

@@ -853,13 +853,15 @@ class controlWindow(QWidget):
         #self.readUntilFound(b':', 100000, 20)
         echo = self.readUntilFound(b'@', 100, 20)
         logging.debug("home1 after step =:%s",echo) 
-        self.moveWait()
+        # Irrelavant if waiting for @
+        #self.moveWait()
 
         self.serialPort.sendCommand(self.commandDict.getCommand("home2"))
         echo = self.readUntilFound(b':', 100, 20)
         #echo += self.readUntilFound(b'S', 100000, 20)
         logging.debug("home1 after step =:%s",echo) 
-        self.moveWait()
+        # Irrelavant if waiting for @
+        # self.moveWait()
         
         self.serialPort.sendCommand(self.commandDict.getCommand("home3"))
         echo = self.readUntilFound(b':', 100, 20)
@@ -899,33 +901,18 @@ class controlWindow(QWidget):
         return pt
 
     def Eline(self):
+        data = 0
         logging.debug("Eline")
         self.homeScan()
         # set noise 1
         # returns echo and b"ND:01\r\n" or b"ND:00\r\n"
         self.serialPort.sendCommand(self.commandDict.getCommand("noise1"))
-        echo = self.readUntilFound(b'N',10, 1)
-        #echo = self.serialPort.canReadLine(20)
-        logging.debug(echo.size())
-        # the echo and return value concatonate to form a size of 12
-        # want to move along if we don't need to check for the second
-        # return value
-        if not(echo.size() is 12):
-            echo = self.readUntilFound(b'N',10, 1)
-        #echo = self.serialPort.canReadLine(20)
-        logging.debug(echo.size())
-        
-        data = 0
+        echo = self.readUntilFound(b'N00',10, 1)
         data = self.integrate()
+
         # set noise 0
         self.serialPort.sendCommand(self.commandDict.getCommand("noise0"))
-        echo = self.readUntilFound(b'N',10, 1)
-        #echo = self.serialPort.canReadLine(20)
-        logging.debug(echo)
-        if not(echo.size() is 12):
-            echo = self.readUntilFound(b'N',10, 1)
-        #echo = self.serialPort.canReadLine(20)
-        logging.debug(echo)
+        echo = self.readUntilFound(b'N01',10, 1)
         return data + self.integrate()
 
     def Aline(self):
@@ -1144,30 +1131,30 @@ class controlWindow(QWidget):
             # tune echos received in tune function
             logging.debug("Frequency/channel:"+ str(freq))
             self.tune(freq, isFirst)
+            isFirst = False
             # clear echos 
             dataLine = self.quickRead(25) # avg is ~9, max is currently 15
-            isFirst = False
             # Start integrator I 40 command    
             self.serialPort.sendCommand((self.commandDict.getCommand("count")))
             # ensure integrator starts so then can
             i=0
-            looptimeMS = 20
+            looptimeMS = 2
             looping = True
             while i < looptimeMS: 
                 logging.debug("integrate loop 1, checking for odd number")
-                i = i+1
                 if self.waitForStatus(b'5'):
                     break
                 if i == looptimeMS:
                     self.serialPort.sendCommand((self.commandDict.getCommand("count")))
                     i = looptimeMS/2
                     looptimeMS = i
+                i = i+1
             i=0
-            while i < 30: 
+            while i < 2: 
                 logging.debug("integrate loop 2, checking for even number")
-                i = i+1 
                 if self.waitForStatus(b'4'):
                     break
+                i = i+1 
 
 
                 '''
@@ -1284,7 +1271,7 @@ class controlWindow(QWidget):
         # see comment in waitForStatus for frustration
         self.waitForStatus(b'4')
         
-
+'''
 
     def goAngle(self, targetEl, zel):
         # pitch and roll need to be instant values from IWG, updated 1x per cycle (??!?) in Aline
@@ -1309,10 +1296,10 @@ class controlWindow(QWidget):
         nstep = nstepSplit[0]
         if self.nstep[0] is '-':
             # nstep is negative
-            nstepSplit = str(nstep).split("-")
+            nstepSplit = str(nstep).split("+")
             nstep = nstepSplit[1].rjust(6,'0')
         else:
-            self.nstepSplit = str(nstep).split('+')
+            self.nstepSplit = str(nstep).split('-')
             nstep = nstepSplit[0].rjust(6,'0')
 
         if nstep is 0.0:
@@ -1338,7 +1325,7 @@ class controlWindow(QWidget):
         # self.parent.packetStore.setData("currentClkStep", self.targetClkStep)
         # set in serial to avoid infinite loop of zero nstep
         angleI = self.packetStore.getData("angleI") # angle index, zenith at 1
-
+'''
 
 
 
