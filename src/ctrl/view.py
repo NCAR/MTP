@@ -39,7 +39,7 @@ class controlWindow(QWidget):
         # Create the GUI
         self.initUI()
 
-
+        self.initSaveDataFile()
         self.mainloop()
 
     def closeEvent(self, event):
@@ -654,8 +654,16 @@ class controlWindow(QWidget):
         ''' reads config file into dictionary to change default values '''
         ''' to be implemented '''
         #self.serialPort.sendCommand(str.encode(self.commandDict.getCommand("read_scan")))
+        config = 3
 
-        with open("MTP_data.txt", "ab") as datafile:
+
+
+    def initSaveDataFile(self):    
+        # Check flight number popup
+        flight_number =str(00)
+        saveDataFileName = time.strftime("%Y%m%d") + '_' + time.strftime("%H%M%S") + flight_number + '.mtp'
+
+        with open(saveDataFileName, "ab") as datafile:
                 # this will be rewritten each time the program restarts
                 datafile.write(str.encode("Instrument on " + time.strftime("%X") + " " + time.strftime("%m-%d-%y") + '\r\n'))
         logging.debug("initConfig")
