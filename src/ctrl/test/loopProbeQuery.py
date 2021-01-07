@@ -87,18 +87,20 @@ def moveNotComplete(buf):
 
 def moveTo(location):
     location = location + '\r\n'
+    print('moveTo:send location:%r', location)
     serialPort.write(location.encode('ascii'))
     buf = readEchos(3)
     serialPort.write(b'S\r\n')
     buf += readEchos(3)
+    print('moveTo:received status:%r', buf)
     while moveNotComplete(buf):
         serialPort.write(location.encode('ascii'))
         buf = readEchos(3)
         serialPort.write(b'S\r\n')
         buf += readEchos(3)
     # after received '@' terminate stepper motion
-    serialPort.write(b'U/1TR\r\n')
-    buf = readEchos(3)
+    # serialPort.write(b'U/1TR\r\n')
+    # buf = readEchos(3)
     serialPort.write(b'S\r\n')
     buf += readEchos(3)
     
@@ -133,9 +135,11 @@ while (1):
     readEchos(3)
     # move home
     serialPort.write(b'U/1J0f0j256Z1000000J3R\r\n')
+    print('home')
     readEchos(3)
     serialPort.write(b'S\r\n')
     readEchos(3)
+    print('echo2')
 
     # optional m 0, m 1, pt query
     serialPort.write(b'M 1\r\n') 
@@ -172,6 +176,7 @@ while (1):
     
     #bline 
     moveTo('U/1J0D28226J3R')
+    print("Move1")
     bline = CIRS() + ' '
     moveTo('U/1J0D7110J3R')
     bline += CIRS() + ' '

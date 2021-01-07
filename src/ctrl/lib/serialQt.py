@@ -129,7 +129,7 @@ class SerialInit(object):
         #buf = b'' 
         #logging.debug("serialqt readline")
         i = 0 
-        while i < 7 * timeVal:
+        while i <  timeVal:
             self.parent.app.processEvents()
             #logging.debug("i: %d, timeVal: %d" , i, timeVal)
             '''
