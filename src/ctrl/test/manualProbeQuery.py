@@ -4,7 +4,7 @@ import serial
 from serial import Serial
 
 logging.basicConfig(level = logging.DEBUG)
-serialPort = serial.Serial('COM6', 9600, timeout = 5)
+serialPort = serial.Serial('COM6', 9600, timeout = .5)
 #serialPort.setBaudrate(9600)
 
 
@@ -22,6 +22,9 @@ while 1:
         print(i)
         #buf = serialPort.readline()
         buf = serialPort.readline()
+        if i>1:    
+            query = "S\r\n"
+            serialPort.write(query.encode('ascii'))
         logging.debug("read %r", buf)
 
 

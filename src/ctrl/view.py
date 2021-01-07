@@ -431,7 +431,7 @@ class controlWindow(QWidget):
             # also replaces spaces with commas and removes start strings
             # speed may be an issue here
             #self.udp.sendUDP(self.mover.formUDP())
-            updPacket = self.mover.formUDP()
+            udpPacket = self.mover.formUDP()
             print(udpPacket)
             self.udp.sendUDP(udpPacket)
             logging.debug("sent UDP packet")
@@ -530,14 +530,14 @@ class controlWindow(QWidget):
 
             #logging.debug(echo)
             if echo is None or echo == b'':
-                #logging.debug("checking init1")
+                logging.debug(" readUntilFound: none case")
                 self.app.processEvents()
                 i = i + 1
             elif echo.data().find(binaryString) >= 0:
                 logging.debug("received binary string")
-                return echo
+                return echo 
             else:
-                logging.debug("init1 loop echo else case")
+                logging.debug("didn't recieve binary string this loop")
                 self.app.processEvents()
                 i = i + 1
         logging.debug("readUntilStep timeout")
@@ -825,7 +825,7 @@ class controlWindow(QWidget):
         i = 0
         while i< 20:
             self.serialPort.sendCommand(self.commandDict.getCommand("status"))
-            echo = self.readUntilFound(b'S', 100000, 20)
+            echo = self.readUntilFound(b'S', 10, 30)
             # do instring of ST:0#
             # location of T +3
             findTheT = echo.data().find(b'T')
@@ -850,25 +850,25 @@ class controlWindow(QWidget):
 
     def homeScan(self):
         self.serialPort.sendCommand(self.commandDict.getCommand("home1"))
-        self.readUntilFound(b':', 100000, 20)
-        echo = self.readUntilFound(b'S', 100000, 20)
+        #self.readUntilFound(b':', 100000, 20)
+        echo = self.readUntilFound(b'@', 100, 20)
         logging.debug("home1 after step =:%s",echo) 
         self.moveWait()
 
         self.serialPort.sendCommand(self.commandDict.getCommand("home2"))
-        self.readUntilFound(b':', 100000, 20)
-        echo = self.readUntilFound(b'S', 100000, 20)
+        echo = self.readUntilFound(b':', 100, 20)
+        #echo += self.readUntilFound(b'S', 100000, 20)
         logging.debug("home1 after step =:%s",echo) 
         self.moveWait()
         
         self.serialPort.sendCommand(self.commandDict.getCommand("home3"))
-        self.readUntilFound(b':', 100000, 20)
-        self.readUntilFound(b'S', 100000, 20)
+        echo = self.readUntilFound(b':', 100, 20)
+        #echo += self.readUntilFound(b'S', 100000, 20)
         self.moveWait()
-        echo = self.read(200,20)
-        logging.debug("home3 1st echo =:%s",echo) 
-        echo = self.read(200,20)
-        logging.debug("home3 2nd echo =:%s",echo) 
+        #echo = self.read(200,20)
+        #logging.debug("home3 1st echo =:%s",echo) 
+        #echo = self.read(200,20)
+        #logging.debug("home3 2nd echo =:%s",echo) 
         # Update GUI
         self.elAngleBox.insertPlainText("Target")
 
@@ -877,7 +877,7 @@ class controlWindow(QWidget):
         logging.debug("M01")
         self.serialPort.sendCommand((self.commandDict.getCommand("read_M1")))
         # echo will echo "M  1" so have to scan for the : in the M line
-        m = self.readUntilFound(b':', 100000, 20)
+        m = self.readUntilFound(b'M01:', 100, 20)
         # set a timer so m01 values get translated from hex?
         m01 = self.mover.decode(m)
         return m01
@@ -886,14 +886,14 @@ class controlWindow(QWidget):
     def m02(self):
         logging.debug("M02")
         self.serialPort.sendCommand((self.commandDict.getCommand("read_M2")))
-        m = self.readUntilFound(b':', 100000, 20)
+        m = self.readUntilFound(b'M02:', 100, 20)
         m02 = self.mover.decode(m)
         return m02
 
     def pt(self):
         logging.debug("pt")
         self.serialPort.sendCommand((self.commandDict.getCommand("read_P")))
-        p = self.readUntilFound(b':', 100000, 20)
+        p = self.readUntilFound(b':', 100, 20)
         pt = self.mover.decode(p)
 
         return pt
@@ -904,14 +904,14 @@ class controlWindow(QWidget):
         # set noise 1
         # returns echo and b"ND:01\r\n" or b"ND:00\r\n"
         self.serialPort.sendCommand(self.commandDict.getCommand("noise1"))
-        echo = self.readUntilFound(b'N',100, 4)
+        echo = self.readUntilFound(b'N',10, 1)
         #echo = self.serialPort.canReadLine(20)
         logging.debug(echo.size())
         # the echo and return value concatonate to form a size of 12
         # want to move along if we don't need to check for the second
         # return value
         if not(echo.size() is 12):
-            echo = self.readUntilFound(b'N',100, 4)
+            echo = self.readUntilFound(b'N',10, 1)
         #echo = self.serialPort.canReadLine(20)
         logging.debug(echo.size())
         
@@ -919,11 +919,11 @@ class controlWindow(QWidget):
         data = self.integrate()
         # set noise 0
         self.serialPort.sendCommand(self.commandDict.getCommand("noise0"))
-        echo = self.readUntilFound(b'N',100, 4)
+        echo = self.readUntilFound(b'N',10, 1)
         #echo = self.serialPort.canReadLine(20)
         logging.debug(echo)
         if not(echo.size() is 12):
-            echo = self.readUntilFound(b'N',100, 4)
+            echo = self.readUntilFound(b'N',10, 1)
         #echo = self.serialPort.canReadLine(20)
         logging.debug(echo)
         return data + self.integrate()
@@ -1013,8 +1013,8 @@ class controlWindow(QWidget):
         # update instantanious angle frame?
 
         self.serialPort.sendCommand((self.commandDict.getCommand("read_scan")))
-        echo = self.readUntilFound(b':', 100000, 20)
-        echo = self.readUntilFound(b'S', 100000, 20)
+        echo = self.readUntilFound(b':', 10, 20)
+        echo = self.readUntilFound(b'S', 10, 20)
         # b'Step:\xff/0`1000010\r\n'
         # echo = self.read(200,200)
         # need to implement the better logic counters in bline
@@ -1049,13 +1049,16 @@ class controlWindow(QWidget):
             self.mover.getAngle(angle)
             # Hmmm. Not seeing the @, and timing out.
             # Might be related to channel setting?
-            #echo = self.readUntilFound(b'@',100000, 20)
+            echo = self.readUntilFound(b'@',100000, 20)
             #logging.debug("Bline find the @: %r", echo)
             # wait until Step:\xddff/0@\r\n is received
 
             if self.packetStore.getData("pitchCorrect"):
                 #
                 logging.debug('Pitch correct mode on')
+
+            # wait for move to complete
+
             data = data + self.integrate()
             logging.debug(data)
         
@@ -1070,10 +1073,10 @@ class controlWindow(QWidget):
         while i < 11:
             self.serialPort.sendCommand((self.commandDict.getCommand(scanOrEncode)))
             # first there's the echo, then there's the probe's echo of that echo then
-            echo = self.readUntilFound(b':', 100000, 20)
+            echo = self.readUntilFound(b':', 10, 20)
             # read_scan returns b'Step:\xff/0c1378147\r\n' 
             # then returns b'Step:\xff/0`1378147\r\n' 
-            echo = self.readUntilFound(b':', 100000, 20)
+            echo = self.readUntilFound(b':', 10, 20)
             #logging.debug("integrate echo 1 : %s", echo.decode(ascii))
             #echo = self.readUntilFound(b':', 100000, 20)
             # have a does string contain bactic `
@@ -1141,55 +1144,36 @@ class controlWindow(QWidget):
             # tune echos received in tune function
             logging.debug("Frequency/channel:"+ str(freq))
             self.tune(freq, isFirst)
-            isFirst = False
-            
-            self.serialPort.sendCommand((self.commandDict.getCommand("count")))
             # clear echos 
             dataLine = self.quickRead(25) # avg is ~9, max is currently 15
+            isFirst = False
+            # Start integrator I 40 command    
+            self.serialPort.sendCommand((self.commandDict.getCommand("count")))
             # ensure integrator starts so then can
             i=0
-            looptimeMS = 50
+            looptimeMS = 20
             looping = True
             while i < looptimeMS: 
                 logging.debug("integrate loop 1, checking for odd number")
-                self.serialPort.sendCommand((self.commandDict.getCommand("status")))
-                # echo is b'S\r\n'
-                status = self.readUntilFound(b'T', 100000, 10)
-                #if status[4] or 7
-                if status.size() is 10:
-                    # echo and status return concatinated
-                    num = int(status[7])
-                elif status.size() is 7:
-                    num = int(status[4])
-                else: 
-                    num = 525600
-                logging.debug(num)
-                if (num % 2) == 1:
-                    # VB6 code has a bitwise and to check if this status is odd
-                    # most commonly returns 7, can return 5
-                    logging.debug("break, integrator started")
-                    break   
-                logging.debug(status.size())
-                i = i + 1
-                if  i == looptimeMS and looping:
-                    #send integrate again
+                i = i+1
+                if self.waitForStatus(b'5'):
+                    break
+                if i == looptimeMS:
                     self.serialPort.sendCommand((self.commandDict.getCommand("count")))
-                    #reset i, but only once
-                    i = 0
-                    looping = False
-                    #wait for read
-                    status = self.readUntilFound(b'I', 100000, 10)
-                    logging.debug("INtegrate 1, resend count command")
-                    logging.debug(status)
-
-            logging.debug("integrator has started")
-            # check that integrator is done
+                    i = looptimeMS/2
+                    looptimeMS = i
             i=0
-            while i < 90: 
+            while i < 30: 
                 logging.debug("integrate loop 2, checking for even number")
+                i = i+1 
+                if self.waitForStatus(b'4'):
+                    break
+
+
+                '''
                 self.serialPort.sendCommand((self.commandDict.getCommand("status")))
                 # echo is b'S\r\n'
-                status = self.readUntilFound(b'T', 100000, 10)
+                status = self.readUntilFound(b'T', 10, 10)
                 #if status[4] or 7
                 if status.size() is 10:
                     # echo and status return concatinated
@@ -1209,13 +1193,16 @@ class controlWindow(QWidget):
                 logging.debug(status.size())
                 i = i + 1
                 # self.app.processEvents()
+                '''
 
             logging.debug("integrator has finished")
+            # clear echos 
+            dataLine = self.quickRead(25) # avg is ~9, max is currently 15
             # actually request the data of interest
             self.serialPort.sendCommand((self.commandDict.getCommand("count2")))
-            echo = self.readUntilFound(b'R', 100000, 20)
+            echo = self.readUntilFound(b'R', 10, 20)
             if echo.size() <6:
-                echo = self.readUntilFound(b':', 100000, 20)
+                echo = self.readUntilFound(b':', 10, 20)
             #logging.debug("integrate echo 1 : %s", echo.decode(ascii))
             # grab value from string, translate from hex, append to string
             check = echo[1:2]
@@ -1249,20 +1236,20 @@ class controlWindow(QWidget):
         # time between packets down.
         # in Tune status 0 is an error that requires resending the C
         # 
-        while i < 30 :
+        while i < 5 :
             self.serialPort.sendCommand((self.commandDict.getCommand("status")))
             logging.debug("sent status request")
-            echo = self.readUntilFound(b'S', 100000, 20)
+            echo = self.readUntilFound(b'S', 37, 55)
             logging.debug("status: %s, received Status: %s, ", status, echo)
             statusFound = echo.data().find(status)
             if statusFound >= 0:
                 logging.debug("status searched: %s , found: %s", int(status), int(echo[statusFound])) 
-                return
+                return True
             else:
                 logging.debug("status searched for: %r , found: %r", status, echo)
             i = i +1
         logging.warning(" waitForStatus timed out: %s", int(status))
-        return
+        return False
 
 
     def tune(self, fghz, isFirst):
@@ -1287,7 +1274,7 @@ class controlWindow(QWidget):
         # as echo from probe: both "C#####\r\n"
         # catch tune echos
         # official response is a status of 4
-        echo = self.readUntilFound(b'C', 100000, 20)
+        echo = self.readUntilFound(b'C', 100, 20)
         
         # if it's the first channel, resend C
         # that seems to fail with status 0
@@ -1345,7 +1332,7 @@ class controlWindow(QWidget):
 
 
         # wait until status returns @
-        echo = self.readUntilFound(b'@', 10000, 20)
+        echo = self.readUntilFound(b'@', 10, 20)
         logging.warning("goAngle, @ echo %r", echo)
 
         # self.parent.packetStore.setData("currentClkStep", self.targetClkStep)
