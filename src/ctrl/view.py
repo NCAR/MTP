@@ -11,13 +11,12 @@ from PyQt5.QtWidgets import (QWidget, QToolTip,
 from PyQt5 import QtGui 
 from PyQt5.QtWidgets import *
 from PyQt5 import QtCore
-#from lib.serialInst import SerialInst
 from lib.serialQt import SerialInit
 from lib.mtpcommand import MTPcommand 
 from lib.storePacket import StorePacket
+from lib.storeConfig import StoreConfig
 from lib.udp import doUDP
 from moveMTP import moveMTP 
-# from PyQt5.QtCore import QTimer
 import logging
 
 
@@ -339,8 +338,17 @@ class controlWindow(QWidget):
 
         self.isScanning = False
         logging.debug("1 : main loop")
+        # Declare instance of command dictionary
         self.commandDict = MTPcommand()
+        # Declare instance of packet store
         self.packetStore = StorePacket()
+        # Declare instance of moveMTP class
+        self.mover = moveMTP(self)
+        # Declare instance of config store
+        # Has lab defaults for IWG 
+        # temporary values for gui - changed default.mtph
+        self.configStore = StoreConfig()
+
         # global storage for values collected from probe
         # storing them in dict introduced slowness
         self.iwgStore = 'IWG1,20101002T194729,39.1324,-103.978,4566.43,,14127.9,,180.827,190.364,293.383,0.571414,-8.02806,318.85,318.672,-0.181879,-0.417805,-0.432257,-0.0980951,2.36793,-1.66016,-35.8046,16.3486,592.062,146.734,837.903,9.55575,324.104,1.22603,45.2423,,-22    .1676,'
@@ -375,27 +383,11 @@ class controlWindow(QWidget):
         #self.elAngles= [10,-179.8, 80.00, 55.00, 42.00, 25.00, 12.00, 0.00, -12.00, -25.00, -42.00, -80.00]
         '''
         self.udp = doUDP(self, app)
-        # UDP LED's
-        # need to figure out the logic behind making them red if they aren't
-        # actually sending/recieving data
-        # self.receivingUDPLED.setPixmap(self.ICON_YELLOW_LED.scaled(40, 40))
-        # self.sendingUDPLED.setPixmap(self.ICON_YELLOW_LED.scaled(40, 40))
-        #logging.debug("2 : main loop")
-        # Don't need two of these:
-        # self.packetDict = StorePacket()
         
         # instantiate serial port
-        # comment out next n lines to test non serial port code       
         self.serialPort = SerialInit(self, app)
-        # self.serialPort.readyRead.connect(self.tick(packetDict))
-        # self.serialPort.sendCommand(self.commandDict.getCommand("status"))
-        # sPort = self.openComm(serialPort)
         self.app.processEvents()
-        '''
-        '''
-        logging.debug("main loop")
-        # Declare instance of moveMTP class
-        self.mover = moveMTP(self)
+        logging.debug("mainloop: serialPort initialized")
 
         self.initProbe()
         self.homeScan()
@@ -407,31 +399,31 @@ class controlWindow(QWidget):
         self.probeStatusLED.setPixmap(self.ICON_GREEN_LED.scaled(40, 40))
         self.scanStatusLED.setPixmap(self.ICON_GREEN_LED.scaled(40, 40))
         while self.continueCycling:
-
             logging.debug("loop                                                                                                                 asdfasdf")
-            self.m01Store = self.m01()
-            self.m02Store = self.m02()
-            self.ptStore = self.pt()
-            # Eline: long 
-            self.elineStore = 'E' + self.Eline()
             # check here to exit cycling
 
             # use the MTPmove aline
+            packetStartTime = time.gmtime()
             self.alineStore = self.Aline()
 
             # Bline: long
             # doesn't do any scan correcting 
             self.blineStore = 'B' + self.Bline()
 
+            self.m01Store = self.m01()
+            self.m02Store = self.m02()
+            self.ptStore = self.pt()
+            # Eline: long 
+            self.elineStore = 'E' + self.Eline()
             # save to file
             # assumes everything's been decoded from hex
-            self.mover.saveData()
+            self.mover.saveData(packetStartTime)
 
             # send packet over UDP
             # also replaces spaces with commas and removes start strings
             # speed may be an issue here
             #self.udp.sendUDP(self.mover.formUDP())
-            udpPacket = self.mover.formUDP()
+            udpPacket = self.mover.formUDP(packetStartTime)
             print(udpPacket)
             self.udp.sendUDP(udpPacket)
             logging.debug("sent UDP packet")
