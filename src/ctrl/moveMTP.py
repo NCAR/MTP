@@ -591,12 +591,12 @@ class moveMTP():
             
         #logging.debug("blIne End")
 
-    def saveData(self):
+    def saveData(self, gmtime):
         # self.parent.app.processEvents()
         logging.debug("saving Data to file")
 
-        t = time.gmtime();
-
+        #t = time.gmtime();
+        t = gmtime
         # yyyymmddhhmmss in UDP send feed
         #currentDateUDP =  "%02d%02d%02d%02d%02d%02d," %(t[0], t[1], t[2],t[3], t[4], t[5])
 
@@ -628,11 +628,12 @@ class moveMTP():
         #udpArray = self.formUdp()
         return
 
-    def formUDP(self):
+    def formUDP(self, gmtime):
         # new udp string
         udpArray =  QtCore.QByteArray(str.encode(""))
         # get time
-        t = time.gmtime();
+        #t = time.gmtime();
+        t = gmtime
         # yyyymmddhhmmss in UDP send feed
         currentDateUDP =  "%02d%02d%02dT%02d%02d%02d" %(t[0], t[1], t[2],t[3], t[4], t[5])
 
