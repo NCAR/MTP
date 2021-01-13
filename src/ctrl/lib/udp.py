@@ -172,9 +172,9 @@ class doUDP(object):
     
             # Sometimes IWG packet doesn't fill out values
             # check if roll/pitch is zero in goAngle
-            if latestValue is '':
+            if latestValue == '':
                 latestValue = float(0) # try and figure out nan value instead
-            elif latestValue is b'':
+            elif latestValue == b'':
                 latestValue = float(0) # try and figure out nan value instead
             if name == "Zp":
                 latestValue = float(latestValue)/3280.8 # ft/km value from vb6
@@ -204,9 +204,9 @@ class doUDP(object):
                 # IWG packets to necessitate shuffling
                 templist.append(templist[0])
             templist[0] = latestValue
-            if name is 'pitch':
+            if name == 'pitch':
                 self.parent.packetStore.setData(name+ 'Instant', latestValue)
-            elif name is 'roll':
+            elif name == 'roll':
                 self.parent.packetStore.setData(name+ 'Instant', latestValue)
             self.setArray(name, templist)
             self.averageVal(name)
@@ -215,17 +215,17 @@ class doUDP(object):
 
     def getArray(self, name):
         logging.debug( name)
-        if name is 'pitch':
+        if name =='pitch':
             templist = self.parent.packetStore.getData('pitch15')
-        elif name is 'roll':
+        elif name == 'roll':
             templist = self.parent.packetStore.getData('roll15')
-        elif name is 'Zp':
+        elif name == 'Zp':
             templist = self.parent.packetStore.getData('Zp15')
-        elif name is 'oat':
+        elif name == 'oat':
             templist = self.parent.packetStore.getData('oat15')
-        elif name is 'lat':
+        elif name == 'lat':
             templist = self.parent.packetStore.getData('lat15')
-        elif name is 'lon':
+        elif name == 'lon':
             templist = self.parent.packetStore.getData('lon15')
         else: 
             logging.error("Undefined arrayName in udp keep15")
@@ -233,17 +233,17 @@ class doUDP(object):
         return templist
 
     def setArray(self, name, data):
-        if name is 'pitch':
+        if name == 'pitch':
             self.parent.packetStore.setData('pitch15', data)
-        elif name is 'roll':
+        elif name == 'roll':
             self.parent.packetStore.setData('roll15', data) 
-        elif name is 'Zp':
+        elif name == 'Zp':
             self.parent.packetStore.setData('Zp15', data)
-        elif name is 'oat':
+        elif name == 'oat':
             self.parent.packetStore.setData('oat15', data)
-        elif name is 'lat':
+        elif name == 'lat':
             self.parent.packetStore.setData('lat15', data)
-        elif name is 'lon':
+        elif name == 'lon':
             self.parent.packetStore.setData('lon15', data)
         else: 
             logging.error("Undefined arrayName in udp keep15")
