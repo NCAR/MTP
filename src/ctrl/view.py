@@ -338,57 +338,28 @@ class controlWindow(QWidget):
 
         self.isScanning = False
         logging.debug("1 : main loop")
+        # shouldn't be in mainloop
         # Declare instance of command dictionary
         self.commandDict = MTPcommand()
         # Declare instance of packet store
         self.packetStore = StorePacket()
-        # Declare instance of moveMTP class
-        self.mover = moveMTP(self)
         # Declare instance of config store
         # Has lab defaults for IWG 
         # temporary values for gui - changed default.mtph
         self.configStore = StoreConfig()
-
+        # Declare instance of moveMTP class
+        self.mover = moveMTP(self)
+        self.udp = doUDP(self, app)
         # global storage for values collected from probe
         # storing them in dict introduced slowness
         self.iwgStore = 'IWG1,20101002T194729,39.1324,-103.978,4566.43,,14127.9,,180.827,190.364,293.383,0.571414,-8.02806,318.85,318.672,-0.181879,-0.417805,-0.432257,-0.0980951,2.36793,-1.66016,-35.8046,16.3486,592.062,146.734,837.903,9.55575,324.104,1.22603,45.2423,,-22    .1676,'
-        '''
-        self.pitch15 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]    # Arrays of last 15 s
 
-        self.roll15 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]     # taken from iwg
-        self.Zp15 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-        self.oat15 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-        self.lat15 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-        self.lon15 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-        '''
-        '''
-        self.alineStore = 'A 20101002 19:47:30 -00.59 00.13 -00.26 00.13 +04.37 0.04 270.99 00.38 +39.123 +0.016 -103.967 +0.044 +072727 +071776'
-        self.blineStore = 'B 017828 019041 018564 017846 019061 018572 017874 019069 018603 017906 019095 018625 017932 019124 018637 017949 019139 018655 017968 019151 018665 017979 019164 018665 017997 019161 018691 018029 019181 018705'
-        self.m01Store = 'M01: 2928 2457 3023 3085 1925 2923 2434 2948'
-        self.m02Store = 'M02: 2109 1299 2860 2691 2962 1116 4095 1805'
-        self.ptStore = 'Pt: 2157 13804 13796 10311 13383 13327 13144 14440'
-        self.elineStore = 'E 020541 021894 021874 018826 020158 019813 '
-        pitchavg = self.packetStore.setData("pitchavg", 1)
-        pitchrms = self.packetStore.setData("pitchrms",1)
-        rollavg = self.packetStore.setData("rollavg",1)
-        rollrms = self.packetStore.setData("rollrms",1)
-        Zpavg = self.packetStore.setData("Zpavg",1)
-        Zprms = self.packetStore.setData("Zpavg",1)
-        oatavg = self.packetStore.setData("oatavg",1)
-        oatrms = self.packetStore.setData("oatrms",1)
-        latavg = self.packetStore.setData("latavg",1)
-        latrms = self.packetStore.setData("latrms",1)
-        lonavg = self.packetStore.setData("lonavg",1)
-        lonrms = self.packetStore.setData("lonrms",1)
-        #self.elAngles= [10,-179.8, 80.00, 55.00, 42.00, 25.00, 12.00, 0.00, -12.00, -25.00, -42.00, -80.00]
-        '''
-        self.udp = doUDP(self, app)
         
         # instantiate serial port
         self.serialPort = SerialInit(self, app)
         self.app.processEvents()
         logging.debug("mainloop: serialPort initialized")
-
+        self.probePresent()
         self.initProbe()
         self.homeScan()
         self.continueCycling = True
@@ -398,6 +369,7 @@ class controlWindow(QWidget):
         # loop over " scan commands"
         self.probeStatusLED.setPixmap(self.ICON_GREEN_LED.scaled(40, 40))
         self.scanStatusLED.setPixmap(self.ICON_GREEN_LED.scaled(40, 40))
+
         while self.continueCycling:
             logging.debug("loop                                                                                                                 asdfasdf")
             # check here to exit cycling
@@ -407,7 +379,6 @@ class controlWindow(QWidget):
             self.alineStore = self.Aline()
 
             # Bline: long
-            # doesn't do any scan correcting 
             self.blineStore = 'B' + self.Bline()
 
             self.m01Store = self.m01()
@@ -464,47 +435,45 @@ class controlWindow(QWidget):
         
         return previousTime
 
+    def probePresent(self):
+        i=0
+        while i <1000:
+            self.serialPort.sendCommand(self.commandDict.getCommand("version"))
+            echo = self.readUntilFound(b':', 1000, 200)
+            if echo != b'-1':
+                return True
+            sleep(1)
+        return False
 
 
     def initProbe(self):
         i=0
-        self.packetStore.setData('init1', False)
-        self.packetStore.setData('init2', False)
         while i < 100000:
             # keep trying to initialize the probe
             # grab whatever is in the buffer
             # will terminate at \n if it finds one
-            self.tryInit('init1')
-            self.tryInit('init2')
-            if self.packetStore.getData('init1') and self.packetStore.getData('init2'):
+            i1 = self.tryInit('init1')
+            i2 = self.tryInit('init2')
+            if i1 and i2:
                 logging.debug('probe initialized')
                 break
             i = i + 1
         i = 0
-        # Think this was supposed to send ctrl-c, but re-init does that
-        while i < 3: 
-            self.serialPort.sendCommand(b'\r\n')
-            logging.debug("init vbcr equivalent return1 ")
-            echo = self.serialPort.canReadLine(20)#msec
-            i = i+1
         
 
     def tryInit(self, whichInit):
         # init probe
-        self.serialPort.sendCommand(self.commandDict.getCommand("init1"))
-        echo = self.serialPort.canReadLine(20)#msec
-        logging.debug("init 1 loop echo: ")
-        logging.debug(echo)
-            #logging.debug(echo)
-        if echo is None or echo == b'':
-            #logging.debug("checking init1")
-            self.app.processEvents()
-        elif echo.data().find(b'S') >= 0:
-            logging.debug("received S from %s", whichInit)
-            self.packetStore.setData(whichInit, True)
+        sendCommand = self.commandDict.getCommand(whichInit)
+        self.serialPort.sendCommand(sendCommand)
+        if whichInit == 'init1':
+            echo = self.readUntilFound(b':', 100,10)
         else:
-            logging.debug("tryinit loop echo else case")
-            self.app.processEvents()
+            echo = self.moveCheckAgain(sendCommand)
+            logging.debug("init 2 is a move command")
+        if echo != b'-1':
+            return True
+        else:
+            return False
 
 
     def readUntilFound(self, binaryString, timeout, canReadLineTimeout):
@@ -523,17 +492,15 @@ class controlWindow(QWidget):
             #logging.debug(echo)
             if echo is None or echo == b'':
                 logging.debug(" readUntilFound: none case")
-                self.app.processEvents()
                 i = i + 1
             elif echo.data().find(binaryString) >= 0:
-                logging.debug("received binary string")
-                return echo 
+                logging.debug("received binary string match %r", echo)
+                return echo
             else:
                 logging.debug("didn't recieve binary string this loop")
-                self.app.processEvents()
                 i = i + 1
-        logging.debug("readUntilStep timeout")
-        return echo
+        logging.debug("readUntilFound timeout: returning b'-1'")
+        return b'-1'
 
 
     def tick(self, buff):
@@ -828,16 +795,17 @@ class controlWindow(QWidget):
             echo = self.readUntilFound(b'S', 10, 30)
             # do instring of ST:0#
             # location of T +3
-            findTheT = echo.data().find(b'T')
-            if findTheT >=0:
-                # move along if status is not 2, 6, 10 or 14
-                # status 04 is correct status to move along for
-                logging.debug(echo[findTheT + 3])
-                if(echo[findTheT +3].isalpha()):
-                    #sometimes there's an s that shows up here
-                    logging.debug("moveWait ST:0S4\r\n case + %s", echo)
-                elif (int(echo[findTheT +3]) &2):
-                    return
+            if echo != b'-1':
+                findTheT = echo.data().find(b'T')
+                if findTheT >=0:
+                    # move along if status is not 2, 6, 10 or 14
+                    # status 04 is correct status to move along for
+                    logging.debug(echo[findTheT + 3])
+                    if(echo[findTheT +3].isalpha()):
+                        #sometimes there's an s that shows up here
+                        logging.debug("moveWait ST:0S4\r\n case + %s", echo)
+                    elif (int(echo[findTheT +3]) &2):
+                        return
 
             else: 
                 logging.debug("moveWait not = 7 echo %s", echo)
@@ -847,21 +815,20 @@ class controlWindow(QWidget):
 
 
 
-
     def homeScan(self):
-        self.serialPort.sendCommand(self.commandDict.getCommand("home1"))
-        #self.readUntilFound(b':', 100000, 20)
-        echo = self.readUntilFound(b'@', 100, 20)
-        logging.debug("home1 after step =:%s",echo) 
-        # Irrelavant if waiting for @
-        #self.moveWait()
+        home1 = self.commandDict.getCommand("home1")
+        home2 = self.commandDict.getCommand("home2")
+
+        self.serialPort.sendCommand(home1)
+        self.moveCheckAgain(home1)
+        #echo = self.readUntilFound(b'@', 100, 20)
+        logging.debug("home1 after move home") 
 
         self.serialPort.sendCommand(self.commandDict.getCommand("home2"))
-        echo = self.readUntilFound(b':', 100, 20)
+        self.moveCheckAgain(home2)
+        #echo = self.readUntilFound(b':', 100, 20)
         #echo += self.readUntilFound(b'S', 100000, 20)
-        logging.debug("home1 after step =:%s",echo) 
-        # Irrelavant if waiting for @
-        # self.moveWait()
+        logging.debug("home2 after step ") 
         
         self.serialPort.sendCommand(self.commandDict.getCommand("home3"))
         echo = self.readUntilFound(b':', 100, 20)
@@ -873,6 +840,8 @@ class controlWindow(QWidget):
         #logging.debug("home3 2nd echo =:%s",echo) 
         # Update GUI
         self.elAngleBox.insertPlainText("Target")
+        # sets 'known location' to 0
+        self.packetStore.setData("currentClkStep", 0)
 
 
     def m01(self):
@@ -1014,12 +983,11 @@ class controlWindow(QWidget):
 
     def Bline(self):
         logging.debug("Bline")
-        # clear blineStore
         # All R values have spaces in front
-        #self.blineStore = 'B'
-        angles = self.packetStore.getData("El. Angles")
+        angles = self.configStore.getData("El. Angles", lab=False)
         # First element in array is the number of angles
-        # to keep the config the same 
+        # to keep the config the same as VB6 
+        logging.debug(angles)
         numAngles = angles[0]
         zel = angles[1]
         elAngles = angles[2:numAngles+2]
@@ -1031,30 +999,44 @@ class controlWindow(QWidget):
             self.elAngleBox.insertPlainText(str(angle))
             logging.debug("el angle: %f", angle)
 
-            # get pitch corrected angle
+            # packetStore pitchCorrect should be button
+
+            # get pitch corrected angle and
             # sends move command
-            self.mover.getAngle(angle)
-            # Hmmm. Not seeing the @, and timing out.
-            # Might be related to channel setting?
-            echo = self.readUntilFound(b'@',100000, 20)
+            nstep = self.mover.getAngle(angle, zel)
+            self.serialPort.sendCommand(str.encode(nstep))
+            self.moveCheckAgain(str.encode(nstep))
+            #echo = self.readUntilFound(b'@',100000, 20)
+
             #logging.debug("Bline find the @: %r", echo)
             # wait until Step:\xddff/0@\r\n is received
-
-            if self.packetStore.getData("pitchCorrect"):
-                #
-                logging.debug('Pitch correct mode on')
-
-            # wait for move to complete
 
             data = data + self.integrate()
             logging.debug(data)
         
         self.updateRead("read_scan")
         self.updateRead("read_enc")
-        return data
+        return data   
 
+    def moveCheckAgain(self, sentCommand):
+        # have to check for @ and status separately
+        i = 0
+        while i < 2:
+            echo = self.readUntilFound(b'@',100, 20)
+            if echo == b'-1':
+                self.serialPort.sendCommand((sentCommand))
+                logging.debug("moveCheckAgain: sending move again, %r", echo)
+            else:
+                logging.debug("moveCheckAgain: @ recieved %r, i = %s", echo, i)
+                i=5
+
+        self.serialPort.sendCommand(self.commandDict.getCommand('status'))
+        status = self.readUntilFound(b'T', 10, 10)
+        # if status isn't 4 send it again.
+        logging.debug("moveCheckAgain status after @: %s", status)
+
+        
             
-        #    scanNum = 1000000 - self.readScan()
     def updateRead (self, scanOrEncode):
         i =0 
         while i < 11:

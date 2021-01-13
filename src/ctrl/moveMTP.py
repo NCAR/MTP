@@ -505,7 +505,7 @@ class moveMTP():
         # for scanCount and encoderCount
         self.parent.packetStore.setData("scanCount", int(self.parent.packetStore.getData("scanCount")) + 1)
         logging.debug("Aline")
-
+        '''
     def blIne(self):
         logging.debug("in Bline")
         # self.parent.app.processEvents()
@@ -590,7 +590,7 @@ class moveMTP():
 
             
         #logging.debug("blIne End")
-
+        '''
     def saveData(self, gmtime):
         # self.parent.app.processEvents()
         logging.debug("saving Data to file")
@@ -681,64 +681,72 @@ class moveMTP():
             logging.error('udpFormat, foreign identifier: %f', identifier)
 
 
-    def getAngle(self, targetEl):
+    def getAngle(self, targetEl, zel):
         # changed from goAngle because editor says that would be overriding something
         # though I can't find what or where that would be
         # logging.debug("moveMTP goAngle/getAngle called, targetEl: %s", targetEl)
-        self.zel = self.parent.packetStore.getArray("El. Angles", 1) # current array has total number in array at zero, zenith/fiduciary (?) at 1 and actual angles after that. 
-        # logging.debug("Zel to be added to targetEl: %s", self.zel)
+        logging.debug("Zel to be added to targetEl: %s", zel)
         if self.parent.packetStore.getData("pitchCorrect"):
             logging.info("Correcting Pitch")
             # targetClkAngle = self.configMam()
         else:
             logging.info("Using instantanious MAM")
-            self.targetClkAngle = self.zel + targetEl
+            targetClkAngle = zel + targetEl
 
-        self.sD = self.parent.packetStore.getData("stepsDegree") 
-        #logging.debug("stepDeg: %s", self.sD)
-        self.targetClkStep = self.targetClkAngle * self.sD
-        #logging.debug("targetClkStep: %s", self.targetClkStep)
+        stepDeg = self.parent.packetStore.getData("stepsDegree") 
+        logging.debug("stepDeg: %s", stepDeg)
+        targetClkStep = targetClkAngle * stepDeg
+        logging.debug("targetClkStep: %s", targetClkStep)
 
-        self.currentClkStep = self.parent.packetStore.getData("currentClkStep")
-        #logging.debug("currentClkStep: %s", self.currentClkStep)
-        self.parent.packetStore.setData("Nsteps", self.targetClkStep - self.parent.packetStore.getData("currentClkStep"))
+        currentClkStep = self.parent.packetStore.getData("currentClkStep")
+        logging.debug("currentClkStep: %s", currentClkStep)
+        #self.parent.packetStore.setData("Nsteps", self.targetClkStep - self.parent.packetStore.getData("currentClkStep"))
         # nsteps check here
-        
-        self.nstep = self.parent.packetStore.getData("Nsteps")
-        if self.nstep == 0:
+        nstep = targetClkStep - currentClkStep
+        logging.debug("calculated nstep: %r", nstep)
+        if nstep == 0:
             logging.info("nstep is zero loop")
+            # suspect this occurs when pitch/roll/z are 0
+            # need to have a catch case when above are nan's
+            return
 
         # drop everything after the decimal point:
-        self.nstepSplit = str(self.nstep).split('.')
-        self.nstep = self.nstepSplit[0]
+        nstepSplit = str(nstep).split('.')
+        nstep = nstepSplit[0]
         #logging.debug(" strip nstp of everything after (and including) the decimal point: %s", self.nstepSplit[0])
-        if self.nstep[0] is '-':
-            self.nstepSplit = str(self.nstep).split('-')
-            self.nstep = self.nstepSplit[1].rjust(6,'0')
+        # Split '-' off
+        #right justify, pad with zeros if necessary to get to 6 numerical values
+        if nstep[0] is '-':
+            nstepSplit = str(nstep).split('-')
+            nstep = nstepSplit[1].rjust(6,'0')
         else:
-            self.nstepSplit = str(self.nstep).split('+') 
+            nstepSplit = str(nstep).split('+') 
             # this split shouldn't actually do anything
             # other than add continuity to the nsteps
-            self.nstep = self.nstepSplit[0].rjust(6,'0')
-        # pad with zeros if necessary to get to 6 numerical values
-
+            nstep = nstepSplit[0].rjust(6,'0')
+        ''' Shouldn't need mulitple checks for this?
         # preceeded with a + or -
         #logging.debug("unrounded: %s, rounded nstep value to 0, does this get rid of '.' ?: 6.0f", str(self.nstep)) 
         if self.nstep is 0.0:
             logging.error(" moving 0 steps, nstep calculation turned to 0")
             # suspect this occurs when pitch/roll/z are 0
             # need to have a catch case when above are nan's
+        '''
 
-        # abs( nsteps)  should be less than 20
+        # abs( nsteps)  should never be less than 20
         # move to moveScan/ check logic against that
-        self.backCommand = self.nstep + self.parent.commandDict.getCommand("move_end")
-        if self.nstepSplit[0] is '-':
-            self.frontCommand= self.parent.commandDict.getCommand("move_fwd_front")
+        # save current step so difference is actual step difference 
+        self.parent.packetStore.setData("currentClkStep", int(nstep))
+        backCommand = nstep + self.parent.commandDict.getCommand("move_end")
+        if nstepSplit[0] is '-':
+            frontCommand= self.parent.commandDict.getCommand("move_fwd_front")
         else:
-            self.frontCommand = self.parent.commandDict.getCommand("move_bak_front")  
-        # return should have switch value of "Step:"
-        self.parent.serialPort.sendCommand(str.encode(self.frontCommand + self.backCommand))
-        self.angleI = self.parent.packetStore.getData("angleI") # angle index, zenith at 1
+            frontCommand = self.parent.commandDict.getCommand("move_bak_front")  
+
+        #self.parent.serialPort.sendCommand(str.encode(self.frontCommand + self.backCommand))
+        #self.angleI = self.parent.packetStore.getData("angleI") # angle index, zenith at 1
+
+        return frontCommand + backCommand    
 
         
     
