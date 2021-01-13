@@ -39,7 +39,7 @@ class controlWindow(QWidget):
         self.initUI()
 
         self.initSaveDataFile()
-        self.mainloop()
+        #self.mainloop()
 
     def closeEvent(self, event):
         logging.debug("User has clicked the red x on the main window, unsafe exit")
@@ -212,7 +212,7 @@ class controlWindow(QWidget):
         self.setLayout(mainbox)
         self.setGeometry(100, 100, 400, 800)
         self.setWindowTitle('MTPRealTime')
-        self.show()
+        #self.show()
 
         self.cycleTimer = QtCore.QTimer()
         self.cycleTimer.timeout.connect(self.cycle)
@@ -442,6 +442,7 @@ class controlWindow(QWidget):
             echo = self.readUntilFound(b':', 1000, 200)
             if echo != b'-1':
                 return True
+            self.app.processEvents()
             sleep(1)
         return False
 
@@ -1320,5 +1321,6 @@ if __name__ == '__main__':
     app.setQuitOnLastWindowClosed(True)
     ex = controlWindow(app)
     ex.show()
-    sys.exit(app.exec_())
+    ex.mainloop()
+    # sys.exit(app.exec_())
     # ex.run()
