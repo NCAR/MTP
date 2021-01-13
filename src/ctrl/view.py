@@ -644,7 +644,7 @@ class controlWindow(QWidget):
         self.app.processEvents()
         logging.debug("Cycle, processEvents1")
         # at startup, when cycling = false sets probe to start position
-        if self.packetStore.getData("desiredMode") is "init":
+        if self.packetStore.getData("desiredMode") == "init":
             self.probeStatusLED.setPixmap(self.ICON_YELLOW_LED.scaled(40, 40))
             self.packetStore.setData("switchControl", 'initScan')
         elif self.packetStore.getData("isCycling"):
@@ -819,13 +819,14 @@ class controlWindow(QWidget):
     def homeScan(self):
         home1 = self.commandDict.getCommand("home1")
         home2 = self.commandDict.getCommand("home2")
+        home3 = self.commandDict.getCommand("home3")
 
-        self.serialPort.sendCommand(home1)
+        #self.serialPort.sendCommand(home1)
         self.moveCheckAgain(home1)
         #echo = self.readUntilFound(b'@', 100, 20)
         logging.debug("home1 after move home") 
 
-        self.serialPort.sendCommand(self.commandDict.getCommand("home2"))
+        #self.serialPort.sendCommand(self.commandDict.getCommand("home2"))
         self.moveCheckAgain(home2)
         #echo = self.readUntilFound(b':', 100, 20)
         #echo += self.readUntilFound(b'S', 100000, 20)
@@ -1004,10 +1005,11 @@ class controlWindow(QWidget):
 
             # get pitch corrected angle and
             # sends move command
-            nstep = self.mover.getAngle(angle, zel)
-            self.serialPort.sendCommand(str.encode(nstep))
-            self.moveCheckAgain(str.encode(nstep))
+            moveToCommand = self.mover.getAngle(angle, zel)
+            #self.serialPort.sendCommand(str.encode(moveToCommand))
+            self.moveCheckAgain(str.encode(moveToCommand))
             #echo = self.readUntilFound(b'@',100000, 20)
+            self.zel #break
 
             #logging.debug("Bline find the @: %r", echo)
             # wait until Step:\xddff/0@\r\n is received
@@ -1021,8 +1023,10 @@ class controlWindow(QWidget):
 
     def moveCheckAgain(self, sentCommand):
         # have to check for @ and status separately
+        self.serialPort.sendCommand((sentCommand))
         i = 0
         while i < 2:
+            # Might be possible to reduce this a bit
             echo = self.readUntilFound(b'@',100, 20)
             if echo == b'-1':
                 self.serialPort.sendCommand((sentCommand))
@@ -1031,8 +1035,22 @@ class controlWindow(QWidget):
                 logging.debug("moveCheckAgain: @ recieved %r, i = %s", echo, i)
                 i=5
 
+        # Too soon and status is always 6
+        time.sleep(0.01)
         self.serialPort.sendCommand(self.commandDict.getCommand('status'))
-        status = self.readUntilFound(b'T', 10, 10)
+        status = self.readUntilFound(b'T', 10, 10)   
+        findTheT = status.data().find(b'T')
+        if findTheT >=0:
+            # status 04 is correct statu, others require re-prompt
+            statusNum = status[findTheT + 3]
+            logging.debug('statusnum: %r', statusNum)
+            if statusNum == '4':
+                logging.debug('status is 4')
+                return True
+            else:
+                self.moveCheckAgain(sentCommand)
+                return
+
         # if status isn't 4 send it again.
         logging.debug("moveCheckAgain status after @: %s", status)
 
