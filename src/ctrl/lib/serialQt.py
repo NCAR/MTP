@@ -53,6 +53,7 @@ class SerialInit(object):
             else:
                 # Need to add popup here
                 logging.info ("COM6 failed to open; reset USB: %r", self.serialPort.close())
+            time.sleep(3)
 
 
 
