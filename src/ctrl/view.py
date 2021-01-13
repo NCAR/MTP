@@ -439,7 +439,7 @@ class controlWindow(QWidget):
         i=0
         while i <1000:
             self.serialPort.sendCommand(self.commandDict.getCommand("version"))
-            echo = self.readUntilFound(b':', 1000, 200)
+            echo = self.readUntilFound(b'_', 1000, 200)
             if echo != b'-1':
                 return True
             self.app.processEvents()
