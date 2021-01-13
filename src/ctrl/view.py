@@ -213,10 +213,11 @@ class controlWindow(QWidget):
         self.setGeometry(100, 100, 400, 800)
         self.setWindowTitle('MTPRealTime')
         #self.show()
-
+        '''
         self.cycleTimer = QtCore.QTimer()
         self.cycleTimer.timeout.connect(self.cycle)
         self.cycleTimer.setInterval(82) # mseconds
+        '''
         # 82 ms fixes race condition that makes
         # arriving data concatinate
         # 72 mostly fixes it, but not all
@@ -466,16 +467,9 @@ class controlWindow(QWidget):
         # init probe
         sendCommand = self.commandDict.getCommand(whichInit)
         self.serialPort.sendCommand(sendCommand)
-        if whichInit == 'init1':
-            echo = self.readUntilFound(b':', 100,10)
-        else:
-            echo = self.moveCheckAgain(sendCommand)
-            logging.debug("init 2 is a move command")
-        if echo != b'-1':
-            return True
-        else:
-            return False
-
+        echo = self.readUntilFound(b'@', 100,10)
+        logging.debug("init's send @, no move though echo: %s", echo)
+        return True
 
     def readUntilFound(self, binaryString, timeout, canReadLineTimeout):
         i=0
@@ -627,9 +621,10 @@ class controlWindow(QWidget):
                 # this will be rewritten each time the program restarts
                 datafile.write(str.encode("Instrument on " + time.strftime("%X") + " " + time.strftime("%m-%d-%y") + '\r\n'))
         logging.debug("initConfig")
-
+        '''
     def cycle(self):
         # self.cycleTimer.stop()
+        '''
         '''
         logging.debug("Start of cycle")
         self.serialPort.waitReadyRead(20)
@@ -637,6 +632,7 @@ class controlWindow(QWidget):
         buf = self.serialPort.readLine(70)
         logging.debug("after readline")
         logging.debug(buf.data())
+        '''
         '''
         # this process Events can really slow things down
         # still necessary because recieved data has to be processed
@@ -699,10 +695,6 @@ class controlWindow(QWidget):
         # with timer these should become unnecessary     
         # self.app.processEvents()
         logging.debug("Cycle, processEvents3")
-        '''
-        time.sleep(0.2)
-        self.app.processEvents()
-        '''
         # continue through the cycle
         logging.debug("cycle, before dispatch, with matchword:")
         logging.debug(matchWord)
@@ -710,6 +702,7 @@ class controlWindow(QWidget):
         logging.debug("cycle, after dispatch")
         #self.app.processEvents()
         logging.debug("Cycle, processEvents4")
+        '''
         '''
         switch (matchWord){
                 case 1: matchWord == 'initConfig';
@@ -820,14 +813,14 @@ class controlWindow(QWidget):
         home1 = self.commandDict.getCommand("home1")
         home2 = self.commandDict.getCommand("home2")
         home3 = self.commandDict.getCommand("home3")
-
+        sleepTime = 0.02
         #self.serialPort.sendCommand(home1)
-        self.moveCheckAgain(home1)
+        self.moveCheckAgain(home1, sleepTime)
         #echo = self.readUntilFound(b'@', 100, 20)
         logging.debug("home1 after move home") 
 
         #self.serialPort.sendCommand(self.commandDict.getCommand("home2"))
-        self.moveCheckAgain(home2)
+        self.moveCheckAgain(home2, sleepTime)
         #echo = self.readUntilFound(b':', 100, 20)
         #echo += self.readUntilFound(b'S', 100000, 20)
         logging.debug("home2 after step ") 
@@ -1007,7 +1000,8 @@ class controlWindow(QWidget):
             # sends move command
             moveToCommand = self.mover.getAngle(angle, zel)
             #self.serialPort.sendCommand(str.encode(moveToCommand))
-            self.moveCheckAgain(str.encode(moveToCommand))
+            sleepTime = 0.010
+            self.moveCheckAgain(str.encode(moveToCommand), sleepTime)
             #echo = self.readUntilFound(b'@',100000, 20)
             self.zel #break
 
@@ -1021,7 +1015,7 @@ class controlWindow(QWidget):
         self.updateRead("read_enc")
         return data   
 
-    def moveCheckAgain(self, sentCommand):
+    def moveCheckAgain(self, sentCommand, sleepTime):
         # have to check for @ and status separately
         self.serialPort.sendCommand((sentCommand))
         i = 0
@@ -1035,8 +1029,8 @@ class controlWindow(QWidget):
                 logging.debug("moveCheckAgain: @ recieved %r, i = %s", echo, i)
                 i=5
 
-        # Too soon and status is always 6
-        time.sleep(0.01)
+        # Too soon and status is always 6: homescan needs longer
+        time.sleep(sleepTime)
         self.serialPort.sendCommand(self.commandDict.getCommand('status'))
         status = self.readUntilFound(b'T', 10, 10)   
         findTheT = status.data().find(b'T')
@@ -1047,8 +1041,12 @@ class controlWindow(QWidget):
             if statusNum == '4':
                 logging.debug('status is 4')
                 return True
+            elif statusNum == '7':
+                self.serialPort.sendCommand(self.commandDict.getCommand('count'))
+                self.serialPort.sendCommand(self.commandDict.getCommand('count2'))
+                logging.debug("status 7: sending integrate/read to fix")
             else:
-                self.moveCheckAgain(sentCommand)
+                self.moveCheckAgain(sentCommand, sleepTime)
                 return
 
         # if status isn't 4 send it again.
@@ -1088,7 +1086,7 @@ class controlWindow(QWidget):
                 # So in intrest of sanity, and because python can manage
                 # without a deliminator in this case, I'm not
                 # going to re-implement that. 
-                if scanOrEncode is "read_scan":
+                if scanOrEncode == "read_scan":
                     logging.debug("readScan is: ")
                     logging.debug(readScan)
                     logging.debug(int(readScan.decode('Ascii'),16)) 
