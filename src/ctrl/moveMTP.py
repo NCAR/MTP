@@ -89,11 +89,11 @@ class moveMTP():
         echo = self.read(20,20)
         # initSwitch retrieved from instance of storePacket declared in view
         logging.debug("initScan received values 1: %s, 2: %s",self.parent.packetStore.getData("init1Received"),self.parent.packetStore.getData("init2Received"))
+
         if self.parent.packetStore.getData("init1Received") and self.parent.packetStore.getData("init2Received"):
             logging.debug("Both init commands received, moving on to home")
             # move along and reset init
             self.parent.packetStore.setData("initSwitch", False)
-            self.parent.packetStore.setData("home2Received", False)
             self.parent.packetStore.setData("switchControl", 'resetHomeScan')
         # otherwise just swap between sending the 2 init commands
         # have to have delay otherwise they collide
@@ -145,7 +145,7 @@ class moveMTP():
         # Restores original value to initSwitch, resetting it
         self.parent.packetStore.setData("initSwitch", False)
         
-
+        '''
     def homeScan(self):
         # self.parent.packetStore.setData("currentMode", False)
 
@@ -187,7 +187,6 @@ class moveMTP():
                 time.sleep(0.01)
         logging.debug("homeScan")
         # there may be other final looping stuff that needs to happen here
-
 
     def m01(self):
         # send command M1
@@ -303,6 +302,7 @@ class moveMTP():
             # should do a homescan here, then return
 
 
+        '''
     def integrate(self):
         logging.debug("integrate")
         # could be timing issue
@@ -716,7 +716,7 @@ class moveMTP():
         #logging.debug(" strip nstp of everything after (and including) the decimal point: %s", self.nstepSplit[0])
         # Split '-' off
         #right justify, pad with zeros if necessary to get to 6 numerical values
-        if nstep[0] is '-':
+        if nstep[0] == '-':
             nstepSplit = str(nstep).split('-')
             nstep = nstepSplit[1].rjust(6,'0')
         else:
@@ -738,7 +738,7 @@ class moveMTP():
         # save current step so difference is actual step difference 
         self.parent.packetStore.setData("currentClkStep", int(nstep))
         backCommand = nstep + self.parent.commandDict.getCommand("move_end")
-        if nstepSplit[0] is '-':
+        if nstepSplit[0] == '-':
             frontCommand= self.parent.commandDict.getCommand("move_fwd_front")
         else:
             frontCommand = self.parent.commandDict.getCommand("move_bak_front")  
@@ -834,7 +834,7 @@ class moveMTP():
         # difference in solutions
         
         # Then fEc = 180#: Return
-        if targetEl is 180: 
+        if targetEl == 180: 
             return 180
 
         rpd = atan(1) / 45#       'Radians per degree 3.14159265358979
@@ -857,7 +857,7 @@ class moveMTP():
         C = sE ^ 2 - alpha ^ 2
         Arg = B ^ 2 - 4 * A * C
 
-        if alpha is 0:
+        if alpha == 0:
             if beta > 0: 
                 Ec_at_Emax = 90
             else:
