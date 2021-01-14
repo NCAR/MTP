@@ -813,7 +813,7 @@ class controlWindow(QWidget):
         home1 = self.commandDict.getCommand("home1")
         home2 = self.commandDict.getCommand("home2")
         home3 = self.commandDict.getCommand("home3")
-        sleepTime = 0.02
+        sleepTime = 0.2
         #self.serialPort.sendCommand(home1)
         self.moveCheckAgain(home1, sleepTime)
         #echo = self.readUntilFound(b'@', 100, 20)
@@ -1000,7 +1000,9 @@ class controlWindow(QWidget):
             # sends move command
             moveToCommand = self.mover.getAngle(angle, zel)
             #self.serialPort.sendCommand(str.encode(moveToCommand))
-            sleepTime = 0.010
+            # This needs more time than homescan for stepper motor to 
+            # 'stop' moving. .6 works, 0.526 doesn't
+            sleepTime = 0.53
             self.moveCheckAgain(str.encode(moveToCommand), sleepTime)
             #echo = self.readUntilFound(b'@',100000, 20)
             self.zel #break
@@ -1022,7 +1024,8 @@ class controlWindow(QWidget):
         while i < 2:
             # Might be possible to reduce this a bit
             echo = self.readUntilFound(b'@',100, 20)
-            if echo == b'-1':
+            # Only send again if homescan
+            if echo == b'-1' and (sentCommand == b'home1' or sentCommand == b'home2'):
                 self.serialPort.sendCommand((sentCommand))
                 logging.debug("moveCheckAgain: sending move again, %r", echo)
             else:
@@ -1046,6 +1049,7 @@ class controlWindow(QWidget):
                 self.serialPort.sendCommand(self.commandDict.getCommand('count2'))
                 logging.debug("status 7: sending integrate/read to fix")
             else:
+                if sentCommand == b'home1' or sentCommand == b'home2':
                 self.moveCheckAgain(sentCommand, sleepTime)
                 return
 
