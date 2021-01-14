@@ -815,12 +815,12 @@ class controlWindow(QWidget):
         home3 = self.commandDict.getCommand("home3")
         sleepTime = 0.2
         #self.serialPort.sendCommand(home1)
-        self.moveCheckAgain(home1, sleepTime)
+        self.moveCheckAgain(home1, sleepTime, isHome=True)
         #echo = self.readUntilFound(b'@', 100, 20)
         logging.debug("home1 after move home") 
 
         #self.serialPort.sendCommand(self.commandDict.getCommand("home2"))
-        self.moveCheckAgain(home2, sleepTime)
+        self.moveCheckAgain(home2, sleepTime, isHome=True)
         #echo = self.readUntilFound(b':', 100, 20)
         #echo += self.readUntilFound(b'S', 100000, 20)
         logging.debug("home2 after step ") 
@@ -1003,7 +1003,7 @@ class controlWindow(QWidget):
             # This needs more time than homescan for stepper motor to 
             # 'stop' moving. .6 works, 0.526 doesn't
             sleepTime = 0.53
-            self.moveCheckAgain(str.encode(moveToCommand), sleepTime)
+            self.moveCheckAgain(str.encode(moveToCommand), sleepTime, isHome=False)
             #echo = self.readUntilFound(b'@',100000, 20)
 
             #logging.debug("Bline find the @: %r", echo)
@@ -1016,7 +1016,7 @@ class controlWindow(QWidget):
         self.updateRead("read_enc")
         return data   
 
-    def moveCheckAgain(self, sentCommand, sleepTime):
+    def moveCheckAgain(self, sentCommand, sleepTime, isHome):
         # have to check for @ and status separately
         self.serialPort.sendCommand((sentCommand))
         i = 0
@@ -1024,12 +1024,13 @@ class controlWindow(QWidget):
             # Might be possible to reduce this a bit
             echo = self.readUntilFound(b'@',100, 20)
             # Only send again if homescan
-            if echo == b'-1' and (sentCommand == b'home1' or sentCommand == b'home2'):
+            if echo == b'-1' and isHome:
                 self.serialPort.sendCommand((sentCommand))
                 logging.debug("moveCheckAgain: sending move again, %r", echo)
             else:
                 logging.debug("moveCheckAgain: @ recieved %r, i = %s", echo, i)
                 i=5
+        logging.debug("sentCommand %s", sentCommand)
 
         # Too soon and status is always 6: homescan needs longer
         time.sleep(sleepTime)
@@ -1048,12 +1049,11 @@ class controlWindow(QWidget):
                 self.serialPort.sendCommand(self.commandDict.getCommand('count2'))
                 logging.debug("status 7: sending integrate/read to fix")
             else:
-                if sentCommand == b'home1' or sentCommand == b'home2':
-                    self.moveCheckAgain(sentCommand, sleepTime)
+                if isHome:
+                    self.moveCheckAgain(sentCommand, sleepTime, isHome)
                 return
+        logging.debug("moveCheckAgain status after @: %s ", status)
 
-        # if status isn't 4 send it again.
-        logging.debug("moveCheckAgain status after @: %s", status)
 
         
             
