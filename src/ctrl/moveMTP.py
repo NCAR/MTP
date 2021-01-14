@@ -739,9 +739,9 @@ class moveMTP():
         self.parent.packetStore.setData("currentClkStep", int(nstep))
         backCommand = nstep + self.parent.commandDict.getCommand("move_end")
         if nstepSplit[0] == '-':
-            frontCommand= self.parent.commandDict.getCommand("move_fwd_front")
+            frontCommand= self.parent.commandDict.getCommand("move_bak_front")
         else:
-            frontCommand = self.parent.commandDict.getCommand("move_bak_front")  
+            frontCommand = self.parent.commandDict.getCommand("move_fwd_front")  
 
         #self.parent.serialPort.sendCommand(str.encode(self.frontCommand + self.backCommand))
         #self.angleI = self.parent.packetStore.getData("angleI") # angle index, zenith at 1
