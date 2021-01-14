@@ -1005,7 +1005,6 @@ class controlWindow(QWidget):
             sleepTime = 0.53
             self.moveCheckAgain(str.encode(moveToCommand), sleepTime)
             #echo = self.readUntilFound(b'@',100000, 20)
-            self.zel #break
 
             #logging.debug("Bline find the @: %r", echo)
             # wait until Step:\xddff/0@\r\n is received
@@ -1050,7 +1049,7 @@ class controlWindow(QWidget):
                 logging.debug("status 7: sending integrate/read to fix")
             else:
                 if sentCommand == b'home1' or sentCommand == b'home2':
-                self.moveCheckAgain(sentCommand, sleepTime)
+                    self.moveCheckAgain(sentCommand, sleepTime)
                 return
 
         # if status isn't 4 send it again.
@@ -1127,7 +1126,11 @@ class controlWindow(QWidget):
         # returns string of data values translated from hex to decimal
         # recepit of the @ from the move command has to occur before 
         # entry into this function
-        nfreq = self.packetStore.getData("nFreq")
+        nfreq = self.configStore.getData("Frequencies", lab=True)
+        #logging.debug("Frequencies from config: %r", nfreq)
+        nfreq = nfreq[1: len(nfreq)]
+        #logging.debug("Frequencies without size: %r", nfreq)
+
         data = ''
         isFirst = True
         for freq in nfreq:
@@ -1152,38 +1155,15 @@ class controlWindow(QWidget):
                     i = looptimeMS/2
                     looptimeMS = i
                 i = i+1
+            # check that integrator has finished
             i=0
-            while i < 2: 
+            while i < 3: 
                 logging.debug("integrate loop 2, checking for even number")
                 if self.waitForStatus(b'4'):
                     break
                 i = i+1 
 
 
-                '''
-                self.serialPort.sendCommand((self.commandDict.getCommand("status")))
-                # echo is b'S\r\n'
-                status = self.readUntilFound(b'T', 10, 10)
-                #if status[4] or 7
-                if status.size() is 10:
-                    # echo and status return concatinated
-                    num = int(status[7])
-                elif status.size() is 4:
-                    num = int(status[4])
-                    logging.debug("num 2nd integrate, length 4: %s", num)
-                else: 
-                    # must be odd, but exact value shouldn't matter
-                    # for munged, concantonated and other transmit issues 
-                    num = 1
-                if (num % 2) == 0:
-                    # VB6 code has a bitwise and to check if this status is even
-                    # status returns 04 and 06 most commonly
-                    logging.debug("break, integrator finished")
-                    break   
-                logging.debug(status.size())
-                i = i + 1
-                # self.app.processEvents()
-                '''
 
             logging.debug("integrator has finished")
             # clear echos 

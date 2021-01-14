@@ -85,10 +85,10 @@ class StorePacket():
             # need to keep these arrays formatted the same
             # to keep things backward compatable
       
-            'El. Angles':[10,-179.8, 80.00, 55.00, 42.00, 25.00, 12.00, 0.00, -12.00, -25.00, -42.00, -80.00],
+            #'El. Angles':[10,-179.8, 80.00, 55.00, 42.00, 25.00, 12.00, 0.00, -12.00, -25.00, -42.00, -80.00],
             #'El. Angles':[10,-179.8, 80.00, 80.00, 80.00, 80.00, 80.00, 80.00, 80.00, 80.00, 80.00, 80.00],
             #'nFreq':[55.51, 56.65, 58.8],
-            'nFreq':[56.36, 57.61, 58.36],
+            #'nFreq':[56.36, 57.61, 58.36],
 
             'angleI': 0, # bline angle iterator
             'Nangle' : 10, # First value in El. Angles
