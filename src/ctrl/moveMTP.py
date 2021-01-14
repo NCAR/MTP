@@ -709,6 +709,11 @@ class moveMTP():
             # suspect this occurs when pitch/roll/z are 0
             # need to have a catch case when above are nan's
             return
+        # abs( nsteps)  should never be less than 20
+        # move to moveScan/ check logic against that
+        # save current step so difference is actual step difference 
+        self.parent.packetStore.setData("currentClkStep", currentClkStep + int(nstep))
+        logging.debug("currentClkStep + nstep: %s ", currentClkStep + int(nstep))
 
         # drop everything after the decimal point:
         nstepSplit = str(nstep).split('.')
@@ -733,15 +738,12 @@ class moveMTP():
             # need to have a catch case when above are nan's
         '''
 
-        # abs( nsteps)  should never be less than 20
-        # move to moveScan/ check logic against that
-        # save current step so difference is actual step difference 
-        self.parent.packetStore.setData("currentClkStep", int(nstep))
+
         backCommand = nstep + self.parent.commandDict.getCommand("move_end")
         if nstepSplit[0] == '-':
-            frontCommand= self.parent.commandDict.getCommand("move_bak_front")
+            frontCommand= self.parent.commandDict.getCommand("move_fwd_front")
         else:
-            frontCommand = self.parent.commandDict.getCommand("move_fwd_front")  
+            frontCommand = self.parent.commandDict.getCommand("move_bak_front")  
 
         #self.parent.serialPort.sendCommand(str.encode(self.frontCommand + self.backCommand))
         #self.angleI = self.parent.packetStore.getData("angleI") # angle index, zenith at 1
