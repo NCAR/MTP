@@ -15,10 +15,11 @@ from PyQt5 import QtCore
 
 logging.basicConfig(level=logging.DEBUG)
 #logging = logging.getLogger(__name__)
+
 class SerialInit(object):
 
     serialPort = QSerialPort()
-    def __init__(self, parent, app, device=None):
+    def __init__(self, parent, app, device='COM6'):
         self.app = app
         self.parent = parent
         """
@@ -35,7 +36,7 @@ class SerialInit(object):
         then run "python3 serial.py"
         and will run code on examples in comments
         """
-        self.serialPort.setPortName('COM6')
+        self.serialPort.setPortName(device)
         self.serialPort.setBaudRate(9600)
         # hopefully these are unneded
         #self.serial.setDataBits()
@@ -46,13 +47,13 @@ class SerialInit(object):
 
         if self.serialPort.isOpen():
             self.serialPort.close()
-            logging.info("COM6 was open: now closed")
+            logging.info("%s was open: now closed", device)
         while self.serialPort.isOpen() == False:
             if self.serialPort.open(QIODevice.ReadWrite):
-                logging.info("COM6 is open")
+                logging.info("%s is open", device)
             else:
                 # Need to add popup here
-                logging.info ("COM6 failed to open; reset USB: %r", self.serialPort.close())
+                logging.info ("%s failed to open; reset USB: %r", device, self.serialPort.close())
             time.sleep(3)
 
 
