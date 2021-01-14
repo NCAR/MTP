@@ -366,6 +366,14 @@ class controlWindow(QWidget):
         self.continueCycling = True
         previousTime = time.perf_counter()
         self.cyclesSinceLastStop = 0
+        # First element in array is the number of angles
+        # to keep the config the same as VB6 
+        # for integrate
+        elAngles = self.configStore.getData("El. Angles", lab=False)
+        nfreq = self.configStore.getData("Frequencies", lab=True)
+        #logging.debug("Frequencies from config: %r", nfreq)
+        nfreq = nfreq[1: len(nfreq)]
+        #logging.debug("Frequencies without size: %r", nfreq)
 
         # loop over " scan commands"
         self.probeStatusLED.setPixmap(self.ICON_GREEN_LED.scaled(40, 40))
@@ -380,13 +388,13 @@ class controlWindow(QWidget):
             self.alineStore = self.Aline()
 
             # Bline: long
-            self.blineStore = 'B' + self.Bline()
+            self.blineStore = 'B' + self.Bline(elAngles, nfreq)
 
             self.m01Store = self.m01()
             self.m02Store = self.m02()
             self.ptStore = self.pt()
             # Eline: long 
-            self.elineStore = 'E' + self.Eline()
+            self.elineStore = 'E' + self.Eline(nfreq)
             # save to file
             # assumes everything's been decoded from hex
             self.mover.saveData(packetStartTime)
@@ -813,7 +821,9 @@ class controlWindow(QWidget):
         home1 = self.commandDict.getCommand("home1")
         home2 = self.commandDict.getCommand("home2")
         home3 = self.commandDict.getCommand("home3")
-        sleepTime = 0.2
+        # min time before it starts shaking/grinding
+        # do need the extra push to be sure it gets home though
+        sleepTime = 0.1
         #self.serialPort.sendCommand(home1)
         self.moveCheckAgain(home1, sleepTime, isHome=True)
         #echo = self.readUntilFound(b'@', 100, 20)
@@ -864,7 +874,7 @@ class controlWindow(QWidget):
 
         return pt
 
-    def Eline(self):
+    def Eline(self, nfreq):
         data = 0
         logging.debug("Eline")
         self.homeScan()
@@ -872,12 +882,12 @@ class controlWindow(QWidget):
         # returns echo and b"ND:01\r\n" or b"ND:00\r\n"
         self.serialPort.sendCommand(self.commandDict.getCommand("noise1"))
         echo = self.readUntilFound(b'N00',10, 1)
-        data = self.integrate()
+        data = self.integrate(nfreq)
 
         # set noise 0
         self.serialPort.sendCommand(self.commandDict.getCommand("noise0"))
         echo = self.readUntilFound(b'N01',10, 1)
-        return data + self.integrate()
+        return data + self.integrate(nfreq)
 
     def Aline(self):
         logging.debug("View Aline")
@@ -976,12 +986,9 @@ class controlWindow(QWidget):
 
 
 
-    def Bline(self):
+    def Bline(self, angles, nfreq):
         logging.debug("Bline")
         # All R values have spaces in front
-        angles = self.configStore.getData("El. Angles", lab=False)
-        # First element in array is the number of angles
-        # to keep the config the same as VB6 
         logging.debug(angles)
         numAngles = angles[0]
         zel = angles[1]
@@ -1000,16 +1007,14 @@ class controlWindow(QWidget):
             # sends move command
             moveToCommand = self.mover.getAngle(angle, zel)
             #self.serialPort.sendCommand(str.encode(moveToCommand))
-            # This needs more time than homescan for stepper motor to 
-            # 'stop' moving. .6 works, 0.526 doesn't
-            sleepTime = 0.53
+            sleepTime = 0.001
             self.moveCheckAgain(str.encode(moveToCommand), sleepTime, isHome=False)
             #echo = self.readUntilFound(b'@',100000, 20)
 
             #logging.debug("Bline find the @: %r", echo)
             # wait until Step:\xddff/0@\r\n is received
 
-            data = data + self.integrate()
+            data = data + self.integrate(nfreq)
             logging.debug(data)
         
         self.updateRead("read_scan")
@@ -1122,14 +1127,10 @@ class controlWindow(QWidget):
         logging.debug("quickRead end")
         return datum
 
-    def integrate(self):
+    def integrate(self, nfreq):
         # returns string of data values translated from hex to decimal
         # recepit of the @ from the move command has to occur before 
         # entry into this function
-        nfreq = self.configStore.getData("Frequencies", lab=True)
-        #logging.debug("Frequencies from config: %r", nfreq)
-        nfreq = nfreq[1: len(nfreq)]
-        #logging.debug("Frequencies without size: %r", nfreq)
 
         data = ''
         isFirst = True
