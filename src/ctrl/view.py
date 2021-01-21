@@ -344,7 +344,7 @@ class controlWindow(QWidget):
         # Declare instance of config store
         # Has lab defaults for IWG 
         # temporary values for gui - changed default.mtph
-        self.configStore = StoreConfig()
+        #self.configStore = StoreConfig()
 
         #Might not be in mainloop
         # Declare instance of packet store
@@ -1322,12 +1322,13 @@ def main():
 
 
     # Check for Config.mtph/Fatal Error
-    #try:
-    #    self.initConfig()
-
-    #except Exception as err:
-    #    handle_error("Config.mtph: " + str(err))
-    #    sys.exit()
+    configMTPH = StoreConfig(app)
+    try:
+        configMTPH.loadConfigMTPH()
+    except Exception as err:
+        handle_error("Config.mtph: " + str(err))
+        sys.exit()
+    app.configStore = configMTPH
     
     # Read it in/ declare config dict
 
