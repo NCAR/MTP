@@ -6,11 +6,12 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
+import logging
 
 
 class StoreConfig():
 
-    def __init__(self):
+    def __init__(self, app):
 
         config_list = {
 	    # Example packet
@@ -26,6 +27,7 @@ class StoreConfig():
             'Program': 'MTPcontroller.py',
 	    'Aircraft': 'NGV',
             'NominalPitch': 3,
+            'Offsets':[1,2,3],
 	    'OffsetYi':0,
 	    'OffsetPi':0,
 	    'OffsetRi':0,
@@ -76,11 +78,26 @@ class StoreConfig():
     def getArray(self, key, index, lab):
         """ Return the date for an index given user-requested key """
         if lab:
-            self.a = self.config_lab[key]
-            return self.a[index]
+            a = self.config_lab[key]
+            return a[index]
         else:
-            self.a = self.config[key]
-            return self.a[index]
+            a = self.config[key]
+            return a[index]
+
+    def setArray(self, key, index, value, lab):
+        """ Sets individual element of an array in configStore """
+        logging.debug("setArray")
+        if lab: 
+            logging.debug("setArray: lab")
+            a = self.config_lab[key]
+            a[index] = int(value)
+        else:
+            logging.debug("setArray: notlab, key %r", key)
+            a = self.config[key]
+            logging.debug("setArray: notlab, a %r, value %r, index %r", a, value, index)
+            a[index] = int(value)
+            logging.debug("setArray: notlab, done a %r", a)
+            logging.debug("setArray: notlab, done self.config{key] %r", self.config[key])
 
     def setData(self, key, data, lab):
         """ Return true if sucessfully written """
@@ -89,16 +106,42 @@ class StoreConfig():
         else:
             self.config[key] = data
 
-    def loadDataMTPH(self):
+    def loadConfigMTPH(self):
         # Loads Data from Config.mtph
         # Throws error if not found
-        logging.debug("loadMTP")
-        try:
-            with open("Config.mtph", 'r') as configFile:
-                logging.debug("Reading config.mtph")
-        except:
-            logging.error("Config.mtph not found")
-            # warning popup?
+
+        logging.debug("loadConfigMTP")
+        with open("Config.mtph", 'r') as configFile:
+            lines = configFile.readlines()
+            for line in lines:
+                if line[0] == '[':
+                    key = line[1:len(line)-2]
+                    array = []
+                    index = 0
+                else:
+                    if line == '\n':
+                        break;
+                    elif key == 'Program' or key == 'Aircraft' or key == 'NominalPitch':
+                        self.setData(key, line, lab = False)
+                        logging.debug("program/aircraft/nominalPitch case")
+                    elif key == 'Offsets' or key == 'Frequencies' or key == 'El.Angles':
+                        line = line.split('\'')
+                        line = line[0]
+                        line = line.split(' ')
+                        line = line[0]
+                        logging.debug("load config, split: %r", line)
+                        logging.debug("load config, index %r", index)
+                        self.setArray(key, index, line, lab = False)
+                        index = index + 1
+                    elif key == 'Integ. Time':
+                        blah
+                    elif key == 'End':
+                        logging.info("Config.mtph end of file reached")
+                    else:
+                        logging.error("Config.mtph unknown key %r", key)
+
+                    # They come in with newlines, hence -1
+            logging.debug("Reading config.mtph: %r", lines)
 
 
     def saveData(self, saveFile):
