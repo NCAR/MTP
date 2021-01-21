@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (QWidget, QToolTip,
                              QPlainTextEdit, QTextEdit,
                              QRadioButton, QVBoxLayout,
                              QLabel, QHBoxLayout,
-                             QApplication)
+                             QApplication, QErrorMessage)
 from PyQt5 import QtGui 
 from PyQt5.QtWidgets import *
 from PyQt5 import QtCore
@@ -30,20 +30,16 @@ class controlWindow(QWidget):
             'lastSky': -1, #readScan sets this to actual
         }
 
-        self.vars = varDict
-        self.initConfig()
         
         self.app = app
 
         # Create the GUI
         self.initUI()
-
-        self.initSaveDataFile()
-        #self.mainloop()
+        
 
     def closeEvent(self, event):
         logging.debug("User has clicked the red x on the main window, unsafe exit")
-        #self.shutdownProbeClicked(serialPort)
+        #self.shutdownProbeClicked(self.serialPort)
         #self.event.accept()
 
     def initUI(self):
@@ -228,6 +224,7 @@ class controlWindow(QWidget):
         #sys.exit(app.exec_())
         logging.debug("init ui done")
 
+        '''
     def openComm(self, serialPort):
 
         # close port to make sure 
@@ -244,7 +241,7 @@ class controlWindow(QWidget):
 
     def closeComm(self, serialPort):
         logging.debug("closing serial port")
-        #self.serialPort.close()
+        #serialPort.close()
         serialPort=5
         logging.debug(serialPort)
         return serialPort
@@ -267,6 +264,7 @@ class controlWindow(QWidget):
     # will need to close other udp connections first
     def openUDP(self):
         return 0
+        '''
 
     # read in and save iwg packet to dict
     def readUDP():
@@ -305,7 +303,7 @@ class controlWindow(QWidget):
         self.reInitProbe.setText("Re-initialize Probe/Restart Scanning")
         #self.reInitProbe.setText("Reset Probe")
         #/self.homeScan()
-        self.mainloop()
+        self.mainloop(app, serialPort)
         #self.cycle()
 
         self.app.processEvents()
@@ -334,7 +332,8 @@ class controlWindow(QWidget):
         return self.serialPort.canReadLine(readLineTime)
 
 
-    def mainloop(self):
+    # will need dataFile, configs and others passed in
+    def mainloop(self, app, serialPort):
         # instantiate dict for commands
 
         self.isScanning = False
@@ -342,25 +341,28 @@ class controlWindow(QWidget):
         # shouldn't be in mainloop
         # Declare instance of command dictionary
         self.commandDict = MTPcommand()
-        # Declare instance of packet store
-        self.packetStore = StorePacket()
         # Declare instance of config store
         # Has lab defaults for IWG 
         # temporary values for gui - changed default.mtph
         self.configStore = StoreConfig()
+
+        #Might not be in mainloop
+        # Declare instance of packet store
+        self.packetStore = StorePacket()
         # Declare instance of moveMTP class
         self.mover = moveMTP(self)
         self.udp = doUDP(self, app)
         # global storage for values collected from probe
         # storing them in dict introduced slowness
         self.iwgStore = 'IWG1,20101002T194729,39.1324,-103.978,4566.43,,14127.9,,180.827,190.364,293.383,0.571414,-8.02806,318.85,318.672,-0.181879,-0.417805,-0.432257,-0.0980951,2.36793,-1.66016,-35.8046,16.3486,592.062,146.734,837.903,9.55575,324.104,1.22603,45.2423,,-22    .1676,'
+        # Well, there's the right way to do this
+        # and the easy way. 
+        # So until we're moving all the functions, 
+        # this'll stay.
+        self.serialPort = serialPort 
 
-        
-        # instantiate serial port
-        self.serialPort = SerialInit(self, app)
         self.app.processEvents()
-        logging.debug("mainloop: serialPort initialized")
-        self.probePresent()
+        self.probePresent(app)
         self.initProbe()
         self.homeScan()
         self.continueCycling = True
@@ -444,8 +446,13 @@ class controlWindow(QWidget):
         
         return previousTime
 
-    def probePresent(self):
+    def probePresent(self, app):
         i=0
+        #error_dialog = app.QErrorMessage()
+        #error_dialog.showMessage('Oh no!')   
+
+        # Pauses program execution until ok pressed
+        message = QMessageBox.information(self, "Waiting", "Waiting for radiometer")
         while i <1000:
             self.serialPort.sendCommand(self.commandDict.getCommand("version"))
             echo = self.readUntilFound(b'_', 1000, 200)
@@ -555,12 +562,12 @@ class controlWindow(QWidget):
             #check that probe is at home position
             #put it there if not
             #self.doScan()
-
+        '''
 
     def tick(self):
         self.serialPort.sendCommand(str.encode(self.commandDict.getCommand("status")))
         return
-
+        '''
     def locationLocalClicked(self):
         logging.debug("LocationLocalClicked")
         return 0
@@ -607,16 +614,6 @@ class controlWindow(QWidget):
         else:
             logging.debug("Color not defined")
         painter.end()
-
-    def initConfig(self):
-        # check for config file
-        # reload config
-        #    - calculate MAM
-        # initializes the saveData file
-        ''' reads config file into dictionary to change default values '''
-        ''' to be implemented '''
-        #self.serialPort.sendCommand(str.encode(self.commandDict.getCommand("read_scan")))
-        config = 3
 
 
 
@@ -881,12 +878,12 @@ class controlWindow(QWidget):
         # set noise 1
         # returns echo and b"ND:01\r\n" or b"ND:00\r\n"
         self.serialPort.sendCommand(self.commandDict.getCommand("noise1"))
-        echo = self.readUntilFound(b'N00',10, 1)
+        echo = self.readUntilFound(b'ND:01',6, 4)
         data = self.integrate(nfreq)
 
         # set noise 0
         self.serialPort.sendCommand(self.commandDict.getCommand("noise0"))
-        echo = self.readUntilFound(b'N01',10, 1)
+        echo = self.readUntilFound(b'ND:00',6, 4)
         return data + self.integrate(nfreq)
 
     def Aline(self):
@@ -1310,18 +1307,60 @@ class controlWindow(QWidget):
         # set in serial to avoid infinite loop of zero nstep
         angleI = self.packetStore.getData("angleI") # angle index, zenith at 1
 '''
+def handle_error(error):
+    em = QErrorMessage()
+    em.showMessage(error)
+    em.exec_()
 
-
-
-if __name__ == '__main__':
+def main():
     #    signal.signal(signal.SIGINT, ctrl_c)
     logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',filename="MTPCtrl.log",level=logging.DEBUG)
     logger = logging.getLogger(__name__)
     logging.warning("warning")
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(True)
+
+
+    # Check for Config.mtph/Fatal Error
+    #try:
+    #    self.initConfig()
+
+    #except Exception as err:
+    #    handle_error("Config.mtph: " + str(err))
+    #    sys.exit()
+    
+    # Read it in/ declare config dict
+
+
+    # Check for Config.yaml/Fatal Error(?)
+    #try:
+
+    #except Exception as err:
+    #    handle_error(str(err))
+    #    sys.exit()
+
+    # read it in
+
+    # Eventually have serial port # in config.yaml
+    # Serial Port Check/Fatal Error
+    try:
+        serialPort = SerialInit(app)
+    except Exception as err:
+        handle_error("SerialPort: " + str(err))
+        sys.exit()
+
+    # Dialog for setting flight number
+    # Also creates save file
+    # GetFlightNumberDialog(app)
+    #dataFile = initSaveDataFile()
+
     ex = controlWindow(app)
     ex.show()
-    ex.mainloop()
+    
+    # Will need data file and config dicts too
+    ex.mainloop(app, serialPort)
     # sys.exit(app.exec_())
     # ex.run()
+    
+if __name__ == '__main__':
+    main()
