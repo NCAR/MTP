@@ -19,9 +19,9 @@ logging.basicConfig(level=logging.DEBUG)
 class SerialInit(object):
 
     serialPort = QSerialPort()
-    def __init__(self, parent, app, device='COM6'):
+    def __init__(self, app, device='COM6'):
         self.app = app
-        self.parent = parent
+        #self.parent = parent #Used for process events:don't want
         """
         Serial connection to instrument
 
@@ -54,20 +54,8 @@ class SerialInit(object):
             else:
                 # Need to add popup here
                 logging.info ("%s failed to open; reset USB: %r", device, self.serialPort.close())
-            time.sleep(3)
-
-
-
-        """ Not sure QtSerialPort has an exception in this case?"""
-        '''
-        except self.serialPort.SerialException as ex:
-            logging.info("Port is unavailable: " + str(ex))
-            exit()
-        '''
-        #as yet appears to be unnecessary
-        #self.app.processEvents()
-        # when probe powers on it sends a string, unprompted:
-        # "MTPH_Control.c-101103>101208\r\n"
+                time.sleep(0.5)
+        logging.debug("End of init")
         return
 
     def canReadLine(self, timeVal):
@@ -76,7 +64,7 @@ class SerialInit(object):
         val = self.serialPort.waitForReadyRead(timeVal)
         i=0
         while i < timeVal:
-            self.parent.app.processEvents()
+            #self.parent.app.processEvents()
             if self.serialPort.canReadLine():
                 buf = self.serialPort.readLine()
                 logging.debug('canReadLine signal received')
@@ -93,7 +81,7 @@ class SerialInit(object):
         val = self.serialPort.waitForReadyRead(timeVal)
         i=0
         while i < timeVal:
-            self.parent.app.processEvents()
+            #self.parent.app.processEvents()
             if self.serialPort.canReadLine():
                 buf = self.serialPort.readLine()
                 logging.debug('canReadLine signal received')
@@ -119,7 +107,7 @@ class SerialInit(object):
         #logging.debug("serialqt readline")
         i = 0 
         while i <  timeVal:
-            self.parent.app.processEvents()
+            #self.parent.app.processEvents()
             #logging.debug("i: %d, timeVal: %d" , i, timeVal)
             '''
             if self.serialPort.canReadLine():
@@ -154,6 +142,7 @@ class SerialInit(object):
         self.sentCommand = str(command)
         logging.info('Serialqt:sendCommand: Sending command - ' + str(command))
         return
+
     def readin(self):
         """
         Read data from the serial port and parse it for status updates.
@@ -169,7 +158,7 @@ class SerialInit(object):
             message += byte.decode("utf-8")
         logging.debug("read data: " + message.rstrip())
         return(message.rstrip())
-    
+        ''' 
     def decodeLine(self):
         # decode M01, m02, Pt
         # translates from binary string into ascii
@@ -198,7 +187,7 @@ class SerialInit(object):
                     stringData = stringData + str(int(i,16)) + ' '
             logging.debug(" data i = %s ", i)
         return stringData
-
+        '''
 
     def close(self):
         self.serialPort.close()

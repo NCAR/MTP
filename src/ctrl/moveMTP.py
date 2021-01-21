@@ -965,7 +965,7 @@ class moveMTP():
             if i == data[0]:
                 # reset the dataArray with first equal
                 stringData = str(tmp[0]) + ": " + str(int(str(tmp[1]),16)) + " "
-                logging.debug("decodeLine, 0 case")
+                logging.debug("decode m01, m02, Pt")
                 #dataArray.append(str(int(str(tmp[1]).decode('ascii'),16)))
                 #dataArray.append(str.encode(' '))
             else:
