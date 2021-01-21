@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (QWidget, QToolTip,
                              QPlainTextEdit, QTextEdit,
                              QRadioButton, QVBoxLayout,
                              QLabel, QHBoxLayout,
+                             QInputDialog,
                              QApplication, QErrorMessage)
 from PyQt5 import QtGui 
 from PyQt5.QtWidgets import *
@@ -341,10 +342,6 @@ class controlWindow(QWidget):
         # shouldn't be in mainloop
         # Declare instance of command dictionary
         self.commandDict = MTPcommand()
-        # Declare instance of config store
-        # Has lab defaults for IWG 
-        # temporary values for gui - changed default.mtph
-        #self.configStore = StoreConfig()
 
         #Might not be in mainloop
         # Declare instance of packet store
@@ -362,6 +359,8 @@ class controlWindow(QWidget):
         self.serialPort = serialPort 
 
         self.app.processEvents()
+
+
         self.probePresent(app)
         self.initProbe()
         self.homeScan()
@@ -617,15 +616,15 @@ class controlWindow(QWidget):
 
 
 
-    def initSaveDataFile(self):    
-        # Check flight number popup
-        flight_number =str(00)
-        saveDataFileName = time.strftime("%Y%m%d") + '_' + time.strftime("%H%M%S") + flight_number + '.mtp'
+    def initSaveDataFile(self, flightNumber):    
+        saveDataFileName = time.strftime("%Y%m%d") + '_' + time.strftime("%H%M%S") + '_' + flightNumber + '.mtp'
 
         with open(saveDataFileName, "ab") as datafile:
                 # this will be rewritten each time the program restarts
                 datafile.write(str.encode("Instrument on " + time.strftime("%X") + " " + time.strftime("%m-%d-%y") + '\r\n'))
-        logging.debug("initConfig")
+         
+        logging.debug("initSaveDataFile")
+        return saveDataFileName
         '''
     def cycle(self):
         # self.cycleTimer.stop()
@@ -1251,6 +1250,19 @@ class controlWindow(QWidget):
         # wait for tune status to be 4
         # see comment in waitForStatus for frustration
         self.waitForStatus(b'4')
+
+    def getFlightNumber(self):
+        # Dialog for setting flight number
+        flightNum, ok = QInputDialog.getText(self, self.tr('FlightNum'), 
+                self.tr('Please enter flight number (eg. TF00, RF01, FF00, CF05)'))
+
+        # if ok is clicked
+        if ok:
+            logging.debug("flightnum %r", flightNum)
+            return flightNum
+        else:
+            handle_error("Enter flight number")
+            sys.exit()
         
 '''
 
@@ -1307,6 +1319,10 @@ class controlWindow(QWidget):
         # set in serial to avoid infinite loop of zero nstep
         angleI = self.packetStore.getData("angleI") # angle index, zenith at 1
 '''
+
+
+
+
 def handle_error(error):
     em = QErrorMessage()
     em.showMessage(error)
@@ -1322,16 +1338,13 @@ def main():
 
 
     # Check for Config.mtph/Fatal Error
-    configMTPH = StoreConfig(app)
+    # Read it in/ declare config dict
+    app.configStore = StoreConfig(app)
     try:
-        configMTPH.loadConfigMTPH()
+        app.configStore.loadConfigMTPH()
     except Exception as err:
         handle_error("Config.mtph: " + str(err))
         sys.exit()
-    app.configStore = configMTPH
-    
-    # Read it in/ declare config dict
-
 
     # Check for Config.yaml/Fatal Error(?)
     #try:
@@ -1350,13 +1363,16 @@ def main():
         handle_error("SerialPort: " + str(err))
         sys.exit()
 
-    # Dialog for setting flight number
-    # Also creates save file
-    # GetFlightNumberDialog(app)
-    #dataFile = initSaveDataFile()
+
 
     ex = controlWindow(app)
     ex.show()
+
+    # Prompt flight number
+    flightNumber = ex.getFlightNumber()
+    # Make data file
+    dataFile = ex.initSaveDataFile(flightNumber)
+    logging.debug("dataFile: %r", dataFile)
     
     # Will need data file and config dicts too
     ex.mainloop(app, serialPort)
