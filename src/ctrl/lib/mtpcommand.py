@@ -182,6 +182,10 @@ class MTPcommand():
             # maybe finer and finer adjustment of home position?
             'home1': b'U/1J0f0j256Z1000000J3R\r\n',
             'home2': b'U/1j128z1000000P10R\r\n',
+            # while vb6 does send this, it immediately overrides with
+            # another home2. Keeping this as the last one
+            # makes the steps (with the same move command)
+            # taken by the mirror about 2x as large
             'home3': b'U/1j64z1000000P10R\r\n',
 
             # From VB6 sub moveScan(). Move the MTP Nsteps.
