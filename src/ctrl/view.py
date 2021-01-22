@@ -456,7 +456,7 @@ class controlWindow(QWidget):
         message = QMessageBox.information(self, "Waiting", "Waiting for radiometer")
         while i <1000:
             self.serialPort.sendCommand(self.commandDict.getCommand("version"))
-            echo, sFlag = self.readUntilFound(b'_', 1000, 200)
+            echo, sFlag = self.readUntilFound(b'_', 1000, 200, isHome=False)
             if echo != b'-1':
                 return True
             self.app.processEvents()
@@ -483,15 +483,15 @@ class controlWindow(QWidget):
         # init probe
         sendCommand = self.commandDict.getCommand(whichInit)
         self.serialPort.sendCommand(sendCommand)
-        echo, sFlag = self.readUntilFound(b'@', 100,10)
+        echo, sFlag = self.readUntilFound(b'@', 100, 10, isHome=False)
         while echo == b'-1':
             logging.debug("Init command failed, sending again")
             self.serialPort.sendCommand(sendCommand)
-            echo, sFlag = self.readUntilFound(b'@', 100,10)
+            echo, sFlag = self.readUntilFound(b'@', 100, 10, isHome=False)
         logging.debug("Try init's send @, no move though echo: %s", echo)
         return True
 
-    def readUntilFound(self, binaryString, timeout, canReadLineTimeout):
+    def readUntilFound(self, binaryString, timeout, canReadLineTimeout, isHome):
         i=0
         echo = b''
         sFlag = False
@@ -514,6 +514,8 @@ class controlWindow(QWidget):
             elif echo.data().find(b'S') >= 0:
                 logging.debug("Found an S, setting sFlag to True")
                 sFlag = True
+                if isHome:
+                    return b'-1'
             else:
                 logging.debug("didn't recieve binary string this loop")
                 i = i + 1
@@ -793,13 +795,13 @@ class controlWindow(QWidget):
             logging.debug("cycle2")
     '''
 
-
+    '''
     def moveWait(self):
         logging.debug("IN moveWait")
         i = 0
         while i< 20:
             self.serialPort.sendCommand(self.commandDict.getCommand("status"))
-            echo, sFlag = self.readUntilFound(b'S', 10, 30)
+            echo, sFlag = self.readUntilFound(b'S', 10, 30, isHome=False)
             # do instring of ST:0#
             # location of T +3
             if echo != b'-1':
@@ -819,7 +821,7 @@ class controlWindow(QWidget):
                 logging.debug("moveWait len echo %s", len(echo))
             i = i + 1
         logging.debug("move wait timeout, move along")
-
+    '''
 
 
     def homeScan(self):
@@ -831,27 +833,12 @@ class controlWindow(QWidget):
         sleepTime = 0.1
         #self.serialPort.sendCommand(home1)
         self.moveCheckAgain(home1, sleepTime, isHome=True)
-        #echo, sFlag = self.readUntilFound(b'@', 100, 20)
         logging.debug("home1 after move home") 
 
         sleepTime = 0.000
-        #self.serialPort.sendCommand(self.commandDict.getCommand("home2"))
         self.moveCheckAgain(home2, sleepTime, isHome=True)
-        #echo, sFlag = self.readUntilFound(b':', 100, 20)
-        #echo += self.readUntilFound(b'S', 100000, 20)
         logging.debug("home2 after step ") 
         
-        # Might not be necessary
-        self.moveCheckAgain(home3, sleepTime, isHome=True)
-        logging.debug("home3 after step ") 
-        #self.serialPort.sendCommand(self.commandDict.getCommand("home3"))
-        #echo, sFlag = self.readUntilFound(b':', 100, 20)
-        #echo += self.readUntilFound(b'S', 100000, 20)
-        #self.moveWait()
-        #echo = self.read(200,20)
-        #logging.debug("home3 1st echo =:%s",echo) 
-        #echo = self.read(200,20)
-        #logging.debug("home3 2nd echo =:%s",echo) 
         # Update GUI
         self.elAngleBox.insertPlainText("Target")
         # sets 'known location' to 0
@@ -862,7 +849,7 @@ class controlWindow(QWidget):
         logging.debug("M01")
         self.serialPort.sendCommand((self.commandDict.getCommand("read_M1")))
         # echo will echo "M  1" so have to scan for the : in the M line
-        m, sFlag = self.readUntilFound(b'M01:', 100, 20)
+        m, sFlag = self.readUntilFound(b'M01:', 100, 20, isHome=False)
         # set a timer so m01 values get translated from hex?
         m01 = self.mover.decode(m)
         return m01
@@ -871,14 +858,14 @@ class controlWindow(QWidget):
     def m02(self):
         logging.debug("M02")
         self.serialPort.sendCommand((self.commandDict.getCommand("read_M2")))
-        m, sFlag = self.readUntilFound(b'M02:', 100, 20)
+        m, sFlag = self.readUntilFound(b'M02:', 100, 20, isHome=False)
         m02 = self.mover.decode(m)
         return m02
 
     def pt(self):
         logging.debug("pt")
         self.serialPort.sendCommand((self.commandDict.getCommand("read_P")))
-        p, sFlag = self.readUntilFound(b':', 100, 20)
+        p, sFlag = self.readUntilFound(b':', 100, 20, isHome=False)
         pt = self.mover.decode(p)
 
         return pt
@@ -890,12 +877,12 @@ class controlWindow(QWidget):
         # set noise 1
         # returns echo and b"ND:01\r\n" or b"ND:00\r\n"
         self.serialPort.sendCommand(self.commandDict.getCommand("noise1"))
-        echo, sFlag = self.readUntilFound(b'ND:01',6, 4)
+        echo, sFlag = self.readUntilFound(b'ND:01',6, 4, isHome=False)
         data = self.integrate(nfreq)
 
         # set noise 0
         self.serialPort.sendCommand(self.commandDict.getCommand("noise0"))
-        echo, sFlag = self.readUntilFound(b'ND:00',6, 4)
+        echo, sFlag = self.readUntilFound(b'ND:00',6, 4, isHome=False)
         return data + self.integrate(nfreq)
 
     def Aline(self):
@@ -982,9 +969,14 @@ class controlWindow(QWidget):
         self.packetStore.setData("angleI", 0) # angle index
         # update instantanious angle frame?
 
-        self.serialPort.sendCommand((self.commandDict.getCommand("read_scan")))
-        echo, sFlag = self.readUntilFound(b':', 10, 20)
-        echo, sFlag = self.readUntilFound(b'S', 10, 20)
+        # read_scan and read_encode are not used
+        # They were to determine location of mirror
+        # before the chain was added but since that
+        # came about, they no longer have useful data
+
+        #self.serialPort.sendCommand((self.commandDict.getCommand("read_scan")))
+        #echo, sFlag = self.readUntilFound(b':', 10, 20, isHome=False)
+        #echo, sFlag = self.readUntilFound(b'S', 10, 20, isHome=False)
         # b'Step:\xff/0`1000010\r\n'
         # echo = self.read(200,200)
         # need to implement the better logic counters in bline
@@ -1024,7 +1016,6 @@ class controlWindow(QWidget):
             else:
                 sleepTime = 0.000
             self.moveCheckAgain(str.encode(moveToCommand), sleepTime, isHome=False)
-            #echo, sFlag = self.readUntilFound(b'@',100000, 20)
 
             #logging.debug("Bline find the @: %r", echo)
             # wait until Step:\xddff/0@\r\n is received
@@ -1032,8 +1023,8 @@ class controlWindow(QWidget):
             data = data + self.integrate(nfreq)
             logging.debug(data)
         
-        self.updateRead("read_scan")
-        self.updateRead("read_enc")
+        #self.updateRead("read_scan")
+        #self.updateRead("read_enc")
         return data   
 
     def moveCheckAgain(self, sentCommand, sleepTime, isHome):
@@ -1042,7 +1033,7 @@ class controlWindow(QWidget):
         i = 0
         while i < 2:
             # Might be possible to reduce this a bit
-            echo, sFlag = self.readUntilFound(b'@',100, 20)
+            echo, sFlag = self.readUntilFound(b'@',100, 20, isHome)
             # Only send again if homescan and timeout
             if echo == b'-1' and isHome:
                 self.serialPort.sendCommand((sentCommand))
@@ -1067,7 +1058,11 @@ class controlWindow(QWidget):
         while i < 2:
             time.sleep(sleepTime)
             self.serialPort.sendCommand(self.commandDict.getCommand('status'))
-            status, sFlag = self.readUntilFound(b'T', 10, 10)   
+            # need readUntilFound to not exit on seeing an s here
+            # but also need to keep isHome in this scope as True
+            # for when it is actually called by home
+            status, sFlag = self.readUntilFound(b'T', 10, 10, False)   
+            logging.debug("FindtheT status: %r", status)
             # in case statusNum ==7, S was found, but ST## wasn't
             if status != b'-1':
                 findTheT = status.data().find(b'T')
@@ -1110,12 +1105,10 @@ class controlWindow(QWidget):
         while i < 11:
             self.serialPort.sendCommand((self.commandDict.getCommand(scanOrEncode)))
             # first there's the echo, then there's the probe's echo of that echo then
-            echo, sFlag = self.readUntilFound(b':', 10, 20)
+            echo, sFlag = self.readUntilFound(b':', 10, 20, isHome=False)
             # read_scan returns b'Step:\xff/0c1378147\r\n' 
             # then returns b'Step:\xff/0`1378147\r\n' 
-            echo, sFlag = self.readUntilFound(b':', 10, 20)
-            #logging.debug("integrate echo 1 : %s", echo.decode(ascii))
-            #echo, sFlag = self.readUntilFound(b':', 100000, 20)
+            echo, sFlag = self.readUntilFound(b':', 10, 20, isHome=False)
             # have a does string contain bactic `
             logging.debug(echo.size())
             # 17 or 18 depending on size of value returned
@@ -1210,13 +1203,14 @@ class controlWindow(QWidget):
 
 
             logging.debug("integrator has finished")
-            # clear echos 
-            dataLine = self.quickRead(25) # avg is ~9, max is currently 15
+            # clear echos
+            # avg is ~9, max observed issue at 25
+            dataLine = self.quickRead(30) 
             # actually request the data of interest
             self.serialPort.sendCommand((self.commandDict.getCommand("count2")))
-            echo, sFlag = self.readUntilFound(b'R', 10, 20)
+            echo, sFlag = self.readUntilFound(b'R', 10, 20, isHome=False)
             if echo.size() <6:
-                echo, sFlag = self.readUntilFound(b':', 10, 20)
+                echo, sFlag = self.readUntilFound(b':', 10, 20, isHome=False)
             #logging.debug("integrate echo 1 : %s", echo.decode(ascii))
             # grab value from string, translate from hex, append to string
             check = echo[1:2]
@@ -1233,8 +1227,6 @@ class controlWindow(QWidget):
             # append to string:
             data = data + ' ' + datum
             logging.debug (data)
-        # ??? what is this here for
-        #echo, sFlag = self.readUntilFound(b'S', 100000, 20)
         logging.debug (data)
         return data
 
@@ -1253,7 +1245,7 @@ class controlWindow(QWidget):
         while i < 5 :
             self.serialPort.sendCommand((self.commandDict.getCommand("status")))
             logging.debug("sent status request")
-            echo, sFlag = self.readUntilFound(b'S', 37, 55)
+            echo, sFlag = self.readUntilFound(b'S', 37, 55, isHome=False)
             logging.debug("status: %s, received Status: %s, ", status, echo)
             statusFound = echo.data().find(status)
             if statusFound >= 0:
@@ -1288,7 +1280,7 @@ class controlWindow(QWidget):
         # as echo from probe: both "C#####\r\n"
         # catch tune echos
         # official response is a status of 4
-        echo, sFlag = self.readUntilFound(b'C', 100, 20)
+        echo, sFlag = self.readUntilFound(b'C', 100, 20, isHome=False)
         
         # if it's the first channel, resend C
         # that seems to fail with status 0
@@ -1354,12 +1346,12 @@ class controlWindow(QWidget):
         self.serialPort.sendCommand(str.encode(frontCommand + backCommand))
         self.packetStore.setData("targetClkStep", targetClkStep)
         # read echo 
-        echo, sFlag = self.readUntilFound(b'C', 100, 20)
+        echo, sFlag = self.readUntilFound(b'C', 100, 20, isHome=False)
         logging.debug("goAngle echo: %s", echo)
 
 
         # wait until status returns @
-        echo, sFlag = self.readUntilFound(b'@', 10, 20)
+        echo, sFlag = self.readUntilFound(b'@', 10, 20, isHome=False)
         logging.warning("goAngle, @ echo %r", echo)
 
         # self.parent.packetStore.setData("currentClkStep", self.targetClkStep)
