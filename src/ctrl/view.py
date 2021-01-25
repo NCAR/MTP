@@ -304,7 +304,7 @@ class controlWindow(QWidget):
         self.reInitProbe.setText("Re-initialize Probe/Restart Scanning")
         #self.reInitProbe.setText("Reset Probe")
         #/self.homeScan()
-        self.mainloop(app, serialPort, configStore)
+        self.mainloop(self.app, self.serialPort, self.configStore)
         #self.cycle()
 
         self.app.processEvents()
