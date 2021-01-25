@@ -1087,13 +1087,17 @@ class controlWindow(QWidget):
                         else:
                             # Status 6 with Move commands needs a wait
                             # do the status check again
+                            logging.debug('moveCheckAgain T found, status 6')
                             i = i + 1
                     else:
                         logging.debug("moveCheckAgain:status not 4,6,7: %s",
                                 statusNum)
                         return
+                else: 
+                    logging.debug("moveCheckAgain: T not found")
             else:
                 # send status again
+                logging.debug("moveCheckAgain: T not found")
                 i = i + 1
         logging.debug("moveCheckAgain timeout %s ", status)
 
@@ -1176,51 +1180,25 @@ class controlWindow(QWidget):
             self.tune(freq, isFirst)
             isFirst = False
             # clear echos 
-            dataLine = self.quickRead(25) # avg is ~9, max is currently 15
-            # Start integrator I 40 command    
-            self.serialPort.sendCommand((self.commandDict.getCommand("count")))
-            # ensure integrator starts so then can
-            i=0
-            looptimeMS = 2
-            looping = True
-            while i < looptimeMS: 
-                logging.debug("integrate loop 1, checking for odd number")
-                if self.waitForStatus(b'5'):
-                    break
-                if i == looptimeMS:
-                    self.serialPort.sendCommand((self.commandDict.getCommand("count")))
-                    i = looptimeMS/2
-                    looptimeMS = i
-                i = i+1
-            # check that integrator has finished
-            i=0
-            while i < 3: 
-                logging.debug("integrate loop 2, checking for even number")
-                if self.waitForStatus(b'4'):
-                    break
-                i = i+1 
-
-
-
-            logging.debug("integrator has finished")
+            #dataLine = self.quickRead(25) # avg is ~9, max is currently 15
+            self.getIntegrateFromProbe()
             # clear echos
             # avg is ~9, max observed issue at 25
-            dataLine = self.quickRead(30) 
+            # dataLine = self.quickRead(30) 
+
             # actually request the data of interest
-            self.serialPort.sendCommand((self.commandDict.getCommand("count2")))
-            echo, sFlag = self.readUntilFound(b'R', 10, 20, isHome=False)
-            if echo.size() <6:
-                echo, sFlag = self.readUntilFound(b':', 10, 20, isHome=False)
-            #logging.debug("integrate echo 1 : %s", echo.decode(ascii))
-            # grab value from string, translate from hex, append to string
-            check = echo[1:2]
-            if check == b'00':
-                logging.warning('Integrate not finished')
-                # check is 28 if integrate is finished
-            findSemicolon = echo.data().find(b':')
-            logging.debug("r value data: %s, %s, %s",echo[findSemicolon], echo[findSemicolon+1], echo[findSemicolon+6])
-            datum = echo[findSemicolon+1: findSemicolon+7] # generally 4:10, ocasionally not. up to, not include last val
+            echo = b'-1'
+            while echo == b'-1':
+                self.serialPort.sendCommand((self.commandDict.getCommand("count2")))
+                echo, sFlag = self.readUntilFound(b'R28:', 10, 20, isHome=False)
+                logging.debug("reading R echo %r", echo)
+            
+            findSemicolon = echo.data().find(b'8')
+            #logging.debug("r value data: %s, %s, %s",echo[findSemicolon], echo[findSemicolon+1], echo[findSemicolon+6])
+            datum = echo[findSemicolon+2: findSemicolon+8] # generally 4:10, ocasionally not. up to, not include last val
             logging.debug(datum)
+
+
             # translate from hex:
             datum = '%06d' % int(datum.data().decode('ascii'), 16)
 
@@ -1229,6 +1207,32 @@ class controlWindow(QWidget):
             logging.debug (data)
         logging.debug (data)
         return data
+
+    def getIntegrateFromProbe(self):
+        # Start integrator I 40 command    
+        self.serialPort.sendCommand((self.commandDict.getCommand("count")))                 # ensure integrator starts so then can
+        i=0
+        looptimeMS = 2
+        looping = True
+        while i < looptimeMS: 
+            logging.debug("integrate loop 1, checking for odd number")
+            if self.waitForStatus(b'5'):
+                break
+            if i == looptimeMS:
+                self.serialPort.sendCommand((self.commandDict.getCommand("count")))
+                i = looptimeMS/2
+                looptimeMS = i
+            i = i+1
+
+        # check that integrator has finished
+        i=0
+        while i < 3: 
+            logging.debug("integrate loop 2, checking for even number")
+            if self.waitForStatus(b'4'):
+                break
+            i = i+1 
+            logging.debug("integrator has finished")
+        return True
 
     def waitForStatus(self, status):
         # add timeout?
