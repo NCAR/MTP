@@ -603,6 +603,17 @@ class moveMTP():
         # yyyymmdd hh:mm:ss in save feed
         currentDateSave =  "%02d%02d%02d %02d:%02d:%02d" %( t[0], t[1], t[2], t[3], t[4], t[5])
 
+        saveData = "A " + currentDateSave + " " + self.parent.alineStore
+        saveData = saveData + '\n'
+        saveData = saveData + self.parent.iwgStore + '\n'
+        saveData = saveData + self.parent.blineStore + '\n'
+        saveData = saveData + self.parent.m01Store + '\n'
+        saveData = saveData + self.parent.m02Store + '\n'
+        saveData = saveData + self.parent.ptStore + '\n'
+        saveData = saveData + self.parent.elineStore + '\n'
+        logging.debug("saveData %r", saveData)
+        # this \n doesn't leave the ^M's
+
         # open file in append binary mode
         with open("MTP_data.txt", "a") as datafile:
             # may need to .append instead of +
@@ -626,7 +637,7 @@ class moveMTP():
         # additions that python adds
 
         #udpArray = self.formUdp()
-        return
+        return saveData
 
     def formUDP(self, gmtime):
         # new udp string

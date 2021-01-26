@@ -400,7 +400,7 @@ class controlWindow(QWidget):
             self.elineStore = 'E' + self.Eline(nfreq)
             # save to file
             # assumes everything's been decoded from hex
-            self.mover.saveData(packetStartTime)
+            saveData = self.mover.saveData(packetStartTime)
 
             # send packet over UDP
             # also replaces spaces with commas and removes start strings
@@ -408,7 +408,7 @@ class controlWindow(QWidget):
             #self.udp.sendUDP(self.mover.formUDP())
             udpPacket = self.mover.formUDP(packetStartTime)
             print(udpPacket)
-            self.udp.sendUDP(udpPacket)
+            self.udp.sendUDP(udpPacket, saveData)
             logging.debug("sent UDP packet")
 
             # collect, update, display loop stats
@@ -1254,15 +1254,22 @@ class controlWindow(QWidget):
         while i < 5 :
             self.serialPort.sendCommand((self.commandDict.getCommand("status")))
             logging.debug("sent status request")
-            echo, sFlag, foundIndex = self.readUntilFound(b'S', 37, 55, isHome=False)
+            echo, sFlag, foundIndex = self.readUntilFound(
+                    b'S', 37, 55, isHome=False)
             logging.debug("status: %s, received Status: %s, ", status, echo)
-            statusFound = echo.data().find(status)
-            if statusFound >= 0:
-                logging.debug("status searched: %s , found: %s", int(status), int(echo[statusFound])) 
-                return True
+            if status != b'-1':
+                statusFound = echo.data().find(status)
+                if statusFound >= 0:
+                    logging.debug("status searched: %s , found: %s",
+                            int(status), int(echo[statusFound])) 
+                    return True
+                else:
+                    logging.debug("status searched for: %r , found: %r",
+                            status, echo)
+                i = i + 1
             else:
-                logging.debug("status searched for: %r , found: %r", status, echo)
-            i = i +1
+                logging.debug("waitForStatus' readUntilFound timeout")
+                i = i + 1
         logging.warning(" waitForStatus timed out: %s", int(status))
         return False
 

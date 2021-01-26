@@ -23,11 +23,12 @@ class doUDP(object):
         self.parent = parent
 
         # set up ports and ip address
+        self.udp_write_to_nidas = 30101
         self.udp_write_port = 32107
         self.udp_write_ric_port = 32106
         self.udp_read_port = 7071 # from IWG server 
         # plane
-        #self.udp_ip="192.168.84.255" # subnet mask
+        self.udp_ip_nidas=QHostAddress("192.168.84.2") # subnet mask
         #self.udp_ip=QHostAddress('0.0.0.0') # subnet mask
         # lab
         self.udp_ip=QHostAddress.LocalHost 
@@ -40,8 +41,10 @@ class doUDP(object):
         # the class is, causing it to flash between green and yellow
         #self.parent.receivingUDPLED.setPixmap(self.parent.ICON_YELLOW_LED.scaled(40,40))
 
-        # initialize the udp writer 
+        # initialize the udp writers 
         # Binding is unnecessary and counterproductive to write ports
+        self.sock_write_nidas = QUdpSocket()
+
         self.sock_write = QUdpSocket()
         self.parent.sendingUDPLED.setPixmap(self.parent.ICON_YELLOW_LED.scaled(40,40))
 
@@ -302,8 +305,13 @@ class doUDP(object):
         self.parent.sendingUDPLED.setPixmap(self.parent.ICON_RED_LED.scaled(40,40))
         #logging.debug("UDP feed stopped sending. Probe may no longer be cycling")
 
-    def sendUDP(self, packet):
+    def sendUDP(self, packet, savePacket):
         """ Send a packet out the udp port """
+
+        self.sock_write_nidas.writeDatagram(
+                bytes(savePacket, 'utf-8'), 
+                self.udp_ip_nidas, self.udp_write_to_nidas)
+        # real time viewing software
         self.sock_write.writeDatagram(packet, self.udp_ip, self.udp_write_port)
         logging.debug("sent UDP")
         # or out both udp ports if we want R.I.C. involved
