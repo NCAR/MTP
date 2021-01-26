@@ -834,7 +834,8 @@ class controlWindow(QWidget):
         home3 = self.commandDict.getCommand("home3")
         # min time before it starts shaking/grinding
         # do need the extra checkAgain bit to be sure it gets home 
-        sleepTime = 0.1
+        # 0.1 has 10 long homescans in 315 scans
+        sleepTime = 0.115 
         #self.serialPort.sendCommand(home1)
         self.moveCheckAgain(home1, sleepTime, isHome=True)
         logging.debug("home1 after move home") 
@@ -1059,7 +1060,7 @@ class controlWindow(QWidget):
 
         # Too soon and status is always 6: homescan needs longer
         i = 0
-        while i < 2:
+        while i < 4:
             time.sleep(sleepTime)
             self.serialPort.sendCommand(self.commandDict.getCommand('status'))
             # need readUntilFound to not exit on seeing an s here
