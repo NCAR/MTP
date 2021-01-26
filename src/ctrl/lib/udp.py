@@ -116,13 +116,10 @@ class doUDP(object):
 
     def timeoutIWG(self):
         # if IWG timer manages to timeout, then we haven't recieved 
-        # an IWG packet in at least 5 s, sets IWG led to yellow
-        # sets timer to timeout and check in 5s instead of 1
-        self.parent.receivingUDPLED.setPixmap(self.parent.ICON_YELLOW_LED.scaled(40,40))
-        #logging.debug("iwg timeout")
-        #logging.info("not getting Iwg packet on port %s, subnet mask ip '%s' (red), or Iwg hasn't been recieved within past 5 seconds (yellow)", self.udp_read_port, self.udp_ip) 
-
-        # if we never get an iwg packet, status defaults to red
+        # an IWG packet in at least 5 s, sets IWG led to red
+        # on receipt of IWG packet, will turn green
+        self.parent.receivingUDPLED.setPixmap(
+                self.parent.ICON_RED_LED.scaled(40,40))
         
     def sortIWG(self):
         # grabs values needed for Aline
@@ -315,6 +312,9 @@ class doUDP(object):
 
         #logging.debug("sending udp packet %s", packet)
         self.parent.sendingUDPLED.setPixmap(self.parent.ICON_GREEN_LED.scaled(40,40))
+        # restart timer for gui
+        self.udpTimer.start(50000) # in milliseconds
+
 
 
 
