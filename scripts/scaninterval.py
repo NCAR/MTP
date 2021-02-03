@@ -29,22 +29,29 @@ def main():
     basetime = datetime.strptime("19000101 00:00:00", "%Y%m%d %H:%M:%S")
     # Previous time is basetime first time thru
     previoustime = basetime
-    with open(args.file, 'r') as f:
-        for line in f:
-            # Times are in the A line - ignore all others
-            if re.match(r"^A", line):
-                scantime = line[2:19]
-                currenttime = datetime.strptime(scantime, "%Y%m%d %H:%M:%S")
-                tdelta = currenttime-previoustime
+    try:
+        with open(args.file, 'r') as f:
+            for line in f:
+                # Times are in the A line - ignore all others
+                if re.match(r"^A", line):
+                    scantime = line[2:19]
+                    currenttime = datetime.strptime(scantime,
+                                                    "%Y%m%d %H:%M:%S")
+                    tdelta = currenttime-previoustime
 
-                # ignore first time thru since don't have two times to compare
-                if previoustime != basetime:
-                    # Look for time differences that aren't the normal
-                    # 17 or 18 sec
-                    if tdelta.seconds != 17 and tdelta.seconds != 18:
-                        print(tdelta.seconds)
+                    # don't calculate difference the first time through
+                    # since we don't yet have two times to compare
+                    if previoustime != basetime:
+                        # Look for time differences that aren't the normal
+                        # 17 or 18 sec
+                        if tdelta.seconds != 17 and tdelta.seconds != 18:
+                            print(tdelta.seconds, " second scan interval at ",
+                                  scantime)
 
-                previoustime = currenttime
+                    # Rotate times in prep for reading in next time
+                    previoustime = currenttime
+    except UnicodeDecodeError:
+        pass  # Found non-text data
 
 
 if __name__ == "__main__":
