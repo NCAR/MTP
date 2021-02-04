@@ -100,13 +100,13 @@ class TESTeng3(unittest.TestCase):
         self.assertEqual(self.viewer.eng3.toPlainText(),
                          "Channel\tCounts  Value\n" +
                          "Acceler\t2510  -00.03 g\n" +
-                         "T Data\t1277  +40.62 C\n" +
-                         "T Motor\t1835  +26.43 C\n" +
-                         "T Pod Air\t1994  +22.81 C\n" +
-                         "T Scan\t1926  +24.35 C\n" +
-                         "T Pwr Sup\t1497  +34.65 C\n" +
+                         "T Data\t1277  +40.63 C\n" +
+                         "T Motor\t1835  +26.44 C\n" +
+                         "T Pod Air\t1994  +22.82 C\n" +
+                         "T Scan\t1926  +24.36 C\n" +
+                         "T Pwr Sup\t1497  +34.66 C\n" +
                          "T N/C\t4095  N/A\n" +
-                         "T Synth\t1491  +34.80 C")
+                         "T Synth\t1491  +34.81 C")
 
     # def ():
         # Test plotting of scnt
