@@ -53,12 +53,21 @@ class controlWindow(QWidget):
         # Lables
         self.probeStatus = QLabel('Probe Status', self)
         self.scanStatus = QLabel('Scan Status', self)
-        self.receivingUDP = QLabel("IWG Packet Status", self)
+        self.receivingIWG = QLabel("IWG Packet Status", self)
+        self.IWGPort= QLabel("IWG Port # ", self)
         self.sendingUDP = QLabel("UDP Status", self)
+        self.UDPPort = QLabel("UDP Port # ", self)
+        self.overHeat= QLabel("Overheat", self)
+        self.overVoltage = QLabel("Overvoltage", self)
         self.projectName = QLabel("Project Name")
+        self.flightNumber = QLabel("Flight #")
         self.planeName = QLabel("Plane Name")
+        self.nominalPitch = QLabel("Nominal Pitch")
+        self.frequencies = QLabel("Frequencies")
+        self.allScanAngles = QLabel("Elevation Angles")
         self.saveLocation = QLabel("Raw data saved to:")
         self.logLocation = QLabel("Log data saved to:")
+        self.emptyLabel = QLabel("")
 
         self.loopTimer= QLabel("Time since last frame")
         self.totalNumFrames = QLabel("Total frames")
@@ -76,10 +85,6 @@ class controlWindow(QWidget):
         self.logLocationBox = QPlainTextEdit()
         self.logLocationBox.insertPlainText(':../../deployToDesktop/MTPData/Logs')
         self.logLocationBox.insertPlainText('~/Desktop/MTPData/Logs')
-        self.projectNameBox = QPlainTextEdit()
-        self.projectNameBox.insertPlainText('ACCLIP_TEST')
-        self.planeNameBox = QPlainTextEdit()
-        self.planeNameBox.insertPlainText('NGV')
 
 
         self.loopTimerBox = QPlainTextEdit()
@@ -91,16 +96,36 @@ class controlWindow(QWidget):
         self.numFramesSinceLastResetBox = QPlainTextEdit()
         self.numFramesSinceLastResetBox.insertPlainText('0')
         self.numFramesSinceLastResetBox.setOverwriteMode(True)
+
+        # from config.mtph
+        self.planeNameBox = QPlainTextEdit()
+        self.planeNameBox.insertPlainText('NGV')
+        self.nominalPitchBox = QPlainTextEdit()
+        self.nominalPitchBox.insertPlainText('3')
+        # also known as channels
+        self.frequenciesBox = QPlainTextEdit()
+        self.frequenciesBox.insertPlainText('55.51, 56.65, 58.8')
+        self.allScanAnglesBox = QPlainTextEdit()
+        self.allScanAnglesBox.insertPlainText('80.00, 55.00, 42.00, 25.00, 12.00, 0.00, -12.00, -25.00, -42.00, -80.00')
+        # Current elevation - GUI updates before correction applied
         self.elAngleBox = QPlainTextEdit()
         self.elAngleBox.insertPlainText('Target')
         self.elAngleBox.setOverwriteMode(True)
 
-
+        # from/to (flight name) config.yaml
+        self.projectNameBox = QPlainTextEdit()
+        self.projectNameBox.insertPlainText('ACCLIP_TEST')
+        self.flightNumberBox = QPlainTextEdit()
+        self.flightNumberBox.insertPlainText('change')
+        self.IWGPortBox = QPlainTextEdit()
+        self.IWGPortBox.insertPlainText('change')
+        self.UDPPortBox = QPlainTextEdit()
+        self.UDPPortBox.insertPlainText('change')
 
 
 
         # Push Buttons
-        self.reInitProbe = QPushButton("Re-initialize Probe/restart Scanning", self)
+        self.reInitProbe = QPushButton("(Re)start Scanning", self)
         self.reInitProbe.clicked.connect(self.reInitProbeClicked)
         self.scanStatusButton = QPushButton("Stop Scanning", self)
         self.scanStatusButton.clicked.connect(self.scanStatusClicked)
@@ -131,67 +156,103 @@ class controlWindow(QWidget):
         self.probeStatusLED.setPixmap(self.ICON_RED_LED.scaled(40, 40))
         self.scanStatusLED = QLabel('led')
         self.scanStatusLED.setPixmap(self.ICON_RED_LED.scaled(40, 40))
-        self.receivingUDPLED = QLabel('led')
-        self.receivingUDPLED.setPixmap(self.ICON_RED_LED.scaled(40, 40))
+        self.receivingIWGLED = QLabel('led')
+        self.receivingIWGLED.setPixmap(self.ICON_RED_LED.scaled(40, 40))
         self.sendingUDPLED = QLabel('led')
         self.sendingUDPLED.setPixmap(self.ICON_RED_LED.scaled(40, 40))
+        self.overHeatLED = QLabel('led')
+        # Updated at end of each scan
+        self.overHeatLED.setPixmap(self.ICON_GREEN_LED.scaled(40, 40))
+        self.overVoltageLED = QLabel('led')
+        self.overVoltageLED.setPixmap(self.ICON_GREEN_LED.scaled(40, 40))
 
         # Horizontal boxes
         LineProbeStatus = QHBoxLayout()
         LineProbeStatus.addWidget(self.probeStatusLED)
         LineProbeStatus.addWidget(self.probeStatus)
+        LineProbeStatus.addWidget(self.emptyLabel)
         LineProbeStatus.addStretch()
+        LineProbeStatus.addWidget(self.reInitProbe)
+        LineProbeStatus.addWidget(self.scanStatusButton)
 
         LineScanStatus = QHBoxLayout()
         LineScanStatus.addWidget(self.scanStatusLED)
         LineScanStatus.addWidget(self.scanStatus)
+        LineScanStatus.addWidget(self.emptyLabel)
+        LineScanStatus.addStretch()
         LineScanStatus.addWidget(self.loopTimer)
         LineScanStatus.addWidget(self.loopTimerBox)
-        LineScanStatus.addStretch()
+        
+        LineHousekeeping = QHBoxLayout()
+        LineHousekeeping.addWidget(self.overHeatLED)
+        LineHousekeeping.addWidget(self.overHeat)
+        LineHousekeeping.addWidget(self.emptyLabel)
+        LineHousekeeping.addStretch()
+        LineHousekeeping.addWidget(self.overVoltageLED)
+        LineHousekeeping.addWidget(self.overVoltage)
 
         LineNumFrames = QHBoxLayout()
         LineNumFrames.addWidget(self.totalNumFramesBox)
         LineNumFrames.addWidget(self.totalNumFrames)
+        LineNumFrames.addWidget(self.emptyLabel)
+        LineNumFrames.addStretch()
         LineNumFrames.addWidget(self.numFramesSinceLastReset)
         LineNumFrames.addWidget(self.numFramesSinceLastResetBox)
-        LineNumFrames.addStretch()
 
         LineElAngle = QHBoxLayout()
         LineElAngle.addWidget(self.elAngleBox)
         LineElAngle.addWidget(self.elAngle)
+        LineElAngle.addWidget(self.emptyLabel)
         LineElAngle.addStretch()
+        LineElAngle.addWidget(self.allScanAngles)
+        LineElAngle.addWidget(self.allScanAnglesBox)
 
         LineReceivingUDP = QHBoxLayout()
-        LineReceivingUDP.addWidget(self.receivingUDPLED)
-        LineReceivingUDP.addWidget(self.receivingUDP)
+        LineReceivingUDP.addWidget(self.receivingIWGLED)
+        LineReceivingUDP.addWidget(self.receivingIWG)
+        LineReceivingUDP.addWidget(self.emptyLabel)
         LineReceivingUDP.addStretch()
+        LineReceivingUDP.addWidget(self.IWGPort)
+        LineReceivingUDP.addWidget(self.IWGPortBox)
 
         LineSendingUDP = QHBoxLayout()
         LineSendingUDP.addWidget(self.sendingUDPLED)
         LineSendingUDP.addWidget(self.sendingUDP)
+        LineSendingUDP.addWidget(self.emptyLabel)
         LineSendingUDP.addStretch()
+        LineSendingUDP.addWidget(self.UDPPort)
+        LineSendingUDP.addWidget(self.UDPPortBox)
 
         LineRunningLocation = QHBoxLayout()
-        LineRunningLocation.addWidget(self.locationLocal)
-        LineRunningLocation.addWidget(self.locationRemote)
+        #LineRunningLocation.addWidget(self.locationLocal)
+        #LineRunningLocation.addWidget(self.locationRemote)
         LineRunningLocation.addStretch()
 
         LineProjectName = QHBoxLayout()
         LineProjectName.addWidget(self.projectName)
         LineProjectName.addWidget(self.projectNameBox)
+        LineProjectName.addWidget(self.emptyLabel)
+        LineProjectName.addStretch()
+        LineProjectName.addWidget(self.flightNumber)
+        LineProjectName.addWidget(self.flightNumberBox)
         LineProjectName.addStretch()
 
         LinePlaneName = QHBoxLayout()
         LinePlaneName.addWidget(self.planeName)
         LinePlaneName.addWidget(self.planeNameBox)
+        LinePlaneName.addWidget(self.emptyLabel)
+        LinePlaneName.addStretch()
+        LinePlaneName.addWidget(self.nominalPitch)
+        LinePlaneName.addWidget(self.nominalPitchBox)
         LinePlaneName.addStretch()
 
         # vbox
         mainbox = QVBoxLayout()
         mainbox.addLayout(LineProbeStatus)
-        mainbox.addWidget(self.reInitProbe)
+        #mainbox.addWidget(self.reInitProbe)
         mainbox.addLayout(LineScanStatus)
-        mainbox.addWidget(self.scanStatusButton)
+        mainbox.addLayout(LineHousekeeping)
+        #mainbox.addWidget(self.scanStatusButton)
         mainbox.addLayout(LineNumFrames)
         mainbox.addLayout(LineElAngle)
         mainbox.addLayout(LineReceivingUDP)
@@ -201,8 +262,8 @@ class controlWindow(QWidget):
         mainbox.addLayout(LinePlaneName)
         mainbox.addWidget(self.saveLocation)
         mainbox.addWidget(self.saveLocationBox)
-        mainbox.addWidget(self.logLocation)
-        mainbox.addWidget(self.logLocationBox)
+        #mainbox.addWidget(self.logLocation)
+        #mainbox.addWidget(self.logLocationBox)
         mainbox.addWidget(self.shutdownProbe)
         mainbox.addStretch()
 
@@ -301,7 +362,7 @@ class controlWindow(QWidget):
         self.continueCycling = False
         #self.initProbe()
 
-        self.reInitProbe.setText("Re-initialize Probe/Restart Scanning")
+        #self.reInitProbe.setText("Re-initialize Probe/Restart Scanning")
         #self.reInitProbe.setText("Reset Probe")
         #/self.homeScan()
         self.mainloop(self.app, self.serialPort, self.configStore)
@@ -418,7 +479,7 @@ class controlWindow(QWidget):
 
         logging.debug("Main Loop Stopped")
         self.scanStatusLED.setPixmap(self.ICON_RED_LED.scaled(40, 40))
-        if self.packetStore.setData("quitClicked"):
+        if self.packetStore.getData("quitClicked"):
             app.exit(0)
 
     def cycleStats(self, previousTime):
@@ -433,6 +494,7 @@ class controlWindow(QWidget):
         # total frames(m01,m02,pt,Eline,aline,bline, IWG) taken since startup
         totalCycles = self.packetStore.getData("totalCycles") + 1 
         self.packetStore.setData("totalCycles", totalCycles) 
+        logging.info("cycleStats totalCycles/cycleNumber: %s", totalCycles)
         
         # frames taken since last "stop probe"
         self.cyclesSinceLastStop = self.cyclesSinceLastStop + 1
@@ -544,7 +606,9 @@ class controlWindow(QWidget):
 
     def scanStatusClicked(self):
         
+        logging.debug("scanStatusClicked")
         self.continueCycling= False 
+        logging.debug("scanStatusClicked")
         '''
         logging.debug("scanStatusClicked")
         if self.packetStore.getData("isCycling"): 
@@ -835,7 +899,10 @@ class controlWindow(QWidget):
         # min time before it starts shaking/grinding
         # do need the extra checkAgain bit to be sure it gets home 
         # 0.1 has 10 long homescans in 315 scans
-        sleepTime = 0.115 
+        # 0.115 is better, but still 1/hour
+        # updated so sleepTime is halved for most loops, 
+        # but in case of long scan has full time
+        sleepTime = 0.2
         #self.serialPort.sendCommand(home1)
         self.moveCheckAgain(home1, sleepTime, isHome=True)
         logging.debug("home1 after move home") 
@@ -845,6 +912,9 @@ class controlWindow(QWidget):
         logging.debug("home2 after step ") 
         
         # Update GUI
+        # Note that having the clear here masks the 'target, target'
+        # potential long scan indicator
+        self.elAngleBox.clear()
         self.elAngleBox.insertPlainText("Target")
         # sets 'known location' to 0
         self.packetStore.setData("currentClkStep", 0)
@@ -1002,11 +1072,13 @@ class controlWindow(QWidget):
         elAngles = angles[2:numAngles+2]
         logging.debug(elAngles)
         data = ''
+        angleIndex = 0 #1-10
         for angle in elAngles: 
             # update GUI
             self.elAngleBox.clear()
             self.elAngleBox.insertPlainText(str(angle))
-            logging.debug("el angle: %f", angle)
+            angleIndex = angleIndex + 1
+            logging.debug("el angle: %f, ScanAngleNumber: %f", angle, angleIndex)
             self.app.processEvents()
 
             # packetStore pitchCorrect should be button
@@ -1016,10 +1088,12 @@ class controlWindow(QWidget):
             moveToCommand = self.mover.getAngle(angle, zel)
             #self.serialPort.sendCommand(str.encode(moveToCommand))
             if angle == elAngles[1]:
-                sleepTime = 0.06
+                sleepTime = 0.12
                 time.sleep(0.002)
             else:
-                sleepTime = 0.000
+                #0.01 has many fewer spikes, but average takes too long
+                #0.0045 more spikes, preferred for timing ... 
+                sleepTime = 0.0075
             self.moveCheckAgain(str.encode(moveToCommand), sleepTime, isHome=False)
 
             #logging.debug("Bline find the @: %r", echo)
@@ -1060,8 +1134,10 @@ class controlWindow(QWidget):
 
         # Too soon and status is always 6: homescan needs longer
         i = 0
-        while i < 4:
-            time.sleep(sleepTime)
+        maxLoops = 9
+        while i < maxLoops:
+            i = i + 1
+            time.sleep(sleepTime/2)
             self.serialPort.sendCommand(self.commandDict.getCommand('status'))
             # need readUntilFound to not exit on seeing an s here
             # but also need to keep isHome in this scope as True
@@ -1085,7 +1161,14 @@ class controlWindow(QWidget):
                                 self.commandDict.getCommand('count2'))
                         logging.debug("status 7: sending integrate/read to fix")
                     elif statusNum == '6':
-                        if isHome:
+                        #i = i + 1
+                        time.sleep(sleepTime/2)
+                        if i < maxLoops/2:
+                            # Longer wait to prevent long homescans,
+                            # malset channels (eg. ST:04\r\nS\r\nST:00)
+                            time.sleep(sleepTime/2)
+                            logging.debug("moveCheckAgain, i<maxLoops/2, i = %r, mL/2 = %r", i, maxLoops/2)
+                        elif isHome:
                             # Status 6 needs the command (j0f0) sent again
                             self.moveCheckAgain(sentCommand, sleepTime, isHome)
                             logging.debug("moveCheckAgain, isHome %s", isHome)
@@ -1093,7 +1176,6 @@ class controlWindow(QWidget):
                             # Status 6 with Move commands needs a wait
                             # do the status check again
                             logging.debug('moveCheckAgain T found, status 6')
-                            i = i + 1
                     else:
                         logging.debug("moveCheckAgain:status not 4,6,7: %s",
                                 statusNum)
@@ -1103,7 +1185,7 @@ class controlWindow(QWidget):
             else:
                 # send status again
                 logging.debug("moveCheckAgain: T not found")
-                i = i + 1
+                #i = i + 1
         logging.debug("moveCheckAgain timeout %s ", status)
 
 
@@ -1183,7 +1265,8 @@ class controlWindow(QWidget):
             # tune echos received in tune function
             logging.debug("Frequency/channel:"+ str(freq))
             self.tune(freq, isFirst)
-            isFirst = False
+            # other channels than the first need resetting ocasionally. 
+            # isFirst = False
             # clear echos 
             #dataLine = self.quickRead(25) # avg is ~9, max is currently 15
             self.getIntegrateFromProbe()
@@ -1197,7 +1280,9 @@ class controlWindow(QWidget):
                 self.serialPort.sendCommand((self.commandDict.getCommand("count2")))
                 echo, sFlag, foundIndex = self.readUntilFound(b'R28:', 10, 20, isHome=False)
                 logging.debug("reading R echo %r", echo)
-            
+
+            logging.debug("Echo [foundIndex] = %r, echo[foundIndex + 4] = %r", echo[foundIndex], echo[foundIndex+4])
+            # above to get rid of this extra find when probe loop time is an issue again
             findSemicolon = echo.data().find(b'8')
             #logging.debug("r value data: %s, %s, %s",echo[findSemicolon], echo[findSemicolon+1], echo[findSemicolon+6])
             datum = echo[findSemicolon+2: findSemicolon+8] # generally 4:10, ocasionally not. up to, not include last val
@@ -1297,14 +1382,18 @@ class controlWindow(QWidget):
         # catch tune echos
         # official response is a status of 4
         echo, sFlag, foundIndex = self.readUntilFound(b'C', 100, 20, isHome=False)
+        # wait for tune status to be 4
+        # see comment in waitForStatus for frustration
+        isFour = self.waitForStatus(b'4')
         
         # if it's the first channel, resend C
         # that seems to fail with status 0
-        if isFirst:
+        count = 0
+        while not(isFour) and count < 3:
+            count = count + 1 
             self.serialPort.sendCommand(str.encode(str(mode) + '{:.5}'.format(str(chan)) +"\r\n"))
-        # wait for tune status to be 4
-        # see comment in waitForStatus for frustration
-        self.waitForStatus(b'4')
+            echo, sFlag, foundIndex = self.readUntilFound(b'C', 10, 8, isHome=False)
+            isFour = self.waitForStatus(b'4')
 
     def getFlightNumber(self):
         # Dialog for setting flight number
@@ -1385,7 +1474,8 @@ def handle_error(error):
 
 def main():
     #    signal.signal(signal.SIGINT, ctrl_c)
-    logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',filename="MTPCtrl.log",level=logging.DEBUG)
+    logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
+            filename="MTPControl.log", level=logging.DEBUG)
     logger = logging.getLogger(__name__)
     logging.warning("warning")
     app = QApplication(sys.argv)
