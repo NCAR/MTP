@@ -1134,7 +1134,7 @@ class controlWindow(QWidget):
 
         # Too soon and status is always 6: homescan needs longer
         i = 0
-        maxLoops = 9
+        maxLoops = 12
         while i < maxLoops:
             i = i + 1
             time.sleep(sleepTime/2)
