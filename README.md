@@ -1,8 +1,4 @@
 ```
-Peter's Test of Github
-```
-
-```
 CAUTION: When running the MTP instrument, if Tsynth under the Engineering tab gets to 50 degreesC, the
 probe needs to be shutdown to avoid overheating
 ```
