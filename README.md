@@ -104,7 +104,8 @@ Information on operating the MTP, and other documentation, can be found on the (
  ```
  > python3 MTPviewer.py
  ```
-
+** NOTE that on a MAC you will use python3, but on Windows it's python.exe (no 3) **
+ 
 ## To run in test mode, generate fake "real-time" data by running
  * cd src/emulator
  * On Windows10:
