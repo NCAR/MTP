@@ -107,21 +107,24 @@ Information on operating the MTP, and other documentation, can be found on the (
 ** NOTE that on a MAC you will use python3, but on Windows it's python.exe (no 3) **
  
 ## To run in test mode, generate fake "real-time" data by running
- * cd src/emulator
+ 
  * On Windows10:
  ```
  * Click on MTPemulator icon on the desktop. If this is not available:
     > conda activate
     > cd C:\Users\lroot\MTP\src\emulator
     > C:\Users\lroot\Miniconda3\python.exe snd_MTP_udp.py
+
  * Click on IWGemulator icon on the desktop. If this is not available:
     > git clone http://github.com/NCAR/aircraft_nc2iwg1
     > conda activate
-    > C:\Users\lroot\Miniconda3\python.exe C:\Users\lroot\aircraft_nc2iwg1\nc2iwg1.py -i DEEPWAVERF01.nc -s 1 -u True -er True
+    > cd C:\Users\lroot\MTP\Data\NGV\DEEPWAVE\NG
+    > C:\Users\lroot\Miniconda3\python.exe C:\Users\lroot\aircraft_nc2iwg1\nc2iwg1.py -s 1 -u True -er True DEEPWAVERF01.nc
 
  ```
  * On a MAC:
  ```
+> cd MTP/src/emulator
 > python3 snd_MTP_udp.py
 > ./snd_IWG.sh  (need to install http://github.com/NCAR/aircraft_nc2iwg1)
 ```
