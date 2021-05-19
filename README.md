@@ -112,6 +112,7 @@ Information on operating the MTP, and other documentation, can be found on the (
  ```
  * Click on MTPemulator icon on the desktop. If this is not available:
     > conda activate
+    > cd C:\Users\lroot\MTP\src\emulator
     > C:\Users\lroot\Miniconda3\python.exe snd_MTP_udp.py
  * Click on IWGemulator icon on the desktop. If this is not available:
     > git clone http://github.com/NCAR/aircraft_nc2iwg1
