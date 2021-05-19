@@ -136,7 +136,8 @@ Information on operating the MTP, and other documentation, can be found on the (
 ## Developer Notes
 
 For complete documentation on each class/method, useful if you need to modify the code, use pydoc to extract embedded documentation from each file:
-
+ 
+ * On a MAC: (Change python3 to python for Windows)
 ```
 > cd src
 > python3 -m pydoc <filename>
@@ -145,6 +146,7 @@ e.g. python3 -m pydoc lib/rwget.py
 
 To manually run all unittests:
 
+* On a MAC: (Change python3 to python for Windows) 
 ```
 > cd src
 > python3 -m unittest discover -s ../tests -v
