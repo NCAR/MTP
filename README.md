@@ -128,6 +128,10 @@ Information on operating the MTP, and other documentation, can be found on the (
 > python3 snd_MTP_udp.py
 > ./snd_IWG.sh  (need to install http://github.com/NCAR/aircraft_nc2iwg1)
 ```
+* Then run the GUI in real-time mode, using the platform-specific python call, e.g. on Windows:
+ ```
+ >python MTPviewer.py
+ ```
 
 ## Developer Notes
 
