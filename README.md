@@ -48,14 +48,14 @@ Use miniconda to install all needed packages:
  * Install packages
 ```
    > conda install -c conda-forge metpy
-     - Drags in pyqt5 and cartopy. If it doesn't...
+     - Drags in pyqt5 and cartopy. If it doesn't, install pyqt directly...
    > conda install -c conda-forge pyqt
    > conda install -c conda-forge pyyaml
    > conda install netcdf4
 ```
 If the packages are not available via the conda-forge channel, you can search for alternative channels at https://anaconda.org
 
-Change you environment variable and add a PYTHONPATH that points to netCDF installation (You will also the path to EOL-Python to this env var below.)
+Change you environment variable and add a PYTHONPATH that points to the netCDF installation (You will also add the path to EOL-Python to this env var below.)
 
 Then install Git (if not already there) and download MTP:
  * https://git-scm.com/ -> Download latest per automatic OS detection. Run .exe file to install. I used default settings as suggested by installer, except that I asked to install a desktop icon for “Git Bash”
@@ -66,8 +66,16 @@ Then install Git (if not already there) and download MTP:
 ```
  * Copy bat files from windows10 dir to Desktop
  * Install the EOL-Python packages per instructions in https://github.com/NCAR/EOL-Python
+
+Check your PYTHONPATH
+```
+   > echo %PYTHONPATH%
+```
+It should contain a path to EOL-Python and a path to the anaconda site-packages.
  
 ## To operate the MTP from Windows10
+
+You only need to do this if you will be connecting your computer directly to the MTP instrument in the lab or on the aircraft. If you are only running MTPviewer to monitor collected data, you don't need to install the driver.
 
  * Install the driver for the USOPTL4 USB to serial converter
  * Download the driver from https://support.advantech.com/support/DownloadSRDetail_New.aspx?SR_ID=1-HIPU-30&Doc_Source=Download 
@@ -82,7 +90,7 @@ Then install Git (if not already there) and download MTP:
 Information on operating the MTP, and other documentation, can be found on the (UCAR SEW MTP wiki)[https://wiki.ucar.edu/display/SEW/MicrowaveTemperatureProfiler]
 
 ## To run this code:
- * Copy project ascii_parms file from proj dir to config/
+ * In order to parse the IWG packet on the aircraft, copy project ascii_parms file from proj dir to config/
  * Create/update config/<project>.yml
  * cd src
  * On Windows10:
@@ -96,42 +104,56 @@ Information on operating the MTP, and other documentation, can be found on the (
  ```
  > python3 MTPviewer.py
  ```
-
+** NOTE that on a MAC you will use python3, but on Windows it's python.exe (no 3) **
+ 
 ## To run in test mode, generate fake "real-time" data by running
- * cd src/emulator
+ 
  * On Windows10:
  ```
  * Click on MTPemulator icon on the desktop. If this is not available:
     > conda activate
+    > cd C:\Users\lroot\MTP\src\emulator
     > C:\Users\lroot\Miniconda3\python.exe snd_MTP_udp.py
+
  * Click on IWGemulator icon on the desktop. If this is not available:
     > git clone http://github.com/NCAR/aircraft_nc2iwg1
     > conda activate
-    > C:\Users\lroot\Miniconda3\python.exe C:\Users\lroot\aircraft_nc2iwg1\nc2iwg1.py -i DEEPWAVERF01.nc -s 1 -u True -er True
+    > cd C:\Users\lroot\MTP\Data\NGV\DEEPWAVE\NG
+    > C:\Users\lroot\Miniconda3\python.exe C:\Users\lroot\aircraft_nc2iwg1\nc2iwg1.py -s 1 -u True -er True DEEPWAVERF01.nc
 
  ```
  * On a MAC:
  ```
+> cd MTP/src/emulator
 > python3 snd_MTP_udp.py
 > ./snd_IWG.sh  (need to install http://github.com/NCAR/aircraft_nc2iwg1)
 ```
+* Then run the GUI in real-time mode, using the platform-specific python call, e.g. on Windows:
+ ```
+ >python MTPviewer.py
+ ```
 
 ## Developer Notes
 
-For complete documentation on each class/method, useful if you need to modify the code, use pydoc to extract embedded documentation from each file:
+### Documentation
 
+For complete documentation on each class/method, useful if you need to modify the code, use pydoc to extract embedded documentation from each file:
+ 
+ * On a MAC: (Change python3 to python for Windows)
 ```
 > cd src
 > python3 -m pydoc <filename>
 e.g. python3 -m pydoc lib/rwget.py
 ```
 
-To manually run all unittests:
+### Unit tests
 
+If the unittests are all run sequentially from the same command (python3 -m unittest discover -s ../tests -v), earlier tests seem to leave the unittest code in a state that causes subsequent tests to fail. An attempt was made to get each test to clean up after itself by adding setUp and tearDown functions. But Python's unittest holds on to all sorts of memory until the entire test suite has been run. For a good explanation see: https://stackoverflow.com/questions/26915115/unittest-teardown-del-all-attributes/35001389
+ 
+To get around this, a shell script has been written that breaks up the test suite into smaller chunks. To manually run all unittests, use this script:
+
+* On a MAC: (Change python3 to python for Windows) 
 ```
 > cd src
-> python3 -m unittest discover -s ../tests -v
+> ./run_tests.sh
 ```
-
-If you run into memory issues (unexplainable crashes are a good indicator), use
-run_tests.sh under the src dir.
