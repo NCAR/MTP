@@ -46,6 +46,6 @@ class decodeM02():
                         RR = (1 / (cnt / 4096)) - 1
                         Rt = 34800 * RR
                         T = (1 / (self.A + self.B * numpy.log(Rt) +
-                                  self.C * numpy.log(Rt)**3) - 273.16)
+                                  self.C * numpy.log(Rt)**3) - 273.15)
 
             self.reader.setCalcVal('M02line', var, T, 'temperature')
