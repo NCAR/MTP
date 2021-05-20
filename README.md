@@ -135,6 +135,8 @@ Information on operating the MTP, and other documentation, can be found on the (
 
 ## Developer Notes
 
+### Documentation
+
 For complete documentation on each class/method, useful if you need to modify the code, use pydoc to extract embedded documentation from each file:
  
  * On a MAC: (Change python3 to python for Windows)
@@ -144,13 +146,14 @@ For complete documentation on each class/method, useful if you need to modify th
 e.g. python3 -m pydoc lib/rwget.py
 ```
 
-To manually run all unittests:
+### Unit tests
+
+If the unittests are all run sequentially from the same command (python3 -m unittest discover -s ../tests -v), earlier tests seem to leave the unittest code in a state that causes subsequent tests to fail. An attempt was made to get each test to clean up after itself by adding setUp and tearDown functions. But Python's unittest holds on to all sorts of memory until the entire test suite has been run. For a good explanation see: https://stackoverflow.com/questions/26915115/unittest-teardown-del-all-attributes/35001389
+ 
+To get around this, a shell script has been written that breaks up the test suite into smaller chunks. To manually run all unittests, use this script:
 
 * On a MAC: (Change python3 to python for Windows) 
 ```
 > cd src
-> python3 -m unittest discover -s ../tests -v
+> ./run_tests.sh
 ```
-
-If you run into memory issues (unexplainable crashes are a good indicator), use
-run_tests.sh under the src dir.
