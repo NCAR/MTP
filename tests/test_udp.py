@@ -225,6 +225,6 @@ class TESTparseAsciiPacket(unittest.TestCase):
                          '020582')
         self.assertEqual(self.rawscan['Eline']['values']['TCNT']['val'][5],
                          '020097')
-    
+
     def tearDown(self):
         logger.delHandler()
