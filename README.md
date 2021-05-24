@@ -157,3 +157,8 @@ To get around this, a shell script has been written that breaks up the test suit
 > cd src
 > ./run_tests.sh
 ```
+
+* On a WINDOWS10:
+```
+> powershell -noexit "& ""C:\...\MTP\tests\run_tests_Windows.ps1"""
+```
