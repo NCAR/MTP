@@ -39,7 +39,7 @@ class doUDP(object):
         self.sock_read.bind(self.udp_ip, self.udp_read_port,QUdpSocket.ReuseAddressHint)
         # apparently this init is called each time anything in
         # the class is, causing it to flash between green and yellow
-        #self.parent.receivingUDPLED.setPixmap(self.parent.ICON_YELLOW_LED.scaled(40,40))
+        #self.parent.receivingIWGLED.setPixmap(self.parent.ICON_YELLOW_LED.scaled(40,40))
 
         # initialize the udp writers 
         # Binding is unnecessary and counterproductive to write ports
@@ -106,7 +106,7 @@ class doUDP(object):
 
 
         # if led isn't green, set it so: red led logic later
-        self.parent.receivingUDPLED.setPixmap(self.parent.ICON_GREEN_LED.scaled(40,40))
+        self.parent.receivingIWGLED.setPixmap(self.parent.ICON_GREEN_LED.scaled(40,40))
         # Ensures that events will be processed at 
         # least once a second
         # doesn't because this is whole thing is an event to be queued 
@@ -121,7 +121,7 @@ class doUDP(object):
         # if IWG timer manages to timeout, then we haven't recieved 
         # an IWG packet in at least 5 s, sets IWG led to red
         # on receipt of IWG packet, will turn green
-        self.parent.receivingUDPLED.setPixmap(
+        self.parent.receivingIWGLED.setPixmap(
                 self.parent.ICON_RED_LED.scaled(40,40))
         
     def sortIWG(self):
