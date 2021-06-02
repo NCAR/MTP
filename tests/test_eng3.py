@@ -74,16 +74,17 @@ class TESTeng3(unittest.TestCase):
         self.viewer.client.reader.setRawscan(self.viewer.viewScanIndex)
         # Update data displayed to be data from record 47
         self.viewer.updateDisplay()
+        self.maxDiff = None
         self.assertEqual(self.viewer.eng3.toPlainText(),
                          "Channel\tCounts  Value\n" +
-                         "Acceler\t2061  +01.10 g\n" +
-                         "T Data\t1316  +39.51 C\n" +
-                         "T Motor\t2188  +18.51 C\n" +
-                         "T Pod Air\t2743  +06.16 C\n" +
-                         "T Scan\t2697  +07.21 C\n" +
-                         "T Pwr Sup\t1591  +32.27 C\n" +
+                         "Acceler\t2006  +01.23 g\n" +
+                         "T Data\t1326  +39.24 C\n" +
+                         "T Motor\t2269  +16.74 C\n" +
+                         "T Pod Air\t2854  +03.56 C\n" +
+                         "T Scan\t2829  +04.15 C\n" +
+                         "T Pwr Sup\t1599  +32.08 C\n" +
                          "T N/C\t4095  N/A\n" +
-                         "T Synth\t1535  +33.67 C")
+                         "T Synth\t1544  +33.46 C")
 
         # Send an MTP packet to the parser and confirm it gets parsed
         # correctly.

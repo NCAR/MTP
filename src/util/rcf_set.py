@@ -191,6 +191,11 @@ class RetrievalCoefficientFileSet():
 
         thisRCFIndex = 0  # Which RCF index are we looking at?
 
+        # Initialize an empty array that will hold
+        # RCF indexes and that index's corresponding lnP.
+        RCFIndex_lnP_Array = [[-1, 100000000000]
+                              for i in range(len(self._RCFs))]
+
         # Step through the vector of Retrieval Coefficient files (aka
         # templates) to obtain the best match for the scan at the input
         # Altitude
@@ -234,16 +239,44 @@ class RetrievalCoefficientFileSet():
             thislnP = 8 * math.sqrt(RCFBTWeightedMean**2 + RCFBTStdDev**2) / \
                 RCFit.getNUM_BRT_TEMPS()
 
-            # BestlnP is the sum of the ln of Probabilities for the BestRCIndex
-            # BestRCIndex is the index of "best" template (so far)
-            # What should BestlnP, BestRCIndex default to?
-            if (RCFit == self._RCFs[0]):
-                BestlnP = thislnP
-                BestRCIndex = 0
-            elif (thislnP < BestlnP):
-                BestlnP = thislnP
-                BestRCIndex = thisRCFIndex
+            # If this is the first item:
+            if (RCFIndex_lnP_Array[0][0] == -1):
+                # Just make the first space the current values
+                RCFIndex_lnP_Array[0] = list([thisRCFIndex, thislnP])
+            # Otherwise, sort the current values into the correct spot
+            # (Method similar to bubble sort)
+            else:
+                temp = list([thisRCFIndex, thislnP])
+                # Every value is going to be inserted somewhere, so insert
+                # at the beginning and swap up until sorted
+                for j in range(len(RCFIndex_lnP_Array) - 1):
+                    if (temp[1] < RCFIndex_lnP_Array[j][1]):
+                        i = j
+                        while ((temp[1] < RCFIndex_lnP_Array[i][1])
+                                and (i < len(RCFIndex_lnP_Array) - 1)):
+                            temp2 = RCFIndex_lnP_Array[i]
+                            RCFIndex_lnP_Array[i] = temp
+                            temp = temp2
+                            i += 1
+                RCFIndex_lnP_Array[i] = temp
             thisRCFIndex += 1
+
+        # Strip the lnP values and make a new array now that
+        # lnP values don't need to be saved
+        RCFIndexArray = []
+        for i in range(len(RCFIndex_lnP_Array)):
+            RCFIndexArray.append(RCFIndex_lnP_Array[i][0])
+
+        # Access the values that are the best from the first
+        # element in the array
+        BestRCIndex = RCFIndex_lnP_Array[0][0]
+        BestlnP = RCFIndex_lnP_Array[0][1]
+
+        # Replace all the first elements of RCFIndex_lnP_Arrray
+        # with the RCFId instead of RCFIndex
+        for i in range(len(RCFIndex_lnP_Array)):
+            RCFIndex_lnP_Array[i][0] = \
+                self._RCFs[RCFIndex_lnP_Array[i][0]].getId()
 
         RC4R = RC_Set_4Retrieval
         RC4R['SumLnProb'] = BestlnP
@@ -251,4 +284,46 @@ class RetrievalCoefficientFileSet():
         RC4R['RCFId'] = self._RCFs[BestRCIndex].getId()
         RC4R['RCFIndex'] = BestRCIndex
         RC4R['FL_RCs'] = self._RCFs[BestRCIndex].getRCAvgWt(PAltKm)
+        RC4R['RCFArray'] = RCFIndex_lnP_Array
         return(RC4R)
+
+    def getWeightedRCSet(self, RC4R, position, PAltKm):
+        """
+        Get the data corresponding to a new RCF given an existing
+        RCF and a position. An existing RCF is necessary because
+        the RC_Set_4Retrieval structure includes the array RCFIndexArray
+        which contains the indexes of other RCFs.
+
+        The RC4R stands for RC_Set_4Retrieval, which contains the
+        RCFIndexArray that will be accessed for this function.
+
+        Position corresponds to the array index (not to be confused
+        with RCF index, which is a number that is given to each RCF
+        in order of their listing in the file).
+
+        PAltKm is the altitude of the aircraft in km at the time that the scan
+        was taken.
+
+        Returns a new RC_Set_4Retrieval with the same RCFIndexArray
+        from before, but new values for everything else.
+        """
+        indexArray = RC4R['RCFArray']
+        RCFId = indexArray[position][0]
+        SumLnProb = indexArray[position][1]
+
+        newRC4R = RC_Set_4Retrieval.copy()
+
+        RCFIndex = 0
+        for RCFit in self._RCFs:
+            if RCFit.getId() == RCFId:
+                break
+            RCFIndex += 1
+
+        newRC4R['SumLnProb'] = SumLnProb
+        newRC4R['RCFFileName'] = self.getRCFbyId(RCFId).getFileName()
+        newRC4R['RCFId'] = RCFId
+        newRC4R['RCFIndex'] = RCFIndex
+        newRC4R['FL_RCs'] = self.getRCFbyId(RCFId).getRCAvgWt(PAltKm)
+        newRC4R['RCFArray'] = indexArray
+
+        return newRC4R
