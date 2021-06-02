@@ -88,7 +88,6 @@ class readMTP:
                             "Try loading some raw data")
             self.rawscan = None
             raise
-
         return(True)
 
     def resetRawscan(self):
@@ -547,7 +546,7 @@ class readMTP:
 
             # If get here, went through entire file without finding ATP data
             # so raise exception
-            raise
+            raise Exception()
 
     def setCalcVal(self, linetype, var, value, calctype):
         """

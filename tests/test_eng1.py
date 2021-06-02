@@ -77,13 +77,13 @@ class TESTeng1(unittest.TestCase):
         self.assertEqual(self.viewer.eng1.toPlainText(),
                          "Channel\tCounts  Ohms  Temp  \n" +
                          "Rref 350\t02174  350.00  \n" +
-                         "Target 1\t13808  586.81  +44.64\n" +
-                         "Target 2\t13807  586.79  +44.63\n" +
-                         "Window\t06689  441.90  -29.63\n" +
-                         "Mixer\t13383  578.16  +40.16\n" +
-                         "Dblr Amp\t13331  577.10  +39.61\n" +
-                         "Noise D.\t13215  574.74  +38.39\n" +
-                         "Rref 600\t14456  600.00  ")
+                         "Target 1\t13811  586.79  +44.63\n" +
+                         "Target 2\t13799  586.55  +44.50\n" +
+                         "Window\t06056  428.99  -36.17\n" +
+                         "Mixer\t13336  577.13  +39.62\n" +
+                         "Dblr Amp\t13360  577.62  +39.88\n" +
+                         "Noise D.\t13166  573.67  +37.84\n" +
+                         "Rref 600\t14460  600.00  ")
 
         # Send an MTP packet to the parser and confirm it gets parsed
         # correctly

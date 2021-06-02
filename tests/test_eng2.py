@@ -77,12 +77,12 @@ class TESTeng2(unittest.TestCase):
         self.assertEqual(self.viewer.eng2.toPlainText(),
                          "Channel\tCounts  Volts\n" +
                          "-8V  PS\t2928  -07.99V\n" +
-                         "Video V.\t2061  +02.06V\n" +
+                         "Video V.\t2049  +02.05V\n" +
                          "+8V  PS\t2899  +08.06V\n" +
-                         "+24V Step\t3082  +24.01V\n" +
-                         "+15V Syn\t1923  +14.98V\n" +
-                         "+15V PS\t2922  +14.90V\n" +
-                         "VCC  PS\t2430  +04.86V\n" +
+                         "+24V Step\t3077  +23.97V\n" +
+                         "+15V Syn\t1930  +15.03V\n" +
+                         "+15V PS\t2929  +14.94V\n" +
+                         "VCC  PS\t2434  +04.87V\n" +
                          "-15V PS\t2944  -15.01V")
 
         # Send an MTP packet to the parser and confirm it gets parsed
