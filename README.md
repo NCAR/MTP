@@ -130,7 +130,7 @@ Information on operating the MTP, and other documentation, can be found on the (
 ```
 * Then run the GUI in real-time mode, using the platform-specific python call, e.g. on Windows:
 ```
->python MTPiewer.py
+>python MTPviewer.py
 ```
 
 ## Developer Notes
