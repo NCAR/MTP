@@ -66,7 +66,7 @@ Then install Git (if not already there) and download MTP:
 ```
  * Copy bat files from windows10 dir to Desktop
  * Install the EOL-Python packages per instructions in https://github.com/NCAR/EOL-Python
- 
+
 Check your PYTHONPATH
 ```
     > echo %PYTHONPATH%
@@ -104,7 +104,7 @@ Information on operating the MTP, and other documentation, can be found on the (
  ```
  > python3 MTPviewer.py
  ```
- ** NOTE that on a MAC you will use python3, but on Windows it's python.exe (no 3) **
+** NOTE that on a MAC you will use python3, but on Windows it's python.exe (no 3) **
 
 ## To run in test mode, generate fake "real-time" data by running
 
@@ -118,7 +118,7 @@ Information on operating the MTP, and other documentation, can be found on the (
  * Click on IWGemulator icon on the desktop. If this is not available:
     > git clone http://github.com/NCAR/aircraft_nc2iwg1
     > conda activate
-    > cd C:\Useters\lroot\MTP\Data\NGV\DEEPWAVE\NG
+    > cd C:\Users\lroot\MTP\Data\NGV\DEEPWAVE\NG
     > C:\Users\lroot\Miniconda3\python.exe C:\Users\lroot\aircraft_nc2iwg1\nc2iwg1.py -s 1 -u True -er True DEEPWAVERF01.nc
 
  ```
@@ -130,7 +130,7 @@ Information on operating the MTP, and other documentation, can be found on the (
 ```
 * Then run the GUI in real-time mode, using the platform-specific python call, e.g. on Windows:
 ```
->python MTPViewer.py
+>python MTPiewer.py
 ```
 
 ## Developer Notes
