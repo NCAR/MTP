@@ -1,7 +1,8 @@
-# This is a powershell script that runs all of the unittests (as of 5/20/21) individually to avoid memory errors
-# To run it, do & C:file\location\run_tests_Windows.ps1
+# This is a powershell script that runs all of the unittests (as of 5/20/21) individually to avoid memory errors.
+# To run it, do & .\run_tests_Windows.ps1 inside the tests folder (being in the src folder and referencing this file in the tests folder via ..\tests\run_tests_Windows.ps1 also works.)
 # This may not be a complete list if more tests are added later!
 
+Set-Location ..\src
 python -m unittest discover -s ..\tests -v -p test_1messageHandler.py
 python -m unittest discover -s ..\tests -v -p test_calcTB.py
 python -m unittest discover -s ..\tests -v -p test_eng1.py
