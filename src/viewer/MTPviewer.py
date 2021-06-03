@@ -187,7 +187,6 @@ class MTPviewer(QMainWindow):
         self.curtain.clear()
         self.curtain.draw()
         self.RCF1.setPlainText('')
-        self.RCF2.setPlainText('')
         self.MRI.setPlainText('')
         self.filedata.setPlainText("MTP data block display")
         self.iwg.setPlainText("IWG1,YYYYMMDDTHHMMSS,-xx.xxxx,xxx.xxx,")
@@ -373,10 +372,10 @@ class MTPviewer(QMainWindow):
 
         self.layout.addWidget(QLabel("RCF2"), 3, 7, 1, 1,
                               alignment=Qt.AlignRight)
-        self.RCF2 = QPlainTextEdit("RCF2#")
-        self.RCF2.setFixedHeight(25)
-        self.RCF2.setReadOnly(True)
-        self.layout.addWidget(self.RCF2, 3, 8, 1, 1)
+        RCF2 = QPlainTextEdit("RCF2#")
+        RCF2.setFixedHeight(25)
+        RCF2.setReadOnly(True)
+        self.layout.addWidget(RCF2, 3, 8, 1, 1)
 
         bad = QPushButton("Mark Bad Scan")
         bad.setFixedHeight(25)
@@ -556,7 +555,6 @@ class MTPviewer(QMainWindow):
             self.profile.configure()  # Layout the profile plot
             self.profile.draw()
             self.RCF1.setPlainText('')  # Clear display of last RCF used
-            self.RCF2.setPlainText('')  # Clear display of last RCF used
             return()
 
         # ---------- Retrieval succeeded ----------
@@ -564,10 +562,6 @@ class MTPviewer(QMainWindow):
         # Does RCF file always start with NRC? I think it stands for:
         # "Ncar gv RCf file"
         self.RCF1.setPlainText(self.BestWtdRCSet['RCFId'].replace('NRC', ''))
-
-        # Get next best value to be used for RCF2
-        RCF2Id = str(self.BestWtdRCSet['RCFArray'][1][0])
-        self.RCF2.setPlainText(RCF2Id.replace('NRC', ''))
 
         # Display MRI
         self.MRI.setPlainText('%.3f' % (self.ATP['RCFMRIndex']['val']))
@@ -882,7 +876,7 @@ class MTPviewer(QMainWindow):
 
         if self.index.text() == "":
             # If text field is empty, return without doing anything
-            return
+            return()
         elif self.index.text() == str(0):
             # If user entered index of zero assume they meant 1. This
             # interface is for scientists, not SEs, so the interface shows

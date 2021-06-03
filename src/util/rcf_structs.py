@@ -69,14 +69,6 @@ RC_Set_4Retrieval = {
     'RCFFileName': "",
     'RCFId': "",
     'SumLnProb': numpy.nan,
-
-    # Holds the index of whichever RCF is currently being accessed
     'RCFIndex': numpy.nan,
     'FL_RCs': "",  # Will hold an RCF_FL dictionary
-
-    # Will hold a sorted array of 2-entry arrays where the first entry is
-    # the RCFId and the second entry is that RCF's SumLnProb.
-    # For example, RCFArray[0][0] gives the RCFId corresponding
-    # to the best fit, RCFArray[1][0] gives the second best fit, etc.
-    'RCFArray': [],
 }
