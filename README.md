@@ -155,10 +155,15 @@ To get around this, a shell script has been written that breaks up the test suit
 * On a MAC: (Change python3 to python for Windows) 
 ```
 > cd src
-> ./run_tests.sh
+OR
+> cd tests
+> ../tests/run_tests.sh
 ```
 
 * On a WINDOWS10:
 ```
-> powershell -noexit "& ""C:\...\MTP\tests\run_tests_Windows.ps1"""
+> cd src
+OR
+> cd tests
+> powershell -noexit "& ""..\tests\run_tests_Windows.ps1"""
 ```
