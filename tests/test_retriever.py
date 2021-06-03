@@ -20,11 +20,11 @@
 ###############################################################################
 import numpy
 import unittest
+import os
 import logging
 from io import StringIO
 from util.retriever import Retriever
 from EOLpython.Qlogger.messageHandler import QLogger as logger
-
 
 class TESTretriever(unittest.TestCase):
 
