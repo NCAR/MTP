@@ -21,10 +21,13 @@ import os
 import copy
 import numpy
 import unittest
+import logging
+from io import StringIO
 from unittest.mock import mock_open, patch
 from util.readmtp import readMTP
 from lib.rootdir import getrootdir
 from pathlib import Path
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
 class TESTreadmtp(unittest.TestCase):
@@ -52,6 +55,18 @@ class TESTreadmtp(unittest.TestCase):
         self.Eline = "E 020890 022318 022138 019200 020582 020097"
 
         self.mtp = readMTP()
+
+        self.maxDiff = None  # See entire diff when asserts fail
+
+        # Set environment var to indicate we are in testing mode
+        os.environ["TEST_FLAG"] = "true"
+
+        # For testing, we want to capture the log messages in a buffer so we
+        # can compare the log output to what we expect.
+        self.stream = StringIO()  # Set output stream to buffer
+
+        # Instantiate a logger
+        self.log = logger.initLogger(self.stream, logging.INFO)
 
     def test_parseLine_Aline(self):
         """ Test correct parsing of A line """
@@ -436,3 +451,8 @@ class TESTreadmtp(unittest.TestCase):
         except Exception:
             # Should not get here
             self.fail("test raised Exception when it shouldn't")
+
+    def tearDown(self):
+        logger.delHandler()
+        if "TEST_FLAG" in os.environ:
+            del os.environ['TEST_FLAG']
