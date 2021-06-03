@@ -20,8 +20,11 @@
 ###############################################################################
 import numpy
 import unittest
+import os
+import logging
+from io import StringIO
 from util.retriever import Retriever
-
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 class TESTretriever(unittest.TestCase):
 
@@ -40,6 +43,18 @@ class TESTretriever(unittest.TestCase):
                         250.238, 251.438, 243.099, 244.25, 245.044, 245.639,
                         246.79, 248.06, 248.893, 249.608, 250.679, 251.433]
         self.ACAltKm = 8.206
+
+        self.maxDiff = None  # See entire diff when asserts fail
+
+        # Set environment var to indicate we are in testing mode
+        os.environ["TEST_FLAG"] = "true"
+
+        # For testing, we want to capture the log messages in a buffer so we
+        # can compare the log output to what we expect.
+        self.stream = StringIO()  # Set output stream to buffer
+
+        # Instantiate a logger
+        self.log = logger.initLogger(self.stream, logging.INFO)
 
     def test_getRCSet(self):
         """ Test creation of a functioning retrieval_coefficient_fileset """
@@ -119,3 +134,8 @@ class TESTretriever(unittest.TestCase):
 
         # Should only read in the RCF dir once, so check than len still just 1
         self.assertEqual(len(Rtr.rcf_set._RCFs), 1)
+
+    def tearDown(self):
+        logger.delHandler()
+        if "TEST_FLAG" in os.environ:
+            del os.environ['TEST_FLAG']
