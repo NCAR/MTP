@@ -18,7 +18,11 @@
 ###############################################################################
 import unittest
 import numpy
+import os
+import logging
+from io import StringIO
 from util.tropopause import Tropopause
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
 class TESTtropopause(unittest.TestCase):
@@ -71,6 +75,18 @@ class TESTtropopause(unittest.TestCase):
         # Instantiate a tropopause class
         self.trop = Tropopause(self.ATP, self.NUM_RETR_LVLS)
 
+        self.maxDiff = None  # See entire diff when asserts fail
+
+        # Set environment var to indicate we are in testing mode
+        os.environ["TEST_FLAG"] = "true"
+
+        # For testing, we want to capture the log messages in a buffer so we
+        # can compare the log output to what we expect.
+        self.stream = StringIO()  # Set output stream to buffer
+
+        # Instantiate a logger
+        self.log = logger.initLogger(self.stream, logging.INFO)
+
     def test_findStart(self):
         """ Find index of first retrieval above starting altitude """
         startidx = self.trop.findStart(0, 5.6)
@@ -110,3 +126,8 @@ class TESTtropopause(unittest.TestCase):
         self.assertTrue(numpy.isnan(trop))
         self.assertTrue(numpy.isnan(altctrop))
         self.assertTrue(numpy.isnan(tempctrop))
+
+    def tearDown(self):
+        logger.delHandler()
+        if "TEST_FLAG" in os.environ:
+            del os.environ['TEST_FLAG']
