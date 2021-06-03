@@ -20,10 +20,7 @@
 import os
 import platform
 import unittest
-import logging
-from io import StringIO
 from util.rcf import RetrievalCoefficientFile
-from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
 class TESTrcf(unittest.TestCase):
@@ -39,18 +36,6 @@ class TESTrcf(unittest.TestCase):
         self.rcf = RetrievalCoefficientFile(self.filename)
         self.RCFHdr = self.rcf.getRCF_HDR()  # Get a pointer to the header dict
         self.RCFFl = self.rcf.getFL_RC_Vec()
-
-        self.maxDiff = None  # See entire diff when asserts fail
-
-        # Set environment var to indicate we are in testing mode
-        os.environ["TEST_FLAG"] = "true"
-
-        # For testing, we want to capture the log messages in a buffer so we
-        # can compare the log output to what we expect.
-        self.stream = StringIO()  # Set output stream to buffer
-
-        # Instantiate a logger
-        self.log = logger.initLogger(self.stream, logging.INFO)
 
     def testRCFId(self):
         """ Test that the RCF Id is accurately parsed from the filename """
@@ -422,8 +407,3 @@ class TESTrcf(unittest.TestCase):
                 self.assertEqual('%.5f' % RcSetAvWt['Src'][j *
                                  self.rcf.NUM_BRT_TEMPS + i],
                                  RCwt[j * self.rcf.NUM_BRT_TEMPS + i])
-
-    def tearDown(self):
-        logger.delHandler()
-        if "TEST_FLAG" in os.environ:
-            del os.environ['TEST_FLAG']
