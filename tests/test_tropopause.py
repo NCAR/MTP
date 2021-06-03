@@ -18,7 +18,6 @@
 ###############################################################################
 import unittest
 import numpy
-import os
 import logging
 from io import StringIO
 from util.tropopause import Tropopause
