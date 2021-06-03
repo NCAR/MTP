@@ -17,7 +17,6 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2020
 ###############################################################################
-cd ..\src
 python3 -m unittest discover -s ../tests -v -p test_[0-9A-LN-Za-df-z]*py
 python3 -m unittest discover -s ../tests -v -p test_MTPclient*py
 python3 -m unittest discover -s ../tests -v -p test_MTPprocessor*py
