@@ -110,8 +110,7 @@ class readMTP:
     def readRawScan(self, raw_data_file):
         """
         Read in a scan (a group of lines) from an MTP .RAW file and store them
-        to a dictionary. Keep looping until have a complete scan or reach end
-        of file.
+        to a dictionary
         """
         while True:
 
