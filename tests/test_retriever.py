@@ -44,6 +44,11 @@ class TESTretriever(unittest.TestCase):
                         246.79, 248.06, 248.893, 249.608, 250.679, 251.433]
         self.ACAltKm = 8.206
 
+        self.maxDiff = None  # See entire diff when asserts fail
+
+        # Set environment var to indicate we are in testing mode
+        os.environ["TEST_FLAG"] = "true"
+
         # For testing, we want to capture the log messages in a buffer so we
         # can compare the log output to what we expect.
         self.stream = StringIO()  # Set output stream to buffer
@@ -132,3 +137,5 @@ class TESTretriever(unittest.TestCase):
 
     def tearDown(self):
         logger.delHandler()
+        if "TEST_FLAG" in os.environ:
+            del os.environ['TEST_FLAG']
