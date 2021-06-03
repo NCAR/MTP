@@ -72,7 +72,7 @@ class TESTMTPviewer(unittest.TestCase):
         self.assertEqual(self.viewer.index.text(), str(1))
 
         # Set index > than last scan
-        self.viewer.index.setText(str(54))
+        self.viewer.index.setText(str(49))
         self.viewer.clickGo()
         logger.flushHandler()
         self.assertRegex(self.stream.getvalue(),
