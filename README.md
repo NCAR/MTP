@@ -69,10 +69,10 @@ Then install Git (if not already there) and download MTP:
 
 Check your PYTHONPATH
 ```
-   > echo %PYTHONPATH%
+    > echo %PYTHONPATH%
 ```
 It should contain a path to EOL-Python and a path to the anaconda site-packages.
- 
+
 ## To operate the MTP from Windows10
 
 You only need to do this if you will be connecting your computer directly to the MTP instrument in the lab or on the aircraft. If you are only running MTPviewer to monitor collected data, you don't need to install the driver.
@@ -105,9 +105,9 @@ Information on operating the MTP, and other documentation, can be found on the (
  > python3 MTPviewer.py
  ```
 ** NOTE that on a MAC you will use python3, but on Windows it's python.exe (no 3) **
- 
+
 ## To run in test mode, generate fake "real-time" data by running
- 
+
  * On Windows10:
  ```
  * Click on MTPemulator icon on the desktop. If this is not available:
@@ -129,17 +129,17 @@ Information on operating the MTP, and other documentation, can be found on the (
 > ./snd_IWG.sh  (need to install http://github.com/NCAR/aircraft_nc2iwg1)
 ```
 * Then run the GUI in real-time mode, using the platform-specific python call, e.g. on Windows:
- ```
- >python MTPviewer.py
- ```
+```
+>python MTPviewer.py
+```
 
 ## Developer Notes
 
 ### Documentation
 
 For complete documentation on each class/method, useful if you need to modify the code, use pydoc to extract embedded documentation from each file:
- 
- * On a MAC: (Change python3 to python for Windows)
+
+* On a MAC: (Change python3 to python for Windows)
 ```
 > cd src
 > python3 -m pydoc <filename>
@@ -149,11 +149,21 @@ e.g. python3 -m pydoc lib/rwget.py
 ### Unit tests
 
 If the unittests are all run sequentially from the same command (python3 -m unittest discover -s ../tests -v), earlier tests seem to leave the unittest code in a state that causes subsequent tests to fail. An attempt was made to get each test to clean up after itself by adding setUp and tearDown functions. But Python's unittest holds on to all sorts of memory until the entire test suite has been run. For a good explanation see: https://stackoverflow.com/questions/26915115/unittest-teardown-del-all-attributes/35001389
- 
+
 To get around this, a shell script has been written that breaks up the test suite into smaller chunks. To manually run all unittests, use this script:
 
 * On a MAC: (Change python3 to python for Windows) 
 ```
 > cd src
-> ./run_tests.sh
+OR
+> cd tests
+> ../tests/run_tests.sh
+```
+
+* On a WINDOWS10:
+```
+> cd src
+OR
+> cd tests
+> powershell -noexit "& ""..\tests\run_tests_Windows.ps1"""
 ```
