@@ -556,7 +556,7 @@ class MTPviewer(QMainWindow):
             self.profile.configure()  # Layout the profile plot
             self.profile.draw()
             self.RCF1.setPlainText('')  # Clear display of last RCF used
-            self.RcF2.setPlainText('')  # Clear display of last RCF2 used
+            self.RCF2.setPlainText('')  # Clear display of last RCF2 used
             return()
 
         # ---------- Retrieval succeeded ----------
