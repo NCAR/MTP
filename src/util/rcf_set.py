@@ -191,6 +191,11 @@ class RetrievalCoefficientFileSet():
 
         thisRCFIndex = 0  # Which RCF index are we looking at?
 
+        # Initialize an empty array that will hold
+        # RCF indexes and that index's corresponding lnP.
+        RCFIndex_lnP_Array = [[-1, 100000000000]
+                              for i in range(len(self._RCFs))]
+
         # Step through the vector of Retrieval Coefficient files (aka
         # templates) to obtain the best match for the scan at the input
         # Altitude
@@ -234,16 +239,38 @@ class RetrievalCoefficientFileSet():
             thislnP = 8 * math.sqrt(RCFBTWeightedMean**2 + RCFBTStdDev**2) / \
                 RCFit.getNUM_BRT_TEMPS()
 
-            # BestlnP is the sum of the ln of Probabilities for the BestRCIndex
-            # BestRCIndex is the index of "best" template (so far)
-            # What should BestlnP, BestRCIndex default to?
-            if (RCFit == self._RCFs[0]):
-                BestlnP = thislnP
-                BestRCIndex = 0
-            elif (thislnP < BestlnP):
-                BestlnP = thislnP
-                BestRCIndex = thisRCFIndex
+            # If this is the first item:
+            if (RCFIndex_lnP_Array[0][0] == -1):
+                # Just make the first space the current values
+                RCFIndex_lnP_Array[0] = list([thisRCFIndex, thislnP])
+            # Otherwise, sort the current values into the correct spot
+            # (Method similar to bubble sort)
+            else:
+                temp = list([thisRCFIndex, thislnP])
+                # Every value is going to be inserted somewhere, so insert
+                # at the beginning and swap up until sorted
+                for j in range(len(RCFIndex_lnP_Array) - 1):
+                    if (temp[1] < RCFIndex_lnP_Array[j][1]):
+                        i = j
+                        while ((temp[1] < RCFIndex_lnP_Array[i][1])
+                                and (i < len(RCFIndex_lnP_Array) - 1)):
+                            temp2 = RCFIndex_lnP_Array[i]
+                            RCFIndex_lnP_Array[i] = temp
+                            temp = temp2
+                            i += 1
+                RCFIndex_lnP_Array[i] = temp
             thisRCFIndex += 1
+
+        # Access the values that are the best from the first
+        # element in the array
+        BestRCIndex = RCFIndex_lnP_Array[0][0]
+        BestlnP = RCFIndex_lnP_Array[0][1]
+
+        # Replace all the first elements of RCFIndex_lnP_Arrray
+        # with the RCFId instead of RCFIndex
+        for i in range(len(RCFIndex_lnP_Array)):
+            RCFIndex_lnP_Array[i][0] = \
+                self._RCFs[RCFIndex_lnP_Array[i][0]].getId()
 
         RC4R = RC_Set_4Retrieval
         RC4R['SumLnProb'] = BestlnP
@@ -251,4 +278,5 @@ class RetrievalCoefficientFileSet():
         RC4R['RCFId'] = self._RCFs[BestRCIndex].getId()
         RC4R['RCFIndex'] = BestRCIndex
         RC4R['FL_RCs'] = self._RCFs[BestRCIndex].getRCAvgWt(PAltKm)
+        RC4R['RCFArray'] = RCFIndex_lnP_Array
         return(RC4R)
