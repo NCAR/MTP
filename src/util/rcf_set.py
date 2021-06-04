@@ -261,12 +261,6 @@ class RetrievalCoefficientFileSet():
                 RCFIndex_lnP_Array[i] = temp
             thisRCFIndex += 1
 
-        # Strip the lnP values and make a new array now that
-        # lnP values don't need to be saved
-        RCFIndexArray = []
-        for i in range(len(RCFIndex_lnP_Array)):
-            RCFIndexArray.append(RCFIndex_lnP_Array[i][0])
-
         # Access the values that are the best from the first
         # element in the array
         BestRCIndex = RCFIndex_lnP_Array[0][0]
@@ -286,40 +280,3 @@ class RetrievalCoefficientFileSet():
         RC4R['FL_RCs'] = self._RCFs[BestRCIndex].getRCAvgWt(PAltKm)
         RC4R['RCFArray'] = RCFIndex_lnP_Array
         return(RC4R)
-
-    def getWeightedRCSet(self, RC4R, position, PAltKm):
-        """
-        Get the data corresponding to a new RCF given an existing
-        RCF and a position. An existing RCF is necessary because
-        the RC_Set_4Retrieval structure includes the array RCFIndexArray
-        which contains the indexes of other RCFs.
-        The RC4R stands for RC_Set_4Retrieval, which contains the
-        RCFIndexArray that will be accessed for this function.
-        Position corresponds to the array index (not to be confused
-        with RCF index, which is a number that is given to each RCF
-        in order of their listing in the file).
-        PAltKm is the altitude of the aircraft in km at the time that the scan
-        was taken.
-        Returns a new RC_Set_4Retrieval with the same RCFIndexArray
-        from before, but new values for everything else.
-        """
-        indexArray = RC4R['RCFArray']
-        RCFId = indexArray[position][0]
-        SumLnProb = indexArray[position][1]
-
-        newRC4R = RC_Set_4Retrieval.copy()
-
-        RCFIndex = 0
-        for RCFit in self._RCFs:
-            if RCFit.getId() == RCFId:
-                break
-            RCFIndex += 1
-
-        newRC4R['SumLnProb'] = SumLnProb
-        newRC4R['RCFFileName'] = self.getRCFbyId(RCFId).getFileName()
-        newRC4R['RCFId'] = RCFId
-        newRC4R['RCFIndex'] = RCFIndex
-        newRC4R['FL_RCs'] = self.getRCFbyId(RCFId).getRCAvgWt(PAltKm)
-        newRC4R['RCFArray'] = indexArray
-
-        return newRC4R
