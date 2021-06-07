@@ -49,6 +49,8 @@ class TESTeng3(unittest.TestCase):
 
         self.viewer = MTPviewer(self.client, self.app, self.args)
 
+        self.maxDiff = None
+
     def test_eng3_noJSON(self):
         """ Test Engineering 3 display window shows what we expect """
         # The third engineering window displays the M02 line
@@ -77,13 +79,13 @@ class TESTeng3(unittest.TestCase):
         self.assertEqual(self.viewer.eng3.toPlainText(),
                          "Channel\tCounts  Value\n" +
                          "Acceler\t2061  +01.10 g\n" +
-                         "T Data\t1316  +39.51 C\n" +
-                         "T Motor\t2188  +18.51 C\n" +
-                         "T Pod Air\t2743  +06.16 C\n" +
-                         "T Scan\t2697  +07.21 C\n" +
-                         "T Pwr Sup\t1591  +32.27 C\n" +
+                         "T Data\t1316  +39.52 C\n" +
+                         "T Motor\t2188  +18.52 C\n" +
+                         "T Pod Air\t2743  +06.17 C\n" +
+                         "T Scan\t2697  +07.22 C\n" +
+                         "T Pwr Sup\t1591  +32.28 C\n" +
                          "T N/C\t4095  N/A\n" +
-                         "T Synth\t1535  +33.67 C")
+                         "T Synth\t1535  +33.68 C")
 
         # Send an MTP packet to the parser and confirm it gets parsed
         # correctly.
