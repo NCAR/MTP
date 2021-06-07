@@ -184,7 +184,7 @@ class TESTrcfSet(unittest.TestCase):
         # best and the ID of the third best files.
         secondBestRCFId = BestWtdRCSet['RCFArray'][1][0]
         thirdBestRCFId = BestWtdRCSet['RCFArray'][2][0]
-        
+
         # And show that the first and second are different (actually made a new
         # dictionary instead of just copying a reference)
         self.assertNotEqual(BestWtdRCSet['RCFId'],
@@ -207,8 +207,8 @@ class TESTrcfSet(unittest.TestCase):
 
         # Ensure that SumLnProb for BestWtdRCSet is equal to the
         # SumLnProb for the first element in RCFArray
-        self.assertEqual(BestWtdRCSet['SumLnProb'], 
-                          BestWtdRCSet['RCFArray'][0][1])
+        self.assertEqual(BestWtdRCSet['SumLnProb'],
+                         BestWtdRCSet['RCFArray'][0][1])
 
         # Make sure the rest of the SumLnProbs are correct
         self.assertEqual(BestWtdRCSet['RCFArray'][0][1], 4.363823941531192)
