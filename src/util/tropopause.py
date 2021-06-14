@@ -182,6 +182,8 @@ class Tropopause():
 
             altBot = altBot + step
 
+        return(altBot)
+
     def findStart(self, startidx, minidx):
         """
         Locate the first retrieval above the lowest altitude to look for
@@ -222,8 +224,11 @@ class Tropopause():
         tempctrop = numpy.nan
 
         # At this point, startidx will be the value set in the previous pass
-        # through.
+        # through. If it is zero, we are looking for the first tropopause. If
+        # it is greater than zero, we are looking for a second or greater
+        # tropopause.
         if startidx != 0:
+            LT = startidx
             # Locate lowest layer above gap between tropopauses.
             altBot = self.findGap(LT, step, startidx)
             if (numpy.isnan(altBot)):
