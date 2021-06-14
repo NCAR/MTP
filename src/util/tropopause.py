@@ -181,8 +181,6 @@ class Tropopause():
                 return(numpy.nan)  # no tropopause found
 
             altBot = altBot + step
-        
-        return altBot
 
         return(altBot)
 
