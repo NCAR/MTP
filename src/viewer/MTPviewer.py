@@ -616,8 +616,9 @@ class MTPviewer(QMainWindow):
         # diagonal dashed line, fixed slope anchored to ambient temperature
         # point of first tropopause
         referenceLapseRate = -2  # This is also hardcoded in tropopause.py
-        self.profile.plotLapseRate(self.ATP['trop']['val'][0],
-                                   referenceLapseRate)
+        for i in range(len(self.ATP['trop']['val'])):
+            self.profile.plotLapseRate(self.ATP['trop']['val'][i],
+                                       referenceLapseRate)
 
         # Draw the plots
         self.profile.draw()
