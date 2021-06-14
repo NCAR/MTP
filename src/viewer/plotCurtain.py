@@ -175,7 +175,7 @@ class Curtain(QMainWindow):
 
     def plotTropopause(self):
         """ Plot the tropopause on the left axis """
-        self.ax.plot(self.actime, self.trop, color='white', linestyle='', marker='.', markersize=3)
+        self.ax.plot(self.actime, self.trop, color='white')
 
     def plotMRI(self):
         """
