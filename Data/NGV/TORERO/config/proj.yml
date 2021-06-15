@@ -66,7 +66,7 @@ GEC: [[19.87, 0.1], [23.1, 0.1], [26.05, 0.1]]  # Per channel slope, intercept
 ###############################################################################
 # Project directory to hold data and config info. If commented out, defaults to
 # top dir of code checkout, e.g. .../MTP/
-projdir: 'C:/Users/peter/Documents/GitHub/MTPPersonalBranch/Data/NGV/TORERO'
+projdir: '/Data/NGV/TORERO'
 
 # Location of ascii_parms file relative to projdir
 ascii_parms: 'config/ascii_parms'
