@@ -121,4 +121,4 @@ class config():
 
     def getProjDir(self):
         """ Read proj dir, if defined, from config file. """
-        return(self.getVal("projdir"))
+        return(getrootdir() + self.getVal("projdir"))
