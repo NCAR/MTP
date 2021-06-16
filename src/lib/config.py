@@ -6,6 +6,7 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
 import os
+import pathlib
 import yaml
 from lib.rootdir import getrootdir
 from EOLpython.util.fileselector import FileSelector
@@ -121,4 +122,8 @@ class config():
 
     def getProjDir(self):
         """ Read proj dir, if defined, from config file. """
-        return(getrootdir() + self.getVal("projdir"))
+        pathHere = pathlib.Path(__file__).parent.absolute()
+        pathtoMTP = (str(pathHere).split("src\lib"))[0]
+        if (self.getVal("projdir") == None):
+            return None
+        return(str(pathtoMTP) + self.getVal("projdir"))
