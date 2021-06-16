@@ -33,14 +33,6 @@ class MTPclient():
         # Instantiate an instance of an MTP reader
         self.reader = readMTP()
 
-    def getTestDataDir(self):
-        # For testing purposes, data and configuration information for the
-        # DEEPWAVE project have been copied to Data/NGV/DEEPWAVE within this
-        # code checkout. For transparency, set that hardcoded path here.
-        self.testDataDir = os.path.join(getrootdir(),
-                                        'Data', 'NGV', 'DEEPWAVE')
-        return(self.testDataDir)
-
     def config(self, configfile_name):
         """ Read in config file and set up a bunch of stuff """
         self.configfile_name = configfile_name
@@ -72,8 +64,7 @@ class MTPclient():
             description="Script to display and process MTP scans")
         parser.add_argument(
             '--config', type=str,
-            default=os.path.join(getrootdir(), self.getTestDataDir(),
-                                 'config', 'proj.yml'),
+            required=True,
             help='File containing project-specific MTP configuration info. ' +
             'Defaults to config/proj.yml in code checkout for testing')
         parser.add_argument(
@@ -230,8 +221,6 @@ class MTPclient():
 
         # Get project dir from config. If dir not set, default to test dir
         projdir = self.configfile.getProjDir()
-        if projdir is None:
-            projdir = self.getTestDataDir()
 
         return(self.reader.getJson(projdir, self.getProj(), self.getFltno()))
 
