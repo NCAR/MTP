@@ -71,7 +71,7 @@ class config():
             return(self.projConfig[key])
         else:
             # Projdir defaults so OK. If no filelist, all RCF files are used
-            if key != 'projdir' and key != 'filelist':
+            if key != 'filelist':
                 logger.printmsg("ERROR", key + " not defined in configfile " +
                                 self.yamlfile)
                 raise Exception()
@@ -102,13 +102,10 @@ class config():
         path_components = val.split('/')
         # Join correctly for OS we are running on. The splat operator (*)
         # unpacks a list - who knew?
-        if projdir is None:
-            # Assume paths are relative to code checkout - for testing
-            newpath = os.path.join(getrootdir(), *path_components)
-        else:
-            # Use project directory given in config file as rootdir for data
-            # and config files.
-            newpath = os.path.join(projdir, *path_components)
+        
+        # Use project directory given in config file as rootdir for data
+        # and config files.
+        newpath = os.path.join(projdir, *path_components)
 
         # Check that new path exists. If not, warn user
         if not os.path.exists(newpath):
