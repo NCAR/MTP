@@ -122,8 +122,11 @@ class config():
 
     def getProjDir(self):
         """ Read proj dir, if defined, from config file. """
+        # Get the path on the local system to the directory
+        # that contains this file and remove src\lib to get
+        # the directory that should contain all subdirectories
+        # for this project
         pathHere = pathlib.Path(__file__).parent.absolute()
-        pathtoMTP = (str(pathHere).split("src\lib"))[0]
-        if (self.getVal("projdir") == None):
-            return None
+        pathtoMTP = (str(pathHere).split("src"))[0]
+        print(str(pathHere).split("src")[0])
         return(str(pathtoMTP) + self.getVal("projdir"))
