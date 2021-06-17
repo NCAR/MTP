@@ -72,8 +72,7 @@ class MTPclient():
             description="Script to display and process MTP scans")
         parser.add_argument(
             '--config', type=str,
-            default=os.path.join(getrootdir(), self.getTestDataDir(),
-                                 'config', 'proj.yml'),
+            required=True,
             help='File containing project-specific MTP configuration info. ' +
             'Defaults to config/proj.yml in code checkout for testing')
         parser.add_argument(
@@ -230,8 +229,6 @@ class MTPclient():
 
         # Get project dir from config. If dir not set, default to test dir
         projdir = self.configfile.getProjDir()
-        if projdir is None:
-            projdir = self.getTestDataDir()
 
         return(self.reader.getJson(projdir, self.getProj(), self.getFltno()))
 

@@ -1,3 +1,3 @@
-raw_file: 'Data/NGV/DEEPWAVE/Raw/N2014060606.22'
-nc_file: 'Data/NGV/DEEPWAVE/NG/DEEPWAVErf01.nc'
+raw_file: 'Raw/N2014060606.22'
+nc_file: 'NG/DEEPWAVErf01.nc'
 
