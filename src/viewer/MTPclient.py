@@ -219,10 +219,16 @@ class MTPclient():
         flight number.
         """
 
-        # Get project dir from config. If dir not set, default to test dir
+        # Prepend the projdir to jsondir so jsondir is relative to projdir
         projdir = self.configfile.getProjDir()
+        jsondir = self.configfile.prependDir('json_file', projdir)
 
-        return(self.reader.getJson(projdir, self.getProj(), self.getFltno()))
+        # Defailt to projdir if jsondir is not set
+        if jsondir is None:
+            return(self.reader.getJson(projdir, self.getProj(),
+                                       self.getFltno()))
+
+        return(self.reader.getJson(jsondir, self.getProj(), self.getFltno()))
 
     def processScan(self):
         """
