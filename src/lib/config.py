@@ -70,8 +70,8 @@ class config():
         if key in self.projConfig.keys():
             return(self.projConfig[key])
         else:
-            # Projdir defaults so OK. If no filelist, all RCF files are used
-            if key != 'filelist':
+            # json_file defaults so OK. If no filelist, all RCF files are used
+            if key != 'json_file' and key != 'filelist':
                 logger.printmsg("ERROR", key + " not defined in configfile " +
                                 self.yamlfile)
                 raise Exception()
@@ -119,8 +119,11 @@ class config():
 
     def getProjDir(self):
         """ Read proj dir, if defined, from config file. """
+        # Get the path on the local system to the directory
+        # that contains this file and remove src\lib to get
+        # the directory that should contain all subdirectories
+        # for this project
         pathHere = pathlib.Path(__file__).parent.absolute()
         pathtoMTP = (str(pathHere).split("src\lib"))[0]
-        if (self.getVal("projdir") == None):
-            return None
+
         return(str(pathtoMTP) + self.getVal("projdir"))
