@@ -128,5 +128,5 @@ class config():
         # for this project
         pathHere = pathlib.Path(__file__).parent.absolute()
         pathtoMTP = (str(pathHere).split("src"))[0]
-        print(str(pathHere).split("src")[0])
+
         return(str(pathtoMTP) + self.getVal("projdir"))
