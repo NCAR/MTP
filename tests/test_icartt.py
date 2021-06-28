@@ -42,8 +42,6 @@ class TESTicartt(unittest.TestCase):
         self.client = MTPclient()
 
         # Read the config file. Gets path to RCF dir
-        self.client.config(os.path.join(getrootdir(), 'Data', 'NGV',
-                                            'DEEPWAVE', 'config', 'proj.yml'))
         self.client.readConfig(os.path.join(getrootdir(), 'Data', 'NGV',
                                             'DEEPWAVE', 'config', 'proj.yml'))
 
