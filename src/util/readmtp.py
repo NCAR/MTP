@@ -82,6 +82,7 @@ class readMTP:
         # Returns True or False to indicate if scan was sucessfully set to
         # index or not.
         try:
+            print(self.flightData[index]['IWG1line']['values'])
             self.rawscan = self.flightData[index]
         except Exception as err:
             logger.printmsg("ERROR", "No data available: " + str(err),
