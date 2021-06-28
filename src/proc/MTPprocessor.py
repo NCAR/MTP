@@ -369,7 +369,7 @@ class MTPprocessor(QMainWindow):
                 filename = os.path.join(prod_dir, setupfile)
 
                 # Read flight setup from setup file
-                self.setupfile = config(self.client.configfile)
+                self.setupfile = config()
                 self.setupfile.read(filename)
 
                 # Save files needed for post-processing to post-processing dict

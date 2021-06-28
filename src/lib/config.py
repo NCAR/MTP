@@ -14,9 +14,8 @@ from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 class config():
 
-    def __init__(self, configfile_name):
+    def __init__(self):
         self.projConfig = {}  # initialize dictionary to hold yamlfile contents
-        self.configfile_name = configfile_name
 
     def read(self, yamlfile):
 
@@ -119,5 +118,4 @@ class config():
 
     def getProjDir(self):
         """ Read proj dir, if defined, from config file. """
-        projdir = self.configfile_name.split("config")[0]
-        return(projdir)
+        return(self.getVal("projdir"))

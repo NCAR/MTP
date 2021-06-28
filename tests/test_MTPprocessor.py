@@ -39,10 +39,6 @@ class TESTMTPprocessor(unittest.TestCase):
         # Location of Production dir and config file
         self.proddir = os.path.join('Data', 'NGV',
                                     'DEEPWAVE', 'config', 'Production')
-        # Instantiate an MTP controller
-        self.client = MTPclient()
-        self.client.config(os.path.join(getrootdir(), 'Data', 'NGV',
-                               'DEEPWAVE', 'config', 'proj.yml'))
         self.configfile = os.path.join(getrootdir(), 'Data', 'NGV',
                                        'DEEPWAVE', 'config', 'proj.yml')
 
@@ -56,7 +52,6 @@ class TESTMTPprocessor(unittest.TestCase):
 
         self.app = QApplication([])
         self.client = MTPclient()
-        self.client.config(self.configfile)
         self.client.readConfig(self.configfile)
         self.args = argparse.Namespace(PRODdir=self.proddir, realtime=False)
         self.viewer = MTPviewer(self.client, self.app, self.args)
@@ -144,7 +139,6 @@ class TESTMTPprocessor(unittest.TestCase):
             '021506 022917 022752 019806 021164 020697 '
 
         # Test that raw scan stored correctly to dictionary
-        print("\n\n\n\n\n\n",self.client.reader.rawscan['IWG1line']['values'],"\n\n\n", self.dict['IWG1line']['values'], "\n\n\n")
         self.assertDictEqual(self.client.reader.rawscan, self.dict)
 
         # Test that ascii packet is formed correctly and stored to rawscan

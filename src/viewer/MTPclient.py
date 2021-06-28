@@ -123,7 +123,7 @@ class MTPclient():
 
     def readConfig(self, filename):
         # Read config from config file
-        self.configfile = config(self.configfile_name)
+        self.configfile = config()
         self.configfile.read(filename)
 
         # udp_send_port is port from viewer to MTP
@@ -227,14 +227,8 @@ class MTPclient():
         flight number.
         """
 
-        # Try getting project dir from the config argument instead
-        projdir = self.configfile_name
-        projdir = projdir.split("config")[0]
-
-        '''
         # Get project dir from config. If dir not set, default to test dir
         projdir = self.configfile.getProjDir()
-        '''
 
         return(self.reader.getJson(projdir, self.getProj(), self.getFltno()))
 
