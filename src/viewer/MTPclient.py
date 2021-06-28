@@ -123,7 +123,8 @@ class MTPclient():
 
     def readConfig(self, filename):
         # Read config from config file
-        self.configfile = config()
+        config.__init__(self, filename)
+        self.configfile = config(self.configfile_name)
         self.configfile.read(filename)
 
         # udp_send_port is port from viewer to MTP
