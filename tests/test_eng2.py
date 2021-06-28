@@ -42,6 +42,7 @@ class TESTeng2(unittest.TestCase):
 
         self.app = QApplication([])
         self.client = MTPclient()
+        self.client.config(self.configfile)
         self.client.readConfig(self.configfile)
 
         self.args = argparse.Namespace(cnts=False, postprocess=False,
