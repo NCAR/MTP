@@ -33,7 +33,7 @@ class MTPviewer(QMainWindow):
             self.processor = None
         else:
             self.processor = MTPprocessor(self, self.client)
-            self.processor.readSetup(self.client.configfile.getPath("projdir"))
+            self.processor.readSetup(self.client.configfile.getPath("PRODdir"))
 
         self.cell = [[numpy.nan for j in range(10)] for i in range(3)]
 
