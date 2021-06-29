@@ -14,9 +14,9 @@ from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 class config():
 
-    def __init__(self, configfile_name):
+    def __init__(self, yamlfile):
         self.projConfig = {}  # initialize dictionary to hold yamlfile contents
-        self.configfile_name = configfile_name
+        self.read(yamlfile)
 
     def read(self, yamlfile):
 
@@ -70,6 +70,11 @@ class config():
         if key in self.projConfig.keys():
             return(self.projConfig[key])
         else:
+            # This shouldn't happen because projdir doesn't exist, but
+            # for redundancy's sake this might help
+            if key == 'projdir':
+                return self.getProjDir()
+
             # If no filelist, all RCF files are used
             if key != 'filelist':
                 logger.printmsg("ERROR", key + " not defined in configfile " +
@@ -119,5 +124,5 @@ class config():
 
     def getProjDir(self):
         """ Read proj dir, if defined, from config file. """
-        projdir = self.configfile_name.split("config")[0]
+        projdir = self.yamlfile.split("config")[0]
         return(projdir)
