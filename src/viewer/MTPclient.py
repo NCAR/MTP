@@ -122,10 +122,8 @@ class MTPclient():
         return(self.iwg)
 
     def readConfig(self, filename):
-        # Read config from config file
-        config.__init__(self, filename)
-        self.configfile = config(self.configfile_name)
-        self.configfile.read(filename)
+        # Initialize a config file (includes reading it)
+        self.configfile = config(filename)
 
         # udp_send_port is port from viewer to MTP
         self.udp_send_port = self.configfile.getInt('udp_send_port')
