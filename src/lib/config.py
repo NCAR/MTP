@@ -70,11 +70,6 @@ class config():
         if key in self.projConfig.keys():
             return(self.projConfig[key])
         else:
-            # This shouldn't happen because projdir doesn't exist, but
-            # for redundancy's sake this might help
-            if key == 'projdir':
-                return self.getProjDir()
-
             # If no filelist, all RCF files are used
             if key != 'filelist':
                 logger.printmsg("ERROR", key + " not defined in configfile " +
