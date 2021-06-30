@@ -54,16 +54,18 @@ GEC: [[19.87, 0.1], [23.1, 0.1], [26.05, 0.1]]  # Per channel slope, intercept
 # GEC: [[19.43, 0.2], [22.44, 0.2],[25.29, 0.2]]
 
 ###############################################################################
-# Locations of required files. Project dir (projdir) is a relative path,
-# and all other paths are relative to projdir.
+# Locations of required files. All paths are relative to
+# the path to the project config file given in the --config command line
+# argument. 
 # Then:
 #     cd src
-#     python3 MTPviewer.py --config="__path_to_config_file__"
+#     python3 MTPviewer.py --config="../Data/NGV/<project>/config/proj.yml"
 # You can use either '\' or '/' to separate path components. Code will adjust
 # it for OS you are running on.
 ###############################################################################
-# Project directory to hold data and config info.
-projdir: 'Data/NGV/DEEPWAVE'
+# There used to be a projdir element here. It has been replaced
+# in favor of using the --config command line argument
+# to derive the project directory
 
 # Location of ascii_parms file relative to projdir
 ascii_parms: 'config/ascii_parms'

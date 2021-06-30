@@ -114,9 +114,8 @@ class MTPclient():
         return(self.iwg)
 
     def readConfig(self, filename):
-        # Read config from config file
-        self.configfile = config()
-        self.configfile.read(filename)
+        # Initialize a config file (includes reading it)
+        self.configfile = config(filename)
 
         # udp_send_port is port from viewer to MTP
         self.udp_send_port = self.configfile.getInt('udp_send_port')
@@ -223,7 +222,7 @@ class MTPclient():
         projdir = self.configfile.getProjDir()
         jsondir = self.configfile.prependDir('json_file', projdir)
 
-        # Defailt to projdir if jsondir is not set
+        # Default to projdir if jsondir is not set
         if jsondir is None:
             return(self.reader.getJson(projdir, self.getProj(),
                                        self.getFltno()))

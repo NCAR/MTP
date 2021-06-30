@@ -28,7 +28,6 @@ class MTPviewer(QMainWindow):
         self.client = client
         self.app = app
         self.args = args
-
         # Instantiate a processor view if in processing mode (not realtime)
         if self.args.realtime:
             self.processor = None
