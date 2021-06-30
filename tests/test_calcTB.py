@@ -66,7 +66,6 @@ class TESTcalcTBs(unittest.TestCase):
         self.config = os.path.join(getrootdir(), 'Data', 'NGV', 'DEEPWAVE',
                                    'config', 'proj.yml')
         configfile = config(self.config)
-        configfile.read(self.config)
 
         # Calculate the brightness temperatures
         tb = BrightnessTemperature(configfile)
