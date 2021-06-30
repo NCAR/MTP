@@ -72,8 +72,7 @@ class MTPclient():
             description="Script to display and process MTP scans")
         parser.add_argument(
             '--config', type=str,
-            default=os.path.join(getrootdir(), self.getTestDataDir(),
-                                 'config', 'proj.yml'),
+            required=True,
             help='File containing project-specific MTP configuration info. ' +
             'Defaults to config/proj.yml in code checkout for testing')
         parser.add_argument(
@@ -123,9 +122,8 @@ class MTPclient():
         return(self.iwg)
 
     def readConfig(self, filename):
-        # Read config from config file
-        self.configfile = config()
-        self.configfile.read(filename)
+        # Initialize a config file (includes reading it)
+        self.configfile = config(filename)
 
         # udp_send_port is port from viewer to MTP
         self.udp_send_port = self.configfile.getInt('udp_send_port')
@@ -230,8 +228,6 @@ class MTPclient():
 
         # Get project dir from config. If dir not set, default to test dir
         projdir = self.configfile.getProjDir()
-        if projdir is None:
-            projdir = self.getTestDataDir()
 
         return(self.reader.getJson(projdir, self.getProj(), self.getFltno()))
 

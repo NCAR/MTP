@@ -172,7 +172,7 @@ class TESTtropopause(unittest.TestCase):
                      'val': [{'idx': numpy.nan, 'altc': numpy.nan,
                              'tempc': numpy.nan},
                              {'idx': numpy.nan, 'altc': numpy.nan,
-                             'tempc': numpy.nan}], 
+                             'tempc': numpy.nan}],
                      'short_name': 'tropopause_altitude',
                      'units': 'km',
                      'long_name': 'Tropopause',
@@ -185,8 +185,8 @@ class TESTtropopause(unittest.TestCase):
 
         # Find a first tropopause
         [self.startTropIndex, self.ATP2['trop']['val'][0]['idx'],
-                 self.ATP2['trop']['val'][0]['altc'],
-                 self.ATP2['trop']['val'][0]['tempc']] = \
+         self.ATP2['trop']['val'][0]['altc'],
+         self.ATP2['trop']['val'][0]['tempc']] = \
             self.trop.findTropopause(self.startTropIndex)
         self.assertEqual(self.startTropIndex, 22)
         self.assertEqual(self.ATP2['trop']['val'][0]['idx'], 22)
@@ -197,8 +197,8 @@ class TESTtropopause(unittest.TestCase):
 
         # Find a second tropopause
         [self.startTropIndex, self.ATP2['trop']['val'][1]['idx'],
-                 self.ATP2['trop']['val'][1]['altc'],
-                 self.ATP2['trop']['val'][1]['tempc']] = \
+         self.ATP2['trop']['val'][1]['altc'],
+         self.ATP2['trop']['val'][1]['tempc']] = \
             self.trop.findTropopause(self.startTropIndex)
         self.assertEqual(self.startTropIndex, 28)
         self.assertEqual(self.ATP2['trop']['val'][1]['idx'], 28)
@@ -206,7 +206,6 @@ class TESTtropopause(unittest.TestCase):
                          17.126223122005165)
         self.assertEqual(self.ATP2['trop']['val'][1]['tempc'],
                          204.03224961220323)
-
 
     def tearDown(self):
         logger.delHandler()
