@@ -81,3 +81,6 @@ PRODdir: 'config/Production'
 
 # Dir to hold final data (ICARTT, etc)
 datadir: 'final'
+
+# Location where json file is to be written relative to projdir
+json_file: ''

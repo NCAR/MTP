@@ -6,6 +6,7 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
 import os
+import pathlib
 import yaml
 from lib.rootdir import getrootdir
 from EOLpython.util.fileselector import FileSelector
@@ -70,13 +71,17 @@ class config():
         if key in self.projConfig.keys():
             return(self.projConfig[key])
         else:
+            # if no json_file defined, then write json_file to projdir
             # If no filelist, all RCF files are used
-            if key != 'filelist':
+            if key != 'json_file' and key != 'filelist':
                 logger.printmsg("ERROR", key + " not defined in configfile " +
                                 self.yamlfile)
                 raise Exception()
 
-            return(None)
+            if key == 'json_file':
+                return('')
+            else:
+                return(None)
 
     def getInt(self, key):
         """ Read a param from the config file that should be an integer """
