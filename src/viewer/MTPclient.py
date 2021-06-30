@@ -33,14 +33,6 @@ class MTPclient():
         # Instantiate an instance of an MTP reader
         self.reader = readMTP()
 
-    def getTestDataDir(self):
-        # For testing purposes, data and configuration information for the
-        # DEEPWAVE project have been copied to Data/NGV/DEEPWAVE within this
-        # code checkout. For transparency, set that hardcoded path here.
-        self.testDataDir = os.path.join(getrootdir(),
-                                        'Data', 'NGV', 'DEEPWAVE')
-        return(self.testDataDir)
-
     def config(self, configfile_name):
         """ Read in config file and set up a bunch of stuff """
         self.configfile_name = configfile_name
@@ -226,10 +218,16 @@ class MTPclient():
         flight number.
         """
 
-        # Get project dir from config. If dir not set, default to test dir
+        # Prepend the projdir to jsondir so jsondir is relative to projdir
         projdir = self.configfile.getProjDir()
+        jsondir = self.configfile.prependDir('json_file', projdir)
 
-        return(self.reader.getJson(projdir, self.getProj(), self.getFltno()))
+        # Default to projdir if jsondir is not set
+        if jsondir is None:
+            return(self.reader.getJson(projdir, self.getProj(),
+                                       self.getFltno()))
+
+        return(self.reader.getJson(jsondir, self.getProj(), self.getFltno()))
 
     def processScan(self):
         """
