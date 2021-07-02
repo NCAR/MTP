@@ -39,7 +39,7 @@ def main():
     viewer.loadJson(client.getMtpRealTimeFilename())
     viewer.show()
 
-    # Run the application until the user closes it.
+    # Run the application until the user closes it
     sys.exit(app.exec_())
 
 
