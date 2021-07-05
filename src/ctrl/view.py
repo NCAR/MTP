@@ -114,7 +114,7 @@ class controlWindow(QWidget):
 
         # from/to (flight name) config.yaml
         self.projectNameBox = QPlainTextEdit()
-        self.projectNameBox.insertPlainText('ACCLIP_TEST')
+        self.projectNameBox.insertPlainText('ASPIRE-TEST')
         self.flightNumberBox = QPlainTextEdit()
         self.flightNumberBox.insertPlainText('change')
         self.IWGPortBox = QPlainTextEdit()
@@ -515,14 +515,14 @@ class controlWindow(QWidget):
         #error_dialog.showMessage('Oh no!')   
 
         # Pauses program execution until ok pressed
-        message = QMessageBox.information(self, "Waiting", "Waiting for radiometer")
+        #message = QMessageBox.information(self, "Waiting", "Waiting for radiometer")
         while i <1000:
             self.serialPort.sendCommand(self.commandDict.getCommand("version"))
             echo, sFlag, foundIndex = self.readUntilFound(b'_', 100, 20, isHome=False)
             if echo != b'-1':
                 return True
             self.app.processEvents()
-            sleep(1)
+            time.sleep(1)
         return False
 
 
@@ -696,9 +696,10 @@ class controlWindow(QWidget):
 
 
     def initSaveDataFile(self, flightNumber):    
+        location = "../../../Desktop/ASPIRE-TEST/data/"
         saveDataFileName = time.strftime("%Y%m%d") + '_' + time.strftime("%H%M%S") + '_' + flightNumber + '.mtp'
 
-        with open(saveDataFileName, "ab") as datafile:
+        with open(location+saveDataFileName, "ab") as datafile:
                 # this will be rewritten each time the program restarts
                 datafile.write(str.encode("Instrument on " + time.strftime("%X") + " " + time.strftime("%m-%d-%y") + '\r\n'))
          
