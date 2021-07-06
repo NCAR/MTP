@@ -1115,7 +1115,7 @@ class controlWindow(QWidget):
         while i < 2:
             # Might be possible to reduce this a bit
             # try read until step, then check that for @
-            echo, sFlag, foundIndex = self.readUntilFound(b'S',1000, 2000, isHome)
+            echo, sFlag, foundIndex = self.readUntilFound(b'S',10000, 20000, isHome)
 
             # Only send again if homescan and timeout
             if echo == b'-1' and isHome:
@@ -1276,7 +1276,7 @@ class controlWindow(QWidget):
             self.getIntegrateFromProbe()
             # clear echos
             # avg is ~9, max observed issue at 25
-            # dataLine = self.quickRead(30) 
+            dataLine = self.quickRead(25) 
 
             # actually request the data of interest
             echo = b'-1'
