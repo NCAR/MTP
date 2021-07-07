@@ -89,7 +89,6 @@ class Curtain(QMainWindow):
         self.ax.set_ylabel('Pressure Altitude (km)')
         self.ax.set_ylim(0.0, self.maxAltkm)
         self.ax.yaxis.set_major_locator(MultipleLocator(5))
-        self.ax.set_yticklabels(numpy.arange(-5, self.maxAltkm, 5))
 
         # add right axis with altitude in kft 28km = 91.86kft)
         self.axR.set_ylabel('Altitude (kft)')
@@ -121,7 +120,7 @@ class Curtain(QMainWindow):
         alt = numpy.nan_to_num(altitude).tolist()
         for i in range(len(alt)):
             if self.first:
-                self.alt.append([alt[i], alt[i]])
+                self.alt.append([alt[i]])
             else:
                 self.alt[i].append(alt[i])
 
@@ -132,8 +131,6 @@ class Curtain(QMainWindow):
     def addTime(self, time, temperature):
         """ Create a 2-D aray of times """
         # Create 1-D array of profile times (convert seconds to hours)
-        if self.first:
-            self.time.append((time-17)/3600.0)
         self.time.append(time/3600.0)
 
         # Now build a 2-D array of self.time arrays
@@ -160,9 +157,13 @@ class Curtain(QMainWindow):
 
         # Plot the temperature as a color mesh. Time on X-axis. Altitude on
         # Y-axis. Have to invert temperature array to match.
+        # Note that time is 1-D and alt is 2-D. pcolormesh replicates time to
+        # get needed 2-D array. See:
+        # https://matplotlib.org/stable/api/_as_gen/\
+        #      matplotlib.pyplot.pcolormesh.html
         im = self.ax.pcolormesh(self.time, self.alt,
                                 numpy.transpose(self.data), cmap=self.cmap,
-                                norm=self.norm, axes=self.ax)
+                                norm=self.norm, shading='gouraud')
 
         # Only use the QuadMesh object to create the legend the first time
         if self.first:

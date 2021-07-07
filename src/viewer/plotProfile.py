@@ -5,6 +5,7 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
+import numpy
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import (
        FigureCanvasQTAgg as FigureCanvas)
@@ -97,8 +98,10 @@ class Profile():
 
     def plotTropopause(self, trop):
         """ Plot the tropopause on the left axis """
-        self.ax.hlines(float(trop['altc']), self.tbxlimL, self.tbxlimR,
-                       color='lightgrey', linestyle='dashed')
+        # Only plot tropopause if it exists (prevent nan errors)
+        if not numpy.isnan(trop['altc']):
+            self.ax.hlines(float(trop['altc']), self.tbxlimL, self.tbxlimR,
+                           color='lightgrey', linestyle='dashed')
 
     def plotLapseRate(self, trop, lapseRate):
         """
