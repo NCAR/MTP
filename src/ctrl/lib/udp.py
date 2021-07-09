@@ -31,12 +31,13 @@ class doUDP(object):
         self.udp_ip=QHostAddress.LocalHost 
         # plane
         self.udp_ip_nidas=QHostAddress("192.168.84.2") # subnet mask
+        # Plane iwg - needs for broadcast
         self.udp_ip=QHostAddress('0.0.0.0') # subnet mask
 
         # initialize the reader
         self.sock_read = QUdpSocket()
         # share the iwg packet port 
-        self.sock_read.bind(self.udp_ip_nidas, self.udp_read_port,QUdpSocket.ReuseAddressHint)
+        self.sock_read.bind(self.udp_ip, self.udp_read_port,QUdpSocket.ReuseAddressHint)
 
         #self.sock_read.bind(self.udp_ip_nidas, self.udp_read_port,QUdpSocket.ReuseAddressHint)
         # apparently this init is called each time anything in
