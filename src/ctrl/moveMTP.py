@@ -452,7 +452,8 @@ class moveMTP():
             # other odd constant is in udp.py -
             # sets the recieved values in iwg line to 0
         else:
-            logging.debug("else got IWG")
+            logging.debug("move:else got IWG")
+            logging.debug(self.parent.packetStore.iwgStore)
 
 
         aline = " " + str(pitchavg)
