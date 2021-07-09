@@ -329,8 +329,10 @@ class controlWindow(QWidget):
         '''
 
     # read in and save iwg packet to dict
-    def readUDP():
-        self.SavePacket.saveData()
+    def readIWG():
+        
+        # IWG isn't in packetStore, is in udp.py
+        #self.packetStore.saveData()
         return 0
 
     def reInitProbeClicked(self):
@@ -409,10 +411,15 @@ class controlWindow(QWidget):
         self.packetStore = StorePacket()
         # Declare instance of moveMTP class
         self.mover = moveMTP(self)
+        # Declare instance of doUDP 
+        # Opens ports to write to/from ric/viewer
+        # Opens IWG port, has IWG averaging
+        self.packetStore.iwgStore = 'IWG1,20101002T194729,39.1324,-103.978,4566.43,,14127.9,,180.827,190.364,293.383,0.571414,-8.02806,318.85,318.672,-0.181879,-0.417805,-0.432257,-0.0980951,2.36793,-1.66016,-35.8046,16.3486,592.062,146.734,837.903,9.55575,324.104,1.22603,45.2423,,-22    .1676,'
+        self.iwgStore = 'IWG1,20101002T194729,39.1324,-103.978,4566.43,,14127.9,,180.827,190.364,293.383,0.571414,-8.02806,318.85,318.672,-0.181879,-0.417805,-0.432257,-0.0980951,2.36793,-1.66016,-35.8046,16.3486,592.062,146.734,837.903,9.55575,324.104,1.22603,45.2423,,-22    .1676,'
+        
         self.udp = doUDP(self, app)
         # global storage for values collected from probe
         # storing them in dict introduced slowness
-        self.iwgStore = 'IWG1,20101002T194729,39.1324,-103.978,4566.43,,14127.9,,180.827,190.364,293.383,0.571414,-8.02806,318.85,318.672,-0.181879,-0.417805,-0.432257,-0.0980951,2.36793,-1.66016,-35.8046,16.3486,592.062,146.734,837.903,9.55575,324.104,1.22603,45.2423,,-22    .1676,'
         # Well, there's the right way to do this
         # and the easy way. 
         # So until we're moving all the functions, 
@@ -462,6 +469,7 @@ class controlWindow(QWidget):
             # save to file
             # assumes everything's been decoded from hex
             saveData = self.mover.saveData(packetStartTime)
+            logging.debug("Saved Data packet ------------------------------------")
 
             # send packet over UDP
             # also replaces spaces with commas and removes start strings
@@ -1025,7 +1033,8 @@ class controlWindow(QWidget):
             # other odd constant is in udp.py -
             # sets the recieved values in iwg line to 0
         else:
-            logging.debug("else got IWG")
+            logging.debug("view: else got IWG")
+            logging.debug(self.packetStore.iwgStore)
 
         aline = " " + str(pitchavg)
         aline = aline + " " + str(pitchrms)
