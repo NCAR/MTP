@@ -456,20 +456,26 @@ class controlWindow(QWidget):
 
             # use the MTPmove aline
             packetStartTime = time.gmtime()
+            startTIme = time.perf_counter()
             self.alineStore = self.Aline()
 
+            #logging.debug("Timesince start, after A: %r", nowtime = time.perf_counter()-startTIme)
             # Bline: long
             self.blineStore = 'B' + self.Bline(elAngles, nfreq)
+            #logging.debug("Timesince start, after B: %r", nowtime = time.perf_counter()-startTIme)
 
             self.m01Store = self.m01()
             self.m02Store = self.m02()
             self.ptStore = self.pt()
+            #logging.debug("Timesince start, after m's/pt: %r", time.perf_counter()-startTIme)
             # Eline: long 
             self.elineStore = 'E' + self.Eline(nfreq)
+            #logging.debug("Timesince start, after E: %r", time.perf_counter()-startTIme)
             # save to file
             # assumes everything's been decoded from hex
             saveData = self.mover.saveData(packetStartTime)
             logging.debug("Saved Data packet ------------------------------------")
+            #logging.debug("Timesince start, after file save: %r", time.perf_counter()-startTIme)
 
             # send packet over UDP
             # also replaces spaces with commas and removes start strings
@@ -542,10 +548,13 @@ class controlWindow(QWidget):
             # will terminate at \n if it finds one
             i1 = self.tryInit('init1')
             i2 = self.tryInit('init2')
+            #self.waitForStatus(b'4')
             if i1 and i2:
                 logging.debug('probe initialized')
                 break
+            time.sleep(1)
             i = i + 1
+
         i = 0
         
 
@@ -553,11 +562,11 @@ class controlWindow(QWidget):
         # init probe
         sendCommand = self.commandDict.getCommand(whichInit)
         self.serialPort.sendCommand(sendCommand)
-        echo, sFlag, foundIndex = self.readUntilFound(b'@', 1000, 1000, isHome=False)
+        echo, sFlag, foundIndex = self.readUntilFound(b'@', 10000, 10000, isHome=False)
         while echo == b'-1':
             logging.debug("Init command failed, sending again")
             self.serialPort.sendCommand(sendCommand)
-            echo, sFlag, foundIndex = self.readUntilFound(b'@', 1000, 1000, isHome=False)
+            echo, sFlag, foundIndex = self.readUntilFound(b'@', 10000, 10000, isHome=False)
         logging.debug("Try init's send @, no move though echo: %s", echo)
         return True
 
@@ -912,15 +921,16 @@ class controlWindow(QWidget):
         # 0.115 is better, but still 1/hour
         # updated so sleepTime is halved for most loops, 
         # but in case of long scan has full time
-        sleepTime = 0.2
+        isHome=False
+        sleepTime = 0.0
         #self.serialPort.sendCommand(home1)
         self.moveCheckAgain(home1, sleepTime, isHome=True)
         logging.debug("home1 after move home") 
 
-        sleepTime = 0.000
+        sleepTime = 0.020
         self.moveCheckAgain(home2, sleepTime, isHome=True)
         logging.debug("home2 after step ") 
-        
+        isHome=False 
         # Update GUI
         # Note that having the clear here masks the 'target, target'
         # potential long scan indicator
@@ -1099,12 +1109,15 @@ class controlWindow(QWidget):
             moveToCommand = self.mover.getAngle(angle, zel)
             #self.serialPort.sendCommand(str.encode(moveToCommand))
             if angle == elAngles[1]:
-                sleepTime = 0.12
+                # first angle in lab 0.12
+                # on plane more, probably
+                sleepTime = 0.17
                 time.sleep(0.002)
             else:
                 #0.01 has many fewer spikes, but average takes too long
                 #0.0045 more spikes, preferred for timing ... 
-                sleepTime = 0.0075
+                #0.0075 works in lab, might be to little on plane
+                sleepTime = 0.0105
             self.moveCheckAgain(str.encode(moveToCommand), sleepTime, isHome=False)
 
             #logging.debug("Bline find the @: %r", echo)
@@ -1124,7 +1137,7 @@ class controlWindow(QWidget):
         while i < 2:
             # Might be possible to reduce this a bit
             # try read until step, then check that for @
-            echo, sFlag, foundIndex = self.readUntilFound(b'S',10000, 20000, isHome)
+            echo, sFlag, foundIndex = self.readUntilFound(b'S',1000, 1000, isHome)
 
             # Only send again if homescan and timeout
             if echo == b'-1' and isHome:
@@ -1140,6 +1153,13 @@ class controlWindow(QWidget):
                 self.serialPort.sendCommand((sentCommand))
                 i = i+1
                 logging.debug("moveCheckAgain: timeout")
+                '''
+            elif isHome and echo == b'Step:\xff/0C\r\n':
+                logging.debug("moveCheckAgain: xff\0C received, isHome= %r", isHome)
+                self.serialPort.sendCommand(self.commandDict.getCommand('home1'))
+
+            elif isHome and 
+                '''
             else:
                 logging.debug("moveCheckAgain: @ recieved %r, i = %s", echo, i)
                 i=5
@@ -1164,16 +1184,16 @@ class controlWindow(QWidget):
                     # status 04 is correct statu, others require re-prompt
                     statusNum = status[findTheT + 3]
                     logging.debug('statusnum: %r', statusNum)
-                    if statusNum == '4':
+                    if statusNum == b'4':
                         logging.debug('status is 4')
                         return True
-                    elif statusNum == '7':
+                    elif statusNum == b'7':
                         self.serialPort.sendCommand(
                                 self.commandDict.getCommand('count'))
                         self.serialPort.sendCommand(
                                 self.commandDict.getCommand('count2'))
                         logging.debug("status 7: sending integrate/read to fix")
-                    elif statusNum == '6':
+                    elif statusNum == b'6':
                         #i = i + 1
                         time.sleep(sleepTime/2)
                         if i < maxLoops/2:
@@ -1284,8 +1304,8 @@ class controlWindow(QWidget):
             #dataLine = self.quickRead(25) # avg is ~9, max is currently 15
             self.getIntegrateFromProbe()
             # clear echos
-            # avg is ~9, max observed issue at 25
-            dataLine = self.quickRead(25) 
+            # avg is ~9, max observed issue at 30
+            dataLine = self.quickRead(30) 
 
             # actually request the data of interest
             echo = b'-1'

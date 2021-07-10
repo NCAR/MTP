@@ -28,7 +28,7 @@ class doUDP(object):
         self.udp_write_ric_port = 32106
         self.udp_read_port = 7071 # from IWG server 
         # lab
-        self.udp_ip=QHostAddress.LocalHost 
+        self.udp_ip_local=QHostAddress.LocalHost 
         # plane
         self.udp_ip_nidas=QHostAddress("192.168.84.2") # subnet mask
         # Plane iwg - needs for broadcast
@@ -320,7 +320,7 @@ class doUDP(object):
                 bytes(savePacket, 'utf-8'), 
                 self.udp_ip_nidas, self.udp_write_to_nidas)
         # real time viewing software
-        self.sock_write.writeDatagram(packet, self.udp_ip, self.udp_write_port)
+        self.sock_write.writeDatagram(packet, self.udp_ip_local, self.udp_write_port)
         logging.debug("sent UDP")
         # or out both udp ports if we want R.I.C. involved
         self.sock_write_ric.writeDatagram(packet, self.udp_ip_nidas, self.udp_write_ric_port)
