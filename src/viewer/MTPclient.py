@@ -445,11 +445,16 @@ class MTPclient():
         """ Connection to UDP data streams """
         # Connect to MTP data stream
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # share the MTP packet port
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind(("0.0.0.0", self.udp_read_port))
 
     def connectIWG(self):
+        """ Connection to UDP data streams """
         # Connect to IWG data stream
         self.sockI = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # Share the IWG packet port
+        self.sockI.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sockI.bind(("0.0.0.0", self.iwg1_port))
 
     def getSocketFileDescriptor(self):
