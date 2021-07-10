@@ -27,7 +27,7 @@ revision: 'R0'
 revision_comment: 'initial release'
 
 # Port setting
-udp_send_port: 32106  # fron viewer to MTP
+udp_send_port: 32106  # from viewer to MTP
 udp_read_port: 32107  # from MTP to viewer
 iwg1_port: 7071       # IWG1 packets from GV
 
