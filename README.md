@@ -85,6 +85,9 @@ Install Git (if not already there) and download MTP:
     git clone http://github.com/NCAR/MTP
 ```
  * Copy bat files from windows10 dir to Desktop
+ * Edit the bat file and put in path\to\python.exe
+ * Add --config=path\to\config\file for project you are going to run.
+
 Install the EOL-Python packages per instructions in https://github.com/NCAR/EOL-Python
 
 Check your PYTHONPATH
