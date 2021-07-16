@@ -79,7 +79,9 @@ class MTPstats():
                 # Rotate times in prep for reading in next time
                 last_time = this_time
 
-        print(timedelta_histo)
+        print("Number of times each scan length was found:")
+        for i in sorted (timedelta_histo.keys()):
+            print(i, timedelta_histo[i])
 
         return()
 
@@ -130,6 +132,7 @@ class MTPstats():
         # Let's see what we got. At the moment I am copying these into a Google
         # sheet and plotting them there. Eventually, add this logic to the
         # timeseries plotting in MTP control.
+        print("\ntimeseries of counts by angle/channel")
         for i in range(len(linecounts)):
             str1 = " "
             print(str1.join(counts['scan'][i]))
@@ -137,6 +140,7 @@ class MTPstats():
         # Calculate mean and std of counts by angle/channel. Need to do this
         # for a straight and level portion of the flight for it to be
         # meaningful.
+        print("\nmean and standard deviation of line counts per angle/channel:")
         for i in range(len(linecounts)):
             counts['mean'][i] = \
                 numpy.mean([int(item) for item in counts['scan'][i]])
