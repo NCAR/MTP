@@ -34,7 +34,6 @@ class Curtain(QMainWindow):
         self.data = []    # 2-D array of temperatures
         self.alt = []     # 2-D array of altitudes
         self.time = []    # 1-D array of times (to label X-axis)
-        self.actime = []  # 1-D array of times (without duplicate first entry)
         self.acalt = []   # 1-D array of ACALT
         self.trop = []    # 1-D array of lowest tropopause (plot vs actime)
         self.mri = []     # 1-D array of MRI indicator (quality of fit)
@@ -130,6 +129,12 @@ class Curtain(QMainWindow):
 
     def addTime(self, time, temperature):
         """ Create a 2-D aray of times """
+
+        # Catch midnight rollover
+        if (len(self.time) > 0):
+            if (time/3600.0 < self.time[0]):  # Found midnight rollover
+                time = time + 86400
+
         # Create 1-D array of profile times (convert seconds to hours)
         self.time.append(time/3600.0)
 
@@ -172,11 +177,11 @@ class Curtain(QMainWindow):
 
     def plotACALT(self):
         """ Plot the aircraft altitude on the left axis """
-        self.ax.plot(self.actime, self.acalt, color='black')
+        self.ax.plot(self.time, self.acalt, color='black')
 
     def plotTropopause(self):
         """ Plot the tropopause on the left axis """
-        self.ax.plot(self.actime, self.trop, color='white',
+        self.ax.plot(self.time, self.trop, color='white',
                      linestyle='', marker='.', markersize=3)
 
     def plotMRI(self):
@@ -184,7 +189,7 @@ class Curtain(QMainWindow):
         Plot the MRI. MRI (data quality metric) ranges from .1-.2ish - plotted
         on pressure altitude scale. MRI is BestWtdRCSet['SumLnProb'])
         """
-        self.ax.vlines(self.actime, 0, self.mri, color='black')
+        self.ax.vlines(self.time, 0, self.mri, color='black')
 
 #   def markBadScan(self):  # TBD
 #       """
