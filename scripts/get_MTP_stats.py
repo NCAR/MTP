@@ -80,7 +80,7 @@ class MTPstats():
                 last_time = this_time
 
         print("Number of times each scan length was found:")
-        for i in sorted (timedelta_histo.keys()):
+        for i in sorted(timedelta_histo.keys()):
             print(i, timedelta_histo[i])
 
         return()
@@ -140,7 +140,7 @@ class MTPstats():
         # Calculate mean and std of counts by angle/channel. Need to do this
         # for a straight and level portion of the flight for it to be
         # meaningful.
-        print("\nmean and standard deviation of line counts per angle/channel:")
+        print("\nmean and standard dev of line counts per angle/channel:")
         for i in range(len(linecounts)):
             counts['mean'][i] = \
                 numpy.mean([int(item) for item in counts['scan'][i]])
