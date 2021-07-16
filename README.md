@@ -30,7 +30,8 @@ The MTPviewer software currently uses the following versions of code:
  * pip3 install netCDF4
  
 ## To install on Windows10
- 
+
+### Install needed packages using conda --or-- ...
 Use miniconda to install all needed packages:
  * https://docs.conda.io/en/latest/miniconda.html
    * download win 64 bit installer for python3.7 and install
@@ -57,7 +58,26 @@ If the packages are not available via the conda-forge channel, you can search fo
 
 Change you environment variable and add a PYTHONPATH that points to the netCDF installation (You will also add the path to EOL-Python to this env var below.)
 
-Then install Git (if not already there) and download MTP:
+### ... --or-- Install needed packages using pip
+ * Go to http://python.org
+ * Download the appropriate installer for you windows version
+ * Install python
+ * Click on the installer again and install pip
+
+Note where python is installed (in path\to\python.exe)
+
+ * Install packages
+```
+   > path\to\python.exe -m pip install numpy
+   > path\to\python.exe -m pip install pyqt5
+   > path\to\python.exe -m pip install matplotlib
+   > path\to\python.exe -m pip install pyyaml
+   > path\to\python.exe -m pip install netCDF4
+   > path\to\python.exe -m pip install pandas
+```
+
+### Download and configure the MTPviewer software
+Install Git (if not already there) and download MTP:
  * https://git-scm.com/ -> Download latest per automatic OS detection. Run .exe file to install. I used default settings as suggested by installer, except that I asked to install a desktop icon for “Git Bash”
  * Launch “Git Bash”
  * At the prompt
@@ -65,13 +85,14 @@ Then install Git (if not already there) and download MTP:
     git clone http://github.com/NCAR/MTP
 ```
  * Copy bat files from windows10 dir to Desktop
- * Install the EOL-Python packages per instructions in https://github.com/NCAR/EOL-Python
+Install the EOL-Python packages per instructions in https://github.com/NCAR/EOL-Python
 
 Check your PYTHONPATH
 ```
     > echo %PYTHONPATH%
 ```
 It should contain a path to EOL-Python and a path to the anaconda site-packages.
+If it doesn't follow the instructions on the EOL-Python page.
 
 ## To operate the MTP from Windows10
 
