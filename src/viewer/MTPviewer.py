@@ -643,7 +643,6 @@ class MTPviewer(QMainWindow):
         for index in range(len(self.client.reader.flightData)-1):
             thisscan = self.client.reader.flightData[index]
             time = thisscan['Aline']['values']['TIME']['val']
-            self.curtain.addACtime(time)
             self.curtain.addACalt(thisscan['Aline']['values']['SAPALT']['val'])
 
             try:
@@ -698,7 +697,6 @@ class MTPviewer(QMainWindow):
         self.curtain.addTemp(self.ATP['Temperatures'])
         self.curtain.addTime(self.client.reader.getVar('Aline', 'TIME'),
                              self.ATP['Temperatures'])
-        self.curtain.addACtime(self.client.reader.getVar('Aline', 'TIME'))
         self.curtain.addACalt(self.client.reader.getACAlt())
         self.curtain.addTrop(self.ATP['trop']['val'][0])
         self.curtain.addMRI(self.BestWtdRCSet['SumLnProb'])
