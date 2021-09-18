@@ -23,7 +23,11 @@ class Curtain(QMainWindow):
         consists of altitude vs temperature
         """
 
-        self.maxAltkm = 32  # The maximum altitude to plot
+        self.maxAltkm = 20  # The maximum altitude to plot, was 32
+        self.minCmap = 170  # was 200
+        self.maxCmap = 320  # was 300
+        self.xWinSize = 500  # was 500
+        self.yWinSize = 300  # was 300
 
         super().__init__(parent)
         self.initUI()
@@ -46,8 +50,8 @@ class Curtain(QMainWindow):
         # Set window title
         self.setWindowTitle('Curtain Plot for flight')
 
-        # Copy more from initUI in viewer.MTPviewer
-        self.resize(500, 300)
+        # Set popup window size
+        self.resize(self.xWinSize, self.yWinSize)
 
         # Define central widget to hold everything
         self.view = QWidget()
@@ -102,7 +106,7 @@ class Curtain(QMainWindow):
         self.cmap = plt.get_cmap('jet')  # Set the color scale
 
         # Label X-axis with time, not plot number.
-        levels = MaxNLocator(nbins=33).tick_values(200, 300)
+        levels = MaxNLocator(nbins=33).tick_values(self.minCmap, self.maxCmap)
         self.norm = BoundaryNorm(levels, ncolors=self.cmap.N, clip=True)
 
     def clear(self):
@@ -112,20 +116,40 @@ class Curtain(QMainWindow):
         # Add back the labels and formatting
         self.configureAxis()
 
-    def addAlt(self, altitude):
-        """ Build 2-D array of altitudes """
+    def addAltTemp(self, temperature, altitude, ACAlt):
+        """ Build 2-D arrays: altitudes and temperatures
+
+        Mask out temperatures when scan is greater than 8km from aircraft
+        and when altitude is missing
+        """
+
         # Convert nans in alt to zero, so when temperature is nan, will plot
         # NaN at zero alt.
         alt = numpy.nan_to_num(altitude).tolist()
         for i in range(len(alt)):
             if self.first:
-                self.alt.append([alt[i]])
+                if (alt[i] == 0.0 or abs(alt[i] - float(ACAlt)) > 8):
+                    temperature[i] = numpy.nan
+                self.alt.append([alt[i]])  # init array with first value
             else:
-                self.alt[i].append(alt[i])
+                if (alt[i] == 0.0 or abs(alt[i] - float(ACAlt)) > 8):
+                    temperature[i] = numpy.nan
+                self.alt[i].append(alt[i])  # Append across arrays
 
-    def addTemp(self, temperature):
-        """ Build 2-D array of temperatures """
         self.data.append(temperature)
+
+        # Stuff to plot values - useful for debugging. When counting
+        # across second dimension, select first value in first dim, 0.
+        # All lengths are the same, so this is arbitrary.
+        # self.alt and self.data should have same dimensions
+        # print(len(self.alt))  # altitude array vertical length
+        # print(len(self.data[0]))  # temperature array vertical length
+        # print(len(self.alt[0]))  # altitude array horizontal length
+        # print(len(self.data))  # temperature array horizontal length
+        # Now print the current profile
+        # for i in range(len(temperature)):
+        #     print(self.alt[i][len(self.data)-1])
+        # print(temperature)
 
     def addTime(self, time, temperature):
         """ Create a 2-D aray of times """
@@ -168,7 +192,7 @@ class Curtain(QMainWindow):
         #      matplotlib.pyplot.pcolormesh.html
         im = self.ax.pcolormesh(self.time, self.alt,
                                 numpy.transpose(self.data), cmap=self.cmap,
-                                norm=self.norm, shading='gouraud')
+                                norm=self.norm, shading='nearest')
 
         # Only use the QuadMesh object to create the legend the first time
         if self.first:
