@@ -26,8 +26,8 @@ class Curtain(QMainWindow):
         self.maxAltkm = 20  # The maximum altitude to plot, was 32
         self.minCmap = 170  # was 200
         self.maxCmap = 320  # was 300
-        self.xWinSize = 500  # was 500
-        self.yWinSize = 300  # was 300
+        self.xWinSize = 750  # was 500
+        self.yWinSize = 450  # was 300
 
         super().__init__(parent)
         self.initUI()
@@ -201,19 +201,21 @@ class Curtain(QMainWindow):
 
     def plotACALT(self):
         """ Plot the aircraft altitude on the left axis """
-        self.ax.plot(self.time, self.acalt, color='black')
+        self.ax.plot(self.time, self.acalt, color='black',
+                     linestyle='dashed')
 
     def plotTropopause(self):
         """ Plot the tropopause on the left axis """
         self.ax.plot(self.time, self.trop, color='white',
-                     linestyle='', marker='.', markersize=3)
+                     linestyle='', marker='+', markersize=2)
 
     def plotMRI(self):
         """
         Plot the MRI. MRI (data quality metric) ranges from .1-.2ish - plotted
         on pressure altitude scale. MRI is BestWtdRCSet['SumLnProb'])
         """
-        self.ax.vlines(self.time, 0, self.mri, color='black')
+        self.ax.plot(self.time, self.mri, color='grey',
+                     linestyle='', marker='.', markersize=1)
 
 #   def markBadScan(self):  # TBD
 #       """
