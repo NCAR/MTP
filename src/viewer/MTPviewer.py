@@ -643,14 +643,16 @@ class MTPviewer(QMainWindow):
         for index in range(len(self.client.reader.flightData)-1):
             thisscan = self.client.reader.flightData[index]
             time = thisscan['Aline']['values']['TIME']['val']
-            self.curtain.addACalt(thisscan['Aline']['values']['SAPALT']['val'])
+            self.ACAlt = thisscan['Aline']['values']['SAPALT']['val']
+            self.curtain.addACalt(self.ACAlt)
 
             try:
                 # If retrieval failed, go no further
                 self.client.reader.testATP(index)  # profile has been generated
                 temperature = thisscan['ATP']['Temperatures']
-                self.curtain.addAlt(thisscan['ATP']['Altitudes'])
-                self.curtain.addTemp(temperature)
+                self.curtain.addAltTemp(temperature,
+                                        thisscan['ATP']['Altitudes'],
+                                        self.ACAlt)
                 self.curtain.addTime(time, temperature)
                 self.curtain.addTrop(thisscan['ATP']['trop']['val'][0])
                 self.curtain.addMRI(thisscan['BestWtdRCSet']['SumLnProb'])
@@ -666,8 +668,8 @@ class MTPviewer(QMainWindow):
 
                 # Add missing vals for this scan
                 temperature = [numpy.nan] * 33
-                self.curtain.addAlt([numpy.nan] * 33)
-                self.curtain.addTemp(temperature)
+                self.curtain.addAltTemp(temperature, [numpy.nan] * 33,
+                                        numpy.nan)
                 self.curtain.addTime(time, temperature)
                 self.trop['altc'] = numpy.nan
                 self.curtain.addTrop(self.trop)
@@ -693,11 +695,12 @@ class MTPviewer(QMainWindow):
         self.curtain.clear()
 
         # Add latest data to 2-D arrays used by curtain plot
-        self.curtain.addAlt(self.ATP['Altitudes'])
-        self.curtain.addTemp(self.ATP['Temperatures'])
+        self.ACAlt = self.client.reader.getACAlt()
+        self.curtain.addAltTemp(self.ATP['Temperatures'],
+                                self.ATP['Altitudes'], self.ACAlt)
         self.curtain.addTime(self.client.reader.getVar('Aline', 'TIME'),
                              self.ATP['Temperatures'])
-        self.curtain.addACalt(self.client.reader.getACAlt())
+        self.curtain.addACalt(self.ACAlt)
         self.curtain.addTrop(self.ATP['trop']['val'][0])
         self.curtain.addMRI(self.BestWtdRCSet['SumLnProb'])
 
