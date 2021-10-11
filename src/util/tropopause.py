@@ -151,10 +151,9 @@ class Tropopause():
         If have a tropopause from a previous call to this routine, need to find
         a break between tropopauses before can look for the next one. This
         break is defined as a region where the lapse rate is less than -3 K/km.
-        MJ notes that he decided to search in a 2KM layer (rather than 1 km -
-        not sure where the initial definition comes from) as 1 km is too
-        sensitive for RAOB data causing too many double (and not credible)
-        tropopauses.
+        MJ notes that he decided to search in a 2KM layer (rather than 1 km as
+        defined in WMO) as 1 km is too sensitive for RAOB data causing too many
+        double (and not credible) tropopauses.
 
         Output:
             altBot - altitude of lowest layer to loop for next tropopause
