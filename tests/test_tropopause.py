@@ -18,7 +18,10 @@
 ###############################################################################
 import unittest
 import numpy
+import logging
+from io import StringIO
 from util.tropopause import Tropopause
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
 class TESTtropopause(unittest.TestCase):
@@ -71,6 +74,13 @@ class TESTtropopause(unittest.TestCase):
         # Instantiate a tropopause class
         self.trop = Tropopause(self.ATP, self.NUM_RETR_LVLS)
 
+        # For testing, we want to capture the log messages in a buffer so we
+        # can compare the log output to what we expect.
+        self.stream = StringIO()  # Set output stream to buffer
+
+        # Instantiate a logger
+        self.log = logger.initLogger(self.stream, logging.INFO)
+
     def test_findStart(self):
         """ Find index of first retrieval above starting altitude """
         startidx = self.trop.findStart(0, 5.6)
@@ -110,3 +120,92 @@ class TESTtropopause(unittest.TestCase):
         self.assertTrue(numpy.isnan(trop))
         self.assertTrue(numpy.isnan(altctrop))
         self.assertTrue(numpy.isnan(tempctrop))
+
+    def test_findTwoTropopauses(self):
+        """ If there should be two tropopauses, make sure they are found """
+        self.startTropIndex = 0
+        self.NUM_RETR_LVLS = 33
+        self.ATP2 = {
+            'Temperatures': [285.29277619837796, 284.9391046887834,
+                             275.22585745721324, 265.43706394773767,
+                             257.66176195833884, 251.7473227517665,
+                             246.5165452580186, 242.7213200919579,
+                             239.58618305753458, 237.29889123080966,
+                             234.8923779551945, 232.4238951751098,
+                             230.71409172681706, 228.8349977253528,
+                             227.41536870290545, 226.04075831045594,
+                             224.6908965963142, 223.41225306631642,
+                             221.74350128537444, 220.17881304172667,
+                             218.0848532735625, 216.53731637544328,
+                             215.61005841135045, 215.0940185886796,
+                             214.9674572152112, 214.2293127098129,
+                             212.23152889749747, 207.86963787037368,
+                             204.03224961220323, 205.6038047311626,
+                             212.4215635869228, 219.097400384303,
+                             225.2197442808954],
+            'Altitudes': [0.7312923985006143, 2.2309353714408555,
+                          3.7305907275278067, 5.130337267577113,
+                          6.229996472409457, 7.029821097233241,
+                          7.729622625671382, 8.229563049706845,
+                          8.629406563365935, 8.929302079468883,
+                          9.229214227593767, 9.52905954187316,
+                          9.729099783515057, 9.928973039831412,
+                          10.078894154233202, 10.228864009509474,
+                          10.378844355015765, 10.528530574138689,
+                          10.727920825445407, 10.927134496387087,
+                          11.226055184777136, 11.5261116472849,
+                          11.82627060550164, 12.226150649152498,
+                          12.726307866182433, 13.42637109722949,
+                          14.226360225495615, 15.426297917866275,
+                          17.126223122005165, 19.226237119499388,
+                          21.626499832391826, 24.727297231095307,
+                          28.228070002725715],
+            'RCFIndex': 0,
+            'RCFALT1Index': 14,
+            'RCFALT2Index': 15,
+            'RCFMRIndex': {'val': 0.3486558391214273, 'short_name': 'MRI',
+                           'units': '#', 'long_name':
+                           'retrieval quality metric \
+                           (ranges 0-2, <1 is excellent)',
+                           '_FillValue': '-99.9'},
+            'trop': {
+                     'val': [{'idx': numpy.nan, 'altc': numpy.nan,
+                             'tempc': numpy.nan},
+                             {'idx': numpy.nan, 'altc': numpy.nan,
+                             'tempc': numpy.nan}],
+                     'short_name': 'tropopause_altitude',
+                     'units': 'km',
+                     'long_name': 'Tropopause',
+                     '_FillValue': "-99.9"},
+        }
+
+        # Instantiate a tropopause class
+        self.trop = Tropopause(self.ATP2, self.NUM_RETR_LVLS)
+        self.startTropIndex = 0
+
+        # Find a first tropopause
+        [self.startTropIndex, self.ATP2['trop']['val'][0]['idx'],
+         self.ATP2['trop']['val'][0]['altc'],
+         self.ATP2['trop']['val'][0]['tempc']] = \
+            self.trop.findTropopause(self.startTropIndex)
+        self.assertEqual(self.startTropIndex, 22)
+        self.assertEqual(self.ATP2['trop']['val'][0]['idx'], 22)
+        self.assertEqual(self.ATP2['trop']['val'][0]['altc'],
+                         11.82627060550164)
+        self.assertEqual(self.ATP2['trop']['val'][0]['tempc'],
+                         215.61005841135045)
+
+        # Find a second tropopause
+        [self.startTropIndex, self.ATP2['trop']['val'][1]['idx'],
+         self.ATP2['trop']['val'][1]['altc'],
+         self.ATP2['trop']['val'][1]['tempc']] = \
+            self.trop.findTropopause(self.startTropIndex)
+        self.assertEqual(self.startTropIndex, 28)
+        self.assertEqual(self.ATP2['trop']['val'][1]['idx'], 28)
+        self.assertEqual(self.ATP2['trop']['val'][1]['altc'],
+                         17.126223122005165)
+        self.assertEqual(self.ATP2['trop']['val'][1]['tempc'],
+                         204.03224961220323)
+
+    def tearDown(self):
+        logger.delHandler()

@@ -27,19 +27,22 @@ class doUDP(object):
         self.udp_write_port = 32107
         self.udp_write_ric_port = 32106
         self.udp_read_port = 7071 # from IWG server 
+        # lab
+        self.udp_ip_local=QHostAddress.LocalHost 
         # plane
         self.udp_ip_nidas=QHostAddress("192.168.84.2") # subnet mask
-        #self.udp_ip=QHostAddress('0.0.0.0') # subnet mask
-        # lab
-        self.udp_ip=QHostAddress.LocalHost 
+        # Plane iwg - needs for broadcast
+        self.udp_ip=QHostAddress('0.0.0.0') # subnet mask
 
         # initialize the reader
         self.sock_read = QUdpSocket()
         # share the iwg packet port 
         self.sock_read.bind(self.udp_ip, self.udp_read_port,QUdpSocket.ReuseAddressHint)
+
+        #self.sock_read.bind(self.udp_ip_nidas, self.udp_read_port,QUdpSocket.ReuseAddressHint)
         # apparently this init is called each time anything in
         # the class is, causing it to flash between green and yellow
-        #self.parent.receivingUDPLED.setPixmap(self.parent.ICON_YELLOW_LED.scaled(40,40))
+        #self.parent.receivingIWGLED.setPixmap(self.parent.ICON_YELLOW_LED.scaled(40,40))
 
         # initialize the udp writers 
         # Binding is unnecessary and counterproductive to write ports
@@ -62,11 +65,15 @@ class doUDP(object):
         self.udpTimer.start(50000) # in milliseconds
 
         # Connect getIwg to socket
+        # This works for the loacl iwg spitter, not for the actual broadcast
         self.sock_read.readyRead.connect(self.getIWG)
+        #self.connect(self.sock_read, SIGNAL('readyRead()'),
+        #        self, SLOT('self.getIWG()'))
         return
 
 
     def getIWG(self):
+        logging.debug("IWG received------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
         """ Gets udp feed with iwg packet """
 
         # while there is stuff to read, read
@@ -76,7 +83,8 @@ class doUDP(object):
             # returns networkDatagram type
             #logging.debug( "in IWG read while loop")
 
-        #logging.debug( "after IWG read while loop")
+        logging.debug( "after IWG read while loop")
+        logging.debug("iwg packet from plane: %r", self.networkDatagram)
 
         # returns QByteArray
         self.data = self.networkDatagram.data().data().decode('ascii')
@@ -106,7 +114,7 @@ class doUDP(object):
 
 
         # if led isn't green, set it so: red led logic later
-        self.parent.receivingUDPLED.setPixmap(self.parent.ICON_GREEN_LED.scaled(40,40))
+        self.parent.receivingIWGLED.setPixmap(self.parent.ICON_GREEN_LED.scaled(40,40))
         # Ensures that events will be processed at 
         # least once a second
         # doesn't because this is whole thing is an event to be queued 
@@ -121,7 +129,7 @@ class doUDP(object):
         # if IWG timer manages to timeout, then we haven't recieved 
         # an IWG packet in at least 5 s, sets IWG led to red
         # on receipt of IWG packet, will turn green
-        self.parent.receivingUDPLED.setPixmap(
+        self.parent.receivingIWGLED.setPixmap(
                 self.parent.ICON_RED_LED.scaled(40,40))
         
     def sortIWG(self):
@@ -312,10 +320,10 @@ class doUDP(object):
                 bytes(savePacket, 'utf-8'), 
                 self.udp_ip_nidas, self.udp_write_to_nidas)
         # real time viewing software
-        self.sock_write.writeDatagram(packet, self.udp_ip, self.udp_write_port)
+        self.sock_write.writeDatagram(packet, self.udp_ip_local, self.udp_write_port)
         logging.debug("sent UDP")
         # or out both udp ports if we want R.I.C. involved
-        self.sock_write_ric.writeDatagram(packet, self.udp_ip, self.udp_write_ric_port)
+        self.sock_write_ric.writeDatagram(packet, self.udp_ip_nidas, self.udp_write_ric_port)
         logging.debug("sent ric UDP")
 
         #logging.debug("sending udp packet %s", packet)

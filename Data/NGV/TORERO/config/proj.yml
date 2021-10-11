@@ -15,8 +15,8 @@
 ###############################################################################
 
 # Project info
-project: 'DEEPWAVE'  # 20140606
-fltno: 'RF01'
+project: 'TORERO'
+fltno: 'RF04'  # 20120127
 
 # ICARTT header info
 pi: 'Julie Haggerty (haggerty@ucar.edu)'
@@ -27,7 +27,7 @@ revision: 'R0'
 revision_comment: 'initial release'
 
 # Port setting
-udp_send_port: 32106  # from viewer to MTP
+udp_send_port: 32106  # fron viewer to MTP
 udp_read_port: 32107  # from MTP to viewer
 iwg1_port: 7071       # IWG1 packets from GV
 
@@ -46,6 +46,7 @@ GeqnMax: 40           # Maximum acceptable gain
 ###############################################################################
 # For testing, use the constants from DEEPWAVE RF01 post-processing (so can
 # compare with nimbus and VB6 results to confirm these calcs are OK)
+# These constants are the same for TORERO
 GOF: 40.6             # Gain offset to subtract from Mixer Temperature Counts
 GEC: [[19.87, 0.1], [23.1, 0.1], [26.05, 0.1]]  # Per channel slope, intercept
 
@@ -66,6 +67,7 @@ GEC: [[19.87, 0.1], [23.1, 0.1], [26.05, 0.1]]  # Per channel slope, intercept
 # There used to be a projdir element here. It has been replaced
 # in favor of using the --config command line argument
 # to derive the project directory
+
 
 # Location of ascii_parms file relative to projdir
 ascii_parms: 'config/ascii_parms'
