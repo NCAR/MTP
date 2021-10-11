@@ -12,6 +12,8 @@ from datetime import datetime
 
 def main():
 
+    histogram = {}
+
     # Process command line arguments
     parser = argparse.ArgumentParser(
             "Script to find scan intervals for a flight\n")
@@ -44,14 +46,21 @@ def main():
                     if previoustime != basetime:
                         # Look for time differences that aren't the normal
                         # 17 or 18 sec
-                        if tdelta.seconds != 17 and tdelta.seconds != 18:
-                            print(tdelta.seconds, " second scan interval at ",
-                                  scantime)
+                        #if tdelta.seconds < 17 or tdelta.seconds > 20:
+                        #    print("interval time: ", tdelta.seconds, " at ",
+                        #          scantime)
+                        if str(tdelta.seconds) in histogram.keys():
+                            histogram[str(tdelta.seconds)] += 1
+                        else:
+                            histogram[str(tdelta.seconds)] = 1
 
                     # Rotate times in prep for reading in next time
                     previoustime = currenttime
     except UnicodeDecodeError:
         pass  # Found non-text data
+
+    for value in histogram:
+        print(value, " ", histogram[value])
 
 
 if __name__ == "__main__":
