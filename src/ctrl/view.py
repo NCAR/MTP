@@ -53,16 +53,25 @@ class controlWindow(QWidget):
         # Lables
         self.probeStatus = QLabel('Probe Status', self)
         self.scanStatus = QLabel('Scan Status', self)
-        self.receivingUDP = QLabel("IWG Packet Status", self)
+        self.receivingIWG = QLabel("IWG Packet Status", self)
+        self.IWGPort= QLabel("IWG Port # ", self)
         self.sendingUDP = QLabel("UDP Status", self)
-        self.projectName = QLabel("Project Name")
-        self.planeName = QLabel("Plane Name")
+        self.UDPPort = QLabel("UDP Port # ", self)
+        self.overHeat= QLabel("40C < Tsynth < 50C", self)
+        self.overVoltage = QLabel("Overvoltage", self)
+        self.projectName = QLabel("Project")
+        self.flightNumber = QLabel("Flight #")
+        self.planeName = QLabel("Plane")
+        self.nominalPitch = QLabel("Nominal Pitch")
+        self.frequencies = QLabel("Frequencies")
+        self.allScanAngles = QLabel("Nominal Elevation Angles")
         self.saveLocation = QLabel("Raw data saved to:")
         self.logLocation = QLabel("Log data saved to:")
+        self.emptyLabel = QLabel("")
 
         self.loopTimer= QLabel("Time since last frame")
-        self.totalNumFrames = QLabel("Total frames")
-        self.numFramesSinceLastReset = QLabel("Frames since reset")
+        self.totalNumFrames = QLabel("Total scans")
+        self.numFramesSinceLastReset = QLabel("Scans since reset")
         self.elAngle = QLabel("Current El. Angle")
 
         # Text boxes
@@ -76,10 +85,6 @@ class controlWindow(QWidget):
         self.logLocationBox = QPlainTextEdit()
         self.logLocationBox.insertPlainText(':../../deployToDesktop/MTPData/Logs')
         self.logLocationBox.insertPlainText('~/Desktop/MTPData/Logs')
-        self.projectNameBox = QPlainTextEdit()
-        self.projectNameBox.insertPlainText('ACCLIP_TEST')
-        self.planeNameBox = QPlainTextEdit()
-        self.planeNameBox.insertPlainText('NGV')
 
 
         self.loopTimerBox = QPlainTextEdit()
@@ -91,16 +96,36 @@ class controlWindow(QWidget):
         self.numFramesSinceLastResetBox = QPlainTextEdit()
         self.numFramesSinceLastResetBox.insertPlainText('0')
         self.numFramesSinceLastResetBox.setOverwriteMode(True)
+
+        # from config.mtph
+        self.planeNameBox = QPlainTextEdit()
+        self.planeNameBox.insertPlainText('NGV')
+        self.nominalPitchBox = QPlainTextEdit()
+        self.nominalPitchBox.insertPlainText('3')
+        # also known as channels
+        self.frequenciesBox = QPlainTextEdit()
+        self.frequenciesBox.insertPlainText('55.51, 56.65, 58.8')
+        self.allScanAnglesBox = QPlainTextEdit()
+        self.allScanAnglesBox.insertPlainText('80.00, 55.00, 42.00, 25.00, 12.00, 0.00, -12.00, -25.00, -42.00, -80.00')
+        # Current elevation - GUI updates before correction applied
         self.elAngleBox = QPlainTextEdit()
         self.elAngleBox.insertPlainText('Target')
         self.elAngleBox.setOverwriteMode(True)
 
-
+        # from/to (flight name) config.yaml
+        self.projectNameBox = QPlainTextEdit()
+        self.projectNameBox.insertPlainText('ASPIRE-TEST')
+        self.flightNumberBox = QPlainTextEdit()
+        self.flightNumberBox.insertPlainText('change')
+        self.IWGPortBox = QPlainTextEdit()
+        self.IWGPortBox.insertPlainText('change')
+        self.UDPPortBox = QPlainTextEdit()
+        self.UDPPortBox.insertPlainText('change')
 
 
 
         # Push Buttons
-        self.reInitProbe = QPushButton("Re-initialize Probe/restart Scanning", self)
+        self.reInitProbe = QPushButton("(Re)start Scanning", self)
         self.reInitProbe.clicked.connect(self.reInitProbeClicked)
         self.scanStatusButton = QPushButton("Stop Scanning", self)
         self.scanStatusButton.clicked.connect(self.scanStatusClicked)
@@ -131,67 +156,103 @@ class controlWindow(QWidget):
         self.probeStatusLED.setPixmap(self.ICON_RED_LED.scaled(40, 40))
         self.scanStatusLED = QLabel('led')
         self.scanStatusLED.setPixmap(self.ICON_RED_LED.scaled(40, 40))
-        self.receivingUDPLED = QLabel('led')
-        self.receivingUDPLED.setPixmap(self.ICON_RED_LED.scaled(40, 40))
+        self.receivingIWGLED = QLabel('led')
+        self.receivingIWGLED.setPixmap(self.ICON_RED_LED.scaled(40, 40))
         self.sendingUDPLED = QLabel('led')
         self.sendingUDPLED.setPixmap(self.ICON_RED_LED.scaled(40, 40))
+        self.overHeatLED = QLabel('led')
+        # Updated at end of each scan
+        self.overHeatLED.setPixmap(self.ICON_GREEN_LED.scaled(40, 40))
+        self.overVoltageLED = QLabel('led')
+        self.overVoltageLED.setPixmap(self.ICON_GREEN_LED.scaled(40, 40))
 
         # Horizontal boxes
         LineProbeStatus = QHBoxLayout()
         LineProbeStatus.addWidget(self.probeStatusLED)
         LineProbeStatus.addWidget(self.probeStatus)
+        LineProbeStatus.addWidget(self.emptyLabel)
         LineProbeStatus.addStretch()
+        LineProbeStatus.addWidget(self.reInitProbe)
+        LineProbeStatus.addWidget(self.scanStatusButton)
 
         LineScanStatus = QHBoxLayout()
         LineScanStatus.addWidget(self.scanStatusLED)
         LineScanStatus.addWidget(self.scanStatus)
+        LineScanStatus.addWidget(self.emptyLabel)
+        LineScanStatus.addStretch()
         LineScanStatus.addWidget(self.loopTimer)
         LineScanStatus.addWidget(self.loopTimerBox)
-        LineScanStatus.addStretch()
+        
+        LineHousekeeping = QHBoxLayout()
+        LineHousekeeping.addWidget(self.overHeatLED)
+        LineHousekeeping.addWidget(self.overHeat)
+        LineHousekeeping.addWidget(self.emptyLabel)
+        LineHousekeeping.addStretch()
+        LineHousekeeping.addWidget(self.overVoltageLED)
+        LineHousekeeping.addWidget(self.overVoltage)
 
         LineNumFrames = QHBoxLayout()
         LineNumFrames.addWidget(self.totalNumFramesBox)
         LineNumFrames.addWidget(self.totalNumFrames)
+        LineNumFrames.addWidget(self.emptyLabel)
+        LineNumFrames.addStretch()
         LineNumFrames.addWidget(self.numFramesSinceLastReset)
         LineNumFrames.addWidget(self.numFramesSinceLastResetBox)
-        LineNumFrames.addStretch()
 
         LineElAngle = QHBoxLayout()
         LineElAngle.addWidget(self.elAngleBox)
         LineElAngle.addWidget(self.elAngle)
+        LineElAngle.addWidget(self.emptyLabel)
         LineElAngle.addStretch()
+        LineElAngle.addWidget(self.allScanAngles)
+        LineElAngle.addWidget(self.allScanAnglesBox)
 
         LineReceivingUDP = QHBoxLayout()
-        LineReceivingUDP.addWidget(self.receivingUDPLED)
-        LineReceivingUDP.addWidget(self.receivingUDP)
+        LineReceivingUDP.addWidget(self.receivingIWGLED)
+        LineReceivingUDP.addWidget(self.receivingIWG)
+        LineReceivingUDP.addWidget(self.emptyLabel)
         LineReceivingUDP.addStretch()
+        LineReceivingUDP.addWidget(self.IWGPort)
+        LineReceivingUDP.addWidget(self.IWGPortBox)
 
         LineSendingUDP = QHBoxLayout()
         LineSendingUDP.addWidget(self.sendingUDPLED)
         LineSendingUDP.addWidget(self.sendingUDP)
+        LineSendingUDP.addWidget(self.emptyLabel)
         LineSendingUDP.addStretch()
+        LineSendingUDP.addWidget(self.UDPPort)
+        LineSendingUDP.addWidget(self.UDPPortBox)
 
         LineRunningLocation = QHBoxLayout()
-        LineRunningLocation.addWidget(self.locationLocal)
-        LineRunningLocation.addWidget(self.locationRemote)
+        #LineRunningLocation.addWidget(self.locationLocal)
+        #LineRunningLocation.addWidget(self.locationRemote)
         LineRunningLocation.addStretch()
 
         LineProjectName = QHBoxLayout()
         LineProjectName.addWidget(self.projectName)
         LineProjectName.addWidget(self.projectNameBox)
+        LineProjectName.addWidget(self.emptyLabel)
+        LineProjectName.addStretch()
+        LineProjectName.addWidget(self.flightNumber)
+        LineProjectName.addWidget(self.flightNumberBox)
         LineProjectName.addStretch()
 
         LinePlaneName = QHBoxLayout()
         LinePlaneName.addWidget(self.planeName)
         LinePlaneName.addWidget(self.planeNameBox)
+        LinePlaneName.addWidget(self.emptyLabel)
+        LinePlaneName.addStretch()
+        LinePlaneName.addWidget(self.nominalPitch)
+        LinePlaneName.addWidget(self.nominalPitchBox)
         LinePlaneName.addStretch()
 
         # vbox
         mainbox = QVBoxLayout()
         mainbox.addLayout(LineProbeStatus)
-        mainbox.addWidget(self.reInitProbe)
+        #mainbox.addWidget(self.reInitProbe)
         mainbox.addLayout(LineScanStatus)
-        mainbox.addWidget(self.scanStatusButton)
+        mainbox.addLayout(LineHousekeeping)
+        #mainbox.addWidget(self.scanStatusButton)
         mainbox.addLayout(LineNumFrames)
         mainbox.addLayout(LineElAngle)
         mainbox.addLayout(LineReceivingUDP)
@@ -201,8 +262,8 @@ class controlWindow(QWidget):
         mainbox.addLayout(LinePlaneName)
         mainbox.addWidget(self.saveLocation)
         mainbox.addWidget(self.saveLocationBox)
-        mainbox.addWidget(self.logLocation)
-        mainbox.addWidget(self.logLocationBox)
+        #mainbox.addWidget(self.logLocation)
+        #mainbox.addWidget(self.logLocationBox)
         mainbox.addWidget(self.shutdownProbe)
         mainbox.addStretch()
 
@@ -268,8 +329,10 @@ class controlWindow(QWidget):
         '''
 
     # read in and save iwg packet to dict
-    def readUDP():
-        self.SavePacket.saveData()
+    def readIWG():
+        
+        # IWG isn't in packetStore, is in udp.py
+        #self.packetStore.saveData()
         return 0
 
     def reInitProbeClicked(self):
@@ -301,7 +364,7 @@ class controlWindow(QWidget):
         self.continueCycling = False
         #self.initProbe()
 
-        self.reInitProbe.setText("Re-initialize Probe/Restart Scanning")
+        #self.reInitProbe.setText("Re-initialize Probe/Restart Scanning")
         #self.reInitProbe.setText("Reset Probe")
         #/self.homeScan()
         self.mainloop(self.app, self.serialPort, self.configStore)
@@ -348,10 +411,15 @@ class controlWindow(QWidget):
         self.packetStore = StorePacket()
         # Declare instance of moveMTP class
         self.mover = moveMTP(self)
+        # Declare instance of doUDP 
+        # Opens ports to write to/from ric/viewer
+        # Opens IWG port, has IWG averaging
+        self.packetStore.iwgStore = 'IWG1,20101002T194729,39.1324,-103.978,4566.43,,14127.9,,180.827,190.364,293.383,0.571414,-8.02806,318.85,318.672,-0.181879,-0.417805,-0.432257,-0.0980951,2.36793,-1.66016,-35.8046,16.3486,592.062,146.734,837.903,9.55575,324.104,1.22603,45.2423,,-22    .1676,'
+        self.iwgStore = 'IWG1,20101002T194729,39.1324,-103.978,4566.43,,14127.9,,180.827,190.364,293.383,0.571414,-8.02806,318.85,318.672,-0.181879,-0.417805,-0.432257,-0.0980951,2.36793,-1.66016,-35.8046,16.3486,592.062,146.734,837.903,9.55575,324.104,1.22603,45.2423,,-22    .1676,'
+        
         self.udp = doUDP(self, app)
         # global storage for values collected from probe
         # storing them in dict introduced slowness
-        self.iwgStore = 'IWG1,20101002T194729,39.1324,-103.978,4566.43,,14127.9,,180.827,190.364,293.383,0.571414,-8.02806,318.85,318.672,-0.181879,-0.417805,-0.432257,-0.0980951,2.36793,-1.66016,-35.8046,16.3486,592.062,146.734,837.903,9.55575,324.104,1.22603,45.2423,,-22    .1676,'
         # Well, there's the right way to do this
         # and the easy way. 
         # So until we're moving all the functions, 
@@ -388,19 +456,26 @@ class controlWindow(QWidget):
 
             # use the MTPmove aline
             packetStartTime = time.gmtime()
+            startTIme = time.perf_counter()
             self.alineStore = self.Aline()
 
+            #logging.debug("Timesince start, after A: %r", nowtime = time.perf_counter()-startTIme)
             # Bline: long
             self.blineStore = 'B' + self.Bline(elAngles, nfreq)
+            #logging.debug("Timesince start, after B: %r", nowtime = time.perf_counter()-startTIme)
 
             self.m01Store = self.m01()
             self.m02Store = self.m02()
             self.ptStore = self.pt()
+            #logging.debug("Timesince start, after m's/pt: %r", time.perf_counter()-startTIme)
             # Eline: long 
             self.elineStore = 'E' + self.Eline(nfreq)
+            #logging.debug("Timesince start, after E: %r", time.perf_counter()-startTIme)
             # save to file
             # assumes everything's been decoded from hex
             saveData = self.mover.saveData(packetStartTime)
+            logging.debug("Saved Data packet ------------------------------------")
+            #logging.debug("Timesince start, after file save: %r", time.perf_counter()-startTIme)
 
             # send packet over UDP
             # also replaces spaces with commas and removes start strings
@@ -418,7 +493,7 @@ class controlWindow(QWidget):
 
         logging.debug("Main Loop Stopped")
         self.scanStatusLED.setPixmap(self.ICON_RED_LED.scaled(40, 40))
-        if self.packetStore.setData("quitClicked"):
+        if self.packetStore.getData("quitClicked"):
             app.exit(0)
 
     def cycleStats(self, previousTime):
@@ -433,6 +508,7 @@ class controlWindow(QWidget):
         # total frames(m01,m02,pt,Eline,aline,bline, IWG) taken since startup
         totalCycles = self.packetStore.getData("totalCycles") + 1 
         self.packetStore.setData("totalCycles", totalCycles) 
+        logging.info("cycleStats totalCycles/cycleNumber: %s", totalCycles)
         
         # frames taken since last "stop probe"
         self.cyclesSinceLastStop = self.cyclesSinceLastStop + 1
@@ -453,14 +529,14 @@ class controlWindow(QWidget):
         #error_dialog.showMessage('Oh no!')   
 
         # Pauses program execution until ok pressed
-        message = QMessageBox.information(self, "Waiting", "Waiting for radiometer")
+        #message = QMessageBox.information(self, "Waiting", "Waiting for radiometer")
         while i <1000:
             self.serialPort.sendCommand(self.commandDict.getCommand("version"))
-            echo, sFlag, foundIndex = self.readUntilFound(b'_', 1000, 200, isHome=False)
+            echo, sFlag, foundIndex = self.readUntilFound(b'_', 10000, 200, isHome=False)
             if echo != b'-1':
                 return True
             self.app.processEvents()
-            sleep(1)
+            time.sleep(1)
         return False
 
 
@@ -472,10 +548,13 @@ class controlWindow(QWidget):
             # will terminate at \n if it finds one
             i1 = self.tryInit('init1')
             i2 = self.tryInit('init2')
+            #self.waitForStatus(b'4')
             if i1 and i2:
                 logging.debug('probe initialized')
                 break
+            time.sleep(1)
             i = i + 1
+
         i = 0
         
 
@@ -483,11 +562,11 @@ class controlWindow(QWidget):
         # init probe
         sendCommand = self.commandDict.getCommand(whichInit)
         self.serialPort.sendCommand(sendCommand)
-        echo, sFlag, foundIndex = self.readUntilFound(b'@', 100, 10, isHome=False)
+        echo, sFlag, foundIndex = self.readUntilFound(b'@', 10000, 10000, isHome=False)
         while echo == b'-1':
             logging.debug("Init command failed, sending again")
             self.serialPort.sendCommand(sendCommand)
-            echo, sFlag, foundIndex = self.readUntilFound(b'@', 100, 10, isHome=False)
+            echo, sFlag, foundIndex = self.readUntilFound(b'@', 10000, 10000, isHome=False)
         logging.debug("Try init's send @, no move though echo: %s", echo)
         return True
 
@@ -544,7 +623,9 @@ class controlWindow(QWidget):
 
     def scanStatusClicked(self):
         
+        logging.debug("scanStatusClicked")
         self.continueCycling= False 
+        logging.debug("scanStatusClicked")
         '''
         logging.debug("scanStatusClicked")
         if self.packetStore.getData("isCycling"): 
@@ -632,9 +713,11 @@ class controlWindow(QWidget):
 
 
     def initSaveDataFile(self, flightNumber):    
+        location = "ASPIRE-TEST/data/"
+        #location = "../../../Desktop/ASPIRE-TEST/data/"
         saveDataFileName = time.strftime("%Y%m%d") + '_' + time.strftime("%H%M%S") + '_' + flightNumber + '.mtp'
 
-        with open(saveDataFileName, "ab") as datafile:
+        with open(location+saveDataFileName, "ab") as datafile:
                 # this will be rewritten each time the program restarts
                 datafile.write(str.encode("Instrument on " + time.strftime("%X") + " " + time.strftime("%m-%d-%y") + '\r\n'))
          
@@ -835,16 +918,23 @@ class controlWindow(QWidget):
         # min time before it starts shaking/grinding
         # do need the extra checkAgain bit to be sure it gets home 
         # 0.1 has 10 long homescans in 315 scans
-        sleepTime = 0.115 
+        # 0.115 is better, but still 1/hour
+        # updated so sleepTime is halved for most loops, 
+        # but in case of long scan has full time
+        isHome=False
+        sleepTime = 0.0
         #self.serialPort.sendCommand(home1)
         self.moveCheckAgain(home1, sleepTime, isHome=True)
         logging.debug("home1 after move home") 
 
-        sleepTime = 0.000
+        sleepTime = 0.020
         self.moveCheckAgain(home2, sleepTime, isHome=True)
         logging.debug("home2 after step ") 
-        
+        isHome=False 
         # Update GUI
+        # Note that having the clear here masks the 'target, target'
+        # potential long scan indicator
+        self.elAngleBox.clear()
         self.elAngleBox.insertPlainText("Target")
         # sets 'known location' to 0
         self.packetStore.setData("currentClkStep", 0)
@@ -854,7 +944,7 @@ class controlWindow(QWidget):
         logging.debug("M01")
         self.serialPort.sendCommand((self.commandDict.getCommand("read_M1")))
         # echo will echo "M  1" so have to scan for the : in the M line
-        m, sFlag, foundIndex = self.readUntilFound(b'M01:', 100, 20, isHome=False)
+        m, sFlag, foundIndex = self.readUntilFound(b'M01:', 1000, 1000, isHome=False)
         # set a timer so m01 values get translated from hex?
         m01 = self.mover.decode(m)
         return m01
@@ -863,14 +953,14 @@ class controlWindow(QWidget):
     def m02(self):
         logging.debug("M02")
         self.serialPort.sendCommand((self.commandDict.getCommand("read_M2")))
-        m, sFlag, foundIndex = self.readUntilFound(b'M02:', 100, 20, isHome=False)
+        m, sFlag, foundIndex = self.readUntilFound(b'M02:', 1000, 1000, isHome=False)
         m02 = self.mover.decode(m)
         return m02
 
     def pt(self):
         logging.debug("pt")
         self.serialPort.sendCommand((self.commandDict.getCommand("read_P")))
-        p, sFlag, foundIndex = self.readUntilFound(b':', 100, 20, isHome=False)
+        p, sFlag, foundIndex = self.readUntilFound(b':', 1000, 1000, isHome=False)
         pt = self.mover.decode(p)
 
         return pt
@@ -882,12 +972,12 @@ class controlWindow(QWidget):
         # set noise 1
         # returns echo and b"ND:01\r\n" or b"ND:00\r\n"
         self.serialPort.sendCommand(self.commandDict.getCommand("noise1"))
-        echo, sFlag, foundIndex = self.readUntilFound(b'ND:01',6, 4, isHome=False)
+        echo, sFlag, foundIndex = self.readUntilFound(b'ND:01',6000, 1000, isHome=False)
         data = self.integrate(nfreq)
 
         # set noise 0
         self.serialPort.sendCommand(self.commandDict.getCommand("noise0"))
-        echo, sFlag, foundIndex = self.readUntilFound(b'ND:00',6, 4, isHome=False)
+        echo, sFlag, foundIndex = self.readUntilFound(b'ND:00',6000, 4000, isHome=False)
         return data + self.integrate(nfreq)
 
     def Aline(self):
@@ -953,7 +1043,8 @@ class controlWindow(QWidget):
             # other odd constant is in udp.py -
             # sets the recieved values in iwg line to 0
         else:
-            logging.debug("else got IWG")
+            logging.debug("view: else got IWG")
+            logging.debug(self.packetStore.iwgStore)
 
         aline = " " + str(pitchavg)
         aline = aline + " " + str(pitchrms)
@@ -1002,11 +1093,13 @@ class controlWindow(QWidget):
         elAngles = angles[2:numAngles+2]
         logging.debug(elAngles)
         data = ''
+        angleIndex = 0 #1-10
         for angle in elAngles: 
             # update GUI
             self.elAngleBox.clear()
             self.elAngleBox.insertPlainText(str(angle))
-            logging.debug("el angle: %f", angle)
+            angleIndex = angleIndex + 1
+            logging.debug("el angle: %f, ScanAngleNumber: %f", angle, angleIndex)
             self.app.processEvents()
 
             # packetStore pitchCorrect should be button
@@ -1016,10 +1109,15 @@ class controlWindow(QWidget):
             moveToCommand = self.mover.getAngle(angle, zel)
             #self.serialPort.sendCommand(str.encode(moveToCommand))
             if angle == elAngles[1]:
-                sleepTime = 0.06
+                # first angle in lab 0.12
+                # on plane more, probably
+                sleepTime = 0.17
                 time.sleep(0.002)
             else:
-                sleepTime = 0.000
+                #0.01 has many fewer spikes, but average takes too long
+                #0.0045 more spikes, preferred for timing ... 
+                #0.0075 works in lab, might be to little on plane
+                sleepTime = 0.0105
             self.moveCheckAgain(str.encode(moveToCommand), sleepTime, isHome=False)
 
             #logging.debug("Bline find the @: %r", echo)
@@ -1038,7 +1136,9 @@ class controlWindow(QWidget):
         i = 0
         while i < 2:
             # Might be possible to reduce this a bit
-            echo, sFlag, foundIndex = self.readUntilFound(b'@',100, 20, isHome)
+            # try read until step, then check that for @
+            echo, sFlag, foundIndex = self.readUntilFound(b'S',1000, 1000, isHome)
+
             # Only send again if homescan and timeout
             if echo == b'-1' and isHome:
                 self.serialPort.sendCommand((sentCommand))
@@ -1053,6 +1153,13 @@ class controlWindow(QWidget):
                 self.serialPort.sendCommand((sentCommand))
                 i = i+1
                 logging.debug("moveCheckAgain: timeout")
+                '''
+            elif isHome and echo == b'Step:\xff/0C\r\n':
+                logging.debug("moveCheckAgain: xff\0C received, isHome= %r", isHome)
+                self.serialPort.sendCommand(self.commandDict.getCommand('home1'))
+
+            elif isHome and 
+                '''
             else:
                 logging.debug("moveCheckAgain: @ recieved %r, i = %s", echo, i)
                 i=5
@@ -1060,13 +1167,15 @@ class controlWindow(QWidget):
 
         # Too soon and status is always 6: homescan needs longer
         i = 0
-        while i < 4:
-            time.sleep(sleepTime)
+        maxLoops = 12
+        while i < maxLoops:
+            i = i + 1
+            time.sleep(sleepTime/2)
             self.serialPort.sendCommand(self.commandDict.getCommand('status'))
             # need readUntilFound to not exit on seeing an s here
             # but also need to keep isHome in this scope as True
             # for when it is actually called by home
-            status, sFlag, foundIndex = self.readUntilFound(b'T', 10, 10, False)   
+            status, sFlag, foundIndex = self.readUntilFound(b'T', 1000, 1000, False)   
             logging.debug("FindtheT status: %r", status)
             # in case statusNum ==7, S was found, but ST## wasn't
             if status != b'-1':
@@ -1075,17 +1184,24 @@ class controlWindow(QWidget):
                     # status 04 is correct statu, others require re-prompt
                     statusNum = status[findTheT + 3]
                     logging.debug('statusnum: %r', statusNum)
-                    if statusNum == '4':
+                    if statusNum == b'4':
                         logging.debug('status is 4')
                         return True
-                    elif statusNum == '7':
+                    elif statusNum == b'7':
                         self.serialPort.sendCommand(
                                 self.commandDict.getCommand('count'))
                         self.serialPort.sendCommand(
                                 self.commandDict.getCommand('count2'))
                         logging.debug("status 7: sending integrate/read to fix")
-                    elif statusNum == '6':
-                        if isHome:
+                    elif statusNum == b'6':
+                        #i = i + 1
+                        time.sleep(sleepTime/2)
+                        if i < maxLoops/2:
+                            # Longer wait to prevent long homescans,
+                            # malset channels (eg. ST:04\r\nS\r\nST:00)
+                            time.sleep(sleepTime/2)
+                            logging.debug("moveCheckAgain, i<maxLoops/2, i = %r, mL/2 = %r", i, maxLoops/2)
+                        elif isHome:
                             # Status 6 needs the command (j0f0) sent again
                             self.moveCheckAgain(sentCommand, sleepTime, isHome)
                             logging.debug("moveCheckAgain, isHome %s", isHome)
@@ -1093,7 +1209,6 @@ class controlWindow(QWidget):
                             # Status 6 with Move commands needs a wait
                             # do the status check again
                             logging.debug('moveCheckAgain T found, status 6')
-                            i = i + 1
                     else:
                         logging.debug("moveCheckAgain:status not 4,6,7: %s",
                                 statusNum)
@@ -1103,7 +1218,7 @@ class controlWindow(QWidget):
             else:
                 # send status again
                 logging.debug("moveCheckAgain: T not found")
-                i = i + 1
+                #i = i + 1
         logging.debug("moveCheckAgain timeout %s ", status)
 
 
@@ -1114,10 +1229,10 @@ class controlWindow(QWidget):
         while i < 11:
             self.serialPort.sendCommand((self.commandDict.getCommand(scanOrEncode)))
             # first there's the echo, then there's the probe's echo of that echo then
-            echo, sFlag, foundIndex = self.readUntilFound(b':', 10, 20, isHome=False)
+            echo, sFlag, foundIndex = self.readUntilFound(b':', 1000, 2000, isHome=False)
             # read_scan returns b'Step:\xff/0c1378147\r\n' 
             # then returns b'Step:\xff/0`1378147\r\n' 
-            echo, sFlag, foundIndex = self.readUntilFound(b':', 10, 20, isHome=False)
+            echo, sFlag, foundIndex = self.readUntilFound(b':', 1000, 2000, isHome=False)
             # have a does string contain bactic `
             logging.debug(echo.size())
             # 17 or 18 depending on size of value returned
@@ -1183,21 +1298,24 @@ class controlWindow(QWidget):
             # tune echos received in tune function
             logging.debug("Frequency/channel:"+ str(freq))
             self.tune(freq, isFirst)
-            isFirst = False
+            # other channels than the first need resetting ocasionally. 
+            # isFirst = False
             # clear echos 
             #dataLine = self.quickRead(25) # avg is ~9, max is currently 15
             self.getIntegrateFromProbe()
             # clear echos
-            # avg is ~9, max observed issue at 25
-            # dataLine = self.quickRead(30) 
+            # avg is ~9, max observed issue at 30
+            dataLine = self.quickRead(30) 
 
             # actually request the data of interest
             echo = b'-1'
             while echo == b'-1':
                 self.serialPort.sendCommand((self.commandDict.getCommand("count2")))
-                echo, sFlag, foundIndex = self.readUntilFound(b'R28:', 10, 20, isHome=False)
+                echo, sFlag, foundIndex = self.readUntilFound(b'R28:', 1000, 2000, isHome=False)
                 logging.debug("reading R echo %r", echo)
-            
+
+            logging.debug("Echo [foundIndex] = %r, echo[foundIndex + 4] = %r", echo[foundIndex], echo[foundIndex+4])
+            # above to get rid of this extra find when probe loop time is an issue again
             findSemicolon = echo.data().find(b'8')
             #logging.debug("r value data: %s, %s, %s",echo[findSemicolon], echo[findSemicolon+1], echo[findSemicolon+6])
             datum = echo[findSemicolon+2: findSemicolon+8] # generally 4:10, ocasionally not. up to, not include last val
@@ -1254,8 +1372,9 @@ class controlWindow(QWidget):
         while i < 5 :
             self.serialPort.sendCommand((self.commandDict.getCommand("status")))
             logging.debug("sent status request")
+            # min 37, 55
             echo, sFlag, foundIndex = self.readUntilFound(
-                    b'S', 37, 55, isHome=False)
+                    b'S', 1000, 2000, isHome=False)
             logging.debug("status: %s, received Status: %s, ", status, echo)
             if status != b'-1':
                 statusFound = echo.data().find(status)
@@ -1296,15 +1415,34 @@ class controlWindow(QWidget):
         # as echo from probe: both "C#####\r\n"
         # catch tune echos
         # official response is a status of 4
-        echo, sFlag, foundIndex = self.readUntilFound(b'C', 100, 20, isHome=False)
+        echo, sFlag, foundIndex = self.readUntilFound(b'C', 1000, 2000, isHome=False)
+        # most of the time the c-echo and c response concatonate
+        # this is for when they don't
+        byteArray = echo.data()
+        lenByteArray = len(echo.data())
+        if lenByteArray>1:
+            if byteArray[foundIndex+1:lenByteArray].find(b'C') >= 0:
+                logging.debug('C concatonation')
+            else:
+                logging.debug('C came in separately')
+                echo, sFlag, foundIndex = self.readUntilFound(b'C', 1000, 2000, isHome=False)
+
+            logging.debug(byteArray[foundIndex+1:lenByteArray])
+        #if echo.data()[foundIndex:echo.data().length()]:
+
+        # wait for tune status to be 4
+        # see comment in waitForStatus for frustration
+        isFour = self.waitForStatus(b'4')
         
         # if it's the first channel, resend C
         # that seems to fail with status 0
-        if isFirst:
+        count = 0
+        while not(isFour) and count < 3:
+            count = count + 1 
             self.serialPort.sendCommand(str.encode(str(mode) + '{:.5}'.format(str(chan)) +"\r\n"))
-        # wait for tune status to be 4
-        # see comment in waitForStatus for frustration
-        self.waitForStatus(b'4')
+            # 10, 8 readuntil found min
+            echo, sFlag, foundIndex = self.readUntilFound(b'C', 1000, 1000, isHome=False)
+            isFour = self.waitForStatus(b'4')
 
     def getFlightNumber(self):
         # Dialog for setting flight number
@@ -1385,7 +1523,8 @@ def handle_error(error):
 
 def main():
     #    signal.signal(signal.SIGINT, ctrl_c)
-    logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',filename="MTPCtrl.log",level=logging.DEBUG)
+    logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
+            filename="MTPControl.log", level=logging.DEBUG)
     logger = logging.getLogger(__name__)
     logging.warning("warning")
     app = QApplication(sys.argv)

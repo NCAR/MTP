@@ -33,14 +33,6 @@ class MTPclient():
         # Instantiate an instance of an MTP reader
         self.reader = readMTP()
 
-    def getTestDataDir(self):
-        # For testing purposes, data and configuration information for the
-        # DEEPWAVE project have been copied to Data/NGV/DEEPWAVE within this
-        # code checkout. For transparency, set that hardcoded path here.
-        self.testDataDir = os.path.join(getrootdir(),
-                                        'Data', 'NGV', 'DEEPWAVE')
-        return(self.testDataDir)
-
     def config(self, configfile_name):
         """ Read in config file and set up a bunch of stuff """
         self.configfile_name = configfile_name
@@ -72,8 +64,7 @@ class MTPclient():
             description="Script to display and process MTP scans")
         parser.add_argument(
             '--config', type=str,
-            default=os.path.join(getrootdir(), self.getTestDataDir(),
-                                 'config', 'proj.yml'),
+            required=True,
             help='File containing project-specific MTP configuration info. ' +
             'Defaults to config/proj.yml in code checkout for testing')
         parser.add_argument(
@@ -123,9 +114,8 @@ class MTPclient():
         return(self.iwg)
 
     def readConfig(self, filename):
-        # Read config from config file
-        self.configfile = config()
-        self.configfile.read(filename)
+        # Initialize a config file (includes reading it)
+        self.configfile = config(filename)
 
         # udp_send_port is port from viewer to MTP
         self.udp_send_port = self.configfile.getInt('udp_send_port')
@@ -228,12 +218,16 @@ class MTPclient():
         flight number.
         """
 
-        # Get project dir from config. If dir not set, default to test dir
+        # Prepend the projdir to jsondir so jsondir is relative to projdir
         projdir = self.configfile.getProjDir()
-        if projdir is None:
-            projdir = self.getTestDataDir()
+        jsondir = self.configfile.prependDir('json_file', projdir)
 
-        return(self.reader.getJson(projdir, self.getProj(), self.getFltno()))
+        # Default to projdir if jsondir is not set
+        if jsondir is None:
+            return(self.reader.getJson(projdir, self.getProj(),
+                                       self.getFltno()))
+
+        return(self.reader.getJson(jsondir, self.getProj(), self.getFltno()))
 
     def processScan(self):
         """
@@ -451,11 +445,16 @@ class MTPclient():
         """ Connection to UDP data streams """
         # Connect to MTP data stream
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # share the MTP packet port
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind(("0.0.0.0", self.udp_read_port))
 
     def connectIWG(self):
+        """ Connection to UDP data streams """
         # Connect to IWG data stream
         self.sockI = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # Share the IWG packet port
+        self.sockI.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sockI.bind(("0.0.0.0", self.iwg1_port))
 
     def getSocketFileDescriptor(self):

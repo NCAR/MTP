@@ -28,7 +28,6 @@ class MTPviewer(QMainWindow):
         self.client = client
         self.app = app
         self.args = args
-
         # Instantiate a processor view if in processing mode (not realtime)
         if self.args.realtime:
             self.processor = None
@@ -187,6 +186,7 @@ class MTPviewer(QMainWindow):
         self.curtain.clear()
         self.curtain.draw()
         self.RCF1.setPlainText('')
+        self.RCF2.setPlainText('')
         self.MRI.setPlainText('')
         self.filedata.setPlainText("MTP data block display")
         self.iwg.setPlainText("IWG1,YYYYMMDDTHHMMSS,-xx.xxxx,xxx.xxx,")
@@ -372,10 +372,10 @@ class MTPviewer(QMainWindow):
 
         self.layout.addWidget(QLabel("RCF2"), 3, 7, 1, 1,
                               alignment=Qt.AlignRight)
-        RCF2 = QPlainTextEdit("RCF2#")
-        RCF2.setFixedHeight(25)
-        RCF2.setReadOnly(True)
-        self.layout.addWidget(RCF2, 3, 8, 1, 1)
+        self.RCF2 = QPlainTextEdit("RCF2#")
+        self.RCF2.setFixedHeight(25)
+        self.RCF2.setReadOnly(True)
+        self.layout.addWidget(self.RCF2, 3, 8, 1, 1)
 
         bad = QPushButton("Mark Bad Scan")
         bad.setFixedHeight(25)
@@ -555,6 +555,7 @@ class MTPviewer(QMainWindow):
             self.profile.configure()  # Layout the profile plot
             self.profile.draw()
             self.RCF1.setPlainText('')  # Clear display of last RCF used
+            self.RCF2.setPlainText('')  # Clear display of last RCF2 used
             return()
 
         # ---------- Retrieval succeeded ----------
@@ -562,6 +563,10 @@ class MTPviewer(QMainWindow):
         # Does RCF file always start with NRC? I think it stands for:
         # "Ncar gv RCf file"
         self.RCF1.setPlainText(self.BestWtdRCSet['RCFId'].replace('NRC', ''))
+
+        # Get next best value to be used for RCF2
+        RCF2Id = str(self.BestWtdRCSet['RCFArray'][1][0])
+        self.RCF2.setPlainText(RCF2Id.replace('NRC', ''))
 
         # Display MRI
         self.MRI.setPlainText('%.3f' % (self.ATP['RCFMRIndex']['val']))
@@ -610,8 +615,9 @@ class MTPviewer(QMainWindow):
         # diagonal dashed line, fixed slope anchored to ambient temperature
         # point of first tropopause
         referenceLapseRate = -2  # This is also hardcoded in tropopause.py
-        self.profile.plotLapseRate(self.ATP['trop']['val'][0],
-                                   referenceLapseRate)
+        for i in range(len(self.ATP['trop']['val'])):
+            self.profile.plotLapseRate(self.ATP['trop']['val'][i],
+                                       referenceLapseRate)
 
         # Draw the plots
         self.profile.draw()
@@ -637,15 +643,16 @@ class MTPviewer(QMainWindow):
         for index in range(len(self.client.reader.flightData)-1):
             thisscan = self.client.reader.flightData[index]
             time = thisscan['Aline']['values']['TIME']['val']
-            self.curtain.addACtime(time)
-            self.curtain.addACalt(thisscan['Aline']['values']['SAPALT']['val'])
+            self.ACAlt = thisscan['Aline']['values']['SAPALT']['val']
+            self.curtain.addACalt(self.ACAlt)
 
             try:
                 # If retrieval failed, go no further
                 self.client.reader.testATP(index)  # profile has been generated
                 temperature = thisscan['ATP']['Temperatures']
-                self.curtain.addAlt(thisscan['ATP']['Altitudes'])
-                self.curtain.addTemp(temperature)
+                self.curtain.addAltTemp(temperature,
+                                        thisscan['ATP']['Altitudes'],
+                                        self.ACAlt)
                 self.curtain.addTime(time, temperature)
                 self.curtain.addTrop(thisscan['ATP']['trop']['val'][0])
                 self.curtain.addMRI(thisscan['BestWtdRCSet']['SumLnProb'])
@@ -661,8 +668,8 @@ class MTPviewer(QMainWindow):
 
                 # Add missing vals for this scan
                 temperature = [numpy.nan] * 33
-                self.curtain.addAlt([numpy.nan] * 33)
-                self.curtain.addTemp(temperature)
+                self.curtain.addAltTemp(temperature, [numpy.nan] * 33,
+                                        numpy.nan)
                 self.curtain.addTime(time, temperature)
                 self.trop['altc'] = numpy.nan
                 self.curtain.addTrop(self.trop)
@@ -688,12 +695,12 @@ class MTPviewer(QMainWindow):
         self.curtain.clear()
 
         # Add latest data to 2-D arrays used by curtain plot
-        self.curtain.addAlt(self.ATP['Altitudes'])
-        self.curtain.addTemp(self.ATP['Temperatures'])
+        self.ACAlt = self.client.reader.getACAlt()
+        self.curtain.addAltTemp(self.ATP['Temperatures'],
+                                self.ATP['Altitudes'], self.ACAlt)
         self.curtain.addTime(self.client.reader.getVar('Aline', 'TIME'),
                              self.ATP['Temperatures'])
-        self.curtain.addACtime(self.client.reader.getVar('Aline', 'TIME'))
-        self.curtain.addACalt(self.client.reader.getACAlt())
+        self.curtain.addACalt(self.ACAlt)
         self.curtain.addTrop(self.ATP['trop']['val'][0])
         self.curtain.addMRI(self.BestWtdRCSet['SumLnProb'])
 
@@ -876,7 +883,7 @@ class MTPviewer(QMainWindow):
 
         if self.index.text() == "":
             # If text field is empty, return without doing anything
-            return()
+            return
         elif self.index.text() == str(0):
             # If user entered index of zero assume they meant 1. This
             # interface is for scientists, not SEs, so the interface shows

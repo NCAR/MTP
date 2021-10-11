@@ -111,7 +111,7 @@ class StoreConfig():
         # Throws error if not found
 
         logging.debug("loadConfigMTP")
-        with open("Config.mtph", 'r') as configFile:
+        with open("../MTP/src/ctrl/Config.mtph", 'r') as configFile:
             lines = configFile.readlines()
             for line in lines:
                 if line[0] == '[':
