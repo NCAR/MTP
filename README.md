@@ -84,7 +84,7 @@ Install Git (if not already there) and download MTP:
 ```
     git clone http://github.com/NCAR/MTP
 ```
- * Copy bat files from windows10 dir to Desktop
+ * Copy the shortcut bat files (which have an icon and look cool) from windows10 dir to Desktop
  * Edit the bat file and put in path\to\python.exe
  * Add --config=path\to\config\file for project you are going to run.
 
@@ -121,12 +121,12 @@ Information on operating the MTP, and other documentation, can be found on the (
  ```
  * click on MTPviewer icon on the desktop. If this is not available:
      > conda activate (to get the base environment where libraries have been installed)
-     > C:\Users\lroot\Miniconda3\python.exe MTPviewer.py
+     > C:\Users\lroot\Miniconda3\python.exe MTPviewer.py --config=path\to\config\fie
 
  ```
  * On a MAC:
  ```
- > python3 MTPviewer.py
+ > python3 MTPviewer.py --config=\path\to\config\file
  ```
 ** NOTE that on a MAC you will use python3, but on Windows it's python.exe (no 3) **
 
@@ -154,7 +154,7 @@ Information on operating the MTP, and other documentation, can be found on the (
 ```
 * Then run the GUI in real-time mode, using the platform-specific python call, e.g. on Windows:
 ```
->python MTPviewer.py
+>python MTPviewer.py --config=\path\to\config\file
 ```
 
 ## Developer Notes
