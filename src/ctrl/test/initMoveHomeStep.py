@@ -46,7 +46,7 @@ def findChar(array, binaryCharacter):
     # otherwise error = -1
     index = array.find(binaryCharacter)
     if index>-1:
-        logging.debug("status: %r, %r", array[index], array)
+        #logging.debug("status: %r, %r", array[index], array)
         return array[index]
     else:
         logging.error("status unknown, unable to find %r: %r",  binaryCharacter, array)
@@ -56,24 +56,54 @@ def findCharPlusNum(array, binaryCharacter, offset):
     # status = 0-6, C, B, or @
     # otherwise error = -1
     index = array.find(binaryCharacter)
-    logging.debug("findCharPlusNum[index], %r", array[index])
     asciiArray = array.decode('ascii')
     if index>-1:
-        logging.debug("status with offset: %r, %r", asciiArray[index+offset], asciiArray)
+        #logging.debug("status with offset: %r, %r", asciiArray[index+offset], asciiArray)
         return asciiArray[index+offset]
     else:
         logging.error("status with offset unknown, unable to find %r: %r",  binaryCharacter, array)
         return -1
+    
+def probeResponseCheck():
+        serialPort.write(b'V\r\n')
+        if findChar(readEchos(3), b"MTPH_Control.c-101103>101208")>0:
+            logging.info("Probe on, responding to version string prompt")
+            return True
+        else:
+            logging.info("Probe not responding to version string prompt")
+            return False
+
+def truncateBotchedMoveCommand():
+        serialPort.write(b'Ctrl-C\r\n')
+        if findChar(readEchos(3),b'Ctrl-C\r\n')>0:
+            logging.info("Probe on, responding to Ctrl-C string prompt")
+            return True
+        else:
+            logging.info("Probe not responding to Ctrl-C string prompt")
+            return False
 
 
+def probeOnCheck():
+    if findChar(readEchos(3), b"MTPH_Control.c-101103>101208")>0:
+        logging.info("Probe on, Version string detected")
+        return True
+    else:
+        logging.debug("No version startup string from probe found, sending V prompt")
+        if probeResponseCheck():
+            return True
+        else:
+            if truncateBotchedMoveCommand():
+                logging.warning("truncateBotchedMoveCommand called, ctrl-c success")
+                return True
+            else:
+                logging.error("probe not responding to truncateBotchedMoveCommand ctrl-c, power cycle necessary")
+                return False
 
-def init():
-    # errorStatus = 0 if all's good
-    # -1 if echos don't match exact return string expected
-    # -2 if unexpected status
-    # 
+    logging.error("probeOnCheck all previous logic tried, something's wrong")
+    return False
 
-    errorStatus = 0
+
+def sendInit1():
     # Init1
     serialPort.write(b'U/1f1j256V50000R\r\n')
     # returns:
@@ -81,20 +111,20 @@ def init():
     # U:U/1f1j256V50000R\r\n
     # Step:\xff/0@\r\n
     # if already set to this
-    # last line replaced by 
+    # last line replaced by
     # Step:/0B\r\n
     # if too eary in boot phase (?)
     # Have seen this near boot:
     #  b'\x1b[A\x1b[BU/1f1j256V50000R\r\n'
-    # And this after several cycles
-    #  Step:/0C\r\n
+    # And this in cycles
+    #  Step:\xff/0@\r\n - makes ascii parser die
+    #  Step:/0C\r\n - makes fix for above not work
+    #  Step:\r\n
     #
 
-    readEchos(3)
-    # check for errors/decide if resend?
+    return readEchos(3)
 
-    serialPort.write(b'S\r\n')
-    readEchos(3)
+def sendInit2():
     # Init2
     serialPort.write(b'U/1L4000h30m100R\r\n')
     # normal return:
@@ -106,17 +136,52 @@ def init():
     # error returns:
     # \x1b[A\x1b[BU/1f1j256V50000R
     # Step:\xff/0B\r\n'
-    # 
-    readEchos(3)
+    #
+    return readEchos(3)
 
 
-    # This is an init command
-    # but it moves the motor faster, so not desired
-    # in initial startup/go home ?
-    # do a check for over voltage
-    #serialPort.write(b'U/1j128z1000000P10R\r\n')
 
-    #readEchos(3)
+def init():
+    # errorStatus = 0 if all's good
+    # -1 if echos don't match exact return string expected
+    # -2 if unexpected status
+    #
+    errorStatus = 0
+    # 12 is arbirtary choice. Will tune in main program.
+    while errorStatus < 12:
+        errorStatus = errorStatus + 1
+        answerFromProbe = sendInit1()
+        # check for errors/decide if resend?
+        if findChar(answerFromProbe, b'@') >0:
+            errorStatus = 12
+            # success
+        elif findChar(answerFromProbe, b'B') >0:
+            logging.warning(" Init 1 status B, resending.")
+        elif findChar(answerFromProbe, b'C') >0:
+            logging.warning(" Init 1 status C, resending.")
+        else:
+            logging.warning(" Init 1 status else, resending.")
+
+
+
+    serialPort.write(b'S\r\n')
+    buf = readEchos(3)
+
+    errorStatus = 0
+    # 12 is arbirtary choice. Will tune in main program.
+    while errorStatus < 12:
+        errorStatus == errorStatus + 1
+        answerFromProbe = sendInit2()
+        # check for errors/decide if resend?
+        if findChar(answerFromProbe, b'@') >0:
+            errorStatus = 12
+            # success
+        elif findChar(answerFromProbe, b'B') >0:
+            logging.warning(" Init 2 status B, resending.")
+        elif findChar(answerFromProbe, b'C') >0:
+            logging.warning(" Init 2 status C, resending.")
+        else:
+            logging.warning(" Init 2 status else, resending.")
 
     # After both is status of 7 ok?
     # no
@@ -124,8 +189,7 @@ def init():
     # if after both inits status = 5
     # do an integrate, then a read to clear
 
-
-    return errorStatus 
+    return errorStatus
 
 
 def moveHome():
@@ -167,7 +231,7 @@ def initForNewLoop():
 
 
 
-def isMovePossible(maxDebugAttempts, scanStatus):
+def isMovePossibleFromHome(maxDebugAttempts, scanStatus):
     # returns 4 if move is possible
     # otherwise does debugging
 
@@ -175,11 +239,15 @@ def isMovePossible(maxDebugAttempts, scanStatus):
  
     # and how many debug attempts have been made 
     # should also be a case statement, 6, 4, 7 being most common
+
+
+    
     counter =0
     while counter < maxDebugAttempts:
         s = getStatus()
         counter = counter + 1
         if s == '0':
+            # integrator busy, Stepper not moving, Synthesizer out of lock, and spare = 0
             logging.debug('isMovePossible status 0')
             return 0
         elif s == '1':
@@ -192,11 +260,12 @@ def isMovePossible(maxDebugAttempts, scanStatus):
             logging.debug('isMovePossible status 3')
             return 3
         elif s == '4':
-            logging.debug("isMovePossible is 4")
+            logging.debug("isMovePossible is 4 - yes, return")
             return 4
             #continue on with moving
         elif s == '5' :
-            # do an integrate/read
+            # do an integrate
+            serialPort.write(b'I\r\n')
             logging.debug("isMovePossible, status = 5")
             return 5
         elif s =='6':
@@ -211,6 +280,7 @@ def isMovePossible(maxDebugAttempts, scanStatus):
         elif s == '7':
             logging.debug('isMovePossible status 7')
 
+
         else:
             logging.error("Home, status = %r", s)
 
@@ -223,13 +293,22 @@ def isMovePossible(maxDebugAttempts, scanStatus):
 # MTPH_Control.c-101103>101208
 # needs to be caught first before other init commands are sent
 # also response to V
+probeResponding = False
 while (1):
+    if probeResponding == False:
+        while probeOnCheck() == False:
+            time.sleep(10)
+            logging.error("probe off or not responding")
+        logging.info("Probe on check returns true")
+        probeResponding = True
+
+    time.sleep(1)
     readEchos(3)
     init()
-    # check for @'s, resend if no
+    logging.debug("init successful")
     readEchos(3)
     moveHome()
-    if (isMovePossible(maxDebugAttempts=12, scanStatus='potato')==4):
+    if (isMovePossibleFromHome(maxDebugAttempts=12, scanStatus='potato')==4):
         initForNewLoop()
         time.sleep(3)
         echo = moveTo(b'U/1J0D28226J3R\r\n')
@@ -238,7 +317,9 @@ while (1):
 
     time.sleep(3)
 
-
+'''
+below is reference only
+'''
 
 
 

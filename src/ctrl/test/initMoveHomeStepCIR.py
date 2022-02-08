@@ -251,15 +251,15 @@ def changeFrequency(freq):
     # b'C28805\r\n'
     # b'C229180\r\n'
     serialPort.write(freq)
-    readEchos(3)
+    readEchos(2)
     # possible answers:
 
 
 
 def integrate():
     serialPort.write(b'I 40\r\n')
-    time.sleep(0.40)
-    readEchos(3)
+    time.sleep(0.350)
+    readEchos(2)
     # this needs to check that S turns to 5 (integrator starts)
     # and that S turns back to 4 (integrator finished) to move on
     
@@ -269,7 +269,7 @@ def integrate():
 
 def readDatumFromProbe():
     serialPort.write(b'R\r\n')
-    return readEchos(3)
+    return readEchos(2)
 
 
 def CIR(freq):
@@ -281,22 +281,23 @@ def CIR(freq):
 
 
 def CIRS():
-    CIR( b'C28180\r\n')
-    CIR( b'C28805\r\n')
-    CIR( b'C229180\r\n')
+    data = CIR( b'C28180\r\n')
+    data = data + CIR( b'C28805\r\n')
+    data = data + CIR( b'C229180\r\n')
+    return data
 
 
 def setNoise(num):
     serialPort.write(num)
-    readEchos(3)
+    readEchos(2)
 
 def readAllDataAtPosition():
     setNoise(b'N 1\r\n')
-    CIRS()
+    data = CIRS()
     setNoise(b'N 0\r\n')
-    CIRS()
-
-    return 0
+    data = data + CIRS()
+    logging.debug("data from one position, %r", data)
+    return data
 
 
 # if on first move status 6 for longer than expected 
