@@ -1,5 +1,6 @@
 import logging
 import datetime
+import time
 import serial
 import socket
 import sys
@@ -39,17 +40,58 @@ def sanitize(data):
 
     return ret
 
+def findChar(array, binaryCharacter):
+    # status = 0-6, C, B, or @
+    # otherwise error = -1
+    index = array.find(binaryCharacter)
+    if index>-1:
+        #logging.debug("status: %r, %r", array[index], array)
+        return array[index]
+    else:
+        logging.error("status unknown, unable to find %r: %r",  binaryCharacter, array)
+        return -1
+
+def probeResponseCheck():
+        serialPort.write(b'V\r\n')
+        if findChar(readEchos(3), b"MTPH_Control.c-101103>101208")>0:
+            logging.info("Probe on, responding to version string prompt")
+            return True
+        else:
+            logging.info("Probe not responding to version string prompt")
+            return False
+
+def truncateBotchedMoveCommand():
+        serialPort.write(b'Ctrl-C\r\n')
+        if findChar(readEchos(3),b'Ctrl-C\r\n')>0:
+            logging.info("Probe on, responding to Ctrl-C string prompt")
+            return True
+        else:
+            logging.info("Probe not responding to Ctrl-C string prompt")
+            return False
 
 
-def init():
-    # errorStatus = 0 if all's good
-    # -1 if echos don't match exact return string expected
-    # -2 if unexpected status
-    # 
-    # status should be 4 after inits and move
- 
+def probeOnCheck():
+    if findChar(readEchos(3), b"MTPH_Control.c-101103>101208")>0:
+        logging.info("Probe on, Version string detected")
+        return True
+    else:
+        logging.debug("No version startup string from probe found, sending V prompt")
+        if probeResponseCheck():
+            return True
+        else:
+            if truncateBotchedMoveCommand():
+                logging.warning("truncateBotchedMoveCommand called, ctrl-c success")
+                return True
+            else:
+                logging.error("probe not responding to truncateBotchedMoveCommand ctrl-c, power cycle necessary")
+                return False
 
-    errorStatus = 0
+    logging.error("probeOnCheck all previous logic tried, something's wrong")
+    return False
+
+
+
+def sendInit1():
     # Init1
     serialPort.write(b'U/1f1j256V50000R\r\n')
     # returns:
@@ -57,20 +99,20 @@ def init():
     # U:U/1f1j256V50000R\r\n
     # Step:\xff/0@\r\n
     # if already set to this
-    # last line replaced by 
+    # last line replaced by
     # Step:/0B\r\n
     # if too eary in boot phase (?)
     # Have seen this near boot:
     #  b'\x1b[A\x1b[BU/1f1j256V50000R\r\n'
-    # And this after several cycles
-    #  Step:/0C\r\n
+    # And this in cycles
+    #  Step:\xff/0@\r\n - makes ascii parser die
+    #  Step:/0C\r\n - makes fix for above not work
+    #  Step:\r\n
     #
 
-    readEchos(3)
-    # check for errors/decide if resend?
+    return readEchos(3)
 
-    serialPort.write(b'S\r\n')
-    readEchos(3)
+def sendInit2():
     # Init2
     serialPort.write(b'U/1L4000h30m100R\r\n')
     # normal return:
@@ -82,12 +124,64 @@ def init():
     # error returns:
     # \x1b[A\x1b[BU/1f1j256V50000R
     # Step:\xff/0B\r\n'
-    # 
-    readEchos(3)
-     
+    #
+    return readEchos(3)
 
+def init():
+    # errorStatus = 0 if all's good
+    # -1 if echos don't match exact return string expected
+    # -2 if unexpected status
+    #
+    errorStatus = 0
+    # 12 is arbirtary choice. Will tune in main program.
+    while errorStatus < 12:
+        answerFromProbe = sendInit1()
+        # check for errors/decide if resend?
+        if findChar(answerFromProbe, b'@') >0:
+            errorStatus = 12
+            # success
+        elif findChar(answerFromProbe, b'B') >0:
+            logging.warning(" Init 1 status B, resending.")
+            errorStatus = errorStatus + 1
+        elif findChar(answerFromProbe, b'C') >0:
+            logging.warning(" Init 1 status C, resending.")
+            errorStatus == errorStatus + 1
+        else:
+            logging.warning(" Init 1 status else, resending.")
+            errorStatus == errorStatus + 1
+
+
+
+    serialPort.write(b'S\r\n')
+    buf = readEchos(3)
+
+    errorStatus = 0
+    # 12 is arbirtary choice. Will tune in main program.
+    while errorStatus < 12:
+        answerFromProbe = sendInit2()
+        # check for errors/decide if resend?
+        if findChar(answerFromProbe, b'@') >0:
+            errorStatus = 12
+            # success
+        elif findChar(answerFromProbe, b'B') >0:
+            logging.warning(" Init 2 status B, resending.")
+            errorStatus = errorStatus + 1
+        elif findChar(answerFromProbe, b'C') >0:
+            logging.warning(" Init 2 status C, resending.")
+            errorStatus == errorStatus + 1
+        else:
+            logging.warning(" Init 2 status else, resending.")
+            errorStatus = errorStatus + 1
+
+    # After both is status of 7 ok?
+    # no
+    # 4 is preferred status
+    # if after both inits status = 5
+    # do an integrate, then a read to clear
 
     return errorStatus
+
+
 
 def moveHome():
     errorStatus = 0
@@ -130,7 +224,15 @@ def initForNewLoop():
 # MTPH_Control.c-101103>101208
 # needs to be caught first before other init commands are sent
 # also response to V
-while(1):
+probeResponding = False
+while (1):
+    if probeResponding == False:
+        while probeOnCheck() == False:
+            time.sleep(1)
+            logging.error("probe off or not responding")
+        logging.info("Probe on check returns true")
+        probeResponding = True
+
     readEchos(3)
     init()
     readEchos(3)
