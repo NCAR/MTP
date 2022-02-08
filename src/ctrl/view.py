@@ -114,7 +114,7 @@ class controlWindow(QWidget):
 
         # from/to (flight name) config.yaml
         self.projectNameBox = QPlainTextEdit()
-        self.projectNameBox.insertPlainText('ASPIRE-TEST')
+        self.projectNameBox.insertPlainText('TI3GER')
         self.flightNumberBox = QPlainTextEdit()
         self.flightNumberBox.insertPlainText('change')
         self.IWGPortBox = QPlainTextEdit()
@@ -713,8 +713,7 @@ class controlWindow(QWidget):
 
 
     def initSaveDataFile(self, flightNumber):    
-        location = "ASPIRE-TEST/data/"
-        #location = "../../../Desktop/ASPIRE-TEST/data/"
+        location = "TI3GER/data/"
         saveDataFileName = time.strftime("%Y%m%d") + '_' + time.strftime("%H%M%S") + '_' + flightNumber + '.mtp'
 
         with open(location+saveDataFileName, "ab") as datafile:
