@@ -5,11 +5,11 @@ import socket
 import sys
 from serial import Serial
 
-# initial setup of time, logging, serialPort, Udp port
 saveTime = datetime.datetime.now(datetime.timezone.utc)
 logging.basicConfig(level = logging.WARNING, filename = "MTP_" 
         + str(saveTime.year) + str(saveTime.month) + str(saveTime.day)
         + ".log")
+# initial setup of time, logging, serialPort, Udp port
 serialPort = serial.Serial('COM6', 9600, timeout = 0.15)
 udpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
 udpSocket.connect(('127.0.0.1', 32107)) # ip, port number
@@ -22,88 +22,6 @@ def readEchos(num):
     logging.debug("read %r", buf)
     return buf
 
-def waitStatusOdd(num):
-    # Have to check that integrator starts
-    for i in range(num):
-        serialPort.write(b'S\r\n')
-        buf = readEchos(3)
-        if buf.find(b'05') >= 0 or buf.find(b'07') >= 0 or buf.find(b'03') >= 0:
-            return 
-    logging.debug("Timeout waitStatusOdd")
-
-def waitStatusEven(num):
-    # check that integrator finishes
-    for i in range(num):
-        serialPort.write(b'S\r\n')
-        buf = readEchos(3)
-        if buf.find(b'04') >= 0 or buf.find(b'06') >= 0 or buf.find(b'02') >=0:
-            return 
-    logging.debug("Timeout waitStatusEven")
-
-
-def CIR(channel):
-    # Set channel
-    channel = channel + '\r\n'
-    serialPort.write(channel.encode('ascii'))
-    readEchos(2)
-    serialPort.write(b'S\r\n')
-    readEchos(2)
-    serialPort.write(channel.encode('ascii'))
-    readEchos(2)
-    serialPort.write(b'S\r\n')
-    readEchos(2)
-    # start/clear integrator
-    serialPort.write(b'I 40\r\n')
-    readEchos(2)
-    # these really should always be 05 and 04
-    # for now going with even/odd to help debug why they're not
-    # and if that matters
-    waitStatusOdd(2)
-    waitStatusEven(2)
-    # do a read, to clear integrate bit
-    serialPort.write(b'R\r\n')
-    buf = readEchos(2)
-    serialPort.write(b'S\r\n')
-    readEchos(2)
-    datum = '%06d' % int(buf[9:13].decode('ascii'), 16)
-    return datum
-
-
-
-def CIRS():
-    # status should be either 6 or 4 after this
-    # preferably 4, but 6 seems annoyingly common
-    data = str( CIR('C28182') ) + ' ' 
-    data = data + str( CIR('C28806') ) + ' '
-    data = data + str( CIR('C29182') ) 
-    return data
-
-
-def moveNotComplete(buf):
-    # returns false if '@' is found,
-    if buf.find(b'@') >= 0:
-        return False 
-    return True
-
-def moveTo(location):
-    location = location + '\r\n'
-    print('moveTo:send location:%r', location)
-    serialPort.write(location.encode('ascii'))
-    buf = readEchos(3)
-    serialPort.write(b'S\r\n')
-    buf += readEchos(3)
-    print('moveTo:received status:%r', buf)
-    while moveNotComplete(buf):
-        serialPort.write(location.encode('ascii'))
-        buf = readEchos(3)
-        serialPort.write(b'S\r\n')
-        buf += readEchos(3)
-    # after received '@' terminate stepper motion
-    # serialPort.write(b'U/1TR\r\n')
-    # buf = readEchos(3)
-    serialPort.write(b'S\r\n')
-    buf += readEchos(3)
-    
 
 def sanitize(data):
     data = data[data.find(b':') + 1 : len(data) - 3]
@@ -115,17 +33,158 @@ def sanitize(data):
 
     return ret
 
+def getStatus():
+    # status = 0-6, C, B, or @
+    # otherwise error = -1
+    # check for T in ST:0X
+    # return status
+    serialPort.write(b'S\r\n')
+    answerFromProbe = readEchos(4)
+    return findChar(answerFromProbe, b'T')
+
+def findChar(array, binaryCharacter):
+    # status = 0-6, C, B, or @
+    # otherwise error = -1
+    index = array.find(binaryCharacter)
+    if index>-1:
+        logging.debug("status: %r", array[index])
+        return array[index]
+    else:
+        logging.error("status unknown, unable to find %r: %r",  binaryCharacter, array)
+        return -1
+
+def findAt(buf):
+    ## returns true if '@' is found,
+    ## needs a timeout if command not sent properly
+    ##if buf.find(b'@') >= 0:
+    #    return True 
+    return False
 
 
-#CIRS()
-# Init1
-serialPort.write(b'U/1f1j256V50000R\r\n')
-readEchos(3)
-serialPort.write(b'S\r\n')
-readEchos(3)
-# Init2
-serialPort.write(b'U/1L4000h30m100R\r\n')
-readEchos(3)
+def init():
+    # errorStatus = 0 if all's good
+    # -1 if echos don't match exact return string expected
+    # -2 if unexpected status
+    # 
+
+    errorStatus = 0
+    # Init1
+    #serialPort.write(b'U/1f1j256V50000R\r\n')
+    # returns:
+    # U/1f1j256V50000R\r\n
+    # U:U/1f1j256V50000R\r\n
+    # Step:\xff/0@\r\n
+    # if already set to this
+    # last line replaced by 
+    # Step:/0B\r\n
+    # if too eary in boot phase (?)
+    # Have seen this near boot:
+    #  b'\x1b[A\x1b[BU/1f1j256V50000R\r\n'
+    # And this after several cycles
+    #  Step:/0C\r\n
+    #
+
+    readEchos(3)
+    # check for errors/decide if resend?
+
+    serialPort.write(b'S\r\n')
+    readEchos(3)
+    # Init2
+    serialPort.write(b'U/1L4000h30m100R\r\n')
+    # normal return:
+    #
+    # U/1f1j256V50000R\r\n
+    # U:U/1f1j256V50000R\r\n
+    # b'Step:\xff/0@\r\n'
+
+    # error returns:
+    # \x1b[A\x1b[BU/1f1j256V50000R
+    # Step:\xff/0B\r\n'
+    # 
+    readEchos(3)
+
+
+    # This is an init command
+    # but it moves the motor faster, so not desired
+    # in initial startup/go home ?
+    # do a check for over voltage
+    serialPort.write(b'U/1j128z1000000P10R\r\n')
+
+    readEchos(3)
+
+    # After both is status of 7 ok?
+    # no
+    # 4 is preferred status
+    # if after both inits status = 5
+    # do an integrate, then a read to clear
+
+
+    return errorStatus 
+
+
+def moveHome():
+    errorStatus = 0
+    # acutal initiate movement home
+    serialPort.write(b'U/1J0f0j256Z1000000J3R\r\n')
+    readEchos(3)
+    # if spamming a re-init, this shouldn't be needed
+    # or should be in the init phase anyway
+    #serialPort.write(b'U/1j128z1000000P10R\r\n')
+    #readEchos(3)
+
+    # S needs to be 4 here
+    # otherwise call again
+    # unless S is 5
+    # then need to clear the integrator
+    # with a I (and wait 40 ms)
+    return errorStatus
+
+
+def moveTo(location):
+    serialPort.write(location)
+    readEchos(3)
+
+
+
+
+# if on first move status 6 for longer than expected 
+# aka command sent properly, but actual movement 
+# not initiated, need a Ctrl-c then re-init, re-home
+
+# on boot probe sends 
+# MTPH_Control.c-101103>101208
+# needs to be caught first before other init commands are sent
+# also response to V
+while (1):
+    readEchos(3)
+    init()
+    readEchos(3)
+    moveHome()
+    s = getStatus()
+    if s == 4:
+        logging.debug("getStatus is 4")
+        #continue on with moving
+    elif s == 5 :
+        # do an integrate/read
+        logging.debug("Home, status = 5")
+    else:
+        logging.error("Home, status = %r", s)
+
+    moveTo(b'U/1J0D28226J3R')
+    s = getStatus()
+    logging.debug("First angle, status = %r", s)
+
+
+
+
+# overall error conditions
+# 1) no command gets any response
+# - gets one echo, but not second echo 
+# - because command collision in init commands
+# Probe needs power cycle
+# 2) stuck at Status 5 wih init/home
+# - unable to find commands to recover
+# Probe needs power cycle
 
 
 
