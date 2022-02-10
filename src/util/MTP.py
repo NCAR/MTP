@@ -61,7 +61,7 @@ MTPrecord = {
                   'val': numpy.nan, 'idx': 5},
                  'SAAT':    {  # MTP Scan Avg Ambient Air Temp (deg_K)
                   'val': numpy.nan, 'idx': 6},
-                 'SRAT':    {  # MTP Scan RMSE Ambient Air Temp(deg_K)
+                 'SRAT':    {  # MTP Scan RMSE Ambient Air Temp (deg_K)
                   'val': numpy.nan, 'idx': 7},
                  'SALAT':   {  # MTP Scan Avg Latitude (degree_N)
                   'val': numpy.nan, 'idx': 8,
@@ -114,7 +114,7 @@ MTPrecord = {
         're': "(^M01): (.*)",
         'found': False,
         'data': [],
-        'values': {'VM08CNTE': {  # Vm08 Counts
+        'values': {'VM08CNTE': {  # Voltage minus 8 Counts
                         'val': numpy.nan, 'idx': 0,
                         'fact': -2.73,  # factors from decodeM01 in VB6
                                         # used to convert counts to volts
@@ -125,7 +125,7 @@ MTPrecord = {
                         'fact': 1,
                         'volts': numpy.nan,  # Calculated voltage
                         'name': "Video V."},
-                   'VP08CNTE': {  # Vp08 Counts
+                   'VP08CNTE': {  # Voltage plus 8 Counts
                         'val': numpy.nan, 'idx': 2,
                         'fact': 2.78,
                         'volts': numpy.nan,  # Calculated voltage
@@ -140,17 +140,17 @@ MTPrecord = {
                         'fact': 7.79,
                         'volts': numpy.nan,  # Calculated voltage
                         'name': "+15V Syn"},
-                   'VP15CNTE': {  # Vp15 Counts
+                   'VP15CNTE': {  # Volage plus 15 Counts
                         'val': numpy.nan, 'idx': 5,
                         'fact': 5.1,
                         'volts': numpy.nan,  # Calculated voltage
                         'name': "+15V PS"},
-                   'VP05CNTE': {  # Vp05 Counts
+                   'VP05CNTE': {  # Voltage plus 5 Counts
                         'val': numpy.nan, 'idx': 6,
                         'fact': 2,
                         'volts': numpy.nan,  # Calculated voltage
                         'name': "VCC  PS"},
-                   'VM15CNTE': {  # VM15 Counts
+                   'VM15CNTE': {  # Voltage minus 15 Counts
                         'val': numpy.nan, 'idx': 7,
                         'fact': -5.1,
                         'volts': numpy.nan,  # Calculated voltage
@@ -205,17 +205,17 @@ MTPrecord = {
                          'resistance': numpy.nan,   # Calculated resistance
                          'temperature': numpy.nan,  # Calculated temperature
                          'name': "Rref 350"},       # Name displayed in GUI
-                   'TTCNTRCNTP': {  # Target Center Temp Counts
+                   'TTCNTRCNTP': {  # Target Center Temperature Counts
                          'val': numpy.nan, 'idx': 1,
                          'resistance': numpy.nan,   # Calculated resistance
                          'temperature': numpy.nan,  # Calculated temperature
                          'name': "Target 1"},       # Name displayed in GUI
-                   'TTEDGCNTP': {  # Target Edge Temp Counts
+                   'TTEDGCNTP': {  # Target Edge Temperature Counts
                          'val': numpy.nan, 'idx': 2,
                          'resistance': numpy.nan,   # Calculated resistance
                          'temperature': numpy.nan,  # Calculated temperature
                          'name': "Target 2"},       # Name displayed in GUI
-                   'TWINCNTP': {  # Polyethelene Window Temp Counts
+                   'TWINCNTP': {  # Polyethelene Window Temperature Counts
                          'val': numpy.nan, 'idx': 3,
                          'resistance': numpy.nan,   # Calculated resistance
                          'temperature': numpy.nan,  # Calculated temperature
@@ -225,12 +225,12 @@ MTPrecord = {
                          'resistance': numpy.nan,   # Calculated resistance
                          'temperature': numpy.nan,  # Calculated temperature
                          'name': "Mixer"},          # Name displayed in GUI
-                   'TAMPCNTP': {  # Amplifier Temp Counts
+                   'TAMPCNTP': {  # Amplifier Temperature Counts
                          'val': numpy.nan, 'idx': 5,
                          'resistance': numpy.nan,   # Calculated resistance
                          'temperature': numpy.nan,  # Calculated temperature
                          'name': "Dblr Amp"},       # Name displayed in GUI
-                   'TNDCNTP': {  # Noise Diode Temp Counts
+                   'TNDCNTP': {  # Noise Diode Temperature Counts
                          'val': numpy.nan, 'idx': 6,
                          'resistance': numpy.nan,   # Calculated resistance
                          'temperature': numpy.nan,  # Calculated temperature
