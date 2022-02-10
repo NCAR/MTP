@@ -537,6 +537,8 @@ class MTPviewer(QMainWindow):
         # still see that counts are being collected by instrument
 
         # Clear the scan and template plot canvas in prep for new plots
+        # For testing, I commented this out and was able to see an ensemble
+        # of scans on the same plot. Don't forget to run with --cnts
         self.scantemp.clear()
 
         # Plot scan brightness temperatures.

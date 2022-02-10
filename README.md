@@ -26,6 +26,7 @@ The MTPviewer software currently uses the following versions of code:
  * python3 -m pip install PyQt5
  * pip3 install pyserial
  * pip3 install psycopg2
+ * pip3 install matplotlib
  * Install the EOL-Python packages per instructions in https://github.com/NCAR/EOL-Python
  * pip3 install netCDF4
  
