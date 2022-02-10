@@ -256,10 +256,41 @@ def changeFrequency(freq):
 
 
 
+
+def getIntegrateFromProbe():
+    i=0
+    looptimeMS = 2
+    looping = True
+    while i < looptimeMS:
+        s = getStatus()
+        logging.debug("integrate loop 1, checking for status=5, getStatus = %r",) 
+        if getStatus()== '5':
+            logging.debug("integrate loop 1, status 5 found, integrator started")
+            break
+        if i == looptimeMS:
+            serialPort.write(b'I 40\r\n')
+            i = looptimeMS/2
+            looptimeMS = i
+        i = i+1
+
+    # check that integrator has finished
+    i=0
+    while i < 3:
+        logging.debug("integrate loop 2, checking for status=4")
+        if getStatus() =='4':
+            logging.debug("integrator has finished")
+            break
+        logging.debug('checking for finished integrator: %r', i)
+        i = i+1
+    return True
+
+
+
+
 def integrate():
     serialPort.write(b'I 40\r\n')
-    time.sleep(0.40)
     readEchos(2)
+    getIntegrateFromProbe()
     # this needs to check that S turns to 5 (integrator starts)
     # and that S turns back to 4 (integrator finished) to move on
     
@@ -308,19 +339,28 @@ def readAllDataAtPosition():
 # MTPH_Control.c-101103>101208
 # needs to be caught first before other init commands are sent
 # also response to V
+
 while (1):
     readEchos(3)
     init()
     # check for @'s, resend if no
     readEchos(3)
     moveHome()
-    if (isMovePossible(maxDebugAttempts=12, scanStatus='potato')==4):
+    # These are examples calculated with arbirtary IWG for lab use only: el Angles[80, 55, 42, 25, 12, 0, -12, -25, -42, -80 ]
+    labPositions = [b'U/1J0D28226J3R\r\n', b'U/1J0D7110J3R\r\n', b'U/1J0D3698J3R\r\n', b'U/1J0D4835J3R\r\n', b'U/1J0D3698J3R\r\n', b'U/1J0D3413J3R\r\n', b'U/1J0D3414J3R\r\n', b'U/1J0D3697J3R\r\n', b'U/1J0D4836J3R\r\n', b'U/1J0D10810J3R\r\n']
+    position = 0
+    if (isMovePossible(maxDebugAttempts=12, loopingStatus==True)==4):
         initForNewLoop()
         time.sleep(3)
+        # for position in labPositions:
+        firstTime = datetime.datetime.now()
+        #echo = moveTo(position)
         echo = moveTo(b'U/1J0D28226J3R\r\n')
         s = findChar(echo, b'@')
         logging.debug("First angle, status = %r", s)
         readAllDataAtPosition()
+        nextTime= datetime.datetime.now()
+        logging.debug("moveto + CIR for each step time difference = %r", nextTime-firstTime)
 
     time.sleep(3)
 
