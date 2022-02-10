@@ -114,8 +114,19 @@ You only need to do this if you will be connecting your computer directly to the
 Information on operating the MTP, and other documentation, can be found on the (UCAR SEW MTP wiki)[https://wiki.ucar.edu/display/SEW/MicrowaveTemperatureProfiler]
 
 ## To run this code:
- * In order to parse the IWG packet on the aircraft, copy project ascii_parms file from proj dir to config/
- * Create/update config/<project>.yml
+Both src\ctrl\view.py and src\MTPviewer.py reference a project configuration directory with the following components:
+```
+  <project>\
+    config\
+      ascii_parms (used to parse IWG packet, copied from RAF proj dir for project)
+      config.Mtph
+      proj.yml
+      Production\
+        setup_rf##.yml - one per flight, used for post-processing
+    logs\
+    RC\ - contains project RCF files
+```
+ * Create/update config/proj.yml
  * cd src
  * On Windows10:
  ```
