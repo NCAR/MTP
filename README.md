@@ -1,9 +1,10 @@
-<img align="left" width="175" height="175" src="./docs/images/tropo.png">
+<img align="left" width="175" height="175" src="./doc/images/tropo.png">
+
 ```
-CAUTION: When running the MTP instrument, if Tsynth under the Engineering tab gets to 50 degreesC, the
-probe needs to be shutdown to avoid overheating
+CAUTION: When running the MTP instrument, if Tsynth under the Engineering tab gets
+to 50 degreesC, the probe needs to be shutdown to avoid overheating
 ```
-# MTP
+# Microwave Temperature Profiler Instrument Control, Real-Time Display and Processing Software
 
 The Microwave Temperature Profiler (MTP) is a HAIS instrument which was developed by JPL for the NSF/NCAR GV.
 
