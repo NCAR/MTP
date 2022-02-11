@@ -182,17 +182,37 @@ class Curtain(QMainWindow):
     def plotCurtain(self):
         """
         Plot profile vs temperature in the self.profile plot window
-        """
 
-        # Plot the temperature as a color mesh. Time on X-axis. Altitude on
-        # Y-axis. Have to invert temperature array to match.
-        # Note that time is 1-D and alt is 2-D. pcolormesh replicates time to
-        # get needed 2-D array. See:
-        # https://matplotlib.org/stable/api/_as_gen/\
-        #      matplotlib.pyplot.pcolormesh.html
+        Plot the temperature as a color mesh. Time on X-axis. Altitude on
+        Y-axis. Have to invert temperature array to match.
+
+        From help(pcolormesh):
+          If ``shading='flat'`` the dimensions of *X* and *Y* should be one
+          greater than those of *C*, and the quadrilateral is colored due
+          to the value at ``C[i, j]``.  If *X*, *Y* and *C* have equal
+          dimensions, a warning will be raised and the last row and column
+          of *C* will be ignored.
+
+          If ``shading='nearest'`` or ``'gouraud'``, the dimensions of *X*
+          and *Y* should be the same as those of *C* (if not, a ValueError
+          will be raised).
+            - For ``'nearest'`` the color ``C[i, j]`` is centered on
+            ``(X[i, j], Y[i, j])``.
+            - For ``'gouraud'``, a smooth interpolation is carried out between
+              the quadrilateral corners.
+
+          If *X* and/or *Y* are 1-D arrays or column vectors they will be
+          expanded as needed into the appropriate 2-D arrays, making a
+          rectangular grid.
+
+        So gourand SHOULD give interpoalted shading, but it does not make much
+        of a difference. Using nearest for now.
+        """
         im = self.ax.pcolormesh(self.time, self.alt,
-                                numpy.transpose(self.data), cmap=self.cmap,
-                                norm=self.norm, shading='nearest')
+                                numpy.transpose(self.data), shading='nearest',
+                                cmap=self.cmap,  # color scale
+                                norm=self.norm,
+                                axes=self.ax)
 
         # Only use the QuadMesh object to create the legend the first time
         if self.first:
