@@ -24,14 +24,16 @@ class doUDP(object):
 
         # set up ports and ip address
         self.udp_write_to_nidas = 30101
-        self.udp_write_port = 32107
+        self.udp_write_port = 32106
         self.udp_write_ric_port = 32106
         self.udp_read_port = 7071 # from IWG server 
+        self.udp_read_from_ric_port = 32107 #currently not used
         # plane
         self.udp_ip_nidas=QHostAddress("192.168.84.2") # subnet mask
-        #self.udp_ip=QHostAddress('0.0.0.0') # subnet mask
+        self.udp_ip=QHostAddress('0.0.0.0') # subnet mask
         # lab
         self.udp_ip=QHostAddress.LocalHost 
+        self.udp_ip = QHostAddress("192.168.84.2") # subnet mask
 
         # initialize the reader
         self.sock_read = QUdpSocket()
