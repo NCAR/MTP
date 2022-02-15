@@ -4,6 +4,7 @@ import time
 import serial
 import socket
 import sys
+import re
 from serial import Serial
 
 logging.basicConfig(level = logging.DEBUG)
@@ -18,6 +19,23 @@ def readEchos(num):
         buf = buf + serialPort.readline()
 
     logging.debug("read %r", buf)
+    return buf 
+
+def readEchosUntilAllNewlines(num, newlinesExpected):
+    #import re
+    buf = b''
+    numNewlines = 0 
+    for i in range(num):
+        buf = buf + serialPort.readline()
+        newlineArray = re.findall(b'\n', buf)
+        numNewlines += len(newlineArray)
+        if numNewlines >= newlinesExpected:
+            logging.debug("readEchosUntillAllNewlines:found all expected newlines %r", buf)
+            return buf
+        else:
+            logging.debug("readEchosUntillAllNewlines:numNewLines %r < newlinesExpected %r", numNewlines, newlinesExpected)
+
+    logging.debug("readEchosUntillAllNewlines: %r", buf)
     return buf 
 
 
@@ -212,6 +230,7 @@ while (1):
         probeResponding = True
 
     time.sleep(1)
+    readEchosUntilAllNewlines(4, 3)
     readEchos(3)
     init()
     logging.debug("init successful")
