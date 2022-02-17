@@ -24,22 +24,21 @@ class doUDP(object):
 
         # set up ports and ip address
         self.udp_write_to_nidas = 30101
-        self.udp_write_port = 32107
+        self.udp_write_port = 32106
         self.udp_write_ric_port = 32106
         self.udp_read_port = 7071 # from IWG server 
-        # lab
-        self.udp_ip_local=QHostAddress.LocalHost 
+        self.udp_read_from_ric_port = 32107 #currently not used
         # plane
         self.udp_ip_nidas=QHostAddress("192.168.84.2") # subnet mask
-        # Plane iwg - needs for broadcast
         self.udp_ip=QHostAddress('0.0.0.0') # subnet mask
+        # lab
+        self.udp_ip=QHostAddress.LocalHost 
+        self.udp_ip = QHostAddress("192.168.84.2") # subnet mask
 
         # initialize the reader
         self.sock_read = QUdpSocket()
         # share the iwg packet port 
         self.sock_read.bind(self.udp_ip, self.udp_read_port,QUdpSocket.ReuseAddressHint)
-
-        #self.sock_read.bind(self.udp_ip_nidas, self.udp_read_port,QUdpSocket.ReuseAddressHint)
         # apparently this init is called each time anything in
         # the class is, causing it to flash between green and yellow
         #self.parent.receivingIWGLED.setPixmap(self.parent.ICON_YELLOW_LED.scaled(40,40))
@@ -65,15 +64,11 @@ class doUDP(object):
         self.udpTimer.start(50000) # in milliseconds
 
         # Connect getIwg to socket
-        # This works for the loacl iwg spitter, not for the actual broadcast
         self.sock_read.readyRead.connect(self.getIWG)
-        #self.connect(self.sock_read, SIGNAL('readyRead()'),
-        #        self, SLOT('self.getIWG()'))
         return
 
 
     def getIWG(self):
-        logging.debug("IWG received------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
         """ Gets udp feed with iwg packet """
 
         # while there is stuff to read, read
@@ -83,8 +78,7 @@ class doUDP(object):
             # returns networkDatagram type
             #logging.debug( "in IWG read while loop")
 
-        logging.debug( "after IWG read while loop")
-        logging.debug("iwg packet from plane: %r", self.networkDatagram)
+        #logging.debug( "after IWG read while loop")
 
         # returns QByteArray
         self.data = self.networkDatagram.data().data().decode('ascii')
@@ -320,10 +314,10 @@ class doUDP(object):
                 bytes(savePacket, 'utf-8'), 
                 self.udp_ip_nidas, self.udp_write_to_nidas)
         # real time viewing software
-        self.sock_write.writeDatagram(packet, self.udp_ip_local, self.udp_write_port)
+        self.sock_write.writeDatagram(packet, self.udp_ip, self.udp_write_port)
         logging.debug("sent UDP")
         # or out both udp ports if we want R.I.C. involved
-        self.sock_write_ric.writeDatagram(packet, self.udp_ip_nidas, self.udp_write_ric_port)
+        self.sock_write_ric.writeDatagram(packet, self.udp_ip, self.udp_write_ric_port)
         logging.debug("sent ric UDP")
 
         #logging.debug("sending udp packet %s", packet)
