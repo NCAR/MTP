@@ -30,18 +30,24 @@ class doUDP(object):
         self.udp_read_from_ric_port = 32107 #currently not used
         # plane
         self.udp_ip_nidas=QHostAddress("192.168.84.2") # subnet mask
-        self.udp_ip=QHostAddress('0.0.0.0') # subnet mask
+        # 0.0.0.0 is listen on all ipv4, not a write 
+        self.udp_ip_read_broadcast_IWG=QHostAddress('0.0.0.0') # read all ipv4, read broadcast
+        # needs to be different than reading from single connection because network 
+        # packets indicate if they are broadcast or unicast (single computer)
         # lab
-        self.udp_ip=QHostAddress.LocalHost 
-        self.udp_ip = QHostAddress("192.168.84.2") # subnet mask
+        self.udp_ip_local=QHostAddress.LocalHost 
+        #self.udp_ip = QHostAddress("192.168.84.2") # subnet mask
 
         # initialize the reader
         self.sock_read = QUdpSocket()
         # share the iwg packet port 
-        self.sock_read.bind(self.udp_ip, self.udp_read_port,QUdpSocket.ReuseAddressHint)
+        self.sock_read.bind(self.udp_ip_read_broadcast_IWG, self.udp_read_port,QUdpSocket.ReuseAddressHint)
         # apparently this init is called each time anything in
         # the class is, causing it to flash between green and yellow
         #self.parent.receivingIWGLED.setPixmap(self.parent.ICON_YELLOW_LED.scaled(40,40))
+
+        # Need separate UDP reader for anything from ric/viewer program
+
 
         # initialize the udp writers 
         # Binding is unnecessary and counterproductive to write ports
@@ -309,16 +315,21 @@ class doUDP(object):
 
     def sendUDP(self, packet, savePacket):
         """ Send a packet out the udp port """
-
+        # Write to nidas
         self.sock_write_nidas.writeDatagram(
                 bytes(savePacket, 'utf-8'), 
                 self.udp_ip_nidas, self.udp_write_to_nidas)
-        # real time viewing software
-        self.sock_write.writeDatagram(packet, self.udp_ip, self.udp_write_port)
-        logging.debug("sent UDP")
-        # or out both udp ports if we want R.I.C. involved
-        self.sock_write_ric.writeDatagram(packet, self.udp_ip, self.udp_write_ric_port)
         logging.debug("sent ric UDP")
+        # real time viewing software - writes to localhost
+        self.sock_write.writeDatagram(packet, self.udp_ip_local, self.udp_write_port)
+        logging.debug("sent UDP")
+        # Writes to R.I.C. 
+        self.sock_write_ric.writeDatagram(packet, self.udp_ip_nidas, self.udp_write_ric_port)
+        logging.debug("sent ric UDP")
+        #nidas
+        self.sock_write_nidas.writeDatagram(packet, self.udp_ip_nidas, self.udp_write_to_nidas)
+        logging.debug("sent ric UDP")
+
 
         #logging.debug("sending udp packet %s", packet)
         self.parent.sendingUDPLED.setPixmap(self.parent.ICON_GREEN_LED.scaled(40,40))
