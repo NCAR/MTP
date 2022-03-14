@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 ###############################################################################
 # Script written by Tom Baltzer to read data files written to acserver
 # and send them out over UDP to nidas
@@ -6,14 +6,20 @@
 # This script is NOT used in the current python processing. It is saved here
 # for reference until saving the realtime calculated profiles to nidas or
 # someplace else is implemented
+#
+# Extensively modified March 11, 2022 by Janine Aquino
+#  - ported to python3
+#  - pyinotify doesn't work under python3 and QFileSystemWatcher only works
+#    on first signal, so implement a simple file timestamp watcher.
+#  - Refactor into a more comprehensive class
 ###############################################################################
 """
-This script uses the pyinotify module to monitor
-the creation of new files that are created in the 
+This script uses the QFileSystemWatcher module to monitor
+the creation of new files that are created in the
 'data' folder.  When a new file is detected its
 contents are searched for a timestamp and data
-in which to export via UDP.  There are two different file 
-types that this script works with, Raw MTP data and 
+in which to export via UDP.  There are two different file
+types that this script works with, Raw MTP data and
 MTP profile data.
 
 Raw MTP files look like this:
@@ -53,10 +59,11 @@ MTPP, yyyymmddThhmmss, alt1, temp1, alt2, temp2 ...
 """
 
 import logging, logging.handlers
-import os, sys, pyinotify, re
+import os, sys, re
 import time
 import math
-from pyinotify import WatchManager, Notifier, ProcessEvent #, EventsCodes
+import argparse
+from PyQt5.QtCore import QFileSystemWatcher, pyqtSignal
 from socket import socket, AF_INET, SOCK_DGRAM, IPPROTO_IP, IP_MULTICAST_TTL, SOL_SOCKET, SO_BROADCAST, SO_REUSEADDR
 
 """
@@ -78,18 +85,60 @@ reTemplAltIdxs = re.compile("^(TemplAltIndexes:)(\S+)")
 reMRI = re.compile("^(MRI:)(\S+)")
 reATPTrops = re.compile("^(AltTrops:)(\S+)")
 
-class PClose(ProcessEvent):
+class MTP2UDP():
+    def __init__(self):
 
-    def process_IN_CLOSE(self, event):
+        # Connect to UDP socket
+        self.connectSocket()
 
+    def connectSocket(self):
+        # open UDP socket for raw data
+        self.udp = socket(AF_INET,SOCK_DGRAM)
+        self.udp.setsockopt(IPPROTO_IP, IP_MULTICAST_TTL, 20)  # Multicast mode
+        self.udp.setsockopt(IPPROTO_IP, SO_REUSEADDR, 20)      # Reuse port
+
+        # open UDP socket for profile data
+        #bcast_host = ''
+        #udp_bcast = socket(AF_INET,SOCK_DGRAM)
+        #udp_bcast.setsocketopt(IPPROTO_IP, IP_MULTICAST_TTL, 20)
+        #udp_bcast.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
+        #udp_bcast.setsockopt(SOL_SOCKET,SO_BROADCAST, 1)
+        #udp_bcast.bind((bcast_host,port+1))
+
+    def parse_args(self):
+        """ Instantiate a command line argument parser """
+
+        # Define command line arguments which can be provided
+        parser = argparse.ArgumentParser(
+            description="Script to convert raw MTP scans into UDP packets")
+        parser.add_argument('--path', type=str, required=True,
+            help='Path to data files (i.e. /mnt/r1/mtp)')
+        parser.add_argument('--host', type=str, required=True,
+            help='host dsm that is configured to recv the UDP packet' +
+                 ' (i.e. acserver)')
+        parser.add_argument('--port', type=int, required=True,
+            help="UDP socket port set in NIDAS's XML configuration " +
+                 "(i.e. 30101)")
+        parser.add_argument('--logfile', type=str, required=True,
+            help='logfile - logfile name (i.e. /tmp/mtpudpd.log)\n' +
+                 'The logfile is rotated every 8192 bytes with a backup' +
+                 'count of 10.')
+
+        self.args = parser.parse_args()
+
+        return(self.args)
+
+    def process(self, name):
+
+        path = self.args.path
         data = None
-        TSynth = -32767
+        #TSynth = -32767
 
-        if event.name.startswith('MTPcurrent_'):
-            if os.path.isfile(event.path):
-                fn = event.path
+        if name.startswith('MTPcurrent'):
+            if os.path.isfile(path):
+                fn = path
             else:
-                fn = os.path.join(event.path, event.name)
+                fn = os.path.join(path, name)
 
             # create UDP Data Content
             file = open(fn)
@@ -146,19 +195,19 @@ class PClose(ProcessEvent):
                          m.group(4)+","+m.group(5)+","+m.group(6)+"," + \
                          m.group(7)+","+m.group(8)+","
                   gotM02 = True
-                  TSynthCnts = int(m.group(8))
-                  A=0.0009376
-                  B=0.0002208
-                  C=0.0000001276
-                  if TSynthCnts == 4096 or TSynthCnts == 0:
-                      TSynth = -32767
-                  else:
-                      cnts = 4096 - TSynthCnts
-                      RR = (1.0/(float(cnts)/4096.0)) - 1.0
-                      Rt = 34800.0 * RR
-                      TSynth = (1.0/(A+B*math.log(Rt)+C*math.pow(math.log(Rt),3))-273.16)
-                  data = data + str(TSynth) + ","
-                  logging.info("TSynth = "+ str(TSynth))
+                  #TSynthCnts = int(m.group(8))
+                  #A=0.0009376
+                  #B=0.0002208
+                  #C=0.0000001276
+                  #if TSynthCnts == 4096 or TSynthCnts == 0:
+                  #    TSynth = -32767
+                  #else:
+                  #    cnts = 4096 - TSynthCnts
+                  #    RR = (1.0/(float(cnts)/4096.0)) - 1.0
+                  #    Rt = 34800.0 * RR
+                  #    TSynth = (1.0/(A+B*math.log(Rt)+C*math.pow(math.log(Rt),3))-273.16)
+                  #data = data + str(TSynth) + ","
+                  #logging.info("TSynth = "+ str(TSynth))
 
                 m = rePt.match(line)
                 if m and gotTime and gotVars and gotM01 \
@@ -179,12 +228,13 @@ class PClose(ProcessEvent):
   
             file.close()
 
+            print(data)
             # send UDP Data Content if any has been generated
             if data and gotTime and gotVars and gotTarg and gotM01 and gotM02 and gotPt:
-                udp.sendto(data, (host, port))
+                self.udp.sendto(data.encode('utf-8'), (self.args.host, self.args.port))
                 logging.info(data)
             else:
-                logging.error("Problem with input file:"+event.name)
+                logging.error("Problem with input file:"+name)
                 if not gotTime:
                     logging.error("  Did not find Time line")
                 elif not gotVars:
@@ -198,15 +248,15 @@ class PClose(ProcessEvent):
                 elif not gotTarg:
                     logging.error("  Did not find Target Counts line")
 
-        elif event.name.startswith('ATP_'):
-            logging.info("Found ATP_ file "+event.name)
-            if os.path.isfile(event.path):
-                fn = event.path
+        elif name.startswith('ATP_'):
+            logging.info("Found ATP_ file "+name)
+            if os.path.isfile(path):
+                fn = path
             else:
-                fn = os.path.join(event.path, event.name)
+                fn = os.path.join(path, name)
 
             # Parse file and create UDP Data Content
-            m = reProfTime.match(event.name)
+            m = reProfTime.match(name)
             if m:
                 data = "MTPP," + m.group(1) + "T" + \
                 	m.group(2) + m.group(3) + m.group(4)
@@ -276,21 +326,21 @@ class PClose(ProcessEvent):
 
             # broadcast UDP Data Content to next higher port number
             if data:
-                newport=port+1
-                udp.sendto(data, (host, newport))
-                #udp_bcast.sendto(data, (host, newport))
+                newport=self.args.port+1
+                self.udp.sendto(data.encode('utf-8'), (self.args.host, newport))
+                #udp_bcast.sendto(data.encode('utf-8'), (host, newport))
                 logging.info(data)
                 logging.info("Sent on port:"+str(newport))
 
-        elif event.name.startswith('BT_'):
-            logging.info("Found BT_ file "+event.name)
-            if os.path.isfile(event.path):
-                fn = event.path
+        elif name.startswith('BT_'):
+            logging.info("Found BT_ file "+name)
+            if os.path.isfile(path):
+                fn = path
             else:
-                fn = os.path.join(event.path, event.name)
+                fn = os.path.join(path, name)
 
             # Parse file and create UDP Data Content
-            m = reBTTime.match(event.name)
+            m = reBTTime.match(name)
             if m:
                 data = "MTPBT," + m.group(1) + "T" + \
                         m.group(2) + m.group(3) + m.group(4)
@@ -324,70 +374,66 @@ class PClose(ProcessEvent):
                 data = data + "," + str(btch3[i])
 
             if data:
-                btport = port+29
-                udp.sendto(data, (host, btport))
+                btport = self.args.port+29
+                self.udp.sendto(data.encode('utf-8'), (self.args.host, btport))
                 logging.info(data)
                 logging.info("Sent on port:"+str(btport))
 
+    def monitor(self):
 
-def Monitor(path):
+        # This version of the code only watches MTPcurrent.raw. Original
+        # code watched for ATP_ and BT_. We are not sending those currently
+        # so watchers haven't been set up. Easy to add later if needed.
+        name = 'MTPcurrent.raw'
 
-    wm = WatchManager()
-    notifier = Notifier(wm, PClose())
-    wm.add_watch(path, pyinotify.IN_CLOSE_WRITE)
+        # QFileSystemWatcher only sees the first packet. This is a known
+        # issue. Rather than spend alot of time finding a workaround, just
+        # use the file timestamp.
+        #self.watcher = QFileSystemWatcher([self.args.path+'/'+name])
+        #self.watcher.fileChanged.connect(self.process())
 
-    try:
-        while 1:
-            notifier.process_events()
-            if notifier.check_events():
-                notifier.read_events()
-    except KeyboardInterrupt:
-        notifier.stop()
-        return
+        self._cached_stamp = 0
 
+        while True:
+            stamp = os.stat(self.args.path+'/'+name).st_mtime
+            if stamp != self._cached_stamp:
+                self._cached_stamp = stamp
+                self.process(name)
+            time.sleep(1)
 
-
-if __name__ == '__main__':
-    try:
-        path    = sys.argv[1]
-        host    = sys.argv[2]
-        port    = int(sys.argv[3])
-        logfile = sys.argv[4]
+    def log(self):
 
         # setup logging
         logger = logging.getLogger()
-        handler = logging.handlers.RotatingFileHandler(logfile, maxBytes=8192, backupCount=10)
+        handler = logging.handlers.RotatingFileHandler(self.args.logfile,
+                                            maxBytes=8192, backupCount=10)
         formatter = logging.Formatter("%(asctime)s|%(levelname)s|%(message)s")
         handler.setFormatter(formatter)
         logger.addHandler(handler)
         logger.setLevel(logging.DEBUG)
+        if not os.path.isdir(self.args.path):
+            try:
+                os.mkdir(self.args.path)
+            except Exception as e:
+                logging.critical("Could not create dir %s: %s",
+                                 self.args.path, e)
+                logging.critical("exiting, folder: '%s' does not exist." %
+                                 self.args.path)
+                sys.exit(1)
 
-    except IndexError:
-        print "\nUsage: %s path host port logfile" % sys.argv[0]
-        print "    path    - path to data files  (i.e. /mnt/r1/mtp)"
-        print "    host    - host dsm that is configured to recv the UDP packet (i.e. acserver)"
-        print "    port    - UDP socket port set in NIDAS's XML configuration (i.e. 30101)"
-        print "    logfile - logfile name (i.e. /tmp/mtpudpd.log)"
-        print "\nThe logfile is rotated every 8192 bytes with a backup count of 10."
-        sys.exit(1)
+def main():
 
-    else:
-        if not os.path.isdir(path):
-            logging.critical("exiting, folder: '%s' does not exist." % path)
-            sys.exit(1)
+    # Instantiate an MTP to UDP converter
+    mtpudp = MTP2UDP()
 
-        # open UDP socket for raw data
-        udp = socket(AF_INET,SOCK_DGRAM)
-        # Multicast mode
-        udp.setsockopt(IPPROTO_IP, IP_MULTICAST_TTL, 20) 
+    # Process command line arguments
+    mtpudp.parse_args()
 
-        # open UDP socket for profile data
-        #bcast_host = ''
-        #udp_bcast = socket(AF_INET,SOCK_DGRAM)
-        #udp_bcast.setsocketopt(IPPROTO_IP, IP_MULTICAST_TTL, 20)
-        #udp_bcast.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
-        #udp_bcast.setsockopt(SOL_SOCKET,SO_BROADCAST, 1)
-        #udp_bcast.bind((bcast_host,port+1))
- 
-        # watch the data folder for new files being created
-        Monitor(path)
+    # setup logging
+    mtpudp.log()
+
+    # watch the data folder for new files being created
+    mtpudp.monitor()
+
+if __name__ == '__main__':
+    main()
