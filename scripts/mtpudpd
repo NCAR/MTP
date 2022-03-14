@@ -14,13 +14,12 @@
 #  - Refactor into a more comprehensive class
 ###############################################################################
 """
-This script uses the QFileSystemWatcher module to monitor
-the creation of new files that are created in the
-'data' folder.  When a new file is detected its
-contents are searched for a timestamp and data
-in which to export via UDP.  There are two different file
-types that this script works with, Raw MTP data and
-MTP profile data.
+This script uses the timestamp of the MTPcurrent.raw file to monitor when a new
+data record is written to the file. When a new record is detected its contents
+are searched for a timestamp and data to export via UDP.
+
+While this script currently only watches for Raw MTP data, it also contains
+logic to parse MTP profile data that is not currently used.
 
 Raw MTP files look like this:
 
@@ -28,14 +27,14 @@ Raw MTP files look like this:
 
 A 20101002 19:47:30 -00.59 00.13 -00.26 00.13 +04.37 0.04 270.99 00.38 +39.123 +0.016 -103.967 +0.044 +072727 +071776
 IWG1,20101002T194729,39.1324,-103.978,4566.43,,14127.9,,180.827,190.364,293.383,0.571414,-8.02806,318.85,318.672,-0.181879,-0.417805,-0.432257,-0.0980951,2.36793,-1.66016,-35.8046,16.3486,592.062,146.734,837.903,9.55575,324.104,1.22603,45.2423,,-22.1676,
-B 017828 019041 018564 017846 019061 018572 017874 019069 018603 017906 019095 018625 017932 019124 018637 017949 019139 018655 017968 019151 018665 017979 019164 018665 017997 019161 018691 018029 019181 018705 
+B 017828 019041 018564 017846 019061 018572 017874 019069 018603 017906 019095 018625 017932 019124 018637 017949 019139 018655 017968 019151 018665 017979 019164 018665 017997 019161 018691 018029 019181 018705
 M01: 2928 2457 3023 3085 1925 2923 2434 2948
 M02: 2109 1299 2860 2691 2962 1116 4095 1805
 Pt: 2157 13804 13796 10311 13383 13327 13144 14440
-E 020541 021894 021874 018826 020158 019813 
+E 020541 021894 021874 018826 020158 019813
 
-This script takes date info form the "A" line and 
-spectral values from the "B" line and converts them into a single UDP line that looks like this:
+This script takes date info form the "A" line and spectral values from the "B"
+line and converts them into a single UDP line that looks like this:
 
 MTP,20101002T194730,017828,019041,018564
 
@@ -43,7 +42,9 @@ and ships them UDP multicast to the port number specified on the command line
 
 
 MTP profile files look like this:
-Filename is of the form (ATP_yyyymmdd_hhmmss.txt) and contains a number of rows of the form:
+
+Filename is of the form (ATP_yyyymmdd_hhmmss.txt) and contains a number of rows
+of the form:
 
 index  altitude temperature
 
@@ -51,39 +52,45 @@ where: index is a count of the number of altitude/temperature pairs
        altitude is in km
        temperature is in deg_K
 
-The script takes the date from the filename and the complete set of altitude/temperature pairs 
-and sends them multicast to one + the port number specified on the command line in a form that looks like this:
+The script takes the date from the filename and the complete set of
+altitude/temperature pairs and sends them multicast to one + the port number
+specified on the command line in a form that looks like this:
 
 MTPP, yyyymmddThhmmss, alt1, temp1, alt2, temp2 ...
 
 """
 
-import logging, logging.handlers
-import os, sys, re
+import logging
+import logging.handlers
+import os
+import sys
+import re
 import time
-import math
+# import math
 import argparse
-from PyQt5.QtCore import QFileSystemWatcher, pyqtSignal
-from socket import socket, AF_INET, SOCK_DGRAM, IPPROTO_IP, IP_MULTICAST_TTL, SOL_SOCKET, SO_BROADCAST, SO_REUSEADDR
+# from PyQt5.QtCore import QFileSystemWatcher
+from socket import socket, AF_INET, SOCK_DGRAM, IPPROTO_IP, IP_MULTICAST_TTL, \
+    SOL_SOCKET, SO_BROADCAST, SO_REUSEADDR
 
-"""
-reTime = re.compile("^A (........) (..):(..):(..) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+)")
-"""
-reTime = re.compile("^A (........) (..):(..):(..) ([-+]?\d*\.\d+|\d+) ([-+]?\d*\.\d+|\d+) ([-+]?\d*\.\d+|\d+) ([-+]?\d*\.\d+|\d+) ([-+]?\d*\.\d+|\d+) ([-+]?\d*\.\d+|\d+) ([-+]?\d*\.\d+|\d+) ([-+]?\d*\.\d+|\d+) ([-+]?\d*\.\d+|\d+) ([-+]?\d*\.\d+|\d+) ([-+]?\d*\.\d+|\d+) ([-+]?\d*\.\d+|\d+) ([+-]\d+) ([+-]\d+)")
-reVars = re.compile("^B (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+)")  # 10 angles of 3 channels
-reM01 = re.compile("^M01: (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+)")
-reM02 = re.compile("^M02: (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+)")
-rePt = re.compile("^Pt: (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+)")
-reTarg = re.compile("^E (\d+) (\d+) (\d+) (\d+) (\d+) (\d+)")
-reProfTime = re.compile("ATP_(........)_(..)(..)(..).txt")
-reProfElmt = re.compile("(\d+)  (\d+.\d+)  (\d+.\d+)")
-reBTTime = re.compile("BT_(........)_(..)(..)(..).txt")
-reBTElmt = re.compile("(\d+.\d+) (\d+.\d+) (\d+.\d+)")
-reTemplNames = re.compile("^(TemplNames:)(\S+)")
-reTemplIdxs = re.compile("^(TemplIndexes:)(\S+)")
-reTemplAltIdxs = re.compile("^(TemplAltIndexes:)(\S+)")
-reMRI = re.compile("^(MRI:)(\S+)")
-reATPTrops = re.compile("^(AltTrops:)(\S+)")
+
+# reTime = re.compile("^A (........) (..):(..):(..) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+)")
+
+reTime = re.compile(r"^A (........) (..):(..):(..) ([-+]?\d*\.\d+|\d+) ([-+]?\d*\.\d+|\d+) ([-+]?\d*\.\d+|\d+) ([-+]?\d*\.\d+|\d+) ([-+]?\d*\.\d+|\d+) ([-+]?\d*\.\d+|\d+) ([-+]?\d*\.\d+|\d+) ([-+]?\d*\.\d+|\d+) ([-+]?\d*\.\d+|\d+) ([-+]?\d*\.\d+|\d+) ([-+]?\d*\.\d+|\d+) ([-+]?\d*\.\d+|\d+) ([+-]\d+) ([+-]\d+)")
+reVars = re.compile(r"^B (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+)")  # 10 angles of 3 channels
+reM01 = re.compile(r"^M01: (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+)")
+reM02 = re.compile(r"^M02: (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+)")
+rePt = re.compile(r"^Pt: (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+)")
+reTarg = re.compile(r"^E (\d+) (\d+) (\d+) (\d+) (\d+) (\d+)")
+reProfTime = re.compile(r"ATP_(........)_(..)(..)(..).txt")
+reProfElmt = re.compile(r"(\d+)  (\d+.\d+)  (\d+.\d+)")
+reBTTime = re.compile(r"BT_(........)_(..)(..)(..).txt")
+reBTElmt = re.compile(r"(\d+.\d+) (\d+.\d+) (\d+.\d+)")
+reTemplNames = re.compile(r"^(TemplNames:)(\S+)")
+reTemplIdxs = re.compile(r"^(TemplIndexes:)(\S+)")
+reTemplAltIdxs = re.compile(r"^(TemplAltIndexes:)(\S+)")
+reMRI = re.compile(r"^(MRI:)(\S+)")
+reATPTrops = re.compile(r"^(AltTrops:)(\S+)")
+
 
 class MTP2UDP():
     def __init__(self):
@@ -93,17 +100,17 @@ class MTP2UDP():
 
     def connectSocket(self):
         # open UDP socket for raw data
-        self.udp = socket(AF_INET,SOCK_DGRAM)
+        self.udp = socket(AF_INET, SOCK_DGRAM)
         self.udp.setsockopt(IPPROTO_IP, IP_MULTICAST_TTL, 20)  # Multicast mode
         self.udp.setsockopt(IPPROTO_IP, SO_REUSEADDR, 20)      # Reuse port
 
         # open UDP socket for profile data
-        #bcast_host = ''
-        #udp_bcast = socket(AF_INET,SOCK_DGRAM)
-        #udp_bcast.setsocketopt(IPPROTO_IP, IP_MULTICAST_TTL, 20)
-        #udp_bcast.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
-        #udp_bcast.setsockopt(SOL_SOCKET,SO_BROADCAST, 1)
-        #udp_bcast.bind((bcast_host,port+1))
+        # bcast_host = ''
+        # udp_bcast = socket(AF_INET, SOCK_DGRAM)
+        # udp_bcast.setsocketopt(IPPROTO_IP, IP_MULTICAST_TTL, 20)
+        # udp_bcast.setsockopt(SOL_SOCKET,SO_REUSEADDR, 1)
+        # udp_bcast.setsockopt(SOL_SOCKET,SO_BROADCAST, 1)
+        # udp_bcast.bind((bcast_host, port+1))
 
     def parse_args(self):
         """ Instantiate a command line argument parser """
@@ -112,17 +119,17 @@ class MTP2UDP():
         parser = argparse.ArgumentParser(
             description="Script to convert raw MTP scans into UDP packets")
         parser.add_argument('--path', type=str, required=True,
-            help='Path to data files (i.e. /mnt/r1/mtp)')
+                            help='Path to data files (i.e. /mnt/r1/mtp)')
         parser.add_argument('--host', type=str, required=True,
-            help='host dsm that is configured to recv the UDP packet' +
-                 ' (i.e. acserver)')
+                            help='host dsm that is configured to recv the ' +
+                            'UDP packet (i.e. acserver)')
         parser.add_argument('--port', type=int, required=True,
-            help="UDP socket port set in NIDAS's XML configuration " +
-                 "(i.e. 30101)")
+                            help="UDP socket port set in NIDAS's XML " +
+                            "configuration (i.e. 30101)")
         parser.add_argument('--logfile', type=str, required=True,
-            help='logfile - logfile name (i.e. /tmp/mtpudpd.log)\n' +
-                 'The logfile is rotated every 8192 bytes with a backup' +
-                 'count of 10.')
+                            help='logfile - logfile name (i.e. ' +
+                            '/tmp/mtpudpd.log)\n' + 'The logfile is rotated' +
+                            'every 8192 bytes with a backup count of 10.')
 
         self.args = parser.parse_args()
 
@@ -132,7 +139,7 @@ class MTP2UDP():
 
         path = self.args.path
         data = None
-        #TSynth = -32767
+        # TSynth = -32767
 
         if name.startswith('MTPcurrent'):
             if os.path.isfile(path):
@@ -151,21 +158,23 @@ class MTP2UDP():
             for line in file:
                 m = reTime.match(line)
                 if m and not gotTime and not gotVars and not gotM01 \
-                     and not gotM02 and not gotPt and not gotTarg :
-                  data = "MTP," + m.group(1) + "T" + \
+                   and not gotM02 and not gotPt and not gotTarg:
+                    data = "MTP," + m.group(1) + "T" + \
                          m.group(2) + m.group(3) + m.group(4) + "," + \
-                         m.group(5)+","+m.group(6)+","+m.group(7)+","+\
-                         m.group(8)+","+m.group(9)+","+m.group(10)+","+\
-                         m.group(11)+","+m.group(12)+","+m.group(13)+","+\
-                         m.group(14)+","+m.group(15)+","+m.group(16)+","+\
-                         m.group(17)+","+m.group(18)+","
-                  logging.info("Got Time!")
-                  gotTime = True
+                         m.group(5) + "," + m.group(6) + "," + m.group(7) + \
+                         "," + m.group(8) + "," + m.group(9) + "," + \
+                         m.group(10) + "," + m.group(11) + "," + \
+                         m.group(12) + "," + m.group(13) + "," + \
+                         m.group(14) + "," + m.group(15) + "," + \
+                         m.group(16) + "," + m.group(17) + "," + \
+                         m.group(18) + ","
+                    logging.info("Got Time!")
+                    gotTime = True
 
                 m = reVars.match(line)
                 if m and gotTime and not gotVars and not gotM01 \
-                     and not gotM02 and not gotPt and not gotTarg :
-                  data = data + \
+                   and not gotM02 and not gotPt and not gotTarg:
+                    data = data + \
                          m.group(1)+","+m.group(2)+","+m.group(3)+"," + \
                          m.group(4)+","+m.group(5)+","+m.group(6)+"," + \
                          m.group(7)+","+m.group(8)+","+m.group(9)+"," + \
@@ -176,62 +185,67 @@ class MTP2UDP():
                          m.group(22)+","+m.group(23)+","+m.group(24)+"," + \
                          m.group(25)+","+m.group(26)+","+m.group(27)+"," + \
                          m.group(28)+","+m.group(29)+","+m.group(30)+","
-                  gotVars = True
+                    gotVars = True
 
                 m = reM01.match(line)
                 if m and gotTime and gotVars and not gotM01 \
-                     and not gotM02 and not gotPt and not gotTarg :
-                  data = data + \
+                   and not gotM02 and not gotPt and not gotTarg:
+                    data = data + \
                          m.group(1)+","+m.group(2)+","+m.group(3)+"," + \
                          m.group(4)+","+m.group(5)+","+m.group(6)+"," + \
                          m.group(7)+","+m.group(8)+","
-                  gotM01 = True
+                    gotM01 = True
 
                 m = reM02.match(line)
                 if m and gotTime and gotVars and gotM01 \
-                     and not gotM02 and not gotPt and not gotTarg :
-                  data = data + \
+                   and not gotM02 and not gotPt and not gotTarg:
+                    data = data + \
                          m.group(1)+","+m.group(2)+","+m.group(3)+"," + \
                          m.group(4)+","+m.group(5)+","+m.group(6)+"," + \
                          m.group(7)+","+m.group(8)+","
-                  gotM02 = True
-                  #TSynthCnts = int(m.group(8))
-                  #A=0.0009376
-                  #B=0.0002208
-                  #C=0.0000001276
-                  #if TSynthCnts == 4096 or TSynthCnts == 0:
-                  #    TSynth = -32767
-                  #else:
-                  #    cnts = 4096 - TSynthCnts
-                  #    RR = (1.0/(float(cnts)/4096.0)) - 1.0
-                  #    Rt = 34800.0 * RR
-                  #    TSynth = (1.0/(A+B*math.log(Rt)+C*math.pow(math.log(Rt),3))-273.16)
-                  #data = data + str(TSynth) + ","
-                  #logging.info("TSynth = "+ str(TSynth))
+                    gotM02 = True
+                    # Tsynth is calculated in the MTPviewer code, so no need to
+                    # send it with the UDP packet. Comment out for now.
+                    # TSynthCnts = int(m.group(8))
+                    # A=0.0009376
+                    # B=0.0002208
+                    # C=0.0000001276
+                    # if TSynthCnts == 4096 or TSynthCnts == 0:
+                    #     TSynth = -32767
+                    # else:
+                    #     cnts = 4096 - TSynthCnts
+                    #     RR = (1.0/(float(cnts)/4096.0)) - 1.0
+                    #     Rt = 34800.0 * RR
+                    #     TSynth = (1.0/(A + B * math.log(Rt) +
+                    #              C * math.pow(math.log(Rt), 3)) - 273.16)
+                    # data = data + str(TSynth) + ","
+                    # logging.info("TSynth = "+ str(TSynth))
 
                 m = rePt.match(line)
                 if m and gotTime and gotVars and gotM01 \
-                     and gotM02 and not gotPt and not gotTarg :
-                  data = data + \
+                   and gotM02 and not gotPt and not gotTarg:
+                    data = data + \
                          m.group(1)+","+m.group(2)+","+m.group(3)+"," + \
                          m.group(4)+","+m.group(5)+","+m.group(6)+"," + \
                          m.group(7)+","+m.group(8)+","
-                  gotPt = True
+                    gotPt = True
 
                 m = reTarg.match(line)
                 if m and gotTime and gotVars and gotM01 \
-                     and gotM02 and gotPt and not gotTarg :
-                  data = data + \
+                   and gotM02 and gotPt and not gotTarg:
+                    data = data + \
                          m.group(1)+","+m.group(2)+","+m.group(3)+"," + \
                          m.group(4)+","+m.group(5)+","+m.group(6)
-                  gotTarg = True
-  
+                    gotTarg = True
+
             file.close()
 
             print(data)
             # send UDP Data Content if any has been generated
-            if data and gotTime and gotVars and gotTarg and gotM01 and gotM02 and gotPt:
-                self.udp.sendto(data.encode('utf-8'), (self.args.host, self.args.port))
+            if data and gotTime and gotVars and gotTarg and gotM01 and \
+               gotM02 and gotPt:
+                self.udp.sendto(data.encode('utf-8'), (self.args.host,
+                                                       self.args.port))
                 logging.info(data)
             else:
                 logging.error("Problem with input file:"+name)
@@ -259,7 +273,7 @@ class MTP2UDP():
             m = reProfTime.match(name)
             if m:
                 data = "MTPP," + m.group(1) + "T" + \
-                	m.group(2) + m.group(3) + m.group(4)
+                       m.group(2) + m.group(3) + m.group(4)
             file = open(fn)
             alts = []
             temps = []
@@ -275,8 +289,8 @@ class MTP2UDP():
                 m = reTemplNames.match(line)
                 if m:
                     parts = m.group(2).split(',')
-                    tpl2name = parts.pop()
-                    tpl1name = parts.pop()
+                    # tpl2name = parts.pop()
+                    # tpl1name = parts.pop()
 
                 m = reTemplIdxs.match(line)
                 if m:
@@ -303,17 +317,17 @@ class MTP2UDP():
             # end looping over file lines and put data into UDP packet
             file.close()
 
-            for i in range(count,numpnts):
-                alts.insert(0,0.0)
-                temps.insert(0,0.0)
+            for i in range(count, numpnts):
+                alts.insert(0, 0.0)
+                temps.insert(0, 0.0)
 
             for i in range(0, numpnts):
-                    data = data + "," + str(alts[i])
+                data = data + "," + str(alts[i])
             for i in range(0, numpnts):
-                    data = data + "," + str(temps[i])
+                data = data + "," + str(temps[i])
 
-            #data = data + "," + tpl1name   + "," + tpl2name
-            data = data + "," + tpl1idx    + "," + tpl2idx
+            # data = data + "," + tpl1name   + "," + tpl2name
+            data = data + "," + tpl1idx + "," + tpl2idx
             data = data + "," + tplAlt1idx + "," + tplAlt2idx
             data = data + "," + Trop1Alt
             if float(Trop2Alt) == 99.9:
@@ -322,18 +336,19 @@ class MTP2UDP():
                 data = data + "," + Trop2Alt
             data = data + "," + mri
 
-            #time.sleep(1)
+            # time.sleep(1)
 
             # broadcast UDP Data Content to next higher port number
             if data:
-                newport=self.args.port+1
-                self.udp.sendto(data.encode('utf-8'), (self.args.host, newport))
-                #udp_bcast.sendto(data.encode('utf-8'), (host, newport))
+                newport = self.args.port + 1
+                self.udp.sendto(data.encode('utf-8'), (self.args.host,
+                                                       newport))
+                # udp_bcast.sendto(data.encode('utf-8'), (host, newport))
                 logging.info(data)
-                logging.info("Sent on port:"+str(newport))
+                logging.info("Sent on port:" + str(newport))
 
         elif name.startswith('BT_'):
-            logging.info("Found BT_ file "+name)
+            logging.info("Found BT_ file " + name)
             if os.path.isfile(path):
                 fn = path
             else:
@@ -359,18 +374,18 @@ class MTP2UDP():
                     btch2.append(m.group(2))
                     btch3.append(m.group(3))
                     count = count + 1
-            logging.info("btch1 = "+ str(btch1[0]) + str(btch1[count-1]))
+            logging.info("btch1 = " + str(btch1[0]) + str(btch1[count-1]))
 
             file.close()
 
-            #for i in range(0,count-1):
-            for i in range(0,10):
+            # for i in range(0,count-1):
+            for i in range(0, 10):
                 data = data + "," + str(btch1[i])
-            #for i in range(0,count-1):
-            for i in range(0,10):
+            # for i in range(0,count-1):
+            for i in range(0, 10):
                 data = data + "," + str(btch2[i])
-            #for i in range(0,count-1):
-            for i in range(0,10):
+            # for i in range(0,count-1):
+            for i in range(0, 10):
                 data = data + "," + str(btch3[i])
 
             if data:
@@ -389,8 +404,8 @@ class MTP2UDP():
         # QFileSystemWatcher only sees the first packet. This is a known
         # issue. Rather than spend alot of time finding a workaround, just
         # use the file timestamp.
-        #self.watcher = QFileSystemWatcher([self.args.path+'/'+name])
-        #self.watcher.fileChanged.connect(self.process())
+        # self.watcher = QFileSystemWatcher([self.args.path+'/'+name])
+        # self.watcher.fileChanged.connect(self.process())
 
         self._cached_stamp = 0
 
@@ -406,7 +421,8 @@ class MTP2UDP():
         # setup logging
         logger = logging.getLogger()
         handler = logging.handlers.RotatingFileHandler(self.args.logfile,
-                                            maxBytes=8192, backupCount=10)
+                                                       maxBytes=8192,
+                                                       backupCount=10)
         formatter = logging.Formatter("%(asctime)s|%(levelname)s|%(message)s")
         handler.setFormatter(formatter)
         logger.addHandler(handler)
@@ -421,6 +437,7 @@ class MTP2UDP():
                                  self.args.path)
                 sys.exit(1)
 
+
 def main():
 
     # Instantiate an MTP to UDP converter
@@ -434,6 +451,7 @@ def main():
 
     # watch the data folder for new files being created
     mtpudp.monitor()
+
 
 if __name__ == '__main__':
     main()
