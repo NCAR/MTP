@@ -78,13 +78,13 @@ class controlWindow(QWidget):
 
         self.configFile = QPlainTextEdit()
         self.configFile.insertPlainText(':../../deployToDesktop/MTPData/Config/')
-        self.configFile.insertPlainText('~/Desktop/MTPData/Config/')
+        self.configFile.insertPlainText('~/Desktop/$Project/config/')
         self.saveLocationBox = QPlainTextEdit()
-        self.saveLocationBox.insertPlainText(':../../deployToDesktop/MTPData/RawData')
-        self.saveLocationBox.insertPlainText('~/Desktop/MTPData/RawData')
+        self.saveLocationBox.insertPlainText(':../../deployToDesktop/$Project/data')
+        self.saveLocationBox.insertPlainText('~/Desktop/$Project/data')
         self.logLocationBox = QPlainTextEdit()
-        self.logLocationBox.insertPlainText(':../../deployToDesktop/MTPData/Logs')
-        self.logLocationBox.insertPlainText('~/Desktop/MTPData/Logs')
+        self.logLocationBox.insertPlainText(':../../deployToDesktop/$Project/logs')
+        self.logLocationBox.insertPlainText('~/Desktop/$Project/logs')
 
 
         self.loopTimerBox = QPlainTextEdit()
@@ -365,7 +365,7 @@ class controlWindow(QWidget):
         #self.reInitProbe.setText("Re-initialize Probe/Restart Scanning")
         #self.reInitProbe.setText("Reset Probe")
         #/self.homeScan()
-        self.mainloop(self.app, self.serialPort, self.configStore)
+        #self.mainloop(self.app, self.serialPort, self.configStore, self.dataFile)
         #self.cycle()
 
         self.app.processEvents()
@@ -395,7 +395,7 @@ class controlWindow(QWidget):
 
 
     # will need dataFile, configs and others passed in
-    def mainloop(self, app, serialPort, configStore):
+    def mainloop(self, app, serialPort, configStore, dataFile):
         # instantiate dict for commands
 
         self.isScanning = False
@@ -423,7 +423,7 @@ class controlWindow(QWidget):
         self.app.processEvents()
 
 
-        self.probePresent(app)
+        #self.probePresent(app)
         self.initProbe()
         self.homeScan()
         self.continueCycling = True
@@ -461,7 +461,7 @@ class controlWindow(QWidget):
             self.elineStore = 'E' + self.Eline(nfreq)
             # save to file
             # assumes everything's been decoded from hex
-            saveData = self.mover.saveData(packetStartTime)
+            saveData = self.mover.saveData(packetStartTime, dataFile)
 
             # send packet over UDP
             # also replaces spaces with commas and removes start strings
@@ -1520,7 +1520,7 @@ def main():
     logging.debug("dataFile: %r", dataFile)
     
     # Will need data file and config dicts too
-    ex.mainloop(app, serialPort, configStore)
+    ex.mainloop(app, serialPort, configStore, dataFile)
     # sys.exit(app.exec_())
     # ex.run()
     

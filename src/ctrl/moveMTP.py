@@ -592,7 +592,7 @@ class moveMTP():
             
         #logging.debug("blIne End")
         '''
-    def saveData(self, gmtime):
+    def saveData(self, gmtime, dataFile):
         # self.parent.app.processEvents()
         logging.debug("saving Data to file")
 
@@ -616,7 +616,8 @@ class moveMTP():
         # this \n doesn't leave the ^M's
 
         # open file in append binary mode
-        with open("MTP_data.txt", "a") as datafile:
+        #with open("MTP_data.txt", "a") as datafile:
+        with open(dataFile,"a") as datafile:
             # may need to .append instead of +
             datafile.write("A " + currentDateSave + " " + self.parent.alineStore)
             datafile.write('\n')
