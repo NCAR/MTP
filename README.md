@@ -1,8 +1,8 @@
 <img align="left" width="175" height="175" src="./doc/images/tropo.png">
 
 ```
-CAUTION: When running the MTP instrument, if Tsynth under the Engineering tab gets
-to 50 degreesC, the probe needs to be shutdown to avoid overheating
+CAUTION: When running the MTP instrument, if Tsynth under the Engineering tab
+gets to 50 degreesC, the probe needs to be shutdown to avoid overheating
 ```
 # Microwave Temperature Profiler Instrument Control, Real-Time Display and Processing Software
 
