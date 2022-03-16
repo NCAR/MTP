@@ -19,6 +19,10 @@ from lib.storeConfig import StoreConfig
 from lib.udp import doUDP
 from moveMTP import moveMTP 
 import logging
+import os
+# following 2 are for initMoveHome
+import socket
+from serial import Serial
 
 
 class controlWindow(QWidget):
@@ -425,7 +429,8 @@ class controlWindow(QWidget):
 
         #self.probePresent(app)
         self.initProbe()
-        self.homeScan()
+        #move home is part of initProbe now
+        #self.homeScan()
         self.continueCycling = True
         previousTime = time.perf_counter()
         self.cyclesSinceLastStop = 0
@@ -526,6 +531,362 @@ class controlWindow(QWidget):
         return False
 
 
+
+
+        #from initMoveHome
+    def readEchos(self,num):
+        buf = b''
+        for i in range(num):
+            # readline in class serial library vs serial Qt library
+            # serial qt is uesd in main probram, so need the timeout
+            readLine =self.serialPort.canReadLine(500)
+            if readLine is None:
+                logging.debug("Nothing to read")
+            else:
+                buf = buf + readLine
+
+        logging.debug("read %r", buf)
+        return buf
+
+
+
+    def moveComplete(self,buf):
+        # returns true if '@' is found,
+        # needs a timeout if comand didn't send properly
+        if buf.find(b'@') >= 0:
+            return True
+        return False
+
+
+    def sanitize(self,data):
+        data = data[data.data().find(b':') + 1 : len(data) - 3]
+        placeholder = data.data()#.decode('ascii')
+        place = placeholder.split(' ')
+        ret = ''
+        for datum in place:
+            ret += '%06d' % int(datum,16) + ' '
+
+        return ret
+
+    def findChar(self,array,binaryCharacter):
+        # status = 0-6, C, B, or @
+        # otherwise error = -1
+        #saveIndex = echo.data().find(binaryString)
+        logging.debug("findChar:array %r",array)
+        if array is b'':
+            logging.debug("findChar:array is none %r",array)
+            # if there is no data
+            return -1
+        else:
+            index = array.data().find(binaryCharacter)
+            if index>-1:
+                #logging.debug("status: %r, %r", array[index], array)
+                return array[index]
+            else:
+                logging.error("status unknown, unable to find %r: %r",  binaryCharacter, array)
+                return -1
+
+    def probeResponseCheck(self):
+            self.serialPort.sendCommand(b'V\r\n')
+            if self.findChar(self.readEchos(3), b"MTPH_Control.c-101103>101208")is not -1:
+                logging.info("Probe on, responding to version string prompt")
+                return True
+            else:
+                logging.info("Probe not responding to version string prompt")
+                return False
+
+
+
+    def truncateBotchedMoveCommand(self):
+            self.serialPort.sendCommand(b'Ctrl-C\r\n')
+            if self.findChar(self.readEchos(3),b'Ctrl-C\r\n')is not -1:
+                logging.info("Probe on, responding to Ctrl-C string prompt")
+                return True
+            else:
+                logging.info("Probe not responding to Ctrl-C string prompt")
+                return False
+
+
+    def probeOnCheck(self):
+        if self.findChar(self.readEchos(3), b"MTPH_Control.c-101103>101208") is not -1:
+            logging.info("Probe on, Version string detected")
+            return True
+        else:
+            logging.debug("No version startup string from probe found, sending V prompt")
+            if self.probeResponseCheck():
+                return True
+            else:
+                if self.truncateBotchedMoveCommand():
+                    logging.warning("truncateBotchedMoveCommand called, ctrl-c success")
+                    return True
+                else:
+                    logging.error("probe not responding to truncateBotchedMoveCommand ctrl-c, power cycle necessary")
+                    return False
+
+        logging.error("probeOnCheck all previous logic tried, something's wrong")
+        return False
+
+
+
+    def sendInit1(self):
+        # Init1
+        self.serialPort.sendCommand(b'U/1f1j256V50000R\r\n')
+        # returns:
+        # U/1f1j256V50000R\r\n
+        # U:U/1f1j256V50000R\r\n
+        # Step:\xff/0@\r\n
+        # if already set to this
+        # last line replaced by
+        # Step:/0B\r\n
+        # if too eary in boot phase (?)
+        # Have seen this near boot:
+        #  b'\x1b[A\x1b[BU/1f1j256V50000R\r\n'
+        # And this in cycles
+        #  Step:\xff/0@\r\n - makes ascii parser die
+        #  Step:/0C\r\n - makes fix for above not work
+        #  Step:\r\n
+        #
+
+        return self.readEchos(3)
+    def sendInit2(self):
+        # Init2
+        self.serialPort.sendCommand(b'U/1L4000h30m100R\r\n')
+        # normal return:
+        #
+        # U/1f1j256V50000R\r\n
+        # U:U/1f1j256V50000R\r\n
+        # b'Step:\xff/0@\r\n'
+
+        # error returns:
+        # \x1b[A\x1b[BU/1f1j256V50000R
+        # Step:\xff/0B\r\n'
+        #
+        return self.readEchos(3)
+
+    def init(self):
+        # errorStatus = 0 if all's good
+        # -1 if echos don't match exact return string expected
+        # -2 if unexpected status
+        #
+        errorStatus = 0
+        # 12 is arbirtary choice. Will tune in main program.
+        while errorStatus < 12:
+            answerFromProbe = self.sendInit1()
+            # check for errors/decide if resend?
+            if self.findChar(answerFromProbe, b'@') is not -1:
+                errorStatus = 12
+                # success
+            elif self.findChar(answerFromProbe, b'B') is not -1:
+                logging.warning(" Init 1 status B, resending.")
+                errorStatus = errorStatus + 1
+            elif self.findChar(answerFromProbe, b'C') is not -1:
+                logging.warning(" Init 1 status C, resending.")
+                errorStatus == errorStatus + 1
+            else:
+                logging.warning(" Init 1 status else, resending.")
+                errorStatus == errorStatus + 1
+
+
+
+        self.serialPort.sendCommand(b'S\r\n')
+        buf = self.readEchos(3)
+
+        errorStatus = 0
+        # 12 is arbirtary choice. Will tune in main program.
+        while errorStatus < 12:
+            answerFromProbe = self.sendInit2()
+            # check for errors/decide if resend?
+            if self.findChar(answerFromProbe, b'@') is not -1:
+                errorStatus = 12
+                # success
+            elif self.findChar(answerFromProbe, b'B') is not -1:
+                logging.warning(" Init 2 status B, resending.")
+                errorStatus = errorStatus + 1
+            elif self.findChar(answerFromProbe, b'C') is not -1:
+                logging.warning(" Init 2 status C, resending.")
+                errorStatus == errorStatus + 1
+            else:
+                logging.warning(" Init 2 status else, resending.")
+                errorStatus = errorStatus + 1
+
+        # After both is status of 7 ok?
+        # no
+        # 4 is preferred status
+        # if after both inits status = 5
+        # do an integrate, then a read to clear
+
+        return errorStatus
+
+    def moveHome(self):
+        errorStatus = 0
+        # acutal initiate movement home
+        self.serialPort.sendCommand(b'U/1J0f0j256Z1000000J3R\r\n')
+        self.readEchos(3)
+        # if spamming a re-init, this shouldn't be needed
+        # or should be in the init phase anyway
+        #serialPort.write(b'U/1j128z1000000P10R\r\n')
+        #readEchos(3)
+
+        # Update GUI
+        # Note that having the clear here masks the 'target, target'
+        # potential long scan indicator
+        self.elAngleBox.clear()
+        self.elAngleBox.insertPlainText("Target")
+        # sets 'known location' to 0
+        self.packetStore.setData("currentClkStep", 0)
+
+        # S needs to be 4 here
+        # otherwise call again
+        # unless S is 5
+        # then need to clear the integrator
+        # with a I (and wait 40 ms)
+        #errorStatus = self.isMovePossibleFromHome(12,True)
+        return errorStatus
+
+
+    def getStatus(self):
+        # status = 0-6, C, B, or @
+        # otherwise error = -1
+        # check for T in ST:0X
+        # return status X
+        self.serialPort.sendCommand(b'S\r\n')
+        answerFromProbe = self.readEchos(4)
+        logging.debug("echos from status read: %r", answerFromProbe)
+        return self.findCharPlusNum(answerFromProbe, b'T', offset=3)
+
+    def findCharPlusNum(self,array, binaryCharacter, offset):
+        # status = 0-6, C, B, or @
+        # otherwise error = -1
+        logging.debug("findCharPlusNum:array %r",array)
+        if array is b'':
+            logging.debug("findCharPlusNum:array is none %r",array)
+            # if there is no data
+            return -1
+        else:
+            index = array.data().find(binaryCharacter)
+            logging.debug("findCharPlusNum array: %r",array.data())
+            if index>-1:
+                #logging.debug("status with offset: %r, %r", asciiArray[index+offset], asciiArray)
+                return array.data()[index+offset:index+offset+1].decode('ascii')
+            else:
+                logging.error("status with offset unknown, unable to find %r: %r",  binaryCharacter, array)
+                return -1
+
+
+
+    def isMovePossibleFromHome(self, maxDebugAttempts, scanStatus):
+        # returns 4 if move is possible
+        # otherwise does debugging
+    
+        # debugging needs to know if it's in the scan or starting
+
+        # and how many debug attempts have been made
+        # should also be a case statement, 6, 4, 7 being most common
+
+
+
+        counter =0
+        while counter < maxDebugAttempts:
+            s = self.getStatus()
+            counter = counter + 1
+            if s == '0':
+                # integrator busy, Stepper not moving, Synthesizer out of lock, and spare = 0
+                logging.debug('isMovePossible status 0')
+                return 0
+            elif s == '1':
+                logging.debug('isMovePossible status 1')
+                return 1
+            elif s == '2':
+                logging.debug('isMovePossible status 2')
+                return 2
+            elif s == '3':
+                logging.debug('isMovePossible status 3')
+                return 3
+            elif s == '4':
+                logging.debug("isMovePossible is 4 - yes, return")
+                counter = maxDebugAttempts
+                return 4
+                #continue on with moving
+            elif s == '5' :
+                # do an integrate
+                self.serialPort.sendCommand(b'R\r\n')
+                # Integrate takes 40 ms to clear
+                # should be a read not I, but if I
+                # sleep(40)
+                self.readEchos(3)
+                logging.debug("isMovePossible, status = 5")
+            elif s =='6':
+                # can be infinite 6's,
+                # can also be just wait a bit
+                #s = self.getStatus()
+                if counter<12:
+                    logging.debug("isMovePossible, status = 6, counter = %r", counter)
+                else:
+                    logging.error("isMovePossible, status = 6, counter = %r", counter)
+                    return -1
+            elif s == '7':
+                logging.debug('isMovePossible status 7')
+    
+
+            else:
+                logging.error("Home, status = %r", s)
+
+
+
+
+    def initForNewLoop(self):
+        # This is an init command
+        # but it moves the motor faster, so not desired
+        # in initial startup/go home ?
+        # Correct, necessary before move-to-angle commands
+
+        # do a check for over voltage
+        # first move command in loop errors:
+        # status = 6, but no move
+        # step 0C
+        self.serialPort.sendCommand(b'U/1j128z1000000P10R\r\n')
+
+        self.readEchos(3)
+        return True
+
+    # if on first move status 6 for longer than expected
+    # aka command sent properly, but actual movement
+    # not initiated, need a Ctrl-c then re-init, re-home
+
+    # on boot probe sends
+    # MTPH_Control.c-101103>101208
+    # needs to be caught first before other init commands are sent
+    # also response to V
+    def initProbe(self):
+        probeResponding = False
+        while (1):
+            if probeResponding == False:
+                while self.probeOnCheck() == False:
+                    time.sleep(1)
+                    logging.error("probe off or not responding")
+                logging.info("Probe on check returns true")
+                probeResponding = True
+            self.readEchos(3)
+            self.init()
+            self.readEchos(3)
+            self.moveHome()
+            if (self.isMovePossibleFromHome(maxDebugAttempts=20, scanStatus='potato')==4):
+                if self.initForNewLoop():
+                    #start actual cycling
+                    break
+
+
+
+
+
+
+
+
+
+
+
+        '''
+
     def initProbe(self):
         i=0
         while i < 100000:
@@ -552,6 +913,7 @@ class controlWindow(QWidget):
             echo, sFlag, foundIndex = self.readUntilFound(b'@', 100, 10, isHome=False)
         logging.debug("Try init's send @, no move though echo: %s", echo)
         return True
+        '''
 
     def readUntilFound(self, binaryString, timeout, canReadLineTimeout, isHome):
         i=0
@@ -696,7 +1058,11 @@ class controlWindow(QWidget):
 
 
     def initSaveDataFile(self, flightNumber):    
-        saveDataFileName = time.strftime("%Y%m%d") + '_' + time.strftime("%H%M%S") + '_' + flightNumber + '.mtp'
+        # Make data file path 
+        path = os.path.dirname('C:\\Users\\lroot\\Desktop\\TI3GER\\data\\')
+        if not os.path.exists:
+            os.makedirs(path)
+        saveDataFileName = path+time.strftime("%Y%m%d") + '_' + time.strftime("%H%M%S") + '_' + flightNumber + '.mtp'
 
         with open(saveDataFileName, "ab") as datafile:
                 # this will be rewritten each time the program restarts
@@ -1515,7 +1881,7 @@ def main():
 
     # Prompt flight number
     flightNumber = ex.getFlightNumber()
-    # Make data file
+
     dataFile = ex.initSaveDataFile(flightNumber)
     logging.debug("dataFile: %r", dataFile)
     
