@@ -20,6 +20,7 @@ from lib.udp import doUDP
 from moveMTP import moveMTP 
 import logging
 import os
+import glob
 # following 2 are for initMoveHome
 import socket
 from serial import Serial
@@ -427,7 +428,6 @@ class controlWindow(QWidget):
         self.app.processEvents()
 
 
-        #self.probePresent(app)
         self.initProbe()
         #move home is part of initProbe now
         #self.homeScan()
@@ -514,7 +514,7 @@ class controlWindow(QWidget):
         
         return previousTime
 
-    def probePresent(self, app):
+    def waitForRadiometerWindow(self, app):
         i=0
         #error_dialog = app.QErrorMessage()
         #error_dialog.showMessage('Oh no!')   
@@ -522,9 +522,7 @@ class controlWindow(QWidget):
         # Pauses program execution until ok pressed
         message = QMessageBox.information(self, "Waiting", "Waiting for radiometer")
         while i <1000:
-            self.serialPort.sendCommand(self.commandDict.getCommand("version"))
-            echo, sFlag, foundIndex = self.readUntilFound(b'_', 1000, 200, isHome=False)
-            if echo != b'-1':
+            if self.probeOnCheck():
                 return True
             self.app.processEvents()
             sleep(1)
@@ -809,10 +807,9 @@ class controlWindow(QWidget):
                 #continue on with moving
             elif s == '5' :
                 # do an integrate
-                self.serialPort.sendCommand(b'R\r\n')
+                self.serialPort.sendCommand(b'I\r\n')
                 # Integrate takes 40 ms to clear
-                # should be a read not I, but if I
-                # sleep(40)
+                time.sleep(.0040)
                 self.readEchos(3)
                 logging.debug("isMovePossible, status = 5")
             elif s =='6':
@@ -1062,7 +1059,10 @@ class controlWindow(QWidget):
         path = os.path.dirname('C:\\Users\\lroot\\Desktop\\TI3GER\\data\\')
         if not os.path.exists:
             os.makedirs(path)
-        saveDataFileName = path+time.strftime("%Y%m%d") + '_' + time.strftime("%H%M%S") + '_' + flightNumber + '.mtp'
+        saveDataFileName = path+'\\'+time.strftime("%Y%m%d") + '_' + time.strftime("%H%M%S") + '_' + flightNumber + '.mtp'
+        for filename in glob.glob(path + '\\*_' + flightNumber + '.mtp'):
+            logging.debug("File exists")
+            saveDataFileName=filename
 
         with open(saveDataFileName, "ab") as datafile:
                 # this will be rewritten each time the program restarts
@@ -1884,6 +1884,7 @@ def main():
 
     dataFile = ex.initSaveDataFile(flightNumber)
     logging.debug("dataFile: %r", dataFile)
+
     
     # Will need data file and config dicts too
     ex.mainloop(app, serialPort, configStore, dataFile)
