@@ -1850,6 +1850,7 @@ def main():
 
     # Check for Config.mtph/Fatal Error
     # Read it in/ declare config dict
+    path = os.path.dirname('C:\\Users\\lroot\\MTP\\src\\ctrl\\')
     configStore = StoreConfig(app)
     try:
         configStore.loadConfigMTPH()

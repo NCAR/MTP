@@ -7,6 +7,7 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
 import logging
+from os import path
 
 
 class StoreConfig():
@@ -111,7 +112,9 @@ class StoreConfig():
         # Throws error if not found
 
         logging.debug("loadConfigMTP")
-        with open("../MTP/src/ctrl/Config.mtph", 'r') as configFile:
+        path = 'C:\\Users\\lroot\\MTP\\src\\ctrl\\'
+        
+        with open(path + "Config.mtph", 'r') as configFile:
             lines = configFile.readlines()
             for line in lines:
                 if line[0] == '[':

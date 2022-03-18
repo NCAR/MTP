@@ -1,0 +1,10 @@
+Setup instructions:
+Change project name in .bat file
+Create link, move to desktop
+Right click link, properties
+To run with a minimized command window:
+Run -> minimized
+
+* there is a way to have the cmd prompt not show at all, 
+it removes the ability for killing the process if it hangs by X-ing out of the command prompt
+currently MTPcontrol 'hangs' if the probe isn't actually on, so this is still necessary. 
