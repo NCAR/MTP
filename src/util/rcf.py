@@ -334,7 +334,7 @@ class RetrievalCoefficientFile():
 
         return RcSetAvWt
 
-    def testFlightLevelsKm(self, FlightLevels=[], Len=13):
+    def testFlightLevelsKm(self, FlightLevels=[], Len=15):
         """
         Test that Flight Levels (KM) are as expected.
 
