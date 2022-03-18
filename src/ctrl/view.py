@@ -606,6 +606,7 @@ class controlWindow(QWidget):
 
 
     def probeOnCheck(self):
+        self.app.processEvents()
         if self.findChar(self.readEchos(3), b"MTPH_Control.c-101103>101208") is not -1:
             logging.info("Probe on, Version string detected")
             return True
