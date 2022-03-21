@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 ###############################################################################
 # Script written by Tom Baltzer to read data files written to acserver
 # and send them out over UDP to nidas
@@ -240,7 +239,7 @@ class MTP2UDP():
 
             file.close()
 
-            print(data)
+            #print(data)
             # send UDP Data Content if any has been generated
             if data and gotTime and gotVars and gotTarg and gotM01 and \
                gotM02 and gotPt:
