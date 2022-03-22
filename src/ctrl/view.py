@@ -61,7 +61,7 @@ class controlWindow(QWidget):
         self.receivingIWG = QLabel("IWG Packet Status", self)
         self.IWGPort= QLabel("IWG Port # ", self)
         self.sendingUDP = QLabel("UDP Status", self)
-        self.UDPPort = QLabel("UDP Port # ", self)
+        self.UDPPort = QLabel("UDP out Port # ", self)
         self.overHeat= QLabel("Overheat", self)
         self.overVoltage = QLabel("Overvoltage", self)
         self.projectName = QLabel("Project Name")
@@ -119,13 +119,13 @@ class controlWindow(QWidget):
 
         # from/to (flight name) config.yaml
         self.projectNameBox = QPlainTextEdit()
-        self.projectNameBox.insertPlainText('TI3GER')
+        self.projectNameBox.setPlaceholderText('PROJECTNAME')
         self.flightNumberBox = QPlainTextEdit()
-        self.flightNumberBox.insertPlainText('change')
+        self.flightNumberBox.setPlaceholderText('FlightNum')
         self.IWGPortBox = QPlainTextEdit()
-        self.IWGPortBox.insertPlainText('change')
+        self.IWGPortBox.setPlaceholderText('7071')
         self.UDPPortBox = QPlainTextEdit()
-        self.UDPPortBox.insertPlainText('change')
+        self.UDPPortBox.setPlaceholderText('change')
 
 
 
@@ -514,18 +514,21 @@ class controlWindow(QWidget):
         
         return previousTime
 
-    def waitForRadiometerWindow(self, app):
+    def waitForRadiometerWindow(self, isVisible = True):
         i=0
         #error_dialog = app.QErrorMessage()
         #error_dialog.showMessage('Oh no!')   
 
         # Pauses program execution until ok pressed
-        message = QMessageBox.information(self, "Waiting", "Waiting for radiometer")
-        while i <1000:
-            if self.probeOnCheck():
-                return True
-            self.app.processEvents()
-            sleep(1)
+        progress = QDialog()
+        progress.setModal(False)
+        if isVisible:
+            progress.show()
+            logging.debug("Show waitForRadiometerWindow")
+        else: 
+            progress.hide()
+            logging.debug("hide waitForRadiometerWindow")
+
         return False
 
 
@@ -571,7 +574,7 @@ class controlWindow(QWidget):
         # otherwise error = -1
         #saveIndex = echo.data().find(binaryString)
         logging.debug("findChar:array %r",array)
-        if array is b'':
+        if array == b'':
             logging.debug("findChar:array is none %r",array)
             # if there is no data
             return -1
@@ -586,7 +589,7 @@ class controlWindow(QWidget):
 
     def probeResponseCheck(self):
             self.serialPort.sendCommand(b'V\r\n')
-            if self.findChar(self.readEchos(3), b"MTPH_Control.c-101103>101208")is not -1:
+            if self.findChar(self.readEchos(3), b"MTPH_Control.c-101103>101208") != -1:
                 logging.info("Probe on, responding to version string prompt")
                 return True
             else:
@@ -597,7 +600,7 @@ class controlWindow(QWidget):
 
     def truncateBotchedMoveCommand(self):
             self.serialPort.sendCommand(b'Ctrl-C\r\n')
-            if self.findChar(self.readEchos(3),b'Ctrl-C\r\n')is not -1:
+            if self.findChar(self.readEchos(3),b'Ctrl-C\r\n') != -1:
                 logging.info("Probe on, responding to Ctrl-C string prompt")
                 return True
             else:
@@ -607,7 +610,7 @@ class controlWindow(QWidget):
 
     def probeOnCheck(self):
         self.app.processEvents()
-        if self.findChar(self.readEchos(3), b"MTPH_Control.c-101103>101208") is not -1:
+        if self.findChar(self.readEchos(3), b"MTPH_Control.c-101103>101208") != -1:
             logging.info("Probe on, Version string detected")
             return True
         else:
@@ -672,13 +675,13 @@ class controlWindow(QWidget):
         while errorStatus < 12:
             answerFromProbe = self.sendInit1()
             # check for errors/decide if resend?
-            if self.findChar(answerFromProbe, b'@') is not -1:
+            if self.findChar(answerFromProbe, b'@') != -1:
                 errorStatus = 12
                 # success
-            elif self.findChar(answerFromProbe, b'B') is not -1:
+            elif self.findChar(answerFromProbe, b'B') != -1:
                 logging.warning(" Init 1 status B, resending.")
                 errorStatus = errorStatus + 1
-            elif self.findChar(answerFromProbe, b'C') is not -1:
+            elif self.findChar(answerFromProbe, b'C') != -1:
                 logging.warning(" Init 1 status C, resending.")
                 errorStatus == errorStatus + 1
             else:
@@ -695,13 +698,13 @@ class controlWindow(QWidget):
         while errorStatus < 12:
             answerFromProbe = self.sendInit2()
             # check for errors/decide if resend?
-            if self.findChar(answerFromProbe, b'@') is not -1:
+            if self.findChar(answerFromProbe, b'@') != -1:
                 errorStatus = 12
                 # success
-            elif self.findChar(answerFromProbe, b'B') is not -1:
+            elif self.findChar(answerFromProbe, b'B') != -1:
                 logging.warning(" Init 2 status B, resending.")
                 errorStatus = errorStatus + 1
-            elif self.findChar(answerFromProbe, b'C') is not -1:
+            elif self.findChar(answerFromProbe, b'C') != -1:
                 logging.warning(" Init 2 status C, resending.")
                 errorStatus == errorStatus + 1
             else:
@@ -757,7 +760,7 @@ class controlWindow(QWidget):
         # status = 0-6, C, B, or @
         # otherwise error = -1
         logging.debug("findCharPlusNum:array %r",array)
-        if array is b'':
+        if array == b'':
             logging.debug("findCharPlusNum:array is none %r",array)
             # if there is no data
             return -1
@@ -856,6 +859,8 @@ class controlWindow(QWidget):
     # needs to be caught first before other init commands are sent
     # also response to V
     def initProbe(self):
+        self.waitForRadiometerWindow(isVisible = True)
+
         probeResponding = False
         while (1):
             if probeResponding == False:
@@ -870,6 +875,7 @@ class controlWindow(QWidget):
             self.moveHome()
             if (self.isMovePossibleFromHome(maxDebugAttempts=20, scanStatus='potato')==4):
                 if self.initForNewLoop():
+                    self.waitForRadiometerWindow(isVisible = False)
                     #start actual cycling
                     break
 
@@ -1055,9 +1061,9 @@ class controlWindow(QWidget):
 
 
 
-    def initSaveDataFile(self, flightNumber):    
+    def initSaveDataFile(self, flightNumber,projectName):    
         # Make data file path 
-        path = os.path.dirname('C:\\Users\\lroot\\Desktop\\TI3GER\\data\\')
+        path = os.path.dirname('C:\\Users\\lroot\\Desktop\\'+projectName+'\\data\\')
         if not os.path.exists:
             os.makedirs(path)
         saveDataFileName = path+'\\'+time.strftime("%Y%m%d") + '_' + time.strftime("%H%M%S") + '_' + flightNumber + '.mtp'
@@ -1883,11 +1889,14 @@ def main():
 
     # Prompt flight number
     flightNumber = ex.getFlightNumber()
+    # project name should be gotten from config file, hardcoded here for now 
+    projectName = 'TI3GER'
 
-    dataFile = ex.initSaveDataFile(flightNumber)
+    dataFile = ex.initSaveDataFile(flightNumber,projectName)
     logging.debug("dataFile: %r", dataFile)
-
-    
+    ex.saveLocationBox.setPlainText('~/Desktop/'+ projectName +'/logs')
+    ex.flightNumberBox.setPlainText(flightNumber)
+    ex.projectNameBox.setPlainText(projectName)
     # Will need data file and config dicts too
     ex.mainloop(app, serialPort, configStore, dataFile)
     # sys.exit(app.exec_())
