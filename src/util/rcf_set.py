@@ -160,7 +160,8 @@ class RetrievalCoefficientFileSet():
             if not (rcf.testFlightLevelsKm(FlightLevels, NumFlightLevels)):
                 logger.printmsg("ERROR", "In " + inspect.stack()[0][3] +
                                 " call failed: ERROR: Failed test of flight " +
-                                "levels for RCFID:" + rcf.getId())
+                                "levels for RCFID:" + rcf.getId() + ". " +
+                                "Number of flight levels varies between RCs.")
                 return(False)
 
         return(True)

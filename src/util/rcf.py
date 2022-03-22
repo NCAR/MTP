@@ -62,7 +62,7 @@ class RetrievalCoefficientFile():
 
         # Read in each of the flight levels
         self._RCFFl = []  # Array of dictionaries to hold the flight levels
-        for i in range(self._RCFHdr['NFL']):  # NFL is always 13
+        for i in range(self._RCFHdr['NFL']):  # Number of Flight Levels
             self._RCFFl.append(copy.deepcopy(RCF_FL))
             self.get_FL(i)
 
@@ -334,7 +334,7 @@ class RetrievalCoefficientFile():
 
         return RcSetAvWt
 
-    def testFlightLevelsKm(self, FlightLevels=[], Len=15):
+    def testFlightLevelsKm(self, FlightLevels=[], Len=-1):
         """
         Test that Flight Levels (KM) are as expected.
 
@@ -342,13 +342,11 @@ class RetrievalCoefficientFile():
         above sea level of each flight level in the retrieval coefficient file.
         Flight levels should be ordered in decreasing altitude.
 
-        Len is the length of the FlightLevels list. Len should always be 13.
-
         Returns true if levels successfully set, false if not.
         """
 
         # Test that len of the flight levels list is as expected.
-        if (Len != self._RCFHdr['NFL']):
+        if (Len != -1 and Len != self._RCFHdr['NFL']):
             logger.printmsg("ERROR", "In " + inspect.stack()[0][3] + " for " +
                             "RCFID: " + self.getId() + ", number of flight " +
                             "levels input - " + str(Len) + " - is not equal " +
