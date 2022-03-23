@@ -17,10 +17,11 @@ from PyQt5.QtCore import QTimer
 logging.basicConfig(level=logging.WARNING)
 class doUDP(object):
 
-    def __init__(self, parent, app, device=None):
+    def __init__(self, parent, app, iwgFile, device=None):
         # inherits parent, and app classes
         self.app = app
         self.parent = parent
+        self.IWGFile = iwgFile
 
         # set up ports and ip address
         self.udp_write_to_nidas = 30101
@@ -95,11 +96,17 @@ class doUDP(object):
         # Stores data 
         self.parent.iwgStore = self.data
 
-        # Writes to iwg file
-        with open("IWG.txt", 'a') as iwgFile:
-            iwgFile.write(str(self.data))
+        # format here is to preserve IWG format for VB6 processing
+        stringIWG = str(self.data).split(',') 
+        stringIWG = stringIWG[:32]
+        stringIWG = ','.join(stringIWG)
+        logging.debug(stringIWG)
 
-        iwgFile.close()
+        # Writes to iwg file
+        with open(self.IWGFile,'a') as iwgFile:
+            iwgFile.write("\"" + stringIWG + "\r\n\"\r\n")
+            logging.debug("IWG written")
+            iwgFile.close()
 
         # changes the recieved iwg buffer of type QNetworkDatagram
         # into something more accessable:

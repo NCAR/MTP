@@ -400,7 +400,7 @@ class controlWindow(QWidget):
 
 
     # will need dataFile, configs and others passed in
-    def mainloop(self, app, serialPort, configStore, dataFile):
+    def mainloop(self, app, serialPort, configStore, dataFile, iwgFile):
         # instantiate dict for commands
 
         self.isScanning = False
@@ -414,7 +414,7 @@ class controlWindow(QWidget):
         self.packetStore = StorePacket()
         # Declare instance of moveMTP class
         self.mover = moveMTP(self)
-        self.udp = doUDP(self, app)
+        self.udp = doUDP(self, app, iwgFile)
         # global storage for values collected from probe
         # storing them in dict introduced slowness
         self.iwgStore = 'IWG1,20101002T194729,39.1324,-103.978,4566.43,,14127.9,,180.827,190.364,293.383,0.571414,-8.02806,318.85,318.672,-0.181879,-0.417805,-0.432257,-0.0980951,2.36793,-1.66016,-35.8046,16.3486,592.062,146.734,837.903,9.55575,324.104,1.22603,45.2423,,-22    .1676,'
@@ -1060,6 +1060,23 @@ class controlWindow(QWidget):
         painter.end()
 
 
+    def initSaveIWGFile(self, flightNumber,projectName): 
+        # Make iwg file path 
+        path = os.path.dirname('C:\\Users\\lroot\\Desktop\\'+projectName+'\\data\\')
+        if not os.path.exists:
+            os.makedirs(path)
+        saveIWGFileName = path+'\\'+"IWG_"+ time.strftime("%Y%m%d") + '_' + time.strftime("%H%M%S")+'.txt'
+        # reopen file, no good way to sort via IWG + flight number w/o changing initSaveDataFile
+        '''
+        for filename in glob.glob(path + '\\*_' + flightNumber + '.mtp'):
+            logging.debug("File exists")
+            saveDataFileName=filename
+        '''
+         
+        logging.debug("initIWGDataFile")
+        return saveIWGFileName
+
+
 
     def initSaveDataFile(self, flightNumber,projectName):    
         # Make data file path 
@@ -1071,6 +1088,7 @@ class controlWindow(QWidget):
             logging.debug("File exists")
             saveDataFileName=filename
 
+        # 'b' allows writing the data from a binary format
         with open(saveDataFileName, "ab") as datafile:
                 # this will be rewritten each time the program restarts
                 datafile.write(str.encode("Instrument on " + time.strftime("%X") + " " + time.strftime("%m-%d-%y") + '\r\n'))
@@ -1893,12 +1911,13 @@ def main():
     projectName = 'TI3GER'
 
     dataFile = ex.initSaveDataFile(flightNumber,projectName)
+    iwgFile = ex.initSaveIWGFile(flightNumber,projectName)
     logging.debug("dataFile: %r", dataFile)
     ex.saveLocationBox.setPlainText('~/Desktop/'+ projectName +'/logs')
     ex.flightNumberBox.setPlainText(flightNumber)
     ex.projectNameBox.setPlainText(projectName)
     # Will need data file and config dicts too
-    ex.mainloop(app, serialPort, configStore, dataFile)
+    ex.mainloop(app, serialPort, configStore, dataFile, iwgFile)
     # sys.exit(app.exec_())
     # ex.run()
     
