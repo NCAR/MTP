@@ -78,69 +78,92 @@ class controlWindow(QWidget):
         self.totalNumFrames = QLabel("Total frames")
         self.numFramesSinceLastReset = QLabel("Frames since reset")
         self.elAngle = QLabel("Current El. Angle")
+        self.IWG1 = QLabel("IWG1")
 
         # Text boxes
-
+        self.longWidth = 300
+        self.mediumWidth = 150
+        self.shortWidth = 40
         self.configFile = QLineEdit()
-        self.configFile.insertPlainText(':../../deployToDesktop/MTPData/Config/')
-        self.configFile.insertPlainText('~/Desktop/$Project/config/')
+        self.configFile.setText(':../../deployToDesktop/MTPData/Config/')
+        self.configFile.setText('~/Desktop/$Project/config/')
         self.configFile.setReadOnly(True)
+        self.configFile.setFixedWidth(self.longWidth)
         self.saveLocationBox = QLineEdit()
-        self.saveLocationBox.insertPlainText(':../../deployToDesktop/$Project/data')
-        self.saveLocationBox.insertPlainText('~/Desktop/$Project/data')
+        self.saveLocationBox.setText(':../../deployToDesktop/$Project/data')
+        self.saveLocationBox.setText('~/Desktop/$Project/data')
         self.saveLocationBox.setReadOnly(True)
+        self.saveLocationBox.setFixedWidth(self.longWidth)
         self.logLocationBox = QLineEdit()
-        self.logLocationBox.insertPlainText(':../../deployToDesktop/$Project/logs')
-        self.logLocationBox.insertPlainText('~/Desktop/$Project/logs')
+        self.logLocationBox.setText(':../../deployToDesktop/$Project/logs')
+        self.logLocationBox.setText('~/Desktop/$Project/logs')
         self.logLocationBox.setReadOnly(True)
+        self.logLocationBox.setFixedWidth(self.longWidth)
 
 
         self.loopTimerBox = QLineEdit()
-        self.loopTimerBox.insertPlainText('Start')
-        self.loopTimerBox.setOverwriteMode(True)
+        self.loopTimerBox.setText('Start')
+        self.loopTimerBox.setFixedWidth(self.shortWidth)
         self.loopTimerBox.setReadOnly(True)
         self.totalNumFramesBox = QLineEdit()
-        self.totalNumFramesBox.insertPlainText('0')
-        self.totalNumFramesBox.setOverwriteMode(True)
+        self.totalNumFramesBox.setText('0')
+        self.totalNumFramesBox.setFixedWidth(self.shortWidth)
         self.totalNumFramesBox.setReadOnly(True)
         self.numFramesSinceLastResetBox = QLineEdit()
-        self.numFramesSinceLastResetBox.insertPlainText('0')
-        self.numFramesSinceLastResetBox.setOverwriteMode(True)
+        self.numFramesSinceLastResetBox.setText('0')
+        self.numFramesSinceLastResetBox.setFixedWidth(self.shortWidth)
+        #self.numFramesSinceLastResetBox.setOverwriteMode(True)
         self.numFramesSinceLastResetBox.setReadOnly(True)
 
         # from config.mtph
         self.planeNameBox = QLineEdit()
-        self.planeNameBox.insertPlainText('NGV')
+        self.planeNameBox.setText('NGV')
+        self.planeNameBox.setFixedWidth(self.mediumWidth)
         self.planeNameBox.setReadOnly(True)
         self.nominalPitchBox = QLineEdit()
-        self.nominalPitchBox.insertPlainText('3')
-        self.nominalPitchBo.setReadOnly(True)
+        self.nominalPitchBox.setText('3')
+        self.nominalPitchBox.setFixedWidth(self.shortWidth)
+        self.nominalPitchBox.setReadOnly(True)
         # also known as channels
         self.frequenciesBox = QLineEdit()
-        self.frequenciesBox.insertPlainText('55.51, 56.65, 58.8')
+        self.frequenciesBox.setText('55.51, 56.65, 58.8')
+        self.frequenciesBox.setFixedWidth(self.mediumWidth)
         self.frequenciesBox.setReadOnly(True)
         self.allScanAnglesBox = QPlainTextEdit()
-        self.allScanAnglesBox.insertPlainText('80.00, 55.00, 42.00, 25.00, 12.00, 0.00, -12.00, -25.00, -42.00, -80.00')
+        self.allScanAnglesBox.setPlainText('80.00, 55.00, 42.00, 25.00, 12.00, 0.00, -12.00, -25.00, -42.00, -80.00')
+        self.allScanAnglesBox.setFixedHeight(self.shortWidth)
         self.allScanAnglesBox.setReadOnly(True)
         # Current elevation - GUI updates before correction applied
         self.elAngleBox = QLineEdit()
-        self.elAngleBox.insertPlainText('Target')
-        self.elAngleBox.setOverwriteMode(True)
-        self.elAnglesBox.setReadOnly(True)
+        self.elAngleBox.setText('Target')
+        self.elAngleBox.setFixedWidth(self.shortWidth)
+        #self.elAngleBox.setOverwriteMode(True)
+        self.elAngleBox.setReadOnly(True)
 
         # from/to (flight name) config.yaml
         self.projectNameBox = QLineEdit()
-        self.projectNameBox.setPlaceholderText('PROJECTNAME')
+        self.projectNameBox.setText('PROJECTNAME')
+        self.projectNameBox.setFixedWidth(self.mediumWidth)
         self.projectNameBox.setReadOnly(True)
+
         self.flightNumberBox = QLineEdit()
-        self.flightNumberBox.setPlaceholderText('FlightNum')
+        self.flightNumberBox.setText('FlightNum')
+        self.flightNumberBox.setFixedWidth(self.mediumWidth)
         self.flightNumberBox.setReadOnly(True)
+
         self.IWGPortBox = QLineEdit()
-        self.IWGPortBox.setPlaceholderText('7071')
+        self.IWGPortBox.setText('7071')
+        self.IWGPortBox.setFixedWidth(self.shortWidth)
         self.IWGPortBox.setReadOnly(True)
         self.UDPPortBox = QLineEdit()
-        self.UDPPortBox.setPlaceholderText('change')
+        self.UDPPortBox.setText('32106')
+        self.UDPPortBox.setFixedWidth(self.shortWidth)
         self.UDPPortBox.setReadOnly(True)
+
+        self.IWG1Box = QPlainTextEdit()
+        self.IWG1Box.setPlainText('')
+        self.IWG1Box.setFixedHeight(self.mediumWidth)
+        self.IWG1Box.setReadOnly(True)
 
 
 
@@ -202,32 +225,44 @@ class controlWindow(QWidget):
         LineScanStatus.addWidget(self.scanStatus)
         LineScanStatus.addWidget(self.emptyLabel)
         LineScanStatus.addStretch()
-        LineScanStatus.addWidget(self.loopTimer)
-        LineScanStatus.addWidget(self.loopTimerBox)
+
+        LineTimer = QHBoxLayout()
+        LineTimer.addWidget(self.loopTimerBox)
+        LineTimer.addWidget(self.loopTimer)
+        LineTimer.addStretch()
         
         LineHousekeeping = QHBoxLayout()
         LineHousekeeping.addWidget(self.overHeatLED)
         LineHousekeeping.addWidget(self.overHeat)
         LineHousekeeping.addWidget(self.emptyLabel)
         LineHousekeeping.addStretch()
-        LineHousekeeping.addWidget(self.overVoltageLED)
-        LineHousekeeping.addWidget(self.overVoltage)
+
+        LineHousekeeping2 = QHBoxLayout()
+        LineHousekeeping2.addWidget(self.overVoltageLED)
+        LineHousekeeping2.addWidget(self.overVoltage)
+        LineHousekeeping2.addStretch()
 
         LineNumFrames = QHBoxLayout()
         LineNumFrames.addWidget(self.totalNumFramesBox)
         LineNumFrames.addWidget(self.totalNumFrames)
         LineNumFrames.addWidget(self.emptyLabel)
         LineNumFrames.addStretch()
-        LineNumFrames.addWidget(self.numFramesSinceLastReset)
-        LineNumFrames.addWidget(self.numFramesSinceLastResetBox)
+
+        LineResetFrames = QHBoxLayout()
+        LineResetFrames.addWidget(self.numFramesSinceLastResetBox)
+        LineResetFrames.addWidget(self.numFramesSinceLastReset)
+        LineResetFrames.addStretch()
 
         LineElAngle = QHBoxLayout()
         LineElAngle.addWidget(self.elAngleBox)
         LineElAngle.addWidget(self.elAngle)
         LineElAngle.addWidget(self.emptyLabel)
         LineElAngle.addStretch()
-        LineElAngle.addWidget(self.allScanAngles)
-        LineElAngle.addWidget(self.allScanAnglesBox)
+        
+        LineAllAngle = QHBoxLayout()
+        LineAllAngle.addWidget(self.allScanAnglesBox)
+        LineAllAngle.addWidget(self.allScanAngles)
+        LineAllAngle.addStretch()
 
         LineReceivingUDP = QHBoxLayout()
         LineReceivingUDP.addWidget(self.receivingIWGLED)
@@ -268,15 +303,20 @@ class controlWindow(QWidget):
         LinePlaneName.addWidget(self.nominalPitchBox)
         LinePlaneName.addStretch()
 
+
         # vbox
         mainbox = QVBoxLayout()
         mainbox.addLayout(LineProbeStatus)
         #mainbox.addWidget(self.reInitProbe)
         mainbox.addLayout(LineScanStatus)
         mainbox.addLayout(LineHousekeeping)
+        mainbox.addLayout(LineHousekeeping2)
         #mainbox.addWidget(self.scanStatusButton)
+        mainbox.addLayout(LineTimer)
         mainbox.addLayout(LineNumFrames)
+        mainbox.addLayout(LineResetFrames)
         mainbox.addLayout(LineElAngle)
+        mainbox.addLayout(LineAllAngle)
         mainbox.addLayout(LineReceivingUDP)
         mainbox.addLayout(LineSendingUDP)
         mainbox.addLayout(LineRunningLocation)
@@ -286,11 +326,13 @@ class controlWindow(QWidget):
         mainbox.addWidget(self.saveLocationBox)
         #mainbox.addWidget(self.logLocation)
         #mainbox.addWidget(self.logLocationBox)
+        mainbox.addWidget(self.IWG1)
+        mainbox.addWidget(self.IWG1Box)
         mainbox.addWidget(self.shutdownProbe)
         mainbox.addStretch()
 
         self.setLayout(mainbox)
-        self.setGeometry(100, 100, 400, 800)
+        self.setGeometry(100, 100, 400, 700)
         self.setWindowTitle('MTPRealTime')
         #self.show()
         '''
@@ -523,11 +565,11 @@ class controlWindow(QWidget):
 
         # Update GUI
         self.loopTimerBox.clear()
-        self.loopTimerBox.insertPlainText(str(elapsedTime))
+        self.loopTimerBox.setText("{:0.2f}".format(elapsedTime))
         self.totalNumFramesBox.clear()
-        self.totalNumFramesBox.insertPlainText(str(totalCycles))
+        self.totalNumFramesBox.setText(str(totalCycles))
         self.numFramesSinceLastResetBox.clear()
-        self.numFramesSinceLastResetBox.insertPlainText(str(self.cyclesSinceLastStop))
+        self.numFramesSinceLastResetBox.setText(str(self.cyclesSinceLastStop))
         
         return previousTime
 
@@ -750,7 +792,7 @@ class controlWindow(QWidget):
         # Note that having the clear here masks the 'target, target'
         # potential long scan indicator
         self.elAngleBox.clear()
-        self.elAngleBox.insertPlainText("Target")
+        self.elAngleBox.setText("Target")
         # sets 'known location' to 0
         self.packetStore.setData("currentClkStep", 0)
 
@@ -1323,7 +1365,7 @@ class controlWindow(QWidget):
         # Note that having the clear here masks the 'target, target'
         # potential long scan indicator
         self.elAngleBox.clear()
-        self.elAngleBox.insertPlainText("Target")
+        self.elAngleBox.setText("Target")
         # sets 'known location' to 0
         self.packetStore.setData("currentClkStep", 0)
 
@@ -1484,7 +1526,9 @@ class controlWindow(QWidget):
         for angle in elAngles: 
             # update GUI
             self.elAngleBox.clear()
-            self.elAngleBox.insertPlainText(str(angle))
+            self.elAngleBox.setText(str(angle))
+            self.IWG1Box.setPlainText(self.iwgStore)
+
             angleIndex = angleIndex + 1
             logging.debug("el angle: %f, ScanAngleNumber: %f", angle, angleIndex)
             self.app.processEvents()
@@ -1930,9 +1974,9 @@ def main():
     dataFile = ex.initSaveDataFile(flightNumber,projectName)
     iwgFile = ex.initSaveIWGFile(flightNumber,projectName)
     logging.debug("dataFile: %r", dataFile)
-    ex.saveLocationBox.setPlainText('~/Desktop/'+ projectName +'/data')
-    ex.flightNumberBox.setPlainText(flightNumber)
-    ex.projectNameBox.setPlainText(projectName)
+    ex.saveLocationBox.setText('~/Desktop/'+ projectName +'/data')
+    ex.flightNumberBox.setText(flightNumber)
+    ex.projectNameBox.setText(projectName)
     # Will need data file and config dicts too
     ex.mainloop(app, serialPort, configStore, dataFile, iwgFile)
     # sys.exit(app.exec_())
