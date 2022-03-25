@@ -92,18 +92,21 @@ class doUDP(object):
         # nope, .data() returns string (binary)
         #logging.debug("Does iwg networkDatagram really return QByte array? %s", self.networkDatagram.data())
 
-        #logging.debug(self.data[0])
-        # Stores data 
-        self.parent.iwgStore = self.data
-
         # format here is to preserve IWG format for VB6 processing
         stringIWG = str(self.data).split(',') 
         stringIWG = stringIWG[:32]
         stringIWG = ','.join(stringIWG)
         logging.debug(stringIWG)
 
+        #logging.debug(self.data[0])
+        # Stores data 
+        # Stores IWG w/o newline char
+        self.parent.iwgStore = self.data
+
+
         # Writes to iwg file
         with open(self.IWGFile,'a') as iwgFile:
+            # Close " here is on a new line
             iwgFile.write("\"" + stringIWG + "\r\n\"\r\n")
             logging.debug("IWG written")
             iwgFile.close()
