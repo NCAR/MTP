@@ -924,6 +924,7 @@ class controlWindow(QWidget):
         while (1):
             if probeResponding == False:
                 while self.probeOnCheck() == False:
+                    self.app.processEvents()
                     time.sleep(1)
                     logging.error("probe off or not responding")
                 logging.info("Probe on check returns true")
