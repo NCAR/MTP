@@ -166,6 +166,16 @@ class MTPclient():
         except Exception:
             exit(1)
 
+    def setFltno(self, value):
+        """ Set the flight number """
+        try:
+            self.configfile.setVal('fltno', value)
+            # I don't like how write reformats config, so don't write
+            # to config for now...
+            # self.configfile.writeConfig(self.configfile_name)
+        except Exception:
+            exit(1)
+
     def getFltno(self):
         """ Return the flight number of the current flight from config file """
         try:

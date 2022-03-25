@@ -65,6 +65,22 @@ class config():
         self.projConfig = yaml.load(infile, Loader=yaml.BaseLoader)
         infile.close()
 
+    def writeConfig(self, yamlfile):
+        """ Write config file with any changes held in """
+        try:
+            # This creates a ugly YAML file - can we do better?
+            outfile = open(yamlfile, 'w')
+            yaml.dump(self.projConfig, outfile, default_flow_style=False)
+            outfile.close()
+        except Exception:
+            logger.printmsg("ERROR",
+                            "Could not update config file with new fltno")
+            raise Exception()
+
+    def setVal(self, key, value):
+        """ Set value for given key in yaml file """
+        self.projConfig[key] = value
+
     def getVal(self, key):
         """ Get value for given key in the yaml file """
         if key in self.projConfig.keys():

@@ -10,7 +10,7 @@
 import numpy
 from PyQt5.QtWidgets import QMainWindow, QGridLayout, QWidget, \
         QPlainTextEdit, QFrame, QAction, QLabel, QPushButton, QGroupBox, \
-        QMessageBox, QLineEdit
+        QMessageBox, QLineEdit, QInputDialog
 from PyQt5.QtCore import QSocketNotifier, Qt
 from PyQt5.QtGui import QFontMetrics, QFont
 from util.profile_structs import TropopauseRecord
@@ -104,11 +104,39 @@ class MTPviewer(QMainWindow):
         self.view = QWidget()
         self.setCentralWidget(self.view)
 
+        # Determine Flight Number
+        self.setFltno()
+
         # Create the layout for the viewer
         self.initView()
 
         # Configure the menu bar
         self.createMenuBar()
+
+    def setFltno(self):
+        """
+        Read the fltno from the config file and pop up a window for user
+        to confirm or override.
+
+        TBD: Before read from config, try to read from nidas DB.
+        """
+        try:
+            # Get fltno from configfile and display in popup
+            self.dialog = QInputDialog()
+            self.dialog.setCancelButtonText('Quit MTPviewer')
+            self.fltno, self.ok = self.dialog.getText(
+               self, 'FlightNumber',
+               'Please enter a flight number and select OK.\nEither cancel ' +
+               'or OK will accept default.',
+               QLineEdit.Normal, self.client.getFltno())
+
+            if self.ok:
+                # If user modified fltno, write new fltno to config file
+                if self.client.getFltno() != self.fltno:
+                    self.client.setFltno(self.fltno)
+
+        except Exception:
+            exit(1)
 
     def createMenuBar(self):
         """ Create the menu bar and add options and dropdowns """
