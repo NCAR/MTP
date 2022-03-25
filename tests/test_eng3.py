@@ -17,6 +17,7 @@
 ###############################################################################
 import os
 import unittest
+from unittest.mock import patch
 import argparse
 from viewer.MTPviewer import MTPviewer
 from PyQt5.QtWidgets import QApplication
@@ -47,7 +48,8 @@ class TESTeng3(unittest.TestCase):
         self.args = argparse.Namespace(cnts=False, postprocess=False,
                                        realtime=True)
 
-        self.viewer = MTPviewer(self.client, self.app, self.args)
+        with patch.object(MTPviewer, 'setFltno'):
+            self.viewer = MTPviewer(self.client, self.app, self.args)
 
         self.maxDiff = None
 

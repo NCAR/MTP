@@ -18,6 +18,7 @@
 ###############################################################################
 import os
 import unittest
+from unittest.mock import patch
 import argparse
 import logging
 from io import StringIO
@@ -54,7 +55,8 @@ class TESTMTPviewer(unittest.TestCase):
         self.app = QApplication([])
         self.client.config(self.configfile)
 
-        self.viewer = MTPviewer(self.client, self.app, self.args)
+        with patch.object(MTPviewer, 'setFltno'):
+            self.viewer = MTPviewer(self.client, self.app, self.args)
 
     def test_clickGo(self):
         """ Test that clicking go goes to index selected by user """
