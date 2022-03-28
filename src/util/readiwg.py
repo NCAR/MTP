@@ -47,6 +47,10 @@ class IWG:
         separator = ','
         values = IWGpacket.split(separator)
 
+        # Only keep first 31 values; rest are user vals
+        del(values[33:])
+        print(values)
+
         # values[0] contains the packet identifier, in this case 'IWG1' so skip
         # values[1] contains the datetime, i.e. yyyymmddThhMMss
         m = re.match("(........)T(..)(..)(..)", values[1])
