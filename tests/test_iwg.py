@@ -56,6 +56,15 @@ class TESTreadiwg(unittest.TestCase):
 
         self.iwg = self.client.initIWG()
 
+    def test_ignoreUserVals(self):
+        """ Test that user values at end of IWG packet are ignored """
+        # Add a few values to end of IWG packet but do not change ascii_parms
+        self.userrec = self.iwgrec + "999,999,999,999"
+        self.rawscan = self.client.reader.rawscan
+        self.iwg.parseIwgPacket(self.userrec, self.ascii_parms)
+        self.assertEqual(len(self.rawscan['IWG1line']['values']),
+                         len(self.iwg.values))
+
     def test_getIwgPacket(self):
         """ Test the IWG line parses as expected """
 

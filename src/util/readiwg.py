@@ -45,14 +45,14 @@ class IWG:
             return(False)  # Did not succeed in reading IWG packet
 
         separator = ','
-        values = IWGpacket.split(separator)
+        self.values = IWGpacket.split(separator)
 
         # Only keep first 31 values; rest are user vals
-        del(values[33:])
+        del(self.values[33:])
 
         # values[0] contains the packet identifier, in this case 'IWG1' so skip
         # values[1] contains the datetime, i.e. yyyymmddThhMMss
-        m = re.match("(........)T(..)(..)(..)", values[1])
+        m = re.match("(........)T(..)(..)(..)", self.values[1])
         if (m):
             # Save YYYYMMDD to variable DATE
             self.rawscan['IWG1line']['values']['DATE']['val'] = m.group(1)
@@ -63,12 +63,12 @@ class IWG:
         # If length of values read in from ascii_parms file doesn't match
         # length of IWG1 packet received, warn user. len below includes date
         # and time.
-        if len(self.rawscan['IWG1line']['values']) != len(values):
+        if len(self.rawscan['IWG1line']['values']) != len(self.values):
             self.ERROR_FLAG = True
             logger.printmsg("ERROR", "IWG packet being received on UDP feed " +
                             "has a different number of values (" +
-                            str(len(values)) + ") than listed in ascii_parms" +
-                            " file (" +
+                            str(len(self.values)) + ") than listed in " +
+                            "ascii_parms file (" +
                             str(len(self.rawscan['IWG1line']['values'])) +
                             ") in config dir " + ascii_parms_file +
                             ". Should be 33.")
@@ -79,6 +79,7 @@ class IWG:
         for key in self.rawscan['IWG1line']['values']:
             if (key != 'DATE' and key != 'TIME'):
                 self.rawscan['IWG1line']['values'][key]['val'] = \
-                    values[int(self.rawscan['IWG1line']['values'][key]['idx'])]
+                    self.values[int(self.rawscan['IWG1line']['values']
+                                                [key]['idx'])]
 
         return(True)  # Successful parse of IWG packet
