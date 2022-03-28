@@ -34,7 +34,7 @@ class BrightnessTemperature():
         self.Geqn = [None] * self.channels
         self.tb = [None] * self.channels * self.angles
 
-        # Gain OFfset and per channel Gain Eqn Constants (slope and intercept)
+        # Gain Offset and per channel Gain Eqn Constants (slope and intercept)
         self.GOF = float(configfile.getVal('GOF'))
         self.GEC = configfile.getVal('GEC')
 
