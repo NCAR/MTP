@@ -359,8 +359,8 @@ class MTPprocessor(QMainWindow):
         filenum = 0
         # Find all setup files in prod dir.
         for setupfile in sorted(os.listdir(prod_dir)):
-            # Vet that this is a setup file, i.e. has name setup_rf##
-            m = re.match("setup_[RTFrtf]f[0-9][0-9]", setupfile)
+            # Vet that this is a setup file, i.e. name starts with "setup_"
+            m = re.match("^setup_", setupfile)
             if (m):
                 # Add another entry to our list of file pairs
                 self.filelist.append(copy.deepcopy(data_files))
