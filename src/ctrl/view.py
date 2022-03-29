@@ -1795,7 +1795,7 @@ class controlWindow(QWidget):
             echo, sFlag, foundIndex = self.readUntilFound(
                     b'S', 37, 55, isHome=False)
             logging.debug("status: %s, received Status: %s, ", status, echo)
-            if status != b'-1':
+            if echo != b'-1':
                 statusFound = echo.data().find(status)
                 if statusFound >= 0:
                     logging.debug("status searched: %s , found: %s",
