@@ -614,14 +614,18 @@ class moveMTP():
         saveData = saveData + self.parent.elineStore + '\n'
         logging.debug("saveData %r", saveData)
         # this \n doesn't leave the ^M's
-
-        # open file in append binary mode
+        iwg = self.parent.iwgStore
+        #iwg = str(iwg.split(','))
+        #iwg = iwg[-1]
+        #iwg = ','.join(iwg)
+        
+        # open file in append not-binary mode
         #with open("MTP_data.txt", "a") as datafile:
         with open(dataFile,"a") as datafile:
             # may need to .append instead of +
             datafile.write("A " + currentDateSave + " " + self.parent.alineStore)
             datafile.write('\n')
-            datafile.write(self.parent.iwgStore)
+            datafile.write(iwg)
             datafile.write('\n')
             datafile.write(self.parent.blineStore)
             datafile.write('\n')
