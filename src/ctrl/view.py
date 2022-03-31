@@ -1562,6 +1562,11 @@ class controlWindow(QWidget):
     def moveCheckAgain(self, sentCommand, sleepTime, isHome):
         # have to check for @ and status separately
         self.serialPort.sendCommand((sentCommand))
+        # I really don't like having this process events in here
+        # But is currently necessary for 1/s iwg processing
+        # as there are at least 2 moves a cycle 
+        # that take longer than 1 s
+        self.app.processEvents()
         i = 0
         while i < 2:
             # Might be possible to reduce this a bit
