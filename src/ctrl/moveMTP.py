@@ -624,21 +624,22 @@ class moveMTP():
         with open(dataFile,"a") as datafile:
             # may need to .append instead of +
             datafile.write("A " + currentDateSave + " " + self.parent.alineStore)
-            datafile.write('\n')
+            datafile.write('\r\n')
             datafile.write(iwg)
-            datafile.write('\n')
+            #actual iwg packet has \r\n
+            #datafile.write('\r\n')
             datafile.write(self.parent.blineStore)
-            datafile.write('\n')
+            datafile.write('\r\n')
             datafile.write(self.parent.m01Store)
-            datafile.write('\n')
+            datafile.write('\r\n')
             datafile.write(self.parent.m02Store)
-            datafile.write('\n')
+            datafile.write('\r\n')
             datafile.write(self.parent.ptStore)
-            datafile.write('\n')
+            datafile.write('\r\n')
             datafile.write(self.parent.elineStore)
-            datafile.write('\n')
+            datafile.write('\r\n')
             # this \n doesn't leave the ^M's
-            datafile.write('\n')
+            datafile.write('\r\n')
         # the send Data should have the repress b' data ' 
         # additions that python adds
 
