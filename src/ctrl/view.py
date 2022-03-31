@@ -597,6 +597,8 @@ class controlWindow(QWidget):
     def readEchos(self,num):
         buf = b''
         for i in range(num):
+            self.app.processEvents()
+            self.IWG1Box.setPlainText(self.iwgStore)
             # readline in class serial library vs serial Qt library
             # serial qt is uesd in main probram, so need the timeout
             readLine =self.serialPort.canReadLine(500)
@@ -925,7 +927,7 @@ class controlWindow(QWidget):
             if probeResponding == False:
                 while self.probeOnCheck() == False:
                     self.app.processEvents()
-                    time.sleep(1)
+                    self.IWG1Box.setPlainText(self.iwgStore)
                     logging.error("probe off or not responding")
                 logging.info("Probe on check returns true")
                 probeResponding = True
