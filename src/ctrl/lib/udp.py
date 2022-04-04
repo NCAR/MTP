@@ -14,7 +14,9 @@ from PyQt5.QtNetwork import QUdpSocket, QHostAddress
 from PyQt5.QtCore import QTimer
 #import socket
 
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
+    filename="MTPControl.log", level=logging.DEBUG)
+#logging.basicConfig(level=logging.WARNING)
 class doUDP(object):
 
     def __init__(self, parent, app, iwgFile, device=None):
@@ -93,6 +95,7 @@ class doUDP(object):
         #logging.debug("Does iwg networkDatagram really return QByte array? %s", self.networkDatagram.data())
 
         # format here is to preserve IWG format for VB6 processing
+        logging.debug(str(time.gmtime()) + "length of iwg: " + str(len(self.data)))
         stringIWG = str(self.data).split(',') 
         stringIWG = stringIWG[:32]
         stringIWG = ','.join(stringIWG)

@@ -47,6 +47,12 @@ class controlWindow(QWidget):
         logging.debug("User has clicked the red x on the main window, unsafe exit")
         #self.shutdownProbeClicked(self.serialPort)
         #self.event.accept()
+    def logProcessEvents(self,app):
+        #logging.debug("Log Process Events Timestamp:" + str(time.gmtime()))
+        self.IWG1Box.setPlainText(self.iwgStore)
+        self.app.processEvents()
+        self.app.processEvents()
+        
 
     def initUI(self):
         # QToolTip.setFont(QFont('SansSerif', 10))
@@ -484,7 +490,8 @@ class controlWindow(QWidget):
         self.serialPort = serialPort 
         self.configStore = configStore
 
-        self.app.processEvents()
+        self.logProcessEvents(app)
+        #self.app.processEvents()
 
 
         self.initProbe()
@@ -501,39 +508,55 @@ class controlWindow(QWidget):
         #logging.debug("Frequencies from config: %r", nfreq)
         nfreq = nfreq[1: len(nfreq)]
         #logging.debug("Frequencies without size: %r", nfreq)
+        self.app = app
 
         # loop over " scan commands"
         self.probeStatusLED.setPixmap(self.ICON_GREEN_LED.scaled(40, 40))
         self.scanStatusLED.setPixmap(self.ICON_GREEN_LED.scaled(40, 40))
 
         while self.continueCycling:
-            self.app.processEvents()
-            logging.debug("loop                                                                                                                 asdfasdf")
+            self.IWG1Box.setPlainText(self.iwgStore)
+            self.logProcessEvents(app)
+            #self.app.processEvents()
+            logging.info("mainloop                                                                                                                 asdfasdf")
             # check here to exit cycling
-
+            logging.info("mainloop1")
             # use the MTPmove aline
             packetStartTime = time.gmtime()
             self.alineStore = self.Aline()
+            logging.info("mainloop2")
 
             # Bline: long
             self.blineStore = 'B' + self.Bline(elAngles, nfreq)
+            self.logProcessEvents(app)
+            logging.info("mainloop3")
 
             self.m01Store = self.m01()
             self.m02Store = self.m02()
             self.ptStore = self.pt()
+            self.logProcessEvents(app)
+            logging.info("mainloop4")
             # Eline: long 
             self.elineStore = 'E' + self.Eline(nfreq)
+            self.logProcessEvents(app)
+            logging.info("mainloop5")
             # save to file
             # assumes everything's been decoded from hex
             saveData = self.mover.saveData(packetStartTime, dataFile)
+            self.logProcessEvents(app)
+            logging.info("mainloop6")
 
             # send packet over UDP
             # also replaces spaces with commas and removes start strings
             # speed may be an issue here
             #self.udp.sendUDP(self.mover.formUDP())
             udpPacket = self.mover.formUDP(packetStartTime)
+            self.logProcessEvents(app)
+            logging.info("mainloop6")
             print(udpPacket)
             self.udp.sendUDP(udpPacket, saveData)
+            self.logProcessEvents(app)
+            logging.info("mainloop8")
             logging.debug("sent UDP packet")
 
             # collect, update, display loop stats
@@ -597,6 +620,8 @@ class controlWindow(QWidget):
     def readEchos(self,num):
         buf = b''
         for i in range(num):
+            self.app.processEvents()
+            self.IWG1Box.setPlainText(self.iwgStore)
             # readline in class serial library vs serial Qt library
             # serial qt is uesd in main probram, so need the timeout
             readLine =self.serialPort.canReadLine(500)
@@ -925,7 +950,7 @@ class controlWindow(QWidget):
             if probeResponding == False:
                 while self.probeOnCheck() == False:
                     self.app.processEvents()
-                    time.sleep(1)
+                    self.IWG1Box.setPlainText(self.iwgStore)
                     logging.error("probe off or not responding")
                 logging.info("Probe on check returns true")
                 probeResponding = True
@@ -986,6 +1011,7 @@ class controlWindow(QWidget):
         while i < timeout:
             # grab whatever is in the buffer
             # will terminate at \n if it finds one
+            self.logProcessEvents(self.app)
 
             echo = self.serialPort.canReadAllLines(canReadLineTimeout)#msec
             logging.debug("read until found: ")
@@ -1532,7 +1558,8 @@ class controlWindow(QWidget):
 
             angleIndex = angleIndex + 1
             logging.debug("el angle: %f, ScanAngleNumber: %f", angle, angleIndex)
-            self.app.processEvents()
+            self.logProcessEvents(self.app)
+            #self.app.processEvents()
 
             # packetStore pitchCorrect should be button
 
@@ -1566,7 +1593,8 @@ class controlWindow(QWidget):
         # But is currently necessary for 1/s iwg processing
         # as there are at least 2 moves a cycle 
         # that take longer than 1 s
-        self.app.processEvents()
+        self.logProcessEvents(self.app)
+        #self.app.processEvents()
         i = 0
         while i < 2:
             # Might be possible to reduce this a bit
@@ -1932,10 +1960,12 @@ def handle_error(error):
 
 def main():
     #    signal.signal(signal.SIGINT, ctrl_c)
+    #logger = logging.getLogger('__name__')
     logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
-            filename="MTPControl.log", level=logging.DEBUG)
-    logger = logging.getLogger(__name__)
+            filename="MTPControl.log", level=logging.INFO)
+
     logging.warning("warning")
+    
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(True)
 

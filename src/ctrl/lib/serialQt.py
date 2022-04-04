@@ -13,7 +13,9 @@ from PyQt5.QtSerialPort import *
 from PyQt5.QtCore import *
 from PyQt5 import QtCore
 
-logging.basicConfig(level=logging.DEBUG)
+#logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
+    filename="MTPControl.log", level=logging.DEBUG)
 #logging = logging.getLogger(__name__)
 
 class SerialInit(object):
