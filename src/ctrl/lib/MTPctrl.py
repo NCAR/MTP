@@ -9,7 +9,9 @@ import logging
 from serialInst import SerialInst
 from mtpcommand import MTPcommand
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
+            filename="MTPControl.log", level=logging.DEBUG)
+#logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
