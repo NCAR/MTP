@@ -30,6 +30,8 @@ class moveMTP():
         }
         self.parent = parent
         self.vars = varDict 
+        self.MAM = [['nan','nan','nan', 'nan'],['nan','nan','nan', 'nan'],['nan','nan','nan','nan'],['nan','nan','nan','nan']]
+        self.configMAM()
     
 
     def dispatch(self, argument):
@@ -416,7 +418,7 @@ class moveMTP():
             logging.debug("after pitch rms3")
             Zpavg = self.parent.packetStore.getData("Zpavg")
             logging.debug("after pitch rms4")
-            Zprms = self.parent.packetStore.getData("Zpavg")
+            Zprms = self.parent.packetStore.getData("Zprms")
             logging.debug("after pitch rms5")
             oatavg = self.parent.packetStore.getData("oatavg")
             logging.debug("after pitch rms6")
@@ -436,18 +438,18 @@ class moveMTP():
             logging.error(e.message)
             logging.error(sys.exe_info()[0])
             logging.error("IWG not detected, using defaults")
-            pitchavg = 3
-            pitchrms = 3
-            rollavg = 3
-            rollrms = 3
-            Zpavg = 3
-            Zprms = 3
-            oatavg = 3
-            oatrms = 3
-            latavg = 3
-            latrms = 3
-            lonavg = 3
-            lonrms = 3
+            pitchavg = 3 
+            pitchrms = 3 
+            rollavg = 3 
+            rollrms = 3 
+            Zpavg = 3 
+            Zprms = 3 
+            oatavg = 3 
+            oatrms = 3 
+            latavg = 3 
+            latrms = 3 
+            lonavg = 3 
+            lonrms = 3 
             # set from config file eventually
             # other odd constant is in udp.py -
             # sets the recieved values in iwg line to 0
@@ -785,28 +787,35 @@ class moveMTP():
         (currently on github)
         """
 
-        yi = self.getConfig(OffsetYi)
-        pi = self.getConfig(OffsetPi)
-        ri = self.getConfig(OffsetRi)
+        MAM = self.MAM
+        
+        #specific to NSF HAIPER GV
+        # This will change if it changes planes
+
+
+        yi = -1.600 
+        pi = -3.576
+        ri = -0.123 
         rpd = 0.0174532925199433    # Radians per degree = arctan(1)/45
 
 
-        cY = cos(yi * rpd)
-        cP = cos(pi * rpd)
-        cR = cos(ri * rpd)
-        sy = sin(yi * rpd)
-        sP = sin(pi * rpd)
-        sR = sin(ri * rpd)
-        
-        self.setMAM(1, 1, cP * cY)
-        self.setMAM(1, 2, -cP * sY)
-        self.setMAM(1, 3, sP)
-        self.setMAM(2, 1, sR * sP * cY + cR * sY)
-        self.setMAM(2, 2, -sR * sP * sY + cR * cY)
-        self.setMAM(2, 3, -sR * cP)
-        self.setMAM(3, 1, -cR * sP * cY + sR * sY)
-        self.setMAM(3, 2, cR * sP * sY + sR * cY)
-        self.setMAM(3, 3, cR * cP)
+        cY = math.cos(yi * rpd)
+        cP = math.cos(pi * rpd)
+        cR = math.cos(ri * rpd)
+        sY = math.sin(yi * rpd)
+        sP = math.sin(pi * rpd)
+        sR = math.sin(ri * rpd)
+
+        MAM[0][0] = cP * cY
+        MAM[0][2] = -cP * sY
+        MAM[0][2] = sP
+        MAM[1][0] = sR * sP * cY + cR * sY
+        MAM[1][1] = -sR * sP * sY + cR * cY
+        MAM[1][2] = -sR * cP
+        MAM[2][0] = -cR * sP * cY + sR * sY
+        MAM[2][1] = cR * sP * sY + sR * cY
+        MAM[2][2] = cR * cP
+        self.MAM = MAM
         return
 
     def fSc(self):
@@ -823,6 +832,9 @@ class moveMTP():
 ' rpd = Atn(1) / 45#      'Radians per degree
 
 ' Convert angle from degrees to radians
+
+
+Changed 4/5/2022 to python 2dArray, index -1
   """
         P = Pd * rpd
         R = Rd * rpd
@@ -833,8 +845,8 @@ class moveMTP():
         cR = cos(R)
         sR = sin(R)
 
-        alpha = -cR * sP * self.setMAM(1, 1) + sR * self.setMAM(2, 1) + cR * cP * self.setMAM(3, 1)
-        beta = -1 * (-cR * sP * self.setMAM(1, 3) + sR * self.setMAM(2, 3) + cR * cP * self.setMAM(3, 3))
+        alpha = -cR * sP * MAM[0][0] + sR * MAM[1][0] + cR * cP * MAM[2][0]
+        beta = -1 * (-cR * sP * MAM[0][2] + sR * MAM[1][2] + cR * cP * MAM[2][2])
         fSe = -ASN(alpha * cos(E) + beta * sin(E)) / rpd
 
     def fEc(self, pitch, roll, targetEl, EmaxFlag):
@@ -852,25 +864,27 @@ class moveMTP():
         # In this case the pitch and roll values are irrelevant
         # Excel spreadsheet shows that LHS and RHS are the only 
         # difference in solutions
+
         
         # Then fEc = 180#: Return
         if targetEl == 180: 
             return 180
+        MAM = self.MAM
 
-        rpd = atan(1) / 45#       'Radians per degree 3.14159265358979
+        rpd = math.atan(1) / 45#       'Radians per degree 3.14159265358979
 
         # convert
         P = pitch * rpd
         R = roll * rpd
         E = targetEl * rpd
 
-        cP = cos(P)
-        sP = sin(P)
-        cR = cos(R)
-        sR = sin(R)
-        sE = sin(E)
-        alpha = -cR * sP * self.getMAM(1, 1) + sR * self.getMAM(2, 1) + cR * cP * self.getMAM(3, 1)
-        beta = -1 * (-cR * sP * self.getMAM(1, 3) + sR * self.getMAM(2, 3) + cR * cP * self.getMAM(3, 3))
+        cP = math.cos(P)
+        sP = math.sin(P)
+        cR = math.cos(R)
+        sR = math.sin(R)
+        sE = math.sin(E)
+        alpha = -cR * sP * MAM[0][0] + sR * MAM[1][0] + cR * cP * MAM[2][0]
+        beta = -1 * (-cR * sP * MAM[0][2] + sR * MAM[1][2] + cR * cP * MAM[2][2])
 
         A = alpha ^ 2 + beta ^ 2
         B = 2 * sE * beta
@@ -883,15 +897,15 @@ class moveMTP():
             else:
                 Ec_at_Emax = -90
         else:
-            Ec_at_Emax = atan(beta / alpha) / rpd
+            Ec_at_Emax = math.atan(beta / alpha) / rpd
 
         # VB6 has a less accurate, but presumably faster ASN function for arcsin
-        E_max = -asin(alpha * cos(Ec_at_Emax * rpd) + beta * sin(Ec_at_Emax * rpd))
+        E_max = -math.asin(alpha * math.cos(Ec_at_Emax * rpd) + beta * math.sin(Ec_at_Emax * rpd))
         Emax = E_max / rpd #Always + since it is maximum elevation angle
         #Debug.Print alpha; beta; Ec_at_Emax; alpha * cos(Ec_at_Emax) + beta * sin(Ec_at_Emax)
-        Ep90 = abs(-asin(beta) / rpd)
+        Ep90 = abs(-math.asin(beta) / rpd)
         Em90 = -Ep90
-        E_Ec_0 = -asin(alpha) / rpd  #Elevation at which Ec=0
+        E_Ec_0 = -math.asin(alpha) / rpd  #Elevation at which Ec=0
 
         EmaxFlag = False
         
@@ -912,8 +926,8 @@ class moveMTP():
             if Arg < 0:
                 Arg = 0
                 # next two lines ambiguously indented in vb6
-                fEc1 = asin((-B - sqrt(Arg)) / (2 * A)) / rpd
-                fEc2 = asin((-B + sqrt(Arg)) / (2 * A)) / rpd
+                fEc1 = math.asin((-B - math.sqrt(Arg)) / (2 * A)) / rpd
+                fEc2 = math.asin((-B + math.sqrt(Arg)) / (2 * A)) / rpd
                 if E_Ec_0 < 0:
                     # logical equivalent of Vb6 that follows 
                     if Elevation >= E_Ec_0 and Elevation >= Ep90:
