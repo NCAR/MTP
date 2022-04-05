@@ -194,12 +194,12 @@ class doUDP(object):
             # Sometimes IWG packet doesn't fill out values
             # check if roll/pitch is zero in goAngle
             if latestValue == '':
-                latestValue = float(0) # try and figure out nan value instead
+                latestValue = float('nan') # try and figure out nan value instead
             elif latestValue == b'':
-                latestValue = float(0) # try and figure out nan value instead
+                latestValue = float('nan') # try and figure out nan value instead
             if name == "Zp":
                 latestValue = float(latestValue)/3280.8 # ft/km value from vb6
-            elif name is "oat":
+            elif name == "oat":
                 latestValue = float(latestValue) + 273.15 # C to K value from vb6
 
             # only want to keep 16 values in each array
@@ -284,18 +284,30 @@ class doUDP(object):
         avg = 0
         rms = 0
         i = 0
+        count = 0
         # calculates average and root mean square error
         while i < nval:
             #logging.debug(data15[i])
             #datum = float(self.parent.packetStore.getArray(name,i))
             datum = float(data15[i])
-            # logging.debug(i)
-            # logging.debug(datum)
-            # logging.debug("averageVal for loop")
+            i = i + 1 
+            logging.debug('averageVal datum %r', datum)
+            try:
+                if math.isnan(datum):
+                    logging.debug("NaN value found in IWG")
+                else:
+                    logging.debug(datum)
+                    avg = avg + datum
+                    rms = rms + (datum * datum)
+                    count = count + 1
+            except:
+                logging.WARNING("Nan value: except statement in averageVal")
+
+            logging.debug(datum)
             avg = avg + datum
             rms = rms + (datum * datum)
-            i = i + 1 
-        avg = avg/len(data15)
+            count = count + 1
+        avg = avg/count
         # logging.debug("avg %f", avg)
         if rms - (avg * avg) * nval >0:
             if nval > 1:
@@ -310,8 +322,8 @@ class doUDP(object):
         # logging.debug(name + "avg")
         # saves avg and rms in nameAvg and nameRMS
         # truncate values to third decimal place
-        avg = int(avg * 1000) / 1000.0
-        rms = int(rms * 1000) / 1000.0
+        avg = float(avg * 1000) / 1000.0
+        rms = float(rms * 1000) / 1000.0
 
         #keeping these in the packet store because they are single values
         # may remove if time still an issue

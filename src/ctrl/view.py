@@ -51,7 +51,6 @@ class controlWindow(QWidget):
         #logging.debug("Log Process Events Timestamp:" + str(time.gmtime()))
         self.IWG1Box.setPlainText(self.iwgStore)
         self.app.processEvents()
-        self.app.processEvents()
         
 
     def initUI(self):
@@ -434,7 +433,6 @@ class controlWindow(QWidget):
 
         #self.reInitProbe.setText("Re-initialize Probe/Restart Scanning")
         #self.reInitProbe.setText("Reset Probe")
-        #/self.homeScan()
         #self.mainloop(self.app, self.serialPort, self.configStore, self.dataFile)
         #self.cycle()
 
@@ -496,7 +494,6 @@ class controlWindow(QWidget):
 
         self.initProbe()
         #move home is part of initProbe now
-        #self.homeScan()
         self.continueCycling = True
         previousTime = time.perf_counter()
         self.cyclesSinceLastStop = 0
@@ -1368,34 +1365,9 @@ class controlWindow(QWidget):
         logging.debug("move wait timeout, move along")
     '''
 
-
     def homeScan(self):
-        home1 = self.commandDict.getCommand("home1")
-        home2 = self.commandDict.getCommand("home2")
-        home3 = self.commandDict.getCommand("home3")
-        # min time before it starts shaking/grinding
-        # do need the extra checkAgain bit to be sure it gets home 
-        # 0.1 has 10 long homescans in 315 scans
-        # 0.115 is better, but still 1/hour
-        # updated so sleepTime is halved for most loops, 
-        # but in case of long scan has full time
-        sleepTime = 0.2
-        #self.serialPort.sendCommand(home1)
-        self.moveCheckAgain(home1, sleepTime, isHome=True)
-        logging.debug("home1 after move home") 
-
-        sleepTime = 0.000
-        self.moveCheckAgain(home2, sleepTime, isHome=True)
-        logging.debug("home2 after step ") 
-        
-        # Update GUI
-        # Note that having the clear here masks the 'target, target'
-        # potential long scan indicator
-        self.elAngleBox.clear()
-        self.elAngleBox.setText("Target")
-        # sets 'known location' to 0
-        self.packetStore.setData("currentClkStep", 0)
-
+        #stub for when moveHome and isMovePossible get called by one
+        logging.debug('homeScan')
 
     def m01(self):
         logging.debug("M01")
@@ -1425,7 +1397,11 @@ class controlWindow(QWidget):
     def Eline(self, nfreq):
         data = 0
         logging.debug("Eline")
-        self.homeScan()
+        # has a loop in small program and init probe
+        self.moveHome()
+        self.isMovePossibleFromHome(maxDebugAttempts=10, scanStatus='potato')
+        self.initForNewLoop()
+                #start actual cycling
         # set noise 1
         # returns echo and b"ND:01\r\n" or b"ND:00\r\n"
         self.serialPort.sendCommand(self.commandDict.getCommand("noise1"))
@@ -1562,6 +1538,16 @@ class controlWindow(QWidget):
             #self.app.processEvents()
 
             # packetStore pitchCorrect should be button
+            pitchCorrect = False
+            pitchFrame = self.packetStore.getData("pitchavg")
+            rollFrame = self.packetStore.getData("rollavg")
+            EmaxFlag = False
+            #if self.packetStore.getData("pitchCorrect"):
+            if pitchCorrect:
+                angle =  angle + self.mover.fEc(pitchFrame, rollFrame, angle, EmaxFlag)
+            else:
+                logging.info("not correcting Pitch")
+                angle = angle + zel
 
             # get pitch corrected angle and
             # sends move command
