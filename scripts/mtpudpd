@@ -118,13 +118,15 @@ class MTP2UDP():
         parser = argparse.ArgumentParser(
             description="Script to convert raw MTP scans into UDP packets")
         parser.add_argument('--path', type=str, required=True,
-                            help='Path to data files (i.e. /mnt/r1/mtp)')
+                            help='Path to send data files (i.e. /mnt/r1/mtp)')
         parser.add_argument('--host', type=str, required=True,
                             help='host dsm that is configured to recv the ' +
                             'UDP packet (i.e. acserver)')
         parser.add_argument('--port', type=int, required=True,
                             help="UDP socket port set in NIDAS's XML " +
                             "configuration (i.e. 30101)")
+        parser.add_argument('--ric', type=int, required=True,
+                            help="Send UDP to RIC (i.e. 32106)")
         parser.add_argument('--logfile', type=str, required=True,
                             help='logfile - logfile name (i.e. ' +
                             '/tmp/mtpudpd.log)\n' + 'The logfile is rotated' +
@@ -243,8 +245,13 @@ class MTP2UDP():
             # send UDP Data Content if any has been generated
             if data and gotTime and gotVars and gotTarg and gotM01 and \
                gotM02 and gotPt:
+                # Send to nidas
                 self.udp.sendto(data.encode('utf-8'), (self.args.host,
                                                        self.args.port))
+
+                # Send to RIC
+                self.udp.sendto(data.encode('utf-8'), (self.args.host,
+                                                       self.args.ric))
                 logging.info(data)
             else:
                 logging.error("Problem with input file:"+name)
