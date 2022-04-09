@@ -15,7 +15,7 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
-import math
+from math import cos, sin, atan, asin, sqrt
 import logging
 from PyQt5 import QtCore
 
@@ -248,7 +248,7 @@ class moveMTP():
             logging.debug("after pitch rms, in exception")
             logging.error(repr(e))
             logging.error(e.message)
-            logging.error(sys.exe_info()[0])
+            #logging.error(sys.exe_info()[0])
             logging.error("IWG not detected, using defaults")
             pitchavg = 3 
             pitchrms = 3 
@@ -611,12 +611,12 @@ class moveMTP():
         rpd = 0.0174532925199433    # Radians per degree = arctan(1)/45
 
 
-        cY = math.cos(yi * rpd)
-        cP = math.cos(pi * rpd)
-        cR = math.cos(ri * rpd)
-        sY = math.sin(yi * rpd)
-        sP = math.sin(pi * rpd)
-        sR = math.sin(ri * rpd)
+        cY = cos(yi * rpd)
+        cP = cos(pi * rpd)
+        cR = cos(ri * rpd)
+        sY = sin(yi * rpd)
+        sP = sin(pi * rpd)
+        sR = sin(ri * rpd)
 
         MAM[0][0] = cP * cY
         MAM[0][2] = -cP * sY
@@ -630,38 +630,8 @@ class moveMTP():
         self.MAM = MAM
         return
 
-    def fSc(self):
-        """ Given the commanded elevation angle (Ec) this routine should return the desired
-' elevation angle (Elevation) with respect to the horizon.
-' It is a check that the correct Ec value was calculated by fEc
-'
-' MJ Mahoney, January 10, 2002
-' Enter with MTP Attitude Matrix MAM, aircraft Pitch and Roll in degrees, and
-' commanded elevation angle wrt to horizon.
-'
-' Return with desired elevation angle
 
-' rpd = Atn(1) / 45#      'Radians per degree
-
-' Convert angle from degrees to radians
-
-
-Changed 4/5/2022 to python 2dArray, index -1
-  """
-        P = Pd * rpd
-        R = Rd * rpd
-        E = Ec * rpd
-
-        cP = cos(P)
-        sP = sin(P)
-        cR = cos(R)
-        sR = sin(R)
-
-        alpha = -cR * sP * MAM[0][0] + sR * MAM[1][0] + cR * cP * MAM[2][0]
-        beta = -1 * (-cR * sP * MAM[0][2] + sR * MAM[1][2] + cR * cP * MAM[2][2])
-        fSe = -ASN(alpha * cos(E) + beta * sin(E)) / rpd
-
-    def fEc(self, pitch, roll, targetEl, EmaxFlag):
+    def fEc(self, pitch, roll, Elevation, EmaxFlag):
         # Pitch and roll can be either by frame (post) or instantaneous (realtime)
         """ Needed by goAngle in cycle in move.py """
         # Calculate commanded elevation angle needed to be at a specified
@@ -676,32 +646,33 @@ Changed 4/5/2022 to python 2dArray, index -1
         # In this case the pitch and roll values are irrelevant
         # Excel spreadsheet shows that LHS and RHS are the only 
         # difference in solutions
-
         
+
+        print("testfECprint")
         # Then fEc = 180#: Return
-        if targetEl == 180: 
+        if Elevation == 180: 
             return 180
         MAM = self.MAM
 
-        rpd = math.atan(1) / 45#       'Radians per degree 3.14159265358979
+        rpd = atan(1) / 45#       'Radians per degree 3.14159265358979
 
         # convert
         P = pitch * rpd
         R = roll * rpd
-        E = targetEl * rpd
+        E = Elevation * rpd
 
-        cP = math.cos(P)
-        sP = math.sin(P)
-        cR = math.cos(R)
-        sR = math.sin(R)
-        sE = math.sin(E)
+        cP = cos(P)
+        sP = sin(P)
+        cR = cos(R)
+        sR = sin(R)
+        sE = sin(E)
         alpha = -cR * sP * MAM[0][0] + sR * MAM[1][0] + cR * cP * MAM[2][0]
         beta = -1 * (-cR * sP * MAM[0][2] + sR * MAM[1][2] + cR * cP * MAM[2][2])
 
-        A = alpha ^ 2 + beta ^ 2
+        A = alpha * alpha + beta * beta
         B = 2 * sE * beta
-        C = sE ^ 2 - alpha ^ 2
-        Arg = B ^ 2 - 4 * A * C
+        C = sE * sE - alpha * alpha
+        Arg = B * B - 4 * A * C
 
         if alpha == 0:
             if beta > 0: 
@@ -709,15 +680,15 @@ Changed 4/5/2022 to python 2dArray, index -1
             else:
                 Ec_at_Emax = -90
         else:
-            Ec_at_Emax = math.atan(beta / alpha) / rpd
+            Ec_at_Emax = atan(beta / alpha) / rpd
 
         # VB6 has a less accurate, but presumably faster ASN function for arcsin
-        E_max = -math.asin(alpha * math.cos(Ec_at_Emax * rpd) + beta * math.sin(Ec_at_Emax * rpd))
+        E_max = -asin(alpha * cos(Ec_at_Emax * rpd) + beta * sin(Ec_at_Emax * rpd))
         Emax = E_max / rpd #Always + since it is maximum elevation angle
         #Debug.Print alpha; beta; Ec_at_Emax; alpha * cos(Ec_at_Emax) + beta * sin(Ec_at_Emax)
-        Ep90 = abs(-math.asin(beta) / rpd)
+        Ep90 = abs(-asin(beta) / rpd)
         Em90 = -Ep90
-        E_Ec_0 = -math.asin(alpha) / rpd  #Elevation at which Ec=0
+        E_Ec_0 = -asin(alpha) / rpd  #Elevation at which Ec=0
 
         EmaxFlag = False
         
@@ -738,8 +709,8 @@ Changed 4/5/2022 to python 2dArray, index -1
             if Arg < 0:
                 Arg = 0
                 # next two lines ambiguously indented in vb6
-                fEc1 = math.asin((-B - math.sqrt(Arg)) / (2 * A)) / rpd
-                fEc2 = math.asin((-B + math.sqrt(Arg)) / (2 * A)) / rpd
+                fEc1 = asin((-B - sqrt(Arg)) / (2 * A)) / rpd
+                fEc2 = asin((-B + sqrt(Arg)) / (2 * A)) / rpd
                 if E_Ec_0 < 0:
                     # logical equivalent of Vb6 that follows 
                     if Elevation >= E_Ec_0 and Elevation >= Ep90:
@@ -779,22 +750,9 @@ Changed 4/5/2022 to python 2dArray, index -1
                         '''
                         #if Elevation >= Emax:
                         fEc = fEc1
+            print(fEc)            
             return fEc
-    '''
-    def ASN(self, x):
-        # Take arcsine of a number
-        # Valid only for +- 90 degrees
 
-        # note that both math and numpy libs have an arcsin()
-        # and an arctan() incedentally. Going with current 
-        # functions for reproducability
-        
-        if abs(x) > 0.99999:
-            ASN = x * 3.14159 / 2 
-        else:
-            ASN = arctan(x / sqrt(1 - x ^ 2))
-        return ASN
-    '''
     def decode(self, line):
         # decode M01, m02, Pt
         # translates from binary string into ascii
@@ -806,6 +764,7 @@ Changed 4/5/2022 to python 2dArray, index -1
         #data = data.split(' ')
         tmp = data[0].split(':')
         for i in data:
+            print('decodetest')
             if i == data[0]:
                 # reset the dataArray with first equal
                 stringData = str(tmp[0]) + ": " + str(int(str(tmp[1]),16)) + " "

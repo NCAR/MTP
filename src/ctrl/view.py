@@ -1538,7 +1538,7 @@ class controlWindow(QWidget):
             #self.app.processEvents()
 
             # packetStore pitchCorrect should be button
-            pitchCorrect = False
+            pitchCorrect = True 
             pitchFrame = self.packetStore.getData("pitchavg")
             rollFrame = self.packetStore.getData("rollavg")
             EmaxFlag = False
