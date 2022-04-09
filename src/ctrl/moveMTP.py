@@ -17,7 +17,6 @@
 ###############################################################################
 import math
 import logging
-import time
 from PyQt5 import QtCore
 
 class moveMTP():
@@ -147,164 +146,9 @@ class moveMTP():
         # Restores original value to initSwitch, resetting it
         self.parent.packetStore.setData("initSwitch", False)
         
-        '''
-    def homeScan(self):
-        # self.parent.packetStore.setData("currentMode", False)
-
-        
-        # set current elevation angle to elAngle(0)
+       
 
 
-        # make cycle timer sleep longer?
-        # cycle timer should make this irrelevant
-        # time.sleep(0.4) # to add up to the 0.7 of movWait in vb6
-        # self.parent.app.processEvents()
-        
-        if self.parent.packetStore.getData("homeSwitch"):
-            # sets current mode to desired Mode if both homeSwitch and scanSet are true
-            if self.parent.packetStore.getData("scanSet"):
-                #self.parent.packetStore.setData("currentMode", self.parent.packetStore.getData("desiredMode"))
-                #logging.debug("setitng current mode to desired mode")
-    
-                if self.parent.packetStore.getData("desiredMode") is "init":
-                    # Sends final home packet only in init mode
-                    # and only after the rest of the home scan is done
-                    self.parent.serialPort.sendCommand(str.encode(self.parent.commandDict.getCommand("home3")))
-                    logging.debug("sending home3 command")
-            else: 
-                # homeSwitch is false, so send home2
-                # if recieved status of 1 since home 1 was sent (setting homeSwitch to true)
-                # send home2
-                self.parent.serialPort.sendCommand(str.encode(self.parent.commandDict.getCommand("home2")))
-                logging.debug("sending home2 command")
-
-        else:
-            # send home1
-            self.parent.serialPort.sendCommand(str.encode(self.parent.commandDict.getCommand("home1")))
-            logging.debug(" sending home1 command")
-            # try and minimize time spent blocking here, though waiting for correct home response
-            # need to test to see if it works
-            for i in range(0, 20, 1):
-                self.parent.app.processEvents()
-                time.sleep(0.01)
-        logging.debug("homeScan")
-        # there may be other final looping stuff that needs to happen here
-
-    def m01(self):
-        # send command M1
-        logging.debug("in m01")
-        self.parent.serialPort.sendCommand(str.encode(self.parent.commandDict.getCommand("read_M1")))
-        logging.debug("in m01")
-        self.parent.app.processEvents()
-        logging.debug("sending m01")
-
-    def m02(self):
-        # send command M2
-        self.parent.app.processEvents()
-        self.parent.serialPort.sendCommand(str.encode(self.parent.commandDict.getCommand("read_M2")))
-        logging.debug("sending m02")
-
-    def pt(self):
-        # send command Pt
-        self.parent.app.processEvents()
-        self.parent.serialPort.sendCommand(str.encode(self.parent.commandDict.getCommand("read_P")))
-        logging.debug("sending pt")
-
-
-
-    def Eline(self):
-        logging.debug("Eline")
-        self.parent.app.processEvents()
-
-        if self.parent.packetStore.getData("calledFrom") is "Eline":
-            if self.parent.packetStore.getData("integrateSwitch") is "done":
-                # Check if we continue to cycling
-                if self.parent.packetStore.getData("doneCycle"):
-                    #logging.debug("Eline, doneCycle true")
-                    self.parent.packetStore.setData("isNoiseZero", False)
-
-                    if self.parent.packetStore.getData("isCycling"):
-                        self.parent.probeStatusLED.setPixmap(self.parent.ICON_GREEN_LED.scaled(40,40))
-                        self.parent.scanStatusLED.setPixmap(self.parent.ICON_GREEN_LED.scaled(40,40))
-                        self.parent.packetStore.setData("switchControl", "Aline")
-
-                    else:
-                        # stop cycling
-                        self.parent.probeStatusLED.setPixmap(self.parent.ICON_GREEN_LED.scaled(40,40))
-                        self.parent.scanStatusLED.setPixmap(self.parent.ICON_GREEN_LED.scaled(40,40))
-                        self.parent.packetStore.setData("switchControl", "Aline")
-                        #logging.debug("ending init stage - should go into save/stop cycle here")
-                        # Stop 
-                        self.parent.cycleTimer.stop()
-                        # or if we set green light on status
-                        # scan button to ready
-                        # and init button to re-init
-                # reset integrate
-                self.parent.packetStore.setData('currentFrequency', 55.51)
-                # self.parent.packetStore.setData('isNoiseZero', True)
-                self.parent.packetStore.setData('integrateSwitch', 55.51)
-                # next time in here we finish
-                self.parent.packetStore.setData('doneCycle', True)
-                self.parent.packetStore.setData("isNoiseZero", True)
-
-            if self.parent.packetStore.getData("isNoiseZero"):
-                # check that noise is 0, if not set it to that
-                # note that we're checking the dictionary value, not the probe here
-                # dictionary value has default of -1
-                if self.parent.packetStore.getData("noise") == str.encode("ND:00\r\n"):
-                    # do integrate
-                    #logging.debug("do integrate on noise 0")
-                    self.integrate()
-                else:
-                    self.parent.serialPort.sendCommand(str.encode(self.parent.commandDict.getCommand("noise0")))
-                    #logging.debug("sending set noise 0, second of noise commands")
-
-
-
-            else:
-                # check that noise is 1, if not set it to that
-                # does this first, Then integrates on noise 0
-                # First do the integrate with noise 1, then noise 0
-                
-                if self.parent.packetStore.getData("noise") == str.encode("ND:01\r\n"):
-                    #logging.debug("do integrate on noise 1")
-                    self.integrate()
-                else: 
-                    self.parent.serialPort.sendCommand(str.encode(self.parent.commandDict.getCommand("noise1")))
-                    #logging.debug("sending set noise 1, first of noise commands")
-                    #logging.debug("encoding check: noise: %s, encoder: %s", self.parent.packetStore.getData("noise"), str.encode("N :01"))
-
-
-
-        elif self.parent.packetStore.getData("calledFrom") is not "Eline":
-            # one time actions
-
-            # set current mode to home
-            self.parent.packetStore.setData("calledFrom", "Eline")
-            
-            # on second+ full call to eline, need to reset ElineSwitch
-            self.parent.packetStore.setData("isNoiseZero", False) 
-            
-            # Restores original values for homeScan, resetting it
-            self.parent.packetStore.setData("homeSwitch", False)
-            self.parent.packetStore.setData("scanSet", False)
-            
-            # clear data stored in packetStore.integrateData from previous call
-            #self.parent.elineStore = QtCore.QByteArray(str.encode("E "))
-            self.parent.elineStore = "E "
-            
-            self.parent.packetStore.setData('currentFrequency', 55.51)
-            self.parent.packetStore.setData("doneCycle", False)
-
-            self.parent.packetStore.setData("integrateData", "")
-
-            # Because we don't have a call to the serial port 
-            self.parent.cycleTimer.start()
-
-            # should do a homescan here, then return
-
-
-        '''
     def integrate(self):
         logging.debug("integrate")
         # could be timing issue
@@ -328,7 +172,6 @@ class moveMTP():
             else:
                 self.parent.serialPort.sendCommand(str.encode(self.parent.commandDict.getCommand("count")))
                 self.parent.packetStore.setData("integrateSwitch", 56.65)
-                integrateSwitch = self.parent.packetStore.getData("integrateSwitch")
                 # logging.debug("count on first frequency, integrateSwitch = %s", integrateSwitch)
             # logging.debug("frequency 55.51")
 
@@ -357,38 +200,7 @@ class moveMTP():
             #logging.error(self.parent.packetStore.getData("currentFrequency"))
             #logging.error(self.parent.packetStore.getData("count2Flag"))
             self.parent.packetStore.setData("integrateSwitch", 'done')
-
-
-            '''
-
-
-
-    def tune(self, fghz):
-        self.parent.app.processEvents()
-        # fghz is frequency in gigahertz
-        fby4 = (1000 * fghz)/4 #MHz
-        chan = fby4/0.5  # convert to SNP channel (integer) 0.5 MHz = step size
-        #logging.debug("tune: chan = %s", chan)
-        
-        # either 'C' or 'F' set in packetStore
-        # F mode formatting #####.# instead of cmode formatting #####
-        # not sure it makes a difference
-
-        # mode = self.parent.packetStore.getData("tuneMode")
-
-        mode = 'C'
-        self.parent.serialPort.sendCommand(str.encode(str(mode) + '{:.5}'.format(str(chan)) +"\r")) # \n added by encode I believe
-        #logging.debug("Tuning: currently using mode C as that's what's called in vb6")
-        # no official response, just echos
-        # and echos that are indistinguishable from each other
-        # eg: echo when buffer is sending to probe is same 
-        # as echo from probe: both "C#####\r\n"
-        self.parent.packetStore.setData("tuneSwitch", False)
-            '''
-
-
-
-
+            
 
 
     def Aline(self):

@@ -196,7 +196,7 @@ def initForNewLoop():
 
 
 
-def isMovePossible(maxDebugAttempts, scanStatus):
+def isMovePossible(maxDebugAttempts, loopingStatus):
     # returns 4 if move is possible
     # otherwise does debugging
 
@@ -263,11 +263,12 @@ def getIntegrateFromProbe():
     looping = True
     while i < looptimeMS:
         s = getStatus()
-        logging.debug("integrate loop 1, checking for status=5, getStatus = %r",) 
+        logging.debug("integrate loop 1, checking for status=5, getStatus = %r",s[0]) 
         if getStatus()== '5':
             logging.debug("integrate loop 1, status 5 found, integrator started")
             break
         if i == looptimeMS:
+            logging.warning("integrate loop 1, re-send Integrate")
             serialPort.write(b'I 40\r\n')
             i = looptimeMS/2
             looptimeMS = i
@@ -276,8 +277,9 @@ def getIntegrateFromProbe():
     # check that integrator has finished
     i=0
     while i < 3:
-        logging.debug("integrate loop 2, checking for status=4")
-        if getStatus() =='4':
+        s = getStatus()
+        logging.debug("integrate loop 2, checking for status=4",s[0])
+        if s =='4':
             logging.debug("integrator has finished")
             break
         logging.debug('checking for finished integrator: %r', i)
@@ -349,7 +351,7 @@ while (1):
     # These are examples calculated with arbirtary IWG for lab use only: el Angles[80, 55, 42, 25, 12, 0, -12, -25, -42, -80 ]
     labPositions = [b'U/1J0D28226J3R\r\n', b'U/1J0D7110J3R\r\n', b'U/1J0D3698J3R\r\n', b'U/1J0D4835J3R\r\n', b'U/1J0D3698J3R\r\n', b'U/1J0D3413J3R\r\n', b'U/1J0D3414J3R\r\n', b'U/1J0D3697J3R\r\n', b'U/1J0D4836J3R\r\n', b'U/1J0D10810J3R\r\n']
     position = 0
-    if (isMovePossible(maxDebugAttempts=12, loopingStatus==True)==4):
+    if (isMovePossible(maxDebugAttempts=12, loopingStatus=True) == 4):
         initForNewLoop()
         time.sleep(3)
         # for position in labPositions:
