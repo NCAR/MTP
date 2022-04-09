@@ -1,7 +1,10 @@
 import socket 
 import time 
 
-UDP_IP = "127.0.0.1"
+#only on localhost
+# use 0.0.0.0 to broadcast
+UDP_IP = "0.0.0.0"
+#UDP_IP = "127.0.0.1"
 UDP_PORT = 7071
 # UDP from RIC/ground to this
 UDP_PORT_RIC = 32107

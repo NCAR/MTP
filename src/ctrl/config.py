@@ -15,7 +15,7 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
-import math
+from math import nan
 
 
 class MTPconfig():
@@ -55,7 +55,7 @@ class MTPconfig():
             # From VB6 sub Noise() - called by Eline(). Noise diode.
             'Flight': '00', 
             'Date': 'Today\r', 
-            'MAM':[[a,b,c][d,e,f][g,h,i]],      # MTP Attitude Matrix
+            'MAM':[[nan,nan,nan][nan,nan,nan][nan,nan,nan]],      # MTP Attitude Matrix
         }
 
         self.configs = config_list  # dictionary to hold all initial configs
@@ -64,7 +64,7 @@ class MTPconfig():
         """ Return the config for a given user-requested key """
         return(self.configs[key])
 
-    def getConfig(self):
+    def getAllConfigs(self):
         """ Return a list of all configurations """
         return(self.configs.keys())
 
@@ -74,9 +74,12 @@ class MTPconfig():
 
     def setMAM(self, key1, key2, value):
         """ Sets the new value for key pair """
-        self.configs[MAM[key1][key2]]=value
+        MAM = self.getConfig('MAM')
+        MAM[key1][key2]=value
+        self.setConfigs('MAM',MAM)
 
-    def getMAM(self, key1, key2):
+    def getFromMAM(self, key1, key2):
+        MAM = self.getConfig('MAM')
         return self.configs[MAM[key1][key2]]
     
     def configMAM(self):

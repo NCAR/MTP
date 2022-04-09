@@ -19,11 +19,11 @@ from lib.storeConfig import StoreConfig
 from lib.udp import doUDP
 from moveMTP import moveMTP 
 import logging
-import os
+from os import path, makedirs, sep
 import glob
 # following 2 are for initMoveHome
-import socket
-from serial import Serial
+#import socket
+#from serial import Serial
 
 
 class controlWindow(QWidget):
@@ -1145,10 +1145,10 @@ class controlWindow(QWidget):
 
     def initSaveIWGFile(self, flightNumber,projectName): 
         # Make iwg file path 
-        path = os.path.dirname('C:\\Users\\lroot\\Desktop\\'+projectName+'\\data\\')
-        if not os.path.exists:
-            os.makedirs(path)
-        saveIWGFileName = path+'\\'+"IWG_"+ time.strftime("%Y%m%d") + '_' + time.strftime("%H%M%S")+'.txt'
+        IWG1Path = path.dirname('C:\\Users\\lroot\\Desktop\\'+projectName+'\\data\\')
+        if not path.exists:
+            makedirs(IWG1Path)
+        saveIWGFileName = IWG1Path+'\\'+"IWG_"+ time.strftime("%Y%m%d") + '_' + time.strftime("%H%M%S")+'.txt'
         # reopen file, no good way to sort via IWG + flight number w/o changing initSaveDataFile
         '''
         for filename in glob.glob(path + '\\*_' + flightNumber + '.mtp'):
@@ -1958,7 +1958,7 @@ def main():
 
     # Check for Config.mtph/Fatal Error
     # Read it in/ declare config dict
-    path = os.path.dirname('C:\\Users\\lroot\\MTP\\src\\ctrl\\')
+    #configPath = path.dirname('C:\\Users\\lroot\\MTP\\src\\ctrl\\')
     configStore = StoreConfig(app)
     try:
         configStore.loadConfigMTPH()
