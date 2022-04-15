@@ -274,7 +274,7 @@ def readDatumFromProbe():
 
 def CIR(freq):
     # frequency, integrate, read = CIR
-    changeFrequency(b'C28180\r\n')
+    changeFrequency(freq)
     integrate()
     return readDatumFromProbe()
     
@@ -293,8 +293,10 @@ def setNoise(num):
 
 def readAllDataAtPosition():
     setNoise(b'N 1\r\n')
+    readEchos(2)
     data = CIRS()
     setNoise(b'N 0\r\n')
+    readEchos(2)
     data = data + CIRS()
     logging.debug("data from one position, %r", data)
     return data

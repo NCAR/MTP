@@ -90,21 +90,23 @@ class doUDP(object):
         #logging.debug( "after IWG read while loop")
 
         # returns QByteArray
-        self.data = self.networkDatagram.data().data().decode('ascii')
+        IWG1Data = self.networkDatagram.data().data().decode('ascii')
         # nope, .data() returns string (binary)
         #logging.debug("Does iwg networkDatagram really return QByte array? %s", self.networkDatagram.data())
 
         # format here is to preserve IWG format for VB6 processing
-        logging.debug(str(time.gmtime()) + "length of iwg: " + str(len(self.data)))
-        stringIWG = str(self.data).split(',') 
-        stringIWG = stringIWG[:32]
-        stringIWG = ','.join(stringIWG)
+        logging.debug(str(time.gmtime()) + "length of iwg: " + str(len(IWG1Data)))
+        stringIWGSplit = str(IWG1Data).split(',') 
+        #send this to save15
+        IWGArray = stringIWGSplit[:32]
+
+        stringIWG = ','.join(IWGArray)
         logging.debug(stringIWG)
 
         #logging.debug(self.data[0])
         # Stores data 
         # Stores IWG w/o newline char
-        self.parent.iwgStore = self.data
+        self.parent.iwgStore = IWG1Data
 
 
         # Writes to iwg file
@@ -133,7 +135,7 @@ class doUDP(object):
         # doesn't because this is whole thing is an event to be queued 
         #self.parent.app.processEvents()
 
-        self.sortIWG()
+        self.sortIWG(IWGArray)
 
         #logging.info("Getting Iwg Data") 
 
@@ -145,11 +147,12 @@ class doUDP(object):
         self.parent.receivingIWGLED.setPixmap(
                 self.parent.ICON_RED_LED.scaled(40,40))
         
-    def sortIWG(self):
+    def sortIWG(self, IWGSplit):
         # grabs values needed for Aline
         # calls keep15, and avgVal for each
         # logging.debug( self.parent.packetStore.getData("IWGSplit"))
-        IWGSplit = self.parent.iwgStore.split(',')
+        #IWGSplit = self.parent.iwgStore.split(',')
+        # IWGSplit passed, already split from getIWG
         #logging.debug(IWGSplit[0])
         #logging.debug(IWGSplit[1])
         #logging.debug(IWGSplit[0:1])

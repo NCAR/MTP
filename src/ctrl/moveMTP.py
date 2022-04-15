@@ -750,8 +750,37 @@ class moveMTP():
                         '''
                         #if Elevation >= Emax:
                         fEc = fEc1
-            print(fEc)            
-            return fEc
+                print("in fEc, original value = " + str(Elevation) + " corrected el = " + str(fEc))
+                Elevation = fEc
+
+            return Elevation
+
+    def checkOverheat(self, value):
+        # Check M02 last value = tsynth
+        logging.debug("Checking overheat")
+        A = 0.0009376
+        B = 0.0002208
+        C = 0.0000001276
+        if value == 4096 or value == 0:
+            logging.debug("Check overheat, value = 4096 or 0")
+            self.parent.app.overHeatLED.setPixmap(self.parent.ICON_YELLOW_LED.scaled(40, 40))
+        else:
+            counts = 4096.0 - float(value)
+            RR = (1.0/(counts/4096.0)) - 1.0
+            RT = 34800.0 * RR
+            TSynth = (1.0/(A + B * math.log(Rt) + C * math.pow(math.log(Rt), 3)) - 273.16)
+            # check that tsynth<50C
+
+            if TSynth >= 50:
+                self.parent.app.overHeatLED.setPixmap(self.parent.ICON_RED_LED.scaled(40, 40))
+                logging.WARNING("TEMPERATURE OVER 50C")
+            else:
+                self.parent.app.overHeatLED.setPixmap(self.parent.ICON_GREEN_LED.scaled(40, 40))
+
+             
+            logging.debug("Check overheat, value =" + str(TSynth))
+
+        
 
     def decode(self, line):
         # decode M01, m02, Pt
@@ -763,11 +792,14 @@ class moveMTP():
         data = data.split(' ')
         #data = data.split(' ')
         tmp = data[0].split(':')
+        ifM02tsynth = data[8]
         for i in data:
             print('decodetest')
             if i == data[0]:
                 # reset the dataArray with first equal
-                stringData = str(tmp[0]) + ": " + str(int(str(tmp[1]),16)) + " "
+                nameOfLine = str(tmp[0])
+                stringData = nameOfLine + ": " + str(int(str(tmp[1]),16)) + " "
+
                 logging.debug("decode m01, m02, Pt")
                 #dataArray.append(str(int(str(tmp[1]).decode('ascii'),16)))
                 #dataArray.append(str.encode(' '))
@@ -780,5 +812,9 @@ class moveMTP():
                     stringData
                 else:
                     stringData = stringData + str(int(i,16)) + ' '
+                    if nameOfLine == "M02":
+                        if i == ifM02tsynth:
+                            self.checkOverheat(str(int(ifM02tsynth,16)))
+
             logging.debug(" data i = %s ", i)
         return stringData
