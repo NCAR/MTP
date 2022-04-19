@@ -1951,7 +1951,7 @@ def handle_error(error):
 def parse_args():
     """ Instantiate a command line argument parser """
 
-    #Define command line arguments which can be provided by users
+    # Define command line arguments which can be provided by users
     parser = argparse.ArgumentParser(
         description="Script to control and monitor the MTP instrument")
     parser.add_argument('--device', type=str, default='COM6',
@@ -1968,7 +1968,7 @@ def parse_args():
 def main():
 
     # Process command line arguments
-    args=parse_args()
+    args = parse_args()
 
     #    signal.signal(signal.SIGINT, ctrl_c)
     #logger = logging.getLogger('__name__')
