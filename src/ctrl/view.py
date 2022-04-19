@@ -2003,7 +2003,7 @@ def main():
     # Eventually have serial port # in config.yaml
     # Serial Port Check/Fatal Error
     try:
-        serialPort = SerialInit(app)
+        serialPort = SerialInit(app, args.device)
     except Exception as err:
         handle_error("SerialPort: " + str(err))
         sys.exit()
