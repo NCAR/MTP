@@ -792,7 +792,7 @@ class moveMTP():
         data = data.split(' ')
         #data = data.split(' ')
         tmp = data[0].split(':')
-        ifM02tsynth = data[8]
+        ifM02tsynth = data[7]
         for i in data:
             print('decodetest')
             if i == data[0]:
