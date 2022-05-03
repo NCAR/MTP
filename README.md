@@ -10,74 +10,38 @@ The Microwave Temperature Profiler (MTP) is a HAIS instrument which was develope
 
 The [original VB6 code base](https://github.com/NCAR/MTP-VB6) from JPL that supports data processing and display was written in Microsoft Visual Basic 6. Since Microsoft has chosen to depracate Visual Basic, RAF has embarked on a re-write of some components of the original code. This repository contains those rewrites.
 
-The MTPviewer software currently uses the following versions of code:
- * Python 3.7.2
- * Qt5 5.12.2
- * PyQt5 5.12.1
- * pyserial 3.4
- * psycopg2 2.7.7
- * pyqtgraph 0.10.0
- * pyyaml 5.3.1
- * metpy
- * netCDF4
+Packages needed to run the MTP software are documented in mtpenv.yml
 
-## To install on a MAC
+## To install (on MAC/LINUX/Windows10)
 
- * brew upgrade python (to 3.7.2)
- * unset PYTHONPATH
- * python3 -m pip install PyQt5
- * pip3 install pyserial
- * pip3 install psycopg2
- * pip3 install matplotlib
- * Install the EOL-Python packages per instructions in https://github.com/NCAR/EOL-Python
- * pip3 install netCDF4
- 
-## To install on Windows10
-
-### Install needed packages using conda --or-- ...
+Make sure you have installed at least python 3.7
 Use miniconda to install all needed packages:
- * https://docs.conda.io/en/latest/miniconda.html
-   * download win 64 bit installer for python3.7 and install
- * (Optional) Add Miniconda3 and Miniconda3\condabin to your path
+ * Download conda from https://conda.io/miniconda.html and install
+   * Update conda if warned following instructions
+ * Create the MTP conda environment from the YAML env file
+```
+   > conda env create -f mtpenv.yml
+```
+ * Activate the mtp conda environment - see - https://conda.io/activation
+```
+   > conda activate mtp
+```
+ * Install the EOL-Python packages per instructions in https://github.com/NCAR/EOL-Python
+ 
+## Optional on Windows10
+
+ * Add Miniconda3 and Miniconda3\condabin to your path
    * Windows search -> type "env" -> click "Edit the system environment variables"
    * In lower "System variables" window, click the "Path" row and click edit
    * Click "New" and add the new paths, e.g.
      * C:\Users\lroot\Miniconda3
      * C:\Users\lroot\Miniconda3\condabin
- * Activate a conda environment (I used the default base environment) - see - https://conda.io/activation
-```
-   > conda activate
-```
- * Update conda if warned following instructions
- * Install packages
-```
-   > conda install -c conda-forge metpy
-     - Drags in pyqt5 and cartopy. If it doesn't, install pyqt directly...
-   > conda install -c conda-forge pyqt
-   > conda install -c conda-forge pyyaml
-   > conda install netcdf4
-```
+
+
 If the packages are not available via the conda-forge channel, you can search for alternative channels at https://anaconda.org
 
 Change you environment variable and add a PYTHONPATH that points to the netCDF installation (You will also add the path to EOL-Python to this env var below.)
 
-### ... --or-- Install needed packages using pip
- * Go to http://python.org
- * Download the appropriate installer for you windows version
- * Install python
- * Click on the installer again and install pip
-
-Note where python is installed (in path\to\python.exe)
-
- * Install packages
-```
-   > path\to\python.exe -m pip install numpy
-   > path\to\python.exe -m pip install pyqt5
-   > path\to\python.exe -m pip install matplotlib
-   > path\to\python.exe -m pip install pyyaml
-   > path\to\python.exe -m pip install netCDF4
-   > path\to\python.exe -m pip install pandas
-```
 
 ### Download and configure the MTPviewer software
 Install Git (if not already there) and download MTP:
