@@ -1,0 +1,10 @@
+name: mtp
+channels:
+  - defaults
+dependencies:
+  - metpy
+  - pyqt
+  - pyyaml
+  - netcdf4
+  - pyserial
+prefix: $HOME/.conda/envs/mtp
