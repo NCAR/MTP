@@ -1,10 +1,14 @@
-name: mtp
+name: base
 channels:
   - defaults
 dependencies:
+  - conda
+  - python
+  - menuinst
+  - console_shortcut
+  - powershell_shortcut
   - metpy
   - pyqt
   - pyyaml
   - netcdf4
-  - pyserial
-prefix: $HOME/.conda/envs/mtp
+prefix: C:\Users\lroot\Miniconda3
