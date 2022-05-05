@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import QMainWindow, QGridLayout, QWidget, \
         QPlainTextEdit, QFrame, QAction, QLabel, QPushButton, QGroupBox, \
         QMessageBox, QLineEdit, QInputDialog
 from PyQt5.QtCore import QSocketNotifier, Qt
-from PyQt5.QtGui import QFontMetrics, QFont
+from PyQt5.QtGui import QFontMetrics, QFont, QColor
 from util.profile_structs import TropopauseRecord
 from viewer.plotScanTemp import ScanTemp
 from viewer.plotProfile import Profile
@@ -37,7 +37,12 @@ class MTPviewer(QMainWindow):
 
         self.cell = [[numpy.nan for j in range(10)] for i in range(3)]
 
-        self.clicked = False  # Only show error msg once
+        self.clicked = {  # Only show error msgs once
+            'retrieval': False,
+            'curtain': False,
+            'iwg': False
+        }
+
         self.trop = TropopauseRecord  # Used to populate empty scans with nans
 
         # In order to support stepping forward and back through scans, we need
@@ -511,7 +516,7 @@ class MTPviewer(QMainWindow):
         self.updateDataDisplay()  # Update the display
 
     def reportFailedRetrieval(self, err, index=None):
-        if not self.clicked:
+        if not self.clicked['retrieval']:
             msg = "Could not perform retrieval"
             if index is not None:
                 msg = msg + " on scan " + str(index+1)
@@ -519,7 +524,7 @@ class MTPviewer(QMainWindow):
                                 str(err) + "\nClick OK to stop " +
                                 "seeing this message ", QMessageBox.Ok)
             # Do not get to this point until user clicks OK
-            self.clicked = True  # Only show error once
+            self.clicked['retrieval'] = True  # Only show error once
 
     def updateDataDisplay(self):
         """ Update display to latest scan """
@@ -669,7 +674,6 @@ class MTPviewer(QMainWindow):
 
         # Loop through previous data and add data from each record to
         # 2-D arrays used by curtain plot
-        self.clicked = False
         for index in range(len(self.client.reader.flightData)-1):
             thisscan = self.client.reader.flightData[index]
             time = thisscan['Aline']['values']['TIME']['val']
@@ -688,13 +692,13 @@ class MTPviewer(QMainWindow):
                 self.curtain.addMRI(thisscan['BestWtdRCSet']['SumLnProb'])
             except Exception:
                 # profile was not generated - only warn user once
-                if not self.clicked:
+                if not self.clicked['curtain']:
                     logger.printmsg("ERROR", "While generating curtain plot," +
                                     " found that temperature profile doesn't" +
                                     " exist for scan " + str(index+1),
                                     "Click OK to stop seeing this message " +
                                     "for future scans.")
-                    self.clicked = True
+                    self.clicked['curtain'] = True
 
                 # Add missing vals for this scan
                 temperature = [numpy.nan] * 33
@@ -749,12 +753,38 @@ class MTPviewer(QMainWindow):
     def writeData(self):
         """ Write the latest data record to the data display box """
         self.filedata.appendPlainText("")  # Space between records
+
+        # If A line is not changing (other than date), set background to red.
+        self.client.reader.setRawscan(self.viewScanIndex-1)  # previous line
+        lastAline = self.client.reader.getAline()[20:100]  # IWG section
+        self.client.reader.setRawscan(self.viewScanIndex)  # current line
+        thisAline = self.client.reader.getAline()[20:100]  # IWG section
+        if (lastAline == thisAline):
+            fmt = self.filedata.currentCharFormat()
+            fmt.setBackground(QColor(255, 0, 0, 180))  # light red
+            self.filedata.setCurrentCharFormat(fmt)
+
         self.filedata.appendPlainText(self.client.reader.getAline())
+
+        # Leave remaining lines white background
+        fmt = self.filedata.currentCharFormat()
+        fmt.setBackground(Qt.white)
+        self.filedata.setCurrentCharFormat(fmt)
+
         self.filedata.appendPlainText(self.client.reader.getBline())
         self.filedata.appendPlainText(self.client.reader.getM01line())
         self.filedata.appendPlainText(self.client.reader.getM02line())
         self.filedata.appendPlainText(self.client.reader.getPtline())
         self.filedata.appendPlainText(self.client.reader.getEline())
+
+        # If static Aline and realtime mode, throw up warning box
+        if (lastAline == thisAline):
+            if self.args.realtime and not self.clicked['iwg']:
+                logger.printmsg("ERROR", "IWG packet no longer being " +
+                                "received. " +
+                                "Click OK to stop seeing this message " +
+                                "for future scans.")
+                self.clicked['iwg'] = True
 
     def writeIWG(self):
         """
@@ -844,7 +874,7 @@ class MTPviewer(QMainWindow):
                 # If Tsynth goes over 50, warn user by changing bkgnd to red
                 if (var == 'TSYNCNTE' and deg > 50.0):
                     fmt = self.eng3.currentCharFormat()
-                    fmt.setBackground(Qt.red)
+                    fmt.setBackground(QColor(255, 0, 0, 180))  # light red
                     self.eng3.setCurrentCharFormat(fmt)
                 if var == 'ACCPCNTE':  # Set units of Acceler to g
                     degstr = "%+06.2f g" % deg
