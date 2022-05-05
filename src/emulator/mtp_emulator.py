@@ -1,0 +1,324 @@
+###############################################################################
+# Program to emulate the MTP firmware
+#
+# Written in Python 3
+#
+# COPYRIGHT:   University Corporation for Atmospheric Research, 2022
+###############################################################################
+"""
+This module can be used to emulate the MTP by starting it from the command
+line. It will read commands from a serial port and respond as the instrument
+would.
+
+Firmware command list:
+
+| Command               | Description        |
+|-----------------------|--------------------|
+| F ddddd.d             | Sets frequency for synthesizer, in MHz - 7 digits,
+|                       | decimal always required
+| I dd                  | integrate for dd * 20mS
+| Cddddd                | Change SPI sequence
+| R                     | Read results of last integration from counter
+| M 1                   | Read all 8 channels of multiplexer 1
+| M 2                   | Read all 8 channels of multiplexer 2
+| P                     | Read all 8 platinum RTD channels
+| U/1$$$$$$$            | Send string $ to stepper #1 (only one now)
+|                       | - See [Linn Engineering manual for 23-CE controller]
+|                       | (doc) for command list
+| V                     | Return version date, etc. for this program
+| X ss dd ff gg etc.... | Sends bytes directly to SPI bus for diagnostic
+|                       |  purposes
+| Control-C (ascii 3)   | is caught in interrupt routine and restarts this
+|                       | program
+| S                     | read status byte. Status byte meanings:
+|                       |                    *  Bit 0 = integrator busy
+|                       |                    *  Bit 1 = Stepper moving
+|                       |                    *  Bit 2 = Synthesizer out of lock
+|                       |                    *  Bit 3 = spare
+
+"""
+import os
+import serial
+import sys
+import time
+import argparse
+import logging
+import subprocess as sp
+import shutil
+import tempfile
+from EOLpython.Qlogger.messageHandler import QLogger as logger
+
+
+class MTPEmulator():
+
+    def __init__(self, device):
+        """ Open the given serial device """
+
+        self.sport = serial.Serial(device, 9600, timeout=0)
+        self.sport.nonblocking()
+        self.status = '04'  # Even number indicates integrator not busy
+
+    def listen(self):
+        """ Loop and wait for commands to arrive """
+
+        while (True):
+            # Read data from the serial port and echo it back
+            rdata = self.sport.read(128)
+
+            # Convert to ASCII string (from binary)
+            self.cdata = rdata.decode('utf-8')
+
+            # Only handle lines whose newline has been received.
+            lines = self.cdata.splitlines()
+            remainder = ""
+            if lines and not self.cdata.endswith("\n"):
+                remainder = lines[-1]
+                lines = lines[:-1]
+            self.cdata = remainder
+            for line in lines:
+                logger.printmsg("DEBUG", "Found: " + line)
+
+                # Parse command and send appropriate response back over port
+                self.interpretCommand(line)
+
+    def interpretCommand(self, line):
+        """ Parse command and send appropriate response back over port """
+
+        if line[0] == 'V':  # Firmware Version
+            # Return version date, etc. for this program.
+            # Emulator mimics firmware.
+            self.sport.write(b'\r\nVersion:MTPH_Control.c-101103>101208\r\n')
+
+        elif line[0] == '0X03':  # Restart firmware
+            logger.printmsg("DEBUG", "hex Control-C char")
+            # This emulator does NOT emulate a firmware restart.
+            # Do nothing
+            self.sport.write(b'\r\n0x03\r\n')
+
+        elif line[0] == 'C':  # Change SPI sequence
+            logger.printmsg("DEBUG", "string starting with C" + line)
+            string = '\r\n' + line + '\r\n'
+            self.sport.write(string.encode('utf-8'))
+
+        elif line[0] == 'U':  # Parse UART commands
+            self.UART(line)
+
+        elif line[0] == 'I':  # Integrate channel counts array "I 40"
+            self.status = '05'  # Odd number indicates integrator busy
+            # Parse number out of line
+            (cmd, value) = line.split()
+            # Convert byte to two ascii digits in hex
+            val = int(value)
+            self.hex = self.ntox((val >> 4) & 0x0f) + self.ntox(val & 0x0f)
+            string = '\r\nI' + self.hex + '\r\n'
+            self.sport.write(string.encode('utf-8'))
+
+        elif line[0] == 'R':  # Return counts from last integration
+            # Sending back 19000 counts for all channels/angles
+            string = '\r\nR' + self.hex + ':4A38\r\n'
+            self.sport.write(string.encode('utf-8'))
+
+        elif line[0] == 'S':  # Return firmware status
+            # - Bit 0 = integrator busy
+            # - Bit 1 = Stepper moving
+            # - Bit 2 = Synthesizer out of lock
+            # - Bit 3 = spare
+            string = '\r\nST:' + self.status + '\r\n'
+            self.sport.write(string.encode('utf-8'))
+            self.status = '04'  # Even number indicated integrator NOT busy
+
+        elif line == 'M 1':  # Read M1
+            # Line being sent (in hex) is:
+            # M01:2928 2300 2898 3083 1920 2920 2431 2946
+            self.sport.write(
+                b'M01:B70 8FC B52 C0B 780 B68 97F B82 \r\n')
+
+        elif line == 'M 2':  # Read M2
+            # Line being sent (in hex) is:
+            # M02:2014 1209 1550 2067 1737 1131 4095 1077
+            self.sport.write(
+                b'M02:7DF 494 539 5FF 614 436 FFF 3D0 \r\n')
+
+        elif line[0] == 'P':  # Read P
+            # Line being sent (in hex) is:
+            # Pt:2159 13808 13809 4370 13414 13404 13284 14439
+            self.sport.write(
+                b'Pt:B70 8FC B52 C0B 780 B68 97F B82 \r\n')
+
+        elif line == 'N 1':  # Set Noise Diode On
+            self.sport.write(b'\r\nND:01\r\n')
+
+        elif line == 'N 0':  # Set Noise Diode Off
+            self.sport.write(b'\r\nND:00\r\n')
+
+    def ntox(self, nx):
+        """ Convert nibble to asc hex 0-f """
+
+        hx = "0123456789ABCDEF"
+        return(hx[nx])
+
+    def UART(self, line):
+        """
+        Send string $ to stepper
+
+        Stepper string command meanings:
+        | f | Set polarity or direction of home sensor, default is zero
+        | j | Adjust the resolution in micro-steps per step.
+                    [1,2,4,8,16,32,64,128,256]
+        | V | Set top spped of motor in micro-steps per second.
+        | L | Set acceleration factor micro-steps per second^2.
+        | h | Set hold current 0-50% of 3.0 Amp max
+        | m | Set running current 0-100% of 3.0 Amp max
+        | J | On/off driver. 0-both off; 3-both on; 2 - driver2 on, driver1 off
+        | Z | Home and Initialize motor
+        | z | Set current position without moving motor.
+        | P | Move motor relative number of steps in positive direction
+        | D | Move motor relative number of steps in negative direction
+        | R | run command string
+
+        Returned value meanings (e.g. ff/0@ = No error):
+            ff - RS485 line turnaround char; starts message
+            /  - start char
+            0  - address of message recipient
+            @  - status char (upper case device busy, lower not)
+                Ascii @/` =Hex 40/60 - No error
+                Ascii A/a =Hex 41/61 - Initialization Error
+                Ascii B/b =Hex 42/62 - Illegal Command sent
+                Ascii C/c =Hex 43/63 - Out of range operand value
+                Ascii E/e =Hex 45/65 - Internal communication err
+                Ascii G/g =Hex 47/67 - Not initialized before move
+                Ascii I/i =Hex 49/69 - Overload error (too fast)
+                Ascii K/k =Hex 4B/6B - Move not allowed
+                Ascii O/o =Hex 4F/6F - Already executing command
+                                        when another received
+        """
+        string = 'U:' + line + '/r/n'
+        self.sport.write(string.encode('utf-8'))
+        self.sport.write(b'Step:\xff/0@\r\n')  # No error
+
+    def close(self):
+        """ Close port when exit """
+        self.sport.close()
+
+
+class MTPVirtualPorts():
+    """
+    Shamelessly stolen from the GNI emulator code. -JAA 4/13/2022
+
+    Setup virtual serial devices.
+
+    This creates two subprocesses: the socat process which manages the pty
+    devices for us, and the socat "serial relay" to which the emulator process
+    will connect.
+
+    The MTP emulator opens the "MTP port", or mtpport, while the MTP control
+    program opens the "user port", or userport.
+    """
+    def __init__(self):
+        self.socat = None
+        self.mtpport = None
+        self.userport = None
+        self.tmpdir = None
+
+    def getUserPort(self):
+        return self.userport
+
+    def getMTPPort(self):
+        return self.mtpport
+
+    def startPorts(self, loglevel):
+        " Start just the ports. The emulator is run separately."
+        self.tmpdir = tempfile.mkdtemp()
+        self.userport = os.path.join(self.tmpdir, "userport")
+        self.mtpport = os.path.join(self.tmpdir, "mtpport")
+        cmd = ["socat"]
+        # Verbose if in debug mode
+        if loglevel == 'DEBUG':
+            cmd.extend(["-v"])
+
+        cmd.extend(["PTY,echo=0,link=%s" % (self.mtpport),
+                    "PTY,echo=0,link=%s" % (self.userport)])
+        logger.printmsg("DEBUG", " ".join(cmd))
+
+        # Open ports
+        self.socat = sp.Popen(cmd, close_fds=True, shell=False)
+        started = time.time()
+
+        found = False
+        while time.time() - started < 5 and not found:
+            time.sleep(1)
+            found = bool(os.path.exists(self.userport) and
+                         os.path.exists(self.mtpport))
+
+        # Error handling
+        if not found:
+            raise Exception("serial port devices still do not exist "
+                            "after 5 seconds")
+        return self.mtpport
+
+    def stop(self):
+        logger.printmsg("INFO", "Stopping...")
+        if self.socat:
+            logger.printmsg("DEBUG", "killing socat...")
+            self.socat.kill()
+            self.socat.wait()
+            self.socat = None
+        if self.tmpdir:
+            logger.printmsg("DEBUG", "removing %s" % (self.tmpdir))
+            shutil.rmtree(self.tmpdir)
+            self.tmpdir = None
+
+
+def parse_args():
+    """ Instantiate a command line argument parser """
+
+    # Define command line arguments which can be provided
+    parser = argparse.ArgumentParser(
+        description="Script to emulate the NCAR MTP instrument")
+    parser.add_argument(
+        '--debug', dest='loglevel', action='store_const', const=logging.DEBUG,
+        default=logging.INFO, help="Show debug log messages")
+    parser.add_argument(
+        '--logmod', type=str, default=None, help="Limit logging to " +
+        "given module")
+
+    # Parse the command line arguments
+    args = parser.parse_args()
+
+    return(args)
+
+
+def main():
+
+    # Process command line arguments
+    args = parse_args()
+
+    # Configure logging
+    stream = sys.stdout
+    logger.initLogger(stream, args.loglevel, args.logmod)
+
+    # Instantiate a set of virtual ports for MTP emulator and control code
+    # to communicate over. When the control program is manually started, it
+    # needs to connect to the userport.
+    vports = MTPVirtualPorts()
+    if args.loglevel:
+        level = logging.getLevelName(args.loglevel)
+
+    mtpport = vports.startPorts(level)
+    print("Emulator connecting to virtual serial port: %s" % (mtpport))
+    print("User clients connect to virtual serial port: %s" %
+          (vports.getUserPort()))
+
+    # Instantiate MTPemulator and connect to mtpport.
+    mtp = MTPEmulator(mtpport)
+
+    # Loop and listen for commands from control program
+    mtp.listen()
+
+    # Clean up
+    mtp.close()
+    vports.stop()
+
+
+if __name__ == "__main__":
+    sys.exit(main())
