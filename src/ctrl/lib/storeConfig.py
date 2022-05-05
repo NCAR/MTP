@@ -107,14 +107,13 @@ class StoreConfig():
         else:
             self.config[key] = data
 
-    def loadConfigMTPH(self):
+    def loadConfigMTPH(self, args):
         # Loads Data from Config.mtph
         # Throws error if not found
 
         logging.debug("loadConfigMTP")
-        path = 'C:\\Users\\lroot\\MTP\\src\\ctrl\\'
         
-        with open(path + "Config.mtph", 'r') as configFile:
+        with open(args.mtph, 'r') as configFile:
             lines = configFile.readlines()
             for line in lines:
                 if line[0] == '[':

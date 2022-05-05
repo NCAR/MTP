@@ -1,6 +1,7 @@
 import os
 import sys
 import signal
+import argparse
 #import serial
 import time
 from PyQt5.QtWidgets import (QWidget, QToolTip,
@@ -18,6 +19,7 @@ from lib.mtpcommand import MTPcommand
 from lib.storePacket import StorePacket
 from lib.storeConfig import StoreConfig
 from lib.udp import doUDP
+from lib.rootdir import getrootdir
 from moveMTP import moveMTP 
 import logging
 from os import path, makedirs, sep
@@ -1945,7 +1947,29 @@ def handle_error(error):
     em.showMessage(error)
     em.exec_()
 
+
+def parse_args():
+    """ Instantiate a command line argument parser """
+
+    # Define command line arguments which can be provided by users
+    parser = argparse.ArgumentParser(
+        description="Script to control and monitor the MTP instrument")
+    parser.add_argument('--device', type=str, default='COM6',
+        help="Device on which to receive messages from MTP instrument")
+    parser.add_argument('--mtph', type=str, help="Path to Config.mtph",
+        default=os.path.join(getrootdir(), 'Config.mtph'))
+
+    # Parse the command line arguments
+    args = parser.parse_args()
+
+    return(args)
+
+
 def main():
+
+    # Process command line arguments
+    args = parse_args()
+
     #    signal.signal(signal.SIGINT, ctrl_c)
     #logger = logging.getLogger('__name__')
     logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
@@ -1962,7 +1986,7 @@ def main():
     #configPath = path.dirname('C:\\Users\\lroot\\MTP\\src\\ctrl\\')
     configStore = StoreConfig(app)
     try:
-        configStore.loadConfigMTPH()
+        configStore.loadConfigMTPH(args)
     except Exception as err:
         handle_error("Config.mtph: " + str(err))
         sys.exit()
@@ -1979,7 +2003,7 @@ def main():
     # Eventually have serial port # in config.yaml
     # Serial Port Check/Fatal Error
     try:
-        serialPort = SerialInit(app)
+        serialPort = SerialInit(app, args.device)
     except Exception as err:
         handle_error("SerialPort: " + str(err))
         sys.exit()
