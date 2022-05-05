@@ -192,6 +192,11 @@ class MTPEmulator():
                 Ascii O/o =Hex 4F/6F - Already executing command
                                         when another received
         """
+        # Note: The MTP control program sends strings like
+        # b'U/1J0D######J3R\r\n'. This *appears* to indicate the stepper
+        # motor is moving backward (negative direction). However, in actuality
+        # negative steps cause the motor to rotate from top to bottom when
+        # the mirror is facing forward.
         string = 'U:' + line + '/r/n'
         self.sport.write(string.encode('utf-8'))
         self.sport.write(b'Step:\xff/0@\r\n')  # No error
