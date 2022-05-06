@@ -4,11 +4,11 @@ channels:
 dependencies:
   - conda
   - python
-  - menuinst
   - console_shortcut
   - powershell_shortcut
   - metpy
   - pyqt
   - pyyaml
   - netcdf4
+  - pyserial
 prefix: C:\Users\lroot\Miniconda3
