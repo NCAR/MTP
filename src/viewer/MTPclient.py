@@ -63,9 +63,8 @@ class MTPclient():
         parser = argparse.ArgumentParser(
             description="Script to display and process MTP scans")
         parser.add_argument(
-            '--config', type=str,
-            required=True,
-            help='File containing project-specific MTP configuration info.'
+            '--config', type=str, required=True,
+            help='File containing project-specific MTP configuration info.')
         parser.add_argument(
             '--debug', dest='loglevel', action='store_const',
             const=logging.DEBUG, default=logging.INFO,
