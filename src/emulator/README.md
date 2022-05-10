@@ -9,12 +9,13 @@ Emulator connecting to virtual serial port: /var/folders/ph/6ph43gj971lfy2qn4r4p
 User clients connect to virtual serial port: /var/folders/ph/6ph43gj971lfy2qn4r4p7_vw000244/T/tmp46e5rvbk/userport
 ```
 
-Then start ctrl/view.py with the userport
+You will not get the command prompt back. Leave this window open. Then in another window start ctrl/view.py with the userport as a command line option:
 
 ```
 python3 view.py --mtph Config.mtph --device=/var/folders/ph/6ph43gj971lfy2qn4r4p7_vw000244/T/tmp46e5rvbk/userport
 ```
 
+The control code window should launch, initialize, and start cycling through the view angles.
 
 ## For testing MTPviewer
 To emulate real-time conditions receiving IWG packets and MTP data over UDP on
