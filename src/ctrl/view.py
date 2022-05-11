@@ -443,14 +443,14 @@ class controlWindow(QWidget):
 
     def shutdownProbeClicked(self, serialPort):
         logging.debug("shutdownProbe/quit clicked")
-        self.closeComm(serialPort)
+        #self.closeComm(serialPort)
         self.continueCycling= False 
         self.packetStore.setData("quitClicked", True)
         self.app.processEvents()
         logging.debug("Safe exit")
         # need a timer in here to continue sending app.exits
 
-        app.exit(0)
+        self.app.exit(0)
 
     def readClear(self, waitReadyReadTime, readLineTime):
         # clear a buffer, discarding whatever is in it
