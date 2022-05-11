@@ -15,7 +15,7 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
-from math import cos, sin, atan, asin, sqrt
+from math import cos, sin, atan, asin, sqrt, log, pow
 import logging
 from PyQt5 import QtCore
 
@@ -763,19 +763,19 @@ class moveMTP():
         C = 0.0000001276
         if value == 4096 or value == 0:
             logging.debug("Check overheat, value = 4096 or 0")
-            self.parent.app.overHeatLED.setPixmap(self.parent.ICON_YELLOW_LED.scaled(40, 40))
+            self.parent.overHeatLED.setPixmap(self.parent.ICON_YELLOW_LED.scaled(40, 40))
         else:
             counts = 4096.0 - float(value)
             RR = (1.0/(counts/4096.0)) - 1.0
             RT = 34800.0 * RR
-            TSynth = (1.0/(A + B * math.log(Rt) + C * math.pow(math.log(Rt), 3)) - 273.16)
+            TSynth = (1.0/(A + B * log(RT) + C * pow(log(RT), 3)) - 273.16)
             # check that tsynth<50C
 
             if TSynth >= 50:
-                self.parent.app.overHeatLED.setPixmap(self.parent.ICON_RED_LED.scaled(40, 40))
-                logging.WARNING("TEMPERATURE OVER 50C")
+                self.parent.overHeatLED.setPixmap(self.parent.ICON_RED_LED.scaled(40, 40))
+                logging.warning("TEMPERATURE OVER 50C")
             else:
-                self.parent.app.overHeatLED.setPixmap(self.parent.ICON_GREEN_LED.scaled(40, 40))
+                self.parent.overHeatLED.setPixmap(self.parent.ICON_GREEN_LED.scaled(40, 40))
 
              
             logging.debug("Check overheat, value =" + str(TSynth))
