@@ -22,6 +22,11 @@ Use miniconda to install all needed packages:
 ```
    > conda env create -f mtpenv.yml
 ```
+ * If the yaml file doesn't work because it can't resolve conflicts, you can install by hand:
+```
+   > conda create --name mtp
+```
+   then activate and conda install each package individually. Note that metpy is only available from the conda-force channel.
  * Activate the mtp conda environment - see - https://conda.io/activation
 ```
    > conda activate mtp
