@@ -5,13 +5,8 @@ import serial
 import socket
 import sys
 import re
+import argparse
 from serial import Serial
-
-logging.basicConfig(level = logging.DEBUG)
-# initial setup of time, logging, serialPort, Udp port
-serialPort = serial.Serial('COM6', 9600, timeout = 0.15)
-udpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
-udpSocket.connect(('127.0.0.1', 32107)) # ip, port number
 
 def readEchos(num):
     buf = b''
@@ -199,6 +194,29 @@ def init():
 
     return errorStatus
 
+def parse_args():
+    """ Instantiate a command line argument parser """
+
+    # Define command line arguments which can be provided by users
+    parser = argparse.ArgumentParser(
+        description="Script to initialize the MTP instrument")
+    parser.add_argument('--device', type=str, default='COM6',
+        help="Device on which to receive messages from MTP instrument")
+
+    # Parse the command line arguments
+    args = parser.parse_args()
+
+    return(args)
+
+# initial setup of time, logging
+logging.basicConfig(level = logging.DEBUG)
+
+args = parse_args()
+
+# initial setup of serialPort, Udp port
+serialPort = serial.Serial(args.device, 9600, timeout = 0.15)
+udpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
+udpSocket.connect(('127.0.0.1', 32107)) # ip, port number
 
 # if on first move status 6 for longer than expected 
 # aka command sent properly, but actual movement 
@@ -234,9 +252,3 @@ while (1):
     readEchos(3)
     init()
     logging.debug("init successful")
-    
-    
-
-
-
-
