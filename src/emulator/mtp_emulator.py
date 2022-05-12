@@ -87,17 +87,17 @@ class MTPEmulator():
         if line[0] == 'V':  # Firmware Version
             # Return version date, etc. for this program.
             # Emulator mimics firmware.
-            self.sport.write(b'\r\nVersion:MTPH_Control.c-101103>101208\r\n')
+            self.sport.write(b'Version:MTPH_Control.c-101103>101208\r\n')
 
         elif line[0] == '0X03':  # Restart firmware
             logger.printmsg("DEBUG", "hex Control-C char")
             # This emulator does NOT emulate a firmware restart.
             # Do nothing
-            self.sport.write(b'\r\n0x03\r\n')
+            self.sport.write(b'0x03\r\n')
 
         elif line[0] == 'C':  # Change SPI sequence
             logger.printmsg("DEBUG", "string starting with C" + line)
-            string = '\r\n' + line + '\r\n'
+            string = line + '\r\n'
             self.sport.write(string.encode('utf-8'))
 
         elif line[0] == 'U':  # Parse UART commands
@@ -110,12 +110,12 @@ class MTPEmulator():
             # Convert byte to two ascii digits in hex
             val = int(value)
             self.hex = self.ntox((val >> 4) & 0x0f) + self.ntox(val & 0x0f)
-            string = '\r\nI' + self.hex + '\r\n'
+            string = 'I' + self.hex + '\r\n'
             self.sport.write(string.encode('utf-8'))
 
         elif line[0] == 'R':  # Return counts from last integration
             # Sending back 19000 counts for all channels/angles
-            string = '\r\nR' + self.hex + ':4A38\r\n'
+            string = 'R' + self.hex + ':4A38\r\n'
             self.sport.write(string.encode('utf-8'))
 
         elif line[0] == 'S':  # Return firmware status
@@ -123,7 +123,7 @@ class MTPEmulator():
             # - Bit 1 = Stepper moving
             # - Bit 2 = Synthesizer out of lock
             # - Bit 3 = spare
-            string = '\r\nST:' + self.status + '\r\n'
+            string = 'ST:' + self.status + '\r\n'
             self.sport.write(string.encode('utf-8'))
             self.status = '04'  # Even number indicated integrator NOT busy
 
@@ -146,10 +146,10 @@ class MTPEmulator():
                 b'Pt:B70 8FC B52 C0B 780 B68 97F B82 \r\n')
 
         elif line == 'N 1':  # Set Noise Diode On
-            self.sport.write(b'\r\nND:01\r\n')
+            self.sport.write(b'ND:01\r\n')
 
         elif line == 'N 0':  # Set Noise Diode Off
-            self.sport.write(b'\r\nND:00\r\n')
+            self.sport.write(b'ND:00\r\n')
 
     def ntox(self, nx):
         """ Convert nibble to asc hex 0-f """
