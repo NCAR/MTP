@@ -286,6 +286,10 @@ def parse_args():
     parser.add_argument(
         '--logmod', type=str, default=None, help="Limit logging to " +
         "given module")
+    parser.add_argument(
+        '--chaos', type=str, default='medium', help=" [low, medium, high, extreme] where low is ideal probe operation where all commands are sent immediately, medium approximates nominal probe operation, high includes variable times for commands and high incidences of error conditons, extreme includes theoretical states of the probe/motor that have been observed very rarely or never")
+    parser.add_argument(
+        '--state', type=str, default=None, help="[overheat, overvolt, noresp ] to emulate specific error conditions that are either highly concerning or require signifigant deviation from normal loop. overheat should warn with red toggle, overvolt should warn with red toggle, noresp should warn with popup and return to re-init")
 
     # Parse the command line arguments
     args = parser.parse_args()
