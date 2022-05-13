@@ -61,15 +61,15 @@ class MTPEmulator():
         self.statusset = False
         self.commandstatus = {
             "lastcommand": "start",
-            "timeoflastcommand": time.time(), #float of seconds since epoc
-            "expecteddurration":  0.004 #usec
+            "timeoflastcommand": time.time(),  # float of seconds since epoc
+            "expectedduration":  0.004  # usec
 
         }
 
-    def setcommandstatus(self, command, durration):
+    def setcommandstatus(self, command, duration):
         self.commandstatus['lastcommand'] = command
         self.commandstatus['timeoflastcommand'] = time.time()
-        self.commandstatus['expecteddurration'] = durration
+        self.commandstatus['expectedduration'] = duration
 
     def listen(self, chaos, state):
         """ Loop and wait for commands to arrive """
@@ -121,7 +121,7 @@ class MTPEmulator():
                 # Uncertain what this response would do
                 self.sport.write(b'0x03\r\n')
             elif chaos == 'extreme':
-                #To emulate completely unresponsive probe
+                # To emulate completely unresponsive probe
                 self.sport.write(b'')
             self.sport.write(b'Version:MTPH_Control.c-101103>101208\r\n')
 
@@ -135,12 +135,12 @@ class MTPEmulator():
         elif line[0] == 'U':  # Parse UART commands
             # all commands echo exact command, then other responses
             if chaos == 'low':
-                durration = 0.03
+                duration = 0.03
             else:
                 # emulate that long first and last step
                 # random between 0 and 10 seconds
-                durration = 10
-            self.setcommandstatus('U',durration)
+                duration = 10
+            self.setcommandstatus('U', duration)
             self.statusset = False
             self.UART(line, chaos, state)
 
@@ -154,10 +154,10 @@ class MTPEmulator():
             string = 'I' + self.hex + '\r\n'
             # This command starts the integrator,
             # sets the integrator busy bit (status = 05)
-            # then waits 40us 
-            # so the S should, if 
-            durration = random.randrange(4,5,3)
-            self.setcommandstatus('I',durration)
+            # then waits 40us
+            # so the S should, if
+            duration = random.randrange(4, 5, 3)
+            self.setcommandstatus('I', duration)
             self.sport.write(string.encode('utf-8'))
 
         elif line[0] == 'R':  # Return counts from last integration
@@ -169,7 +169,7 @@ class MTPEmulator():
             if chaos == 'low':
                 self.status = '04'  # Even number indicated integrator NOT busy
             else:
-                self.status = self.conditionalStatus(chaos,state)
+                self.status = self.conditionalStatus(chaos, state)
             string = 'ST:' + self.status + '\r\n'
             self.sport.write(string.encode('utf-8'))
 
@@ -211,7 +211,7 @@ class MTPEmulator():
         | f | Set polarity or direction of home sensor, default is zero
         | j | Adjust the resolution in micro-steps per step.
                     [1,2,4,8,16,32,64,128,256]
-        | V | Set top spped of motor in micro-steps per second.
+        | V | Set top speed of motor in micro-steps per second.
         | L | Set acceleration factor micro-steps per second^2.
         | h | Set hold current 0-50% of 3.0 Amp max
         | m | Set running current 0-100% of 3.0 Amp max
@@ -239,7 +239,10 @@ class MTPEmulator():
                                         when another received
         """
         # including D,d for 'unknown'
-        error = ['@','`','A','a','B','b','C','c','D','d','E','e','G','g','I','i','K','k','O','o']
+        # D is a UART command - move negative. Better to use value not used
+        # otherwise.
+        error = ['@', '`', 'A', 'a', 'B', 'b', 'C', 'c', 'D', 'd', 'E', 'e',
+                 'G', 'g', 'I', 'i', 'K', 'k', 'O', 'o']
         # Note: The MTP control program sends strings like
         # b'U/1J0D######J3R\r\n'. This *appears* to indicate the stepper
         # motor is moving backward (negative direction). However, in actuality
@@ -251,8 +254,8 @@ class MTPEmulator():
             self.sport.write(b'Step:\xff/0@\r\n')  # No error
         if chaos == 'medium':
             self.sport.write(string.encode('utf-8'))
-            #delay @ by 0-30us skipping first 3 numbers generated
-            time.sleep(random.randrange(0,30,3))
+            # delay @ by 0-30us skipping first 3 numbers generated
+            time.sleep(random.randrange(0, 30, 3))
             # ` means the move is happening
             self.sport.write(b'Step:\xff/0`\r\n')
             # @ means the move has stopped
@@ -267,7 +270,6 @@ class MTPEmulator():
             string = b'Step:\xff/0' + error[rand].encode('utf-8') + '\r\n'
             self.sport.write(b'Step:\xff/0c\r\n')
 
-
     def conditionalStatus(self, chaos, state):
         # Two command types have conditions, I (integrate) and U (move)
         # Function returns string of status eg '04'
@@ -276,75 +278,77 @@ class MTPEmulator():
         # - Bit 2 = Synthesizer out of lock
         # - Bit 3 = spare
         lastcommand = self.commandstatus['lastcommand']
-        commandtime =  self.commandstatus['timeoflastcommand']
-        durr = self.commandstatus['expecteddurration'] 
+        commandtime = self.commandstatus['timeoflastcommand']
+        dur = self.commandstatus['expectedduration']
 
         if lastcommand == "I":
             # integrator has to start (05)
             # and after 40 s integrator has to finish (04)
             # even/odd checking will get data in more cases
-            # but it accuracy suffers. 
+            # but it accuracy suffers.
             # if even/odd check perhaps log, but take anyway?
             # the more robust move should limit these.
             logging.debug("conditional status I detected")
-            if time.time() <= commandtime + durr:
+            if time.time() <= commandtime + dur:
                 if chaos == 'low':
                     return '05'
                 elif chaos == 'medium':
                     # possibility that integrator doesn't start
                     # or finishes quickly
-                    return random.choice(['04','05'])
+                    return random.choice(['04', '05'])
                 else:
-                    # possibility that move went wrong, but integrator still started
-                    return random.choice(['01','03','05','07'])
+                    # possibility that move went wrong, but integrator still
+                    # started
+                    return random.choice(['01', '03', '05', '07'])
             else:
                 if chaos == 'low':
                     return '04'
                 elif chaos == 'medium':
-                    # integrate goes long, or 
-                    return random.choice(['04','05'])
+                    # integrate goes long, or
+                    return random.choice(['04', '05'])
                 else:
-                    return random.choice(['00','02','04','06'])
-
+                    return random.choice(['00', '02', '04', '06'])
 
         elif lastcommand == "U":
-            self.statusset = True 
-            if time.time() <= commandtime+durr:
+            self.statusset = True
+            if time.time() <= commandtime+dur:
                 # emulate moving
                 if chaos == 'low':
                     return '05'
                 elif chaos == 'medium' or chaos == 'high':
                     if not self.statusset:
-                        return random.choice(['01','03','05','07'])
+                        return random.choice(['01', '03', '05', '07'])
                 elif chaos == 'extreme':
                     if not self.statusset:
-                        self.status = random.choice(['00','01','02','03','04','05','06','07'])
+                        self.status = random.choice(['00', '01', '02', '03',
+                                                     '04', '05', '06', '07'])
             else:
                 # emulate stop
                 # this else should only run once per 'stop'
-                # except when the status is not 04 - 
-                # then there's logic about what commands need 
-                # to be called to successfully return to 4. Ugh. 
+                # except when the status is not 04 -
+                # then there's logic about what commands need
+                # to be called to successfully return to 4. Ugh.
 
                 if chaos == 'low':
-                    #successfull stop
+                    # successful stop
                     return '04'
                 elif chaos == 'medium':
-                   return '04'
+                    return '04'
                 elif chaos == 'high':
                     # currently emulates that the probe is stuck
                     # signifigant investment to logic out the rest
                     if not self.statusset:
-                        return random.choice(['00','02','04','06'])
+                        return random.choice(['00', '02', '04', '06'])
                 elif chaos == 'extreme':
                     # currently emulates that the probe is stuck
                     # signifigant investment to logic out the rest
                     if not self.statusset:
-                        self.status = random.choice(['00','01','02','03','04','05','06','07'])
-            # most of this is done, tested with probe  so implementation here will be minimal. 
+                        self.status = random.choice(['00', '01', '02', '03',
+                                                     '04', '05', '06', '07'])
+            # most of this is done, tested with probe so implementation
+            # here will be minimal.
             logging.debug("conditional status U detected")
         return '04'
-
 
     def close(self):
         """ Close port when exit """
@@ -432,9 +436,19 @@ def parse_args():
         '--logmod', type=str, default=None, help="Limit logging to " +
         "given module")
     parser.add_argument(
-        '--chaos', dest='chaos', default='medium', help=" [low, medium, high, extreme] where low is ideal probe operation where all commands are sent immediately, medium approximates nominal probe operation, high includes variable times for commands and high incidences of error conditons, extreme includes theoretical states of the probe/motor that have been observed very rarely or never")
+        '--chaos', dest='chaos', default='medium', help=" [low, medium, " +
+        "high, extreme] where low is ideal probe operation where all " +
+        "commands are sent immediately, medium approximates nominal probe " +
+        "operation, high includes variable times for commands and high " +
+        "incidences of error conditons, extreme includes theoretical states " +
+        "of the probe/motor that have been observed very rarely or never")
     parser.add_argument(
-        '--state', dest='state', default='normal', help="[normal, overheat, overvolt, noresp ] to emulate specific error conditions that are either highly concerning or require signifigant deviation from normal loop. overheat should warn with red toggle, overvolt should warn with red toggle, noresp should warn with popup and return to re-init")
+        '--state', dest='state', default='normal', help="[normal, overheat, " +
+        "overvolt, noresp ] to emulate specific error conditions that are " +
+        "either highly concerning or require signifigant deviation from " +
+        "normal loop. overheat should warn with red toggle, overvolt should " +
+        "warn with red toggle, noresp should warn with popup and return to " +
+        "re-init")
 
     # Parse the command line arguments
     args = parser.parse_args()
