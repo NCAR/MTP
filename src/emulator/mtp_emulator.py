@@ -41,6 +41,7 @@ import os
 import serial
 import sys
 import time
+import random
 import argparse
 import logging
 import subprocess as sp
@@ -57,8 +58,18 @@ class MTPEmulator():
         self.sport = serial.Serial(device, 9600, timeout=0)
         self.sport.nonblocking()
         self.status = '04'  # Even number indicates integrator not busy
+        self.commandstatus = {
+            "lastcommand": "start",
+            "timeoflastcommand": time.time(), #float of seconds since epoc
+            "expecteddurration":  0.004 #usec
+        }
 
-    def listen(self):
+    def setcommandstatus(self, command, durration):
+        self.commandstatus['lastcommand'] = command
+        self.commandstatus['expecteddurration'] = durration
+        #self.commandstatus['timeoflastcommand'] =
+
+    def listen(self, chaos, state):
         """ Loop and wait for commands to arrive """
 
         while (True):
@@ -79,29 +90,56 @@ class MTPEmulator():
                 logger.printmsg("DEBUG", "Found: " + line)
 
                 # Parse command and send appropriate response back over port
-                self.interpretCommand(line)
+                self.interpretCommand(line, chaos, state)
 
-    def interpretCommand(self, line):
+    def interpretCommand(self, line, chaos, state):
         """ Parse command and send appropriate response back over port """
+        # All lines echo immediately, then have actuall responses
+        string = line + '\r\n'
+        self.sport.write(string.encode('utf-8'))
 
         if line[0] == 'V':  # Firmware Version
             # Return version date, etc. for this program.
             # Emulator mimics firmware.
+            if state == 'noresp':
+                time.sleep(200)
             self.sport.write(b'Version:MTPH_Control.c-101103>101208\r\n')
 
         elif line[0] == '0X03':  # Restart firmware
             logger.printmsg("DEBUG", "hex Control-C char")
             # This emulator does NOT emulate a firmware restart.
-            # Do nothing
-            self.sport.write(b'0x03\r\n')
+            # Only thing visible from firmware restart is another V command.
+            time.sleep(20)
+            if chaos == 'low':
+                time.sleep(1)
+            elif chaos == 'medium':
+                # find example of firmware overload string
+                self.sport.write(b'0123456789ABCDEF\\x21\\x43\\x65')
+            elif chaos == 'high':
+                # Uncertain what this response would do
+                self.sport.write(b'0x03\r\n')
+            elif chaos == 'extreme':
+                #To emulate completely unresponsive probe
+                self.sport.write(b'')
+            self.sport.write(b'Version:MTPH_Control.c-101103>101208\r\n')
 
         elif line[0] == 'C':  # Change SPI sequence
             logger.printmsg("DEBUG", "string starting with C" + line)
-            string = line + '\r\n'
+            # there are two echos for C's, both are identical
+            # neither seems to have any status info about if it
+            # actually set correctly
             self.sport.write(string.encode('utf-8'))
 
         elif line[0] == 'U':  # Parse UART commands
-            self.UART(line)
+            # all commands echo exact command, then other responses
+            if chaos == 'low':
+                durration = 0.03
+            else:
+                # emulate that long first and last step
+                # random between 0 and 10 seconds
+                durration = 10
+            self.setcommandstatus('U',durration)
+            self.UART(line, chaos, state)
 
         elif line[0] == 'I':  # Integrate channel counts array "I 40"
             self.status = '05'  # Odd number indicates integrator busy
@@ -111,6 +149,11 @@ class MTPEmulator():
             val = int(value)
             self.hex = self.ntox((val >> 4) & 0x0f) + self.ntox(val & 0x0f)
             string = 'I' + self.hex + '\r\n'
+            # This command starts the integrator,
+            # sets the integrator busy bit (status = 05)
+            # then waits 40us 
+            # so the S should, if 
+            self.setcommandstatus('I',durration)
             self.sport.write(string.encode('utf-8'))
 
         elif line[0] == 'R':  # Return counts from last integration
@@ -119,13 +162,12 @@ class MTPEmulator():
             self.sport.write(string.encode('utf-8'))
 
         elif line[0] == 'S':  # Return firmware status
-            # - Bit 0 = integrator busy
-            # - Bit 1 = Stepper moving
-            # - Bit 2 = Synthesizer out of lock
-            # - Bit 3 = spare
+            if chaos == 'low':
+                self.status = '04'  # Even number indicated integrator NOT busy
+            else:
+                self.status = self.conditionalStatus()
             string = 'ST:' + self.status + '\r\n'
             self.sport.write(string.encode('utf-8'))
-            self.status = '04'  # Even number indicated integrator NOT busy
 
         elif line == 'M 1':  # Read M1
             # Line being sent (in hex) is:
@@ -157,7 +199,7 @@ class MTPEmulator():
         hx = "0123456789ABCDEF"
         return(hx[nx])
 
-    def UART(self, line):
+    def UART(self, line, chaos, state):
         """
         Send string $ to stepper
 
@@ -192,14 +234,43 @@ class MTPEmulator():
                 Ascii O/o =Hex 4F/6F - Already executing command
                                         when another received
         """
+        # including D,d for 'unknown'
+        error = ['@','`','A','a','B','b','C','c','D','d','E','e','G','g','I','i','K','k','O','o']
         # Note: The MTP control program sends strings like
         # b'U/1J0D######J3R\r\n'. This *appears* to indicate the stepper
         # motor is moving backward (negative direction). However, in actuality
         # negative steps cause the motor to rotate from top to bottom when
         # the mirror is facing forward.
         string = 'U:' + line + '/r/n'
-        self.sport.write(string.encode('utf-8'))
-        self.sport.write(b'Step:\xff/0@\r\n')  # No error
+        if chaos == 'low':
+            self.sport.write(string.encode('utf-8'))
+            self.sport.write(b'Step:\xff/0@\r\n')  # No error
+        if chaos == 'medium':
+            self.sport.write(string.encode('utf-8'))
+            #delay @ by 0-30us skipping first 3 numbers generated
+            time.sleep(random.randrange(0,30,3))
+            # ` means the move is happening
+            self.sport.write(b'Step:\xff/0`\r\n')
+            # @ means the move has stopped
+            self.sport.write(b'Step:\xff/0@\r\n')
+        if chaos == 'high':
+            # one in 5 chance of not getting an @
+            # this lack should casuse a re-init/powercycle
+            self.sport.write(string.encode('utf-8'))
+        if chaos == 'extreme':
+            # Report other stepper motor states
+            rand = random.choice(error)
+            string = b'Step:\xff/0' + error[rand].encode('utf-8') + '\r\n'
+            self.sport.write(b'Step:\xff/0c\r\n')
+
+
+    def conditionalstatus(self):
+            # - Bit 0 = integrator busy
+            # - Bit 1 = Stepper moving
+            # - Bit 2 = Synthesizer out of lock
+            # - Bit 3 = spare
+            return '04'
+
 
     def close(self):
         """ Close port when exit """
@@ -287,9 +358,9 @@ def parse_args():
         '--logmod', type=str, default=None, help="Limit logging to " +
         "given module")
     parser.add_argument(
-        '--chaos', type=str, default='medium', help=" [low, medium, high, extreme] where low is ideal probe operation where all commands are sent immediately, medium approximates nominal probe operation, high includes variable times for commands and high incidences of error conditons, extreme includes theoretical states of the probe/motor that have been observed very rarely or never")
+        '--chaos', dest='chaos', default='medium', help=" [low, medium, high, extreme] where low is ideal probe operation where all commands are sent immediately, medium approximates nominal probe operation, high includes variable times for commands and high incidences of error conditons, extreme includes theoretical states of the probe/motor that have been observed very rarely or never")
     parser.add_argument(
-        '--state', type=str, default=None, help="[overheat, overvolt, noresp ] to emulate specific error conditions that are either highly concerning or require signifigant deviation from normal loop. overheat should warn with red toggle, overvolt should warn with red toggle, noresp should warn with popup and return to re-init")
+        '--state', dest='state', default='normal', help="[normal, overheat, overvolt, noresp ] to emulate specific error conditions that are either highly concerning or require signifigant deviation from normal loop. overheat should warn with red toggle, overvolt should warn with red toggle, noresp should warn with popup and return to re-init")
 
     # Parse the command line arguments
     args = parser.parse_args()
@@ -322,7 +393,7 @@ def main():
     mtp = MTPEmulator(mtpport)
 
     # Loop and listen for commands from control program
-    mtp.listen()
+    mtp.listen(args.chaos, args.state)
 
     # Clean up
     mtp.close()
