@@ -177,13 +177,13 @@ class MTPEmulator():
             # Line being sent (in hex) is:
             # M01:2928 2300 2898 3083 1920 2920 2431 2946
             self.sport.write(
-                b'\r\nM01:B70 8FC B52 C0B 780 B68 97F B82 \r\n')
+                b'M01:B70 8FC B52 C0B 780 B68 97F B82 \r\n')
 
         elif line == 'M 2':  # Read M2
             # Line being sent (in hex) is:
             # M02:2014 1209 1550 2067 1737 1131 4095 1077
             self.sport.write(
-                b'\r\nM02:7DF 494 539 5FF 614 436 FFF 3D0 \r\n')
+                b'M02:7DF 494 539 5FF 614 436 FFF 3D0 \r\n')
 
         elif line[0] == 'P':  # Read P
             # Line being sent (in hex) is:
