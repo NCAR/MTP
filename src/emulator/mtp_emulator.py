@@ -58,16 +58,18 @@ class MTPEmulator():
         self.sport = serial.Serial(device, 9600, timeout=0)
         self.sport.nonblocking()
         self.status = '04'  # Even number indicates integrator not busy
+        self.statusset = False
         self.commandstatus = {
             "lastcommand": "start",
             "timeoflastcommand": time.time(), #float of seconds since epoc
             "expecteddurration":  0.004 #usec
+
         }
 
     def setcommandstatus(self, command, durration):
         self.commandstatus['lastcommand'] = command
+        self.commandstatus['timeoflastcommand'] = time.time()
         self.commandstatus['expecteddurration'] = durration
-        #self.commandstatus['timeoflastcommand'] =
 
     def listen(self, chaos, state):
         """ Loop and wait for commands to arrive """
@@ -139,6 +141,7 @@ class MTPEmulator():
                 # random between 0 and 10 seconds
                 durration = 10
             self.setcommandstatus('U',durration)
+            self.statusset = False
             self.UART(line, chaos, state)
 
         elif line[0] == 'I':  # Integrate channel counts array "I 40"
@@ -153,6 +156,7 @@ class MTPEmulator():
             # sets the integrator busy bit (status = 05)
             # then waits 40us 
             # so the S should, if 
+            durration = random.randrange(4,5,3)
             self.setcommandstatus('I',durration)
             self.sport.write(string.encode('utf-8'))
 
@@ -165,7 +169,7 @@ class MTPEmulator():
             if chaos == 'low':
                 self.status = '04'  # Even number indicated integrator NOT busy
             else:
-                self.status = self.conditionalStatus()
+                self.status = self.conditionalStatus(chaos,state)
             string = 'ST:' + self.status + '\r\n'
             self.sport.write(string.encode('utf-8'))
 
@@ -173,13 +177,13 @@ class MTPEmulator():
             # Line being sent (in hex) is:
             # M01:2928 2300 2898 3083 1920 2920 2431 2946
             self.sport.write(
-                b'M01:B70 8FC B52 C0B 780 B68 97F B82 \r\n')
+                b'\r\nM01:B70 8FC B52 C0B 780 B68 97F B82 \r\n')
 
         elif line == 'M 2':  # Read M2
             # Line being sent (in hex) is:
             # M02:2014 1209 1550 2067 1737 1131 4095 1077
             self.sport.write(
-                b'M02:7DF 494 539 5FF 614 436 FFF 3D0 \r\n')
+                b'\r\nM02:7DF 494 539 5FF 614 436 FFF 3D0 \r\n')
 
         elif line[0] == 'P':  # Read P
             # Line being sent (in hex) is:
@@ -264,12 +268,82 @@ class MTPEmulator():
             self.sport.write(b'Step:\xff/0c\r\n')
 
 
-    def conditionalstatus(self):
-            # - Bit 0 = integrator busy
-            # - Bit 1 = Stepper moving
-            # - Bit 2 = Synthesizer out of lock
-            # - Bit 3 = spare
-            return '04'
+    def conditionalStatus(self, chaos, state):
+        # Two command types have conditions, I (integrate) and U (move)
+        # Function returns string of status eg '04'
+        # - Bit 0 = integrator busy
+        # - Bit 1 = Stepper moving
+        # - Bit 2 = Synthesizer out of lock
+        # - Bit 3 = spare
+        lastcommand = self.commandstatus['lastcommand']
+        commandtime =  self.commandstatus['timeoflastcommand']
+        durr = self.commandstatus['expecteddurration'] 
+
+        if lastcommand == "I":
+            # integrator has to start (05)
+            # and after 40 s integrator has to finish (04)
+            # even/odd checking will get data in more cases
+            # but it accuracy suffers. 
+            # if even/odd check perhaps log, but take anyway?
+            # the more robust move should limit these.
+            logging.debug("conditional status I detected")
+            if time.time() <= commandtime + durr:
+                if chaos == 'low':
+                    return '05'
+                elif chaos == 'medium':
+                    # possibility that integrator doesn't start
+                    # or finishes quickly
+                    return random.choice(['04','05'])
+                else:
+                    # possibility that move went wrong, but integrator still started
+                    return random.choice(['01','03','05','07'])
+            else:
+                if chaos == 'low':
+                    return '04'
+                elif chaos == 'medium':
+                    # integrate goes long, or 
+                    return random.choice(['04','05'])
+                else:
+                    return random.choice(['00','02','04','06'])
+
+
+        elif lastcommand == "U":
+            self.statusset = True 
+            if time.time() <= commandtime+durr:
+                # emulate moving
+                if chaos == 'low':
+                    return '05'
+                elif chaos == 'medium' or chaos == 'high':
+                    if not self.statusset:
+                        return random.choice(['01','03','05','07'])
+                elif chaos == 'extreme':
+                    if not self.statusset:
+                        self.status = random.choice(['00','01','02','03','04','05','06','07'])
+            else:
+                # emulate stop
+                # this else should only run once per 'stop'
+                # except when the status is not 04 - 
+                # then there's logic about what commands need 
+                # to be called to successfully return to 4. Ugh. 
+
+                if chaos == 'low':
+                    #successfull stop
+                    return '04'
+                elif chaos == 'medium':
+                   return '04'
+                elif chaos == 'high':
+                    # currently emulates that the probe is stuck
+                    # signifigant investment to logic out the rest
+                    if not self.statusset:
+                        return random.choice(['00','02','04','06'])
+                elif chaos == 'extreme':
+                    # currently emulates that the probe is stuck
+                    # signifigant investment to logic out the rest
+                    if not self.statusset:
+                        self.status = random.choice(['00','01','02','03','04','05','06','07'])
+            # most of this is done, tested with probe  so implementation here will be minimal. 
+            logging.debug("conditional status U detected")
+        return '04'
 
 
     def close(self):
