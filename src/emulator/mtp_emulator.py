@@ -97,7 +97,7 @@ class MTPEmulator():
     def interpretCommand(self, line, chaos, state):
         """ Parse command and send appropriate response back over port """
         # All lines echo immediately, then have actuall responses
-        string = line + '\r\n'
+        string = '\r\n' +  line + '\r\n'
         self.sport.write(string.encode('utf-8'))
 
         if line[0] == 'V':  # Firmware Version
@@ -116,10 +116,10 @@ class MTPEmulator():
                 time.sleep(1)
             elif chaos == 'medium':
                 # find example of firmware overload string
-                self.sport.write(b'0123456789ABCDEF\\x21\\x43\\x65')
+                self.sport.write(b'\r\n0123456789ABCDEF\\x21\\x43\\x65\r\n')
             elif chaos == 'high':
                 # Uncertain what this response would do
-                self.sport.write(b'0x03\r\n')
+                self.sport.write(b'\r\n0x03\r\n')
             elif chaos == 'extreme':
                 # To emulate completely unresponsive probe
                 self.sport.write(b'')
@@ -151,7 +151,7 @@ class MTPEmulator():
             # Convert byte to two ascii digits in hex
             val = int(value)
             self.hex = self.ntox((val >> 4) & 0x0f) + self.ntox(val & 0x0f)
-            string = 'I' + self.hex + '\r\n'
+            string = '\r\nI' + self.hex + '\r\n'
             # This command starts the integrator,
             # sets the integrator busy bit (status = 05)
             # then waits 40us
@@ -162,7 +162,7 @@ class MTPEmulator():
 
         elif line[0] == 'R':  # Return counts from last integration
             # Sending back 19000 counts for all channels/angles
-            string = 'R' + self.hex + ':4A38\r\n'
+            string = '\r\nR' +  self.hex + ':4A38\r\n'
             self.sport.write(string.encode('utf-8'))
 
         elif line[0] == 'S':  # Return firmware status
@@ -170,32 +170,32 @@ class MTPEmulator():
                 self.status = '04'  # Even number indicated integrator NOT busy
             else:
                 self.status = self.conditionalStatus(chaos, state)
-            string = 'ST:' + self.status + '\r\n'
+            string = '\r\nST:' + self.status + '\r\n'
             self.sport.write(string.encode('utf-8'))
 
         elif line == 'M 1':  # Read M1
             # Line being sent (in hex) is:
             # M01:2928 2300 2898 3083 1920 2920 2431 2946
             self.sport.write(
-                b'M01:B70 8FC B52 C0B 780 B68 97F B82 \r\n')
+                b'\r\nM01:B70 8FC B52 C0B 780 B68 97F B82 \r\n')
 
         elif line == 'M 2':  # Read M2
             # Line being sent (in hex) is:
             # M02:2014 1209 1550 2067 1737 1131 4095 1077
             self.sport.write(
-                b'M02:7DF 494 539 5FF 614 436 FFF 3D0 \r\n')
+                b'\r\nM02:7DF 494 539 5FF 614 436 FFF 3D0 \r\n')
 
         elif line[0] == 'P':  # Read P
             # Line being sent (in hex) is:
             # Pt:2159 13808 13809 4370 13414 13404 13284 14439
             self.sport.write(
-                b'Pt:B70 8FC B52 C0B 780 B68 97F B82 \r\n')
+                b'\r\nPt:B70 8FC B52 C0B 780 B68 97F B82 \r\n')
 
         elif line == 'N 1':  # Set Noise Diode On
-            self.sport.write(b'ND:01\r\n')
+            self.sport.write(b'\r\nND:01\r\n')
 
         elif line == 'N 0':  # Set Noise Diode Off
-            self.sport.write(b'ND:00\r\n')
+            self.sport.write(b'\r\nND:00\r\n')
 
     def ntox(self, nx):
         """ Convert nibble to asc hex 0-f """
@@ -248,18 +248,18 @@ class MTPEmulator():
         # motor is moving backward (negative direction). However, in actuality
         # negative steps cause the motor to rotate from top to bottom when
         # the mirror is facing forward.
-        string = 'U:' + line + '/r/n'
+        string = '\r\nU:' + line + '/r/n'
         if chaos == 'low':
             self.sport.write(string.encode('utf-8'))
-            self.sport.write(b'Step:\xff/0@\r\n')  # No error
+            self.sport.write(b'\r\nStep:\xff/0@\r\n')  # No error
         if chaos == 'medium':
             self.sport.write(string.encode('utf-8'))
             # delay @ by 0-30us skipping first 3 numbers generated
             time.sleep(random.randrange(0, 30, 3))
             # ` means the move is happening
-            self.sport.write(b'Step:\xff/0`\r\n')
+            self.sport.write(b'\r\nStep:\xff/0`\r\n')
             # @ means the move has stopped
-            self.sport.write(b'Step:\xff/0@\r\n')
+            self.sport.write(b'\r\nStep:\xff/0@\r\n')
         if chaos == 'high':
             # one in 5 chance of not getting an @
             # this lack should casuse a re-init/powercycle
@@ -267,8 +267,8 @@ class MTPEmulator():
         if chaos == 'extreme':
             # Report other stepper motor states
             rand = random.choice(error)
-            string = b'Step:\xff/0' + error[rand].encode('utf-8') + '\r\n'
-            self.sport.write(b'Step:\xff/0c\r\n')
+            string = b'\r\nStep:\xff/0' + error[rand].encode('utf-8') + '\r\n'
+            self.sport.write(b'\r\nStep:\xff/0c\r\n')
 
     def conditionalStatus(self, chaos, state):
         # Two command types have conditions, I (integrate) and U (move)
