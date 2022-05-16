@@ -1169,7 +1169,7 @@ class controlWindow(QWidget):
         path = os.path.dirname('C:\\Users\\lroot\\Desktop\\'+projectName+'\\data\\')
         if not os.path.exists:
             os.makedirs(path)
-        saveDataFileName = path+'\\'+time.strftime("%Y%m%d") + '_' + time.strftime("%H%M%S") + '_' + flightNumber + '.mtp'
+        saveDataFileName = path+time.strftime("%Y%m%d") + '_' + time.strftime("%H%M%S") + '_' + flightNumber + '.mtp'
         for filename in glob.glob(path + '\\*_' + flightNumber + '.mtp'):
             logging.debug("File exists")
             saveDataFileName=filename
