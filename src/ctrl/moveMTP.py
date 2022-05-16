@@ -788,7 +788,6 @@ class moveMTP():
         # translates from binary string into ascii
         # and loops over hex values recieved from probe 
         # changing them to decimal
-        print(line)
         logging.debug('decode')
         data = line.data().decode()
         # Strips of \r\n from end, 
