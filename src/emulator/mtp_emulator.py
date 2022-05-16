@@ -182,8 +182,19 @@ class MTPEmulator():
         elif line == 'M 2':  # Read M2
             # Line being sent (in hex) is:
             # M02:2014 1209 1550 2067 1737 1131 4095 1077
-            self.sport.write(
-                b'\r\nM02:7DF 494 539 5FF 614 436 FFF 3D0 \r\n')
+            # Tsynth of 3D0 translates to 50.03 C,
+            # Tsynth of 3E0 translates to 49.64 C
+            if state == 'overheat': 
+                a = random.randrange(10)
+                if a % 2 == 0:
+                    self.sport.write(
+                        b'\r\nM02:7DF 494 539 5FF 614 436 FFF 3E0 \r\n')
+                else: 
+                    self.sport.write(
+                        b'\r\nM02:7DF 494 539 5FF 614 436 FFF 3D0 \r\n')
+            else:
+                self.sport.write(
+                    b'\r\nM02:7DF 494 539 5FF 614 436 FFF 3F0 \r\n')
 
         elif line[0] == 'P':  # Read P
             # Line being sent (in hex) is:
