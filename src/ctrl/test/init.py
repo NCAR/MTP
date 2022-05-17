@@ -2,24 +2,24 @@ import logging
 import time
 import serial
 import socket
-import re
 import argparse
 
 
 class MTPProbeInit():
 
     def __init__(self, args, port):
-
-        # initial setup of serialPort, UDP port
+        ''' initial setup of serialPort, UDP socket '''
         self.serialPort = serial.Serial(args.device, 9600, timeout=0.15)
 
         self.udpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
         self.udpSocket.connect(('127.0.0.1', port))  # ip, port number
 
     def getSerialPort(self):
+        ''' return serial port '''
         return self.serialPort
 
     def getUdpSocket(self):
+        ''' return UDP socket '''
         return self.udpSocket
 
     def bootCheck(self):
@@ -41,25 +41,6 @@ class MTPProbeInit():
         logging.debug("read %r", buf)
         return buf
 
-    def readEchosUntilAllNewlines(self, num, newlinesExpected):
-        buf = b''
-        numNewlines = 0
-        for i in range(num):
-            buf = buf + self.serialPort.readline()
-            newlineArray = re.findall(b'\n', buf)
-            numNewlines += len(newlineArray)
-            if numNewlines >= newlinesExpected:
-                logging.debug("readEchosUntillAllNewlines:found all expected" +
-                              " newlines %r", buf)
-                return buf
-            else:
-                logging.debug("readEchosUntillAllNewlines:numNewLines %r < " +
-                              "newlinesExpected %r", numNewlines,
-                              newlinesExpected)
-
-        logging.debug("readEchosUntillAllNewlines: %r", buf)
-        return buf
-
     def moveComplete(self, buf):
         # returns true if '@' is found,
         # needs a timeout if command didn't send properly
@@ -77,19 +58,43 @@ class MTPProbeInit():
 
         return ret
 
-    def findChar(self, array, binaryCharacter):
-        # status = 0-6, C, B, or @
+    def findChar(self, array, binaryString):
+        # Make this more restrictive. When Firmware is working, these chars
+        # are unique, but if there is noise it is possible to get an
+        # erroneous match
+        '''
+        UART returned value meanings (e.g. ff/0@ = No error):
+            ff - RS485 line turnaround char; starts message
+            /  - start char
+            0  - address of message recipient
+            @  - status char (upper case device busy, lower not)
+                Ascii @/` =Hex 40/60 - No error
+                Ascii A/a =Hex 41/61 - Initialization Error
+                Ascii B/b =Hex 42/62 - Illegal Command sent
+                Ascii C/c =Hex 43/63 - Out of range operand value
+                Ascii E/e =Hex 45/65 - Internal communication err
+                Ascii G/g =Hex 47/67 - Not initialized before move
+                Ascii I/i =Hex 49/69 - Overload error (too fast)
+                Ascii K/k =Hex 4B/6B - Move not allowed
+                Ascii O/o =Hex 4F/6F - Already executing command
+                                        when another received
+        '''
+        # Status return values = 0-6
         # otherwise error = -1
-        index = array.find(binaryCharacter)
+        index = array.find(binaryString)
         if index > -1:
             # logging.debug("status: %r, %r", array[index], array)
             return array[index]
         else:
             logging.error("status unknown, unable to find %r: %r",
-                          binaryCharacter, array)
+                          binaryString, array)
             return -1
 
     def probeResponseCheck(self):
+        '''
+        Send request for probe to return Firmware version. This is a good
+        way to confirm the probe is on and responding to commands.
+        '''
         self.serialPort.write(b'V\r\n')
         if self.findChar(self.readEchos(3),
                          b"MTPH_Control.c-101103>101208") > 0:
@@ -100,6 +105,19 @@ class MTPProbeInit():
             return False
 
     def truncateBotchedMoveCommand(self):
+        ''' Restart the firmware '''
+        # This fn sends string ‘Ctrl-C’, which is handled by the case
+        # statement in main() in the firmware that matches the first C and
+        # changes the SPI sequence (whatever that means) and then echos back
+        # “\r\nCtrl-C\r\n”. We actually want to send ‘0X03’ (Ascii 3, actual
+        # Control-C) which is caught by the interrupt routine and restarts the
+        # firmware.
+        #
+        # Before we change this, Catherine would like to test the current
+        # version with the probe. She believes she has seen a status change
+        # when sending the 'Ctrl-C' and would like to confirm we understand
+        # exactly what the 'C' case does.
+
         self.serialPort.write(b'Ctrl-C\r\n')
         if self.findChar(self.readEchos(3), b'Ctrl-C\r\n') > 0:
             logging.info("Probe on, responding to Ctrl-C string prompt")
@@ -135,16 +153,20 @@ class MTPProbeInit():
 
     def sendInit1(self):
         # Init1
+        #  - Set polarity of home sensor to 1 ('f1')
+        #  - Adjust the resolution to 256 micro-steps per step ('j256')
+        #  - Set the top motor speed to 50000 micro-steps per second ('V50000')
         self.serialPort.write(b'U/1f1j256V50000R\r\n')
-        # returns:
-        # U/1f1j256V50000R\r\n
-        # U:U/1f1j256V50000R\r\n
-        # Step:\xff/0@\r\n
-        # if already set to this
-        # last line replaced by
-        # Step:/0B\r\n
-        # if too early in boot phase (?)
-        # Have seen this near boot:
+
+        # Returns:
+        #   U/1f1j256V50000R\r\n
+        #   U:U/1f1j256V50000R\r\n
+        #   Step:\xff/0@\r\n - indicating success
+        #
+        # if already set to this last line replaced by
+        #   Step:\xff/0B\r\n - indicating Illegal command sent
+        #
+        # Have seen this near boot: ( too early in boot phase (?) )
         #  b'\x1b[A\x1b[BU/1f1j256V50000R\r\n'
         # And this in cycles
         #  Step:\xff/0@\r\n - makes ascii parser die
@@ -156,6 +178,9 @@ class MTPProbeInit():
 
     def sendInit2(self):
         # Init2
+        #  - Set acceleration factor to 4000 micro-steps per second^2 ('L4000')
+        #  - Set hold current to 30% of 3.0 Amp max ('h30')
+        #  - Set running current to 100% of 3.0 Amp max ('m100')
         self.serialPort.write(b'U/1L4000h30m100R\r\n')
         # normal return:
         #
@@ -169,37 +194,53 @@ class MTPProbeInit():
         #
         return self.readEchos(3)
 
-    def init(self):
-        # errorStatus = 0 if all's good
-        # -1 if echos don't match exact return string expected
-        # -2 if unexpected status
-        #
+    def init(self, maxAttempts=6):
+
+        # Why do we need this?? - JAA
+        self.readEchos(3)
+
         errorStatus = 0
-        # 12 is arbirtary choice. Will tune in main program.
-        while errorStatus < 6:  # This is set to 12 in initMoveHomeStep - JAA
+        while errorStatus < maxAttempts:
+            # Move error checking into function to call from both init1 and
+            # init2. Handle all possible values
             errorStatus = errorStatus + 1
             answerFromProbe = self.sendInit1()
             # check for errors/decide if resend?
             if self.findChar(answerFromProbe, b'@') > 0:
-                errorStatus = 12
-                # success
+                # success - no error. Break out of loop
+                errorStatus = maxAttempts
             elif self.findChar(answerFromProbe, b'B') > 0:
+                # Illegal Command Sent
                 logging.warning(" Init 1 status B, resending.")
             elif self.findChar(answerFromProbe, b'C') > 0:
+                # Out of range operand value
                 logging.warning(" Init 1 status C, resending.")
             else:
                 logging.warning(" Init 1 status else, resending.")
+            # if on first move status 6 for longer than expected
+            # aka command sent properly, but actual movement
+            # not initiated, need a Ctrl-c then re-init, re-home
+            # Since this is not implemented, if get status=6 in status window,
+            # must power cycle probe to clear and get code working
+
+            # overall error conditions
+            # 1) no command gets any response
+            # - gets one echo, but not second echo
+            # - because command collision in init commands
+            # Probe needs power cycle
+            # 2) stuck at Status 5 wih init/home
+            # - unable to find commands to recover
+            # Probe needs power cycle
 
         self.serialPort.write(b'S\r\n')
         buf = self.readEchos(3)
 
         errorStatus = 0
-        # 12 is arbirtary choice. Will tune in main program.
-        while errorStatus < 6:
+        while errorStatus < maxAttempts:
             answerFromProbe = self.sendInit2()
             # check for errors/decide if resend?
             if self.findChar(answerFromProbe, b'@') > 0:
-                errorStatus = 12
+                errorStatus = maxAttempts
                 # success
             elif self.findChar(answerFromProbe, b'B') > 0:
                 logging.warning(" Init 2 status B, resending.")
@@ -217,6 +258,7 @@ class MTPProbeInit():
         # if after both inits status = 5
         # do an integrate, then a read to clear
 
+        logging.debug("init successful")
         return errorStatus
 
 
@@ -242,36 +284,21 @@ def main():
 
     args = parse_args()
 
+    # Move readConfig out of viewer/MTPclient to lib/readConfig and
+    # get port from there. Add --config to parse_args - JAA
     port = 32107
     init = MTPProbeInit(args, port)
 
-    # Can we move these comments to where they are implemented? -- JAA
-    # if on first move status 6 for longer than expected
-    # aka command sent properly, but actual movement
-    # not initiated, need a Ctrl-c then re-init, re-home
-
-    # overall error conditions
-    # 1) no command gets any response
-    # - gets one echo, but not second echo
-    # - because command collision in init commands
-    # Probe needs power cycle
-    # 2) stuck at Status 5 wih init/home
-    # - unable to find commands to recover
-    # Probe needs power cycle
-
     probeResponding = False
     while (1):  # Why not loop until successful init then stop?? - JAA
+        # Or even better implement command line control so can re-init at will.
 
         # Check if probe is on and responding
         if probeResponding is False:
             probeResponding = init.bootCheck()
 
-        # Move the next three lines into init()
-        time.sleep(1)
-        init.readEchosUntilAllNewlines(4, 3)
-        init.readEchos(3)
+        # Initialize probe
         init.init()
-        logging.debug("init successful")
 
 
 if __name__ == "__main__":
