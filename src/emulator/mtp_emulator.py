@@ -96,8 +96,8 @@ class MTPEmulator():
 
     def interpretCommand(self, line, chaos, state):
         """ Parse command and send appropriate response back over port """
-        # All lines echo immediately, then have actuall responses
-        string = '\r\n' +  line + '\r\n'
+        # All lines echo immediately, then have actual responses
+        string = '\r\n' + line + '\r\n'
         self.sport.write(string.encode('utf-8'))
 
         if line[0] == 'V':  # Firmware Version
@@ -162,7 +162,7 @@ class MTPEmulator():
 
         elif line[0] == 'R':  # Return counts from last integration
             # Sending back 19000 counts for all channels/angles
-            string = '\r\nR' +  self.hex + ':4A38\r\n'
+            string = '\r\nR' + self.hex + ':4A38\r\n'
             self.sport.write(string.encode('utf-8'))
 
         elif line[0] == 'S':  # Return firmware status
@@ -184,12 +184,12 @@ class MTPEmulator():
             # M02:2014 1209 1550 2067 1737 1131 4095 1077
             # Tsynth of 3D0 translates to 50.03 C,
             # Tsynth of 3E0 translates to 49.64 C
-            if state == 'overheat': 
+            if state == 'overheat':
                 a = random.randrange(10)
                 if a % 2 == 0:
                     self.sport.write(
                         b'\r\nM02:7DF 494 539 5FF 614 436 FFF 3E0 \r\n')
-                else: 
+                else:
                     self.sport.write(
                         b'\r\nM02:7DF 494 539 5FF 614 436 FFF 3D0 \r\n')
             else:
@@ -251,7 +251,7 @@ class MTPEmulator():
         """
         # including D,d for 'unknown'
         # D is a UART command - move negative. Better to use value not used
-        # otherwise.
+        # otherwise. - JAA
         error = ['@', '`', 'A', 'a', 'B', 'b', 'C', 'c', 'D', 'd', 'E', 'e',
                  'G', 'g', 'I', 'i', 'K', 'k', 'O', 'o']
         # Note: The MTP control program sends strings like
@@ -259,18 +259,18 @@ class MTPEmulator():
         # motor is moving backward (negative direction). However, in actuality
         # negative steps cause the motor to rotate from top to bottom when
         # the mirror is facing forward.
-        string = '\r\nU:' + line + '/r/n'
+        string = 'U:' + line + '\r\n'
         if chaos == 'low':
             self.sport.write(string.encode('utf-8'))
-            self.sport.write(b'\r\nStep:\xff/0@\r\n')  # No error
+            self.sport.write(b'Step:\xff/0@\r\n')  # No error
         if chaos == 'medium':
             self.sport.write(string.encode('utf-8'))
             # delay @ by 0-30us skipping first 3 numbers generated
             time.sleep(random.randrange(0, 30, 3))
             # ` means the move is happening
-            self.sport.write(b'\r\nStep:\xff/0`\r\n')
+            self.sport.write(b'Step:\xff/0`\r\n')
             # @ means the move has stopped
-            self.sport.write(b'\r\nStep:\xff/0@\r\n')
+            self.sport.write(b'Step:\xff/0@\r\n')
         if chaos == 'high':
             # one in 5 chance of not getting an @
             # this lack should casuse a re-init/powercycle
@@ -278,6 +278,7 @@ class MTPEmulator():
         if chaos == 'extreme':
             # Report other stepper motor states
             rand = random.choice(error)
+            # String is not output. What is the intention here?? - JAA
             string = b'\r\nStep:\xff/0' + error[rand].encode('utf-8') + '\r\n'
             self.sport.write(b'\r\nStep:\xff/0c\r\n')
 
