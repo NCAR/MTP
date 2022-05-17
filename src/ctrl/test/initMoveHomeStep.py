@@ -156,8 +156,6 @@ while (1):
     if probeResponding is False:
         probeResponding = init.bootCheck()
 
-    time.sleep(1)
-    # init.py has a call readEchosUntilAllNewLines(4, 3). Also here?? - JAA
     init.readEchos(3)
     init.init()
     logging.debug("init successful")
