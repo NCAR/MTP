@@ -1,3 +1,4 @@
+import sys
 import logging
 import time
 import serial
@@ -21,6 +22,34 @@ class MTPProbeInit():
     def getUdpSocket(self):
         ''' return UDP socket '''
         return self.udpSocket
+
+    def getStatus(self):
+        ''' Query probe for status '''
+
+        # status = 0-6, C, B, or @  otherwise error = -1
+        # staus can have many other values: I, K, O, etc. Handle those - JAA
+        # check for T in ST:0X
+        # return status
+        self.serialPort.write(b'S\r\n')
+        answerFromProbe = self.readEchos(4)
+        logging.debug("echos from status read: %r", answerFromProbe)
+        # Offset assumes probe responds "\r\nST:" before desired status char
+        return self.findCharPlusNum(answerFromProbe, b'T', offset=5)
+
+    def findCharPlusNum(self, array, binaryCharacter, offset):
+        # status = 0-6, C, B, or @
+        # staus can have many other values: I, K, O, etc. Handle those - JAA
+        # otherwise error = -1
+        index = array.find(binaryCharacter)
+        asciiArray = array.decode('ascii')
+        if index > -1:
+            # logging.debug("status with offset: %r, %r",
+            #               asciiArray[index+offset], asciiArray)
+            return asciiArray[index+offset]
+        else:
+            logging.error("status with offset unknown, unable to find %r: %r",
+                          binaryCharacter, array)
+            return -1
 
     def bootCheck(self):
         # on boot probe sends MTPH_Control.c-101103>101208
@@ -174,7 +203,7 @@ class MTPProbeInit():
         #  Step:\r\n
         #
 
-        return self.readEchos(3)
+        return self.readEchos(4)
 
     def sendInit2(self):
         # Init2
@@ -192,7 +221,7 @@ class MTPProbeInit():
         # \x1b[A\x1b[BU/1f1j256V50000R
         # Step:\xff/0B\r\n'
         #
-        return self.readEchos(3)
+        return self.readEchos(4)
 
     def init(self, maxAttempts=6):
 
@@ -232,8 +261,8 @@ class MTPProbeInit():
             # - unable to find commands to recover
             # Probe needs power cycle
 
-        self.serialPort.write(b'S\r\n')
-        buf = self.readEchos(3)
+        status = self.getStatus()
+        # Should check status here. What are we looking for? - JAA
 
         errorStatus = 0
         while errorStatus < maxAttempts:
@@ -278,6 +307,18 @@ def parse_args():
     return(args)
 
 
+def printMenu():
+    """ List user options """
+    print("Please issue a command:")
+    print("0 = Status")
+    print("1 = init")
+
+    cmdInput = sys.stdin.readline()
+    cmdInput = str(cmdInput).strip('\n')
+
+    return(cmdInput)
+
+
 def main():
     # initial setup of time, logging
     logging.basicConfig(level=logging.DEBUG)
@@ -290,15 +331,21 @@ def main():
     init = MTPProbeInit(args, port)
 
     probeResponding = False
-    while (1):  # Why not loop until successful init then stop?? - JAA
-        # Or even better implement command line control so can re-init at will.
+    while (1):
+
+        cmdInput = printMenu()
 
         # Check if probe is on and responding
         if probeResponding is False:
             probeResponding = init.bootCheck()
 
-        # Initialize probe
-        init.init()
+        if cmdInput == '0':
+            # Print status
+            init.getStatus()
+
+        elif cmdInput == '1':
+            # Initialize probe
+            init.init()
 
 
 if __name__ == "__main__":
