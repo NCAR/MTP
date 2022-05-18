@@ -57,6 +57,9 @@ class MTPEmulator():
 
         self.sport = serial.Serial(device, 9600, timeout=0)
         self.sport.nonblocking()
+        # status if 04 indicates synthesizer out of lock. Maybe better to use
+        # 00. Does probe return 04 regularly? If so, ask Julie if synthesizer
+        # status out of lock is a concern... - JAA
         self.status = '04'  # Even number indicates integrator not busy
         self.statusset = False
         self.commandstatus = {
@@ -104,14 +107,14 @@ class MTPEmulator():
             # Return version date, etc. for this program.
             # Emulator mimics firmware.
             if state == 'noresp':
-                time.sleep(200)
+                time.sleep(200)  # Sleep for 3.3 minutes
             self.sport.write(b'Version:MTPH_Control.c-101103>101208\r\n')
 
         elif line[0] == '0X03':  # Restart firmware
             logger.printmsg("DEBUG", "hex Control-C char")
             # This emulator does NOT emulate a firmware restart.
             # Only thing visible from firmware restart is another V command.
-            time.sleep(20)
+            time.sleep(20)  # sleep for 20 seconds
             if chaos == 'low':
                 time.sleep(1)
             elif chaos == 'medium':
@@ -265,10 +268,10 @@ class MTPEmulator():
             self.sport.write(b'Step:\xff/0@\r\n')  # No error
         if chaos == 'medium':
             self.sport.write(string.encode('utf-8'))
-            # delay @ by 0-30us skipping first 3 numbers generated
-            time.sleep(random.randrange(0, 30, 3))
             # ` means the move is happening
             self.sport.write(b'Step:\xff/0`\r\n')
+            # delay @ by 0-30us in multiples of 3
+            time.sleep(random.randrange(0, 30, 3)*0.000001)
             # @ means the move has stopped
             self.sport.write(b'Step:\xff/0@\r\n')
         if chaos == 'high':
@@ -278,9 +281,8 @@ class MTPEmulator():
         if chaos == 'extreme':
             # Report other stepper motor states
             rand = random.choice(error)
-            # String is not output. What is the intention here?? - JAA
-            string = b'\r\nStep:\xff/0' + error[rand].encode('utf-8') + '\r\n'
-            self.sport.write(b'\r\nStep:\xff/0c\r\n')
+            string = b'\r\nStep:\xff/0' + rand.encode('utf-8') + b'\r\n'
+            self.sport.write(string)
 
     def conditionalStatus(self, chaos, state):
         # Two command types have conditions, I (integrate) and U (move)
@@ -322,7 +324,8 @@ class MTPEmulator():
                     return random.choice(['00', '02', '04', '06'])
 
         elif lastcommand == "U":
-            self.statusset = True
+            # By setting status True here, only low chaos gets a return value.
+            # self.statusset = True
             if time.time() <= commandtime+dur:
                 # emulate moving
                 if chaos == 'low':
@@ -332,8 +335,8 @@ class MTPEmulator():
                         return random.choice(['01', '03', '05', '07'])
                 elif chaos == 'extreme':
                     if not self.statusset:
-                        self.status = random.choice(['00', '01', '02', '03',
-                                                     '04', '05', '06', '07'])
+                        return(random.choice(['00', '01', '02', '03',
+                                              '04', '05', '06', '07']))
             else:
                 # emulate stop
                 # this else should only run once per 'stop'
@@ -355,12 +358,14 @@ class MTPEmulator():
                     # currently emulates that the probe is stuck
                     # signifigant investment to logic out the rest
                     if not self.statusset:
-                        self.status = random.choice(['00', '01', '02', '03',
-                                                     '04', '05', '06', '07'])
+                        return(random.choice(['00', '01', '02', '03',
+                                              '04', '05', '06', '07']))
+
             # most of this is done, tested with probe so implementation
             # here will be minimal.
             logging.debug("conditional status U detected")
-        return '04'
+        else:
+            return '04'
 
     def close(self):
         """ Close port when exit """
