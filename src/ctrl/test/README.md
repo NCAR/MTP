@@ -1,25 +1,37 @@
-Be sure to call python IWG.py from same directory as the IWG1_XXX.txt file.
+# MTP control library functions
 
-probeOnCheck.py
-- checks for probe to send version blurb on startup
-- also does basic troubleshooting for responsiveness
+These functions work as stand-alone testing functions. They will eventually
+be integrated into the main code.
 
+Be sure to call python IWG.py from the same directory as the IWG1_XXX.txt file.
+
+Currently updated functions are init.py and initMoveHomeStep.py.  Depending on
+the function you call, a user menu will provide the following functionality:
+
+## 0 = Status (init, move)
+ * return probe status
+
+## 1 = Init (init, move)
+ * confirm probe is on
+ * run the 2 init commands to initialize the motor
+ * probe sound change, no movement
+
+## 2 = Move Home (move)
+ * return the mirror to the home position (mirror moves to point at target)
+
+## 3 = Step (move)
+ * move a pre-determined step into the loop
+ * then move home again
+
+## 9 = Probe On Check (init)
+ * checks for probe to send version blurb on startup
+ * also does basic troubleshooting for responsiveness
+
+## Not updated yet
 manualProbeQuery.py
 - send individual commands to probe
 - useful for debugging combined with lib mtpcommand
   if the other programs get into non-continue states
-
-init.py
-- runs just the 2 init commands to initialize the motor
-- probe sound change, no movement
-
-initMoveHome.py
-- runs the init commands 
-- returns the mirror to the home position (mirror moves to point at target)
-
-initMoveHomeStep.py
-- in addition to moving home, moves a pre-determined step into the loop
-- then moves home again
 
 initMoveHomeLoop.py
 - currently not working
@@ -29,3 +41,27 @@ genericCommandStats.py
 - Can be used to do stats on inits, Channel change, Integrate, Read
 - Can't be used with move commands unless previously initialized
 - ctrl-c kills movement. Or 'movement' that the probe thinks it's doing, but isn't
+
+IWGDaisy.py
+
+Qt_manualProbeQuery.py
+
+dehex.py
+
+initMoveHomeStepCIR.py
+
+initMoveHomeStepCIRALLTIME.py
+
+loopProbeQuery.py
+
+qtUDPread.py
+
+qtUDPwrite.py
+
+read_IWG.py
+
+read_UDP.py
+
+spikes.py
+
+statsManualProbeQuery.py
