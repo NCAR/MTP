@@ -1,3 +1,10 @@
+###############################################################################
+# MTP probe initialization class
+#
+# Written in Python 3
+#
+# COPYRIGHT:   University Corporation for Atmospheric Research, 2022
+###############################################################################
 import re
 import time
 import serial

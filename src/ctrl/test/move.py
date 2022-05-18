@@ -1,3 +1,10 @@
+###############################################################################
+# MTP probe control. Class contains functions that move the probe
+#
+# Written in Python 3
+#
+# COPYRIGHT:   University Corporation for Atmospheric Research, 2022
+###############################################################################
 from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
