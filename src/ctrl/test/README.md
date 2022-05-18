@@ -13,8 +13,9 @@ To run these testing functions, from MTP/src, run
 (mtp) > python3 MTPcontrolTest.py
 ```
 
-Currently updated functions are init.py and move.py. The user menu provides
-the following functionality:
+Currently updated functions are: init.py, move.py, manualProbeQuery.py
+
+The user menu provides the following functionality:
 
 #### 0 = Status (init, move)
  * return probe status
@@ -35,15 +36,16 @@ the following functionality:
  * checks for probe to send version blurb on startup
  * also does basic troubleshooting for responsiveness
 
+#### q = Manual Probe Query
+ * send individual commands to probe
+ * useful for debugging if the other programs get into non-continue states
+ * reference lib/mtpcommand.py for common commands.
+
 #### x = Exit
  * Quit this code.
 
 
 ## Not updated yet
-manualProbeQuery.py
-- send individual commands to probe
-- useful for debugging combined with lib mtpcommand
-  if the other programs get into non-continue states
 
 initMoveHomeLoop.py
 - currently not working

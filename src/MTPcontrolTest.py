@@ -8,8 +8,10 @@
 import sys
 import argparse
 import logging
+from lib.config import config
 from ctrl.test.init import MTPProbeInit
 from ctrl.test.move import MTPProbeMove
+from ctrl.test.manualProbeQuery import MTPQuery
 from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
@@ -19,6 +21,9 @@ def parse_args():
     # Define command line arguments which can be provided by users
     parser = argparse.ArgumentParser(
         description="Script to initialize the MTP instrument")
+    parser.add_argument(
+        '--config', type=str, required=True,
+        help='File containing project-specific MTP configuration info.')
     parser.add_argument(
         '--device', type=str, default='COM6',
         help="Device on which to receive messages from MTP instrument")
@@ -44,6 +49,7 @@ def printMenu():
     print("2 = Move Home")
     print("3 = Step")
     print("9 = Probe On Check")
+    print("q = Manual Probe Query")
     print("x = Exit")
 
     cmdInput = sys.stdin.readline()
@@ -61,9 +67,12 @@ def main():
     stream = sys.stdout
     logger.initLogger(stream, args.loglevel, args.logmod)
 
+    # Initialize a config file (includes reading it into a dictionary)
+    configfile = config(args.config)
+
     # Move readConfig out of viewer/MTPclient to lib/readConfig and
     # get port from there. Add --config to parse_args - JAA
-    port = 32107
+    port = configfile.getInt('udp_send_port')
 
     init = MTPProbeInit(args, port)
     move = MTPProbeMove(init)
@@ -98,6 +107,11 @@ def main():
                 echo = move.moveTo(b'U/1J0D28226J3R\r\n')
                 s = init.findChar(echo, b'@')
                 logger.printmsg('debug', "First angle, status = %r", s)
+
+        elif cmdInput == 'q':
+            # Go into binary command input mode
+            query = MTPQuery(init.getSerialPort())
+            query.query()
 
         elif cmdInput == 'x':
             exit(1)
