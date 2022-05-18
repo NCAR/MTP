@@ -205,3 +205,11 @@ class MTPcommand():
     def getCommands(self):
         """ Return a list of all possible user commands """
         return(self.command.keys())
+
+    def getCommandValues(self):
+        """ Return a list of all possible MTP commands """
+        list = []
+        for value in self.command.values():
+            list.append(value)
+
+        return(list)
