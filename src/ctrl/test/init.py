@@ -25,10 +25,14 @@ class MTPProbeInit():
         return self.udpSocket
 
     def getStatus(self):
-        ''' Query probe for status '''
-        # status can have values X=[0-6], otherwise error = -1
-        # check for T in ST:0X
-        # return status
+        '''
+        Query probe for status
+
+        status can have values X=[0-6], otherwise error = -1
+        check for T in ST:0X
+
+        Return: status
+        '''
         self.serialPort.write(b'S\r\n')
         answerFromProbe = self.readEchos(4)
         logging.debug("echos from status read: %r", answerFromProbe)
@@ -36,9 +40,13 @@ class MTPProbeInit():
         return self.findChar(answerFromProbe, b'T', offset=3)
 
     def findChar(self, array, binaryString, offset=0):
-        # status = 0-6, C, B, or @
-        # staus can have many other values: I, K, O, etc. Handle those - JAA
-        # otherwise error = -1
+        '''
+        Find binary string in char array
+
+        Return:
+         - If found return first char in found string.
+         - If not found (-1) return False
+        '''
         index = array.find(binaryString)
         if index > -1:
             logging.debug("status with offset: %r", chr(array[index+offset]))
@@ -49,9 +57,16 @@ class MTPProbeInit():
             return False
 
     def bootCheck(self):
-        # on boot probe sends MTPH_Control.c-101103>101208
-        # needs to be caught first before other init commands are sent
-        # (This string is also sent as a response to sending a V.)
+        '''
+        Check if probe is booted and responding
+
+        On boot probe returns MTPH_Control.c-101103>101208
+        This needs to be caught first before other init commands are sent
+        This string is also sent as a response to sending a V.)
+
+        Loop indefinitely if probe is off. This allows user to boot probe
+        and have code respond and begin probe operation.
+        '''
         while self.probeOnCheck() is False:
             time.sleep(10)
             logging.error("probe off or not responding")
@@ -60,6 +75,7 @@ class MTPProbeInit():
         return True
 
     def readEchos(self, num):
+        ''' Read num lines ending in newline into buffer '''
         buf = b''
         for i in range(num):
             buf = buf + self.serialPort.readline()
@@ -68,7 +84,13 @@ class MTPProbeInit():
         return buf
 
     def moveComplete(self, buf):
-        # returns true if '@' is found,
+        '''
+        Check if a command has been completed by the firmware.
+
+        Returns:
+         - true if '@' is found, indicating successful completion
+         - false if '@' not found
+        '''
         # needs a timeout if command didn't send properly
         if buf.find(b'@') >= 0:
             return True
@@ -159,6 +181,9 @@ class MTPProbeInit():
             return False
 
     def probeOnCheck(self):
+        '''
+        Check if probe is on by looking for version string.
+        '''
         if self.findChar(self.readEchos(3),
                          b"MTPH_Control.c-101103>101208"):
             logging.info("Probe on, Version string detected")
@@ -169,6 +194,7 @@ class MTPProbeInit():
             if self.probeResponseCheck():
                 return True
             else:
+                # Probe not responding. Attempt firmware reboot.
                 if self.truncateBotchedMoveCommand():
                     logging.warning("truncateBotchedMoveCommand called, " +
                                     "ctrl-c success")
