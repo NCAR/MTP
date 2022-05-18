@@ -1,49 +1,29 @@
+import sys
 import logging
-# import datetime
-import time
 import argparse
 from init import MTPProbeInit
 
 
 class MTPMoveHomeStep():
 
-    def __init__(self, serialPort):
-        self.serialPort = serialPort
-
-    def getStatus(self):
-        ''' Move this to init.py and call it from init - JAA '''
-        # status = 0-6, C, B, or @  otherwise error = -1
-        # check for T in ST:0X
-        # return status
-        self.serialPort.write(b'S\r\n')
-        answerFromProbe = init.readEchos(4)
-        logging.debug("echos from status read: %r", answerFromProbe)
-        return self.findCharPlusNum(answerFromProbe, b'T', offset=3)
-
-    def findCharPlusNum(self, array, binaryCharacter, offset):
-        ''' Move to init.py - JAA '''
-        # status = 0-6, C, B, or @
-        # otherwise error = -1
-        index = array.find(binaryCharacter)
-        asciiArray = array.decode('ascii')
-        if index > -1:
-            # logging.debug("status with offset: %r, %r",
-            #               asciiArray[index+offset], asciiArray)
-            return asciiArray[index+offset]
-        else:
-            logging.error("status with offset unknown, unable to find %r: %r",
-                          binaryCharacter, array)
-            return -1
+    def __init__(self, init):
+        self.serialPort = init.getSerialPort()
+        self.init = init
 
     def moveHome(self):
+        # When call move home during probe operation, check for existing
+        # return strings and handle them. - JAA
+        self.init.readEchos(3)
+
         errorStatus = 0
-        # acutal initiate movement home
+        # initiate movement home
         self.serialPort.write(b'U/1J0f0j256Z1000000J3R\r\n')
-        init.readEchos(3)
+        self.init.readEchos(3)
+
         # if spamming a re-init, this shouldn't be needed
         # or should be in the init phase anyway
         # self.serialPort.write(b'U/1j128z1000000P10R\r\n')
-        # init.readEchos(3)
+        # self.init.readEchos(3)
 
         # S needs to be 4 here
         # otherwise call again
@@ -54,7 +34,7 @@ class MTPMoveHomeStep():
 
     def moveTo(self, location):
         self.serialPort.write(location)
-        return init.readEchos(3)
+        return self.init.readEchos(3)
 
     def initForNewLoop(self):
         # This is an init command
@@ -68,7 +48,7 @@ class MTPMoveHomeStep():
         # step 0C
         self.serialPort.write(b'U/1j128z1000000P10R\r\n')
 
-        init.readEchos(3)
+        self.init.readEchos(3)
 
     def isMovePossibleFromHome(self, maxDebugAttempts, scanStatus):
         # returns 4 if move is possible otherwise does debugging
@@ -78,7 +58,7 @@ class MTPMoveHomeStep():
 
         counter = 0
         while counter < maxDebugAttempts:
-            s = self.getStatus()
+            s = self.init.getStatus()
             counter = counter + 1
             if s == '0':
                 # integrator busy, Stepper not moving, Synthesizer out of lock,
@@ -106,7 +86,7 @@ class MTPMoveHomeStep():
             elif s == '6':
                 # can be infinite,
                 # can also be just wait a bit
-                s = self.getStatus()
+                s = self.init.getStatus()
                 if counter < maxDebugAttempts:
                     logging.debug("isMovePossible, status = 6, counter = %r",
                                   counter)
@@ -136,38 +116,59 @@ def parse_args():
     return(args)
 
 
-# initial setup of time, logging
-logging.basicConfig(level=logging.DEBUG)
+def printMenu():
+    """ List user options """
+    print("Please issue a command:")
+    print("0 = Status")
+    print("1 = init")
+    print("2 = Move home and step")
 
-args = parse_args()
+    cmdInput = sys.stdin.readline()
+    cmdInput = str(cmdInput).strip('\n')
 
-port = 32107
-init = MTPProbeInit(args, port)
-move = MTPMoveHomeStep(init.getSerialPort())
+    return(cmdInput)
 
-# if on first move status 6 for longer than expected
-# aka command sent properly, but actual movement
-# not initiated, need a Ctrl-c then re-init, re-home
 
-probeResponding = False
-while (1):
+def main():
+    # initial setup of time, logging
+    logging.basicConfig(level=logging.DEBUG)
 
-    # Check if probe is on and responding
-    if probeResponding is False:
-        probeResponding = init.bootCheck()
+    args = parse_args()
 
-    init.readEchos(3)
-    init.init()
-    logging.debug("init successful")
+    # Move readConfig out of viewer/MTPclient to lib/readConfig and
+    # get port from there. Add --config to parse_args - JAA
+    port = 32107
+    init = MTPProbeInit(args, port)
 
-    init.readEchos(3)
-    move.moveHome()
-    if (move.isMovePossibleFromHome(maxDebugAttempts=12,
-                                    scanStatus='potato') == 4):
-        move.initForNewLoop()
-        time.sleep(3)
-        echo = move.moveTo(b'U/1J0D28226J3R\r\n')
-        s = init.findChar(echo, b'@')
-        logging.debug("First angle, status = %r", s)
+    move = MTPMoveHomeStep(init)
 
-    time.sleep(3)
+    probeResponding = False
+    while (1):
+
+        cmdInput = printMenu()
+
+        # Check if probe is on and responding
+        if probeResponding is False:
+            probeResponding = init.bootCheck()
+
+        if cmdInput == '0':
+            # Print status
+            status = init.getStatus()
+            # Should check status here. What are we looking for? - JAA
+
+        elif cmdInput == '1':
+            # Initialize probe
+            init.init()
+
+        elif cmdInput == '2':
+            move.moveHome()
+            if (move.isMovePossibleFromHome(maxDebugAttempts=12,
+                                            scanStatus='potato') == 4):
+                move.initForNewLoop()
+                echo = move.moveTo(b'U/1J0D28226J3R\r\n')
+                s = init.findChar(echo, b'@')
+                logging.debug("First angle, status = %r", s)
+
+
+if __name__ == "__main__":
+    main()
