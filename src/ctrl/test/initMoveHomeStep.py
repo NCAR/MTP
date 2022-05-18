@@ -120,8 +120,9 @@ def printMenu():
     """ List user options """
     print("Please issue a command:")
     print("0 = Status")
-    print("1 = init")
-    print("2 = Move home and step")
+    print("1 = Init")
+    print("2 = Move Home")
+    print("3 = Step")
 
     cmdInput = sys.stdin.readline()
     cmdInput = str(cmdInput).strip('\n')
@@ -162,9 +163,12 @@ def main():
 
         elif cmdInput == '2':
             move.moveHome()
+
+        elif cmdInput == '3':
             if (move.isMovePossibleFromHome(maxDebugAttempts=12,
                                             scanStatus='potato') == 4):
                 move.initForNewLoop()
+
                 echo = move.moveTo(b'U/1J0D28226J3R\r\n')
                 s = init.findChar(echo, b'@')
                 logging.debug("First angle, status = %r", s)
