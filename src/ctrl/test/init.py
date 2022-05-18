@@ -340,7 +340,8 @@ def printMenu():
     """ List user options """
     print("Please issue a command:")
     print("0 = Status")
-    print("1 = init")
+    print("1 = Init")
+    print("9 = Probe On Check")
 
     cmdInput = sys.stdin.readline()
     cmdInput = str(cmdInput).strip('\n')
@@ -365,7 +366,7 @@ def main():
         cmdInput = printMenu()
 
         # Check if probe is on and responding
-        if probeResponding is False:
+        if probeResponding is False or cmdInput == '9':
             probeResponding = init.bootCheck()
 
         if cmdInput == '0':
