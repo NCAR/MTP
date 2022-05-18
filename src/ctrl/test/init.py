@@ -1,4 +1,5 @@
 import sys
+import re
 import logging
 import time
 import serial
@@ -25,31 +26,27 @@ class MTPProbeInit():
 
     def getStatus(self):
         ''' Query probe for status '''
-
-        # status = 0-6, C, B, or @  otherwise error = -1
-        # staus can have many other values: I, K, O, etc. Handle those - JAA
+        # status can have values X=[0-6], otherwise error = -1
         # check for T in ST:0X
         # return status
         self.serialPort.write(b'S\r\n')
         answerFromProbe = self.readEchos(4)
         logging.debug("echos from status read: %r", answerFromProbe)
-        # Offset assumes probe responds "\r\nST:" before desired status char
-        return self.findCharPlusNum(answerFromProbe, b'T', offset=5)
+        # Offset assumes probe responds "...T:0X" where X is desired char
+        return self.findChar(answerFromProbe, b'T', offset=3)
 
-    def findCharPlusNum(self, array, binaryCharacter, offset):
+    def findChar(self, array, binaryString, offset=0):
         # status = 0-6, C, B, or @
         # staus can have many other values: I, K, O, etc. Handle those - JAA
         # otherwise error = -1
-        index = array.find(binaryCharacter)
-        asciiArray = array.decode('ascii')
+        index = array.find(binaryString)
         if index > -1:
-            # logging.debug("status with offset: %r, %r",
-            #               asciiArray[index+offset], asciiArray)
-            return asciiArray[index+offset]
+            logging.debug("status with offset: %r", chr(array[index+offset]))
+            return chr(array[index+offset])
         else:
             logging.error("status with offset unknown, unable to find %r: %r",
-                          binaryCharacter, array)
-            return -1
+                          binaryString, array)
+            return False
 
     def bootCheck(self):
         # on boot probe sends MTPH_Control.c-101103>101208
@@ -87,10 +84,7 @@ class MTPProbeInit():
 
         return ret
 
-    def findChar(self, array, binaryString):
-        # Make this more restrictive. When Firmware is working, these chars
-        # are unique, but if there is noise it is possible to get an
-        # erroneous match
+    def findStat(self, array):
         '''
         UART returned value meanings (e.g. ff/0@ = No error):
             ff - RS485 line turnaround char; starts message
@@ -108,15 +102,24 @@ class MTPProbeInit():
                 Ascii O/o =Hex 4F/6F - Already executing command
                                         when another received
         '''
-        # Status return values = 0-6
+        # UART returns "Step:\xff/0<status char>\r\n". To differentiate
+        # this from noise, search for entire string. - JAA
         # otherwise error = -1
-        index = array.find(binaryString)
+        ustat = [b'@', b'`', b'A', b'a', b'B', b'b', b'C', b'c', b'D', b'd',
+                 b'E', b'e', b'G', b'g', b'I', b'i', b'K', b'k', b'O', b'o']
+
+        i = 0
+        index = -1
+        while index == -1 and i < len(ustat):
+            index = array.find(ustat[i])
+            i = i + 1
+
         if index > -1:
             # logging.debug("status: %r, %r", array[index], array)
-            return array[index]
+            return chr(array[index])
         else:
-            logging.error("status unknown, unable to find %r: %r",
-                          binaryString, array)
+            logging.error("status unknown, unable to find status in: %r",
+                          array)
             return -1
 
     def probeResponseCheck(self):
@@ -126,7 +129,7 @@ class MTPProbeInit():
         '''
         self.serialPort.write(b'V\r\n')
         if self.findChar(self.readEchos(3),
-                         b"MTPH_Control.c-101103>101208") > 0:
+                         b"MTPH_Control.c-101103>101208"):
             logging.info("Probe on, responding to version string prompt")
             return True
         else:
@@ -148,7 +151,7 @@ class MTPProbeInit():
         # exactly what the 'C' case does.
 
         self.serialPort.write(b'Ctrl-C\r\n')
-        if self.findChar(self.readEchos(3), b'Ctrl-C\r\n') > 0:
+        if self.findChar(self.readEchos(3), b'Ctrl-C\r\n'):
             logging.info("Probe on, responding to Ctrl-C string prompt")
             return True
         else:
@@ -157,7 +160,7 @@ class MTPProbeInit():
 
     def probeOnCheck(self):
         if self.findChar(self.readEchos(3),
-                         b"MTPH_Control.c-101103>101208") > 0:
+                         b"MTPH_Control.c-101103>101208"):
             logging.info("Probe on, Version string detected")
             return True
         else:
@@ -211,8 +214,8 @@ class MTPProbeInit():
         #  - Set hold current to 30% of 3.0 Amp max ('h30')
         #  - Set running current to 100% of 3.0 Amp max ('m100')
         self.serialPort.write(b'U/1L4000h30m100R\r\n')
+
         # normal return:
-        #
         # U/1f1j256V50000R\r\n
         # U:U/1f1j256V50000R\r\n
         # b'Step:\xff/0@\r\n'
@@ -222,30 +225,32 @@ class MTPProbeInit():
         # Step:\xff/0B\r\n'
         #
         return self.readEchos(4)
+        # By the time we have sent maxAttempts (6) Init1 and 6 init2, we need
+        # 12 readEchos to get all the responses.
 
     def init(self, maxAttempts=6):
 
-        # Why do we need this?? - JAA
-        self.readEchos(3)
+        # The first time the probe is initialized, this returns b''.
+        # If we want to re-initialise probe, there may be content in the
+        # buffer. In that case, something should be done with the returned
+        # values.
+        answerFromProbe = self.readEchos(3)
+        emptyAnswer = re.compile(b'')
+        if not emptyAnswer.match(answerFromProbe):
+            logging.error(" Need to handle probe response %r", answerFromProbe)
 
         errorStatus = 0
         while errorStatus < maxAttempts:
-            # Move error checking into function to call from both init1 and
-            # init2. Handle all possible values
             errorStatus = errorStatus + 1
             answerFromProbe = self.sendInit1()
             # check for errors/decide if resend?
-            if self.findChar(answerFromProbe, b'@') > 0:
+            status = self.findStat(answerFromProbe)
+            if status == '@':
                 # success - no error. Break out of loop
                 errorStatus = maxAttempts
-            elif self.findChar(answerFromProbe, b'B') > 0:
-                # Illegal Command Sent
-                logging.warning(" Init 1 status B, resending.")
-            elif self.findChar(answerFromProbe, b'C') > 0:
-                # Out of range operand value
-                logging.warning(" Init 1 status C, resending.")
             else:
-                logging.warning(" Init 1 status else, resending.")
+                logging.warning(" Init 1 status %r, resending init1 command.",
+                                status)
             # if on first move status 6 for longer than expected
             # aka command sent properly, but actual movement
             # not initiated, need a Ctrl-c then re-init, re-home
@@ -268,17 +273,13 @@ class MTPProbeInit():
         while errorStatus < maxAttempts:
             answerFromProbe = self.sendInit2()
             # check for errors/decide if resend?
-            if self.findChar(answerFromProbe, b'@') > 0:
-                errorStatus = maxAttempts
+            status = self.findStat(answerFromProbe)
+            if status == '@':
                 # success
-            elif self.findChar(answerFromProbe, b'B') > 0:
-                logging.warning(" Init 2 status B, resending.")
-                errorStatus = errorStatus + 1
-            elif self.findChar(answerFromProbe, b'C') > 0:
-                logging.warning(" Init 2 status C, resending.")
-                errorStatus == errorStatus + 1
+                errorStatus = maxAttempts
             else:
-                logging.warning(" Init 2 status else, resending.")
+                logging.warning(" Init 2 status %r, resending init2 command.",
+                                status)
                 errorStatus = errorStatus + 1
 
         # After both is status of 7 ok?
@@ -287,6 +288,8 @@ class MTPProbeInit():
         # if after both inits status = 5
         # do an integrate, then a read to clear
 
+        # We can get here if init fails after maxAttempts. We should
+        # catch that case and not report successful init.
         logging.debug("init successful")
         return errorStatus
 
@@ -341,7 +344,8 @@ def main():
 
         if cmdInput == '0':
             # Print status
-            init.getStatus()
+            status = init.getStatus()
+            # Should check status here. What are we looking for? - JAA
 
         elif cmdInput == '1':
             # Initialize probe
