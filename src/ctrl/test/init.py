@@ -1,10 +1,8 @@
-import sys
 import re
-import logging
 import time
 import serial
 import socket
-import argparse
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
 class MTPProbeInit():
@@ -35,7 +33,8 @@ class MTPProbeInit():
         '''
         self.serialPort.write(b'S\r\n')
         answerFromProbe = self.readEchos(4)
-        logging.debug("echos from status read: %r", answerFromProbe)
+        logger.printmsg('debug', "echos from status read: " +
+                        str(answerFromProbe))
         # Offset assumes probe responds "...T:0X" where X is desired char
         return self.findChar(answerFromProbe, b'T', offset=3)
 
@@ -49,11 +48,12 @@ class MTPProbeInit():
         '''
         index = array.find(binaryString)
         if index > -1:
-            logging.debug("status with offset: %r", chr(array[index+offset]))
+            logger.printmsg('debug', "status with offset: " +
+                            chr(array[index+offset]))
             return chr(array[index+offset])
         else:
-            logging.error("status with offset unknown, unable to find %r: %r",
-                          binaryString, array)
+            logger.printmsg('error', "status with offset unknown, unable to " +
+                            "find " + str(binaryString) + ": " + str(array))
             return False
 
     def bootCheck(self):
@@ -69,8 +69,8 @@ class MTPProbeInit():
         '''
         while self.probeOnCheck() is False:
             time.sleep(10)
-            logging.error("probe off or not responding")
-        logging.info("Probe on check returns true")
+            logger.printmsg('error', "probe off or not responding")
+        logger.printmsg('info', "Probe on check returns true")
 
         return True
 
@@ -80,7 +80,7 @@ class MTPProbeInit():
         for i in range(num):
             buf = buf + self.serialPort.readline()
 
-        logging.debug("read %r", buf)
+        logger.printmsg('debug', "read " + str(buf))
         return buf
 
     def moveComplete(self, buf):
@@ -137,11 +137,12 @@ class MTPProbeInit():
             i = i + 1
 
         if index > -1:
-            # logging.debug("status: %r, %r", array[index], array)
+            # logger.printmsg('debug', "status: " + str(array[index]) + ", " +
+            #                  str(array))
             return chr(array[index])
         else:
-            logging.error("status unknown, unable to find status in: %r",
-                          array)
+            logger.printmsg('error', "status unknown, unable to find status " +
+                            "in: " + str(array))
             return -1
 
     def probeResponseCheck(self):
@@ -152,10 +153,12 @@ class MTPProbeInit():
         self.serialPort.write(b'V\r\n')
         if self.findChar(self.readEchos(3),
                          b"MTPH_Control.c-101103>101208"):
-            logging.info("Probe on, responding to version string prompt")
+            logger.printmsg('info',
+                            "Probe on, responding to version string prompt")
             return True
         else:
-            logging.info("Probe not responding to version string prompt")
+            logger.printmsg('info',
+                            "Probe not responding to version string prompt")
             return False
 
     def truncateBotchedMoveCommand(self):
@@ -174,10 +177,12 @@ class MTPProbeInit():
 
         self.serialPort.write(b'Ctrl-C\r\n')
         if self.findChar(self.readEchos(3), b'Ctrl-C\r\n'):
-            logging.info("Probe on, responding to Ctrl-C string prompt")
+            logger.printmsg('info',
+                            "Probe on, responding to Ctrl-C string prompt")
             return True
         else:
-            logging.info("Probe not responding to Ctrl-C string prompt")
+            logger.printmsg('info',
+                            "Probe not responding to Ctrl-C string prompt")
             return False
 
     def probeOnCheck(self):
@@ -186,27 +191,28 @@ class MTPProbeInit():
         '''
         if self.findChar(self.readEchos(3),
                          b"MTPH_Control.c-101103>101208"):
-            logging.info("Probe on, Version string detected")
+            logger.printmsg('info', "Probe on, Version string detected")
             return True
         else:
-            logging.debug("No version startup string from probe found, " +
-                          "sending V prompt")
+            logger.printmsg('debug', "No version startup string from " +
+                            "probe found, sending V prompt")
             if self.probeResponseCheck():
                 return True
             else:
                 # Probe not responding. Attempt firmware reboot.
                 if self.truncateBotchedMoveCommand():
-                    logging.warning("truncateBotchedMoveCommand called, " +
+                    logger.printmsg('warning',
+                                    "truncateBotchedMoveCommand called, " +
                                     "ctrl-c success")
                     return True
                 else:
-                    logging.error("probe not responding to " +
-                                  "truncateBotchedMoveCommand ctrl-c, " +
-                                  "power cycle necessary")
+                    logger.printmsg('error', "probe not responding to " +
+                                    "truncateBotchedMoveCommand ctrl-c, " +
+                                    "power cycle necessary")
                     return False
 
-        logging.error("probeOnCheck all previous logic tried, " +
-                      "something's wrong")
+        logger.printmsg('error', "probeOnCheck all previous logic tried, " +
+                        "something's wrong")
         return False
 
     def sendInit1(self):
@@ -263,7 +269,8 @@ class MTPProbeInit():
         answerFromProbe = self.readEchos(3)
         emptyAnswer = re.compile(b'')
         if not emptyAnswer.match(answerFromProbe):
-            logging.error(" Need to handle probe response %r", answerFromProbe)
+            logger.printmsg('error', " Need to handle probe response " +
+                            str(answerFromProbe))
 
         errorStatus = 0
         while errorStatus < maxAttempts:
@@ -275,8 +282,8 @@ class MTPProbeInit():
                 # success - no error. Break out of loop
                 errorStatus = maxAttempts
             else:
-                logging.warning(" Init 1 status %r, resending init1 command.",
-                                status)
+                logger.printmsg('warning', " Init 1 status " + status +
+                                ", resending init1 command.")
             # if on first move status 6 for longer than expected
             # aka command sent properly, but actual movement
             # not initiated, need a Ctrl-c then re-init, re-home
@@ -304,8 +311,8 @@ class MTPProbeInit():
                 # success
                 errorStatus = maxAttempts
             else:
-                logging.warning(" Init 2 status %r, resending init2 command.",
-                                status)
+                logger.printmsg('warning', " Init 2 status " + status +
+                                ", resending init2 command.")
                 errorStatus = errorStatus + 1
 
         # After both is status of 7 ok?
@@ -316,68 +323,5 @@ class MTPProbeInit():
 
         # We can get here if init fails after maxAttempts. We should
         # catch that case and not report successful init.
-        logging.debug("init successful")
+        logger.printmsg('debug', "init successful")
         return errorStatus
-
-
-def parse_args():
-    """ Instantiate a command line argument parser """
-
-    # Define command line arguments which can be provided by users
-    parser = argparse.ArgumentParser(
-        description="Script to initialize the MTP instrument")
-    parser.add_argument('--device', type=str, default='COM6',
-                        help="Device on which to receive messages from MTP " +
-                        "instrument")
-
-    # Parse the command line arguments
-    args = parser.parse_args()
-
-    return(args)
-
-
-def printMenu():
-    """ List user options """
-    print("Please issue a command:")
-    print("0 = Status")
-    print("1 = Init")
-    print("9 = Probe On Check")
-
-    cmdInput = sys.stdin.readline()
-    cmdInput = str(cmdInput).strip('\n')
-
-    return(cmdInput)
-
-
-def main():
-    # initial setup of time, logging
-    logging.basicConfig(level=logging.DEBUG)
-
-    args = parse_args()
-
-    # Move readConfig out of viewer/MTPclient to lib/readConfig and
-    # get port from there. Add --config to parse_args - JAA
-    port = 32107
-    init = MTPProbeInit(args, port)
-
-    probeResponding = False
-    while (1):
-
-        cmdInput = printMenu()
-
-        # Check if probe is on and responding
-        if probeResponding is False or cmdInput == '9':
-            probeResponding = init.bootCheck()
-
-        if cmdInput == '0':
-            # Print status
-            status = init.getStatus()
-            # Should check status here. What are we looking for? - JAA
-
-        elif cmdInput == '1':
-            # Initialize probe
-            init.init()
-
-
-if __name__ == "__main__":
-    main()

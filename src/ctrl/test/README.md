@@ -5,8 +5,16 @@ be integrated into the main code.
 
 Be sure to call python IWG.py from the same directory as the IWG1_XXX.txt file.
 
-Currently updated functions are init.py and initMoveHomeStep.py.  Depending on
-the function you call, a user menu will provide the following functionality:
+These tests work with the mtp_emulator (in MTP/src/emulator) via the --device command line argument.
+
+To run these testing functions, from MTP/src, run
+```
+> conda activate mtp
+(mtp) > python3 MTPcontrolTest.py
+```
+
+Currently updated functions are init.py and move.py. The user menu provides
+the following functionality:
 
 #### 0 = Status (init, move)
  * return probe status
@@ -26,6 +34,10 @@ the function you call, a user menu will provide the following functionality:
 #### 9 = Probe On Check (init)
  * checks for probe to send version blurb on startup
  * also does basic troubleshooting for responsiveness
+
+#### x = Exit
+ * Quit this code.
+
 
 ## Not updated yet
 manualProbeQuery.py
