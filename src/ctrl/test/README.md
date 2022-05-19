@@ -13,7 +13,7 @@ To run these testing functions, from MTP/src, run
 (mtp) > python3 MTPcontrolTest.py
 ```
 
-Currently updated functions are: init.py, move.py, manualProbeQuery.py
+Currently updated functions are: init.py, move.py, manualProbeQuery.py, CIR.py
 
 The user menu provides the following functionality:
 
@@ -59,10 +59,9 @@ genericCommandStats.py
 IWGDaisy.py
 
 Qt_manualProbeQuery.py
+- Script that opens port to MTP using PyQt5.QSerialPort
 
 dehex.py
-
-initMoveHomeStepCIR.py
 
 initMoveHomeStepCIRALLTIME.py
 
@@ -77,5 +76,6 @@ read_IWG.py
 read_UDP.py
 
 spikes.py
+- checks for spikes in B data line
 
 statsManualProbeQuery.py
