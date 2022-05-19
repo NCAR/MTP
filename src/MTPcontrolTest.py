@@ -11,6 +11,7 @@ import logging
 from lib.config import config
 from ctrl.test.init import MTPProbeInit
 from ctrl.test.move import MTPProbeMove
+from ctrl.test.CIR import MTPProbeCIR
 from ctrl.test.manualProbeQuery import MTPQuery
 from EOLpython.Qlogger.messageHandler import QLogger as logger
 
@@ -48,6 +49,7 @@ def printMenu():
     print("1 = Init")
     print("2 = Move Home")
     print("3 = Step")
+    print("4 = CIR")
     print("9 = Probe On Check")
     print("q = Manual Probe Query")
     print("x = Exit")
@@ -76,6 +78,7 @@ def main():
 
     init = MTPProbeInit(args, port)
     move = MTPProbeMove(init)
+    data = MTPProbeCIR(init)
 
     probeResponding = False
     while (1):
@@ -96,9 +99,11 @@ def main():
             init.init()
 
         elif cmdInput == '2':
+            # Move Home
             move.moveHome()
 
         elif cmdInput == '3':
+            # Step
             if (move.isMovePossibleFromHome(maxDebugAttempts=12,
                                             scanStatus='potato') == 4):
                 move.initForNewLoop()
@@ -107,6 +112,10 @@ def main():
                 echo = move.moveTo(b'U/1J0D28226J3R\r\n')
                 s = init.findChar(echo, b'@')
                 logger.printmsg('debug', "First angle, status = %r", s)
+
+        elif cmdInput == '4':
+            # Read data at current position
+            data.read()
 
         elif cmdInput == 'q':
             # Go into binary command input mode
