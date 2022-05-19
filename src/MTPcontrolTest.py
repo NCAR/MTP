@@ -49,7 +49,8 @@ def printMenu():
     print("1 = Init")
     print("2 = Move Home")
     print("3 = Step")
-    print("4 = CIR")
+    print("4 = generic CIRS")
+    print("5 = CIRS ND on then off")
     print("9 = Probe On Check")
     print("q = Manual Probe Query")
     print("x = Exit")
@@ -114,8 +115,14 @@ def main():
                 logger.printmsg('debug', "First angle, status = %r", s)
 
         elif cmdInput == '4':
-            # Read data at current position
-            data.read()
+            # Read data at current position for three frequencies
+            countStr = data.CIRS()
+            logger.printmsg("debug", "data from one position:" + str(countStr))
+
+        elif cmdInput == '5':
+            # Read data at current position for three frequencies and for
+            # noise diode on then off
+            data.readEline()
 
         elif cmdInput == 'q':
             # Go into binary command input mode
