@@ -5,7 +5,7 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2022
 ###############################################################################
-import time
+import datetime
 from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
@@ -26,10 +26,46 @@ class MTPProbeCIR():
 
     def integrate(self):
         self.serialPort.write(b'I 40\r\n')
-        time.sleep(0.350)
         self.init.readEchos(4)
-        # this needs to check that S turns to 5 (integrator starts)
+
+        # Check that S turns to 5 (integrator starts)
         # and that S turns back to 4 (integrator finished) to move on
+        self.getIntegrateFromProbe()
+
+    def getIntegrateFromProbe(self):
+        # Need better logic to check for return values than loop set number of
+        # times - JAA
+        i = 0
+        looptimeMS = 2
+        while i < looptimeMS:
+            s = self.init.getStatus()
+            logger.printmsg("debug", "integrate loop 1, checking for " +
+                            "status=5, got status=" + s[0])
+            if s == '5':
+                logger.printmsg("debug", "integrate loop 1, status 5 found, " +
+                                "integrator started")
+                break
+            if i == looptimeMS:
+                logger.printmsg("warning", "integrate loop 1," +
+                                " re-send Integrate")
+                self.serialPort.write(b'I 40\r\n')
+                i = looptimeMS/2
+                looptimeMS = i
+            i = i + 1
+
+        # check that integrator has finished
+        i = 0
+        while i < 3:
+            s = self.init.getStatus()
+            logger.printmsg("debug", "integrate loop 2, checking for " +
+                            "status=4, got status=" + s[0])
+            if s == '4':
+                logger.printmsg("debug", "integrator has finished")
+                break
+            logger.printmsg("debug", 'checking for finished integrator: ' +
+                            str(i))
+            i = i + 1
+        return True
 
     def readDatumFromProbe(self):
         self.serialPort.write(b'R\r\n')
@@ -38,7 +74,7 @@ class MTPProbeCIR():
         # Find counts in string. Expected string is R28:xxxx where xxxx is
         # 4-digit hex value.
         # Need to beef up checking return value - JAA
-        logger.printmsg("debug", "Return value is " + data.decode('ascii'))
+        logger.printmsg("debug", "Return value is " + str(data))
         findColon = data.find(b':')
         hexcounts = data[findColon+1:findColon+5]
 
@@ -99,6 +135,9 @@ class MTPProbeCIR():
         Returns a complete E line,
         eg "E 020807 022393 022128 019105 020672 020117"
         """
+        # Determine how long it takes to create the E line
+        firstTime = datetime.datetime.now()
+
         # Create E line
         data = 'E '
         self.setNoise(b'N 1\r\n')  # Turn noise diode on
@@ -107,5 +146,8 @@ class MTPProbeCIR():
         self.setNoise(b'N 0\r\n')  # Turn noise diode off
         data = data + self.CIRS()  # Collect counts for three channels
         logger.printmsg("debug", "data from E line:" + str(data))
+
+        nextTime = datetime.datetime.now()
+        logger.printmsg("debug", "E line creation took " + nextTime-firstTime)
 
         return data
