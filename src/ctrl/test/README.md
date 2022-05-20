@@ -47,9 +47,6 @@ The user menu provides the following functionality:
 
 ## Not updated yet
 
-initMoveHomeLoop.py
-- currently not working
-
 genericCommandStats.py
 - not written yet
 - Can be used to do stats on inits, Channel change, Integrate, Read
@@ -62,8 +59,6 @@ Qt_manualProbeQuery.py
 - Script that opens port to MTP using PyQt5.QSerialPort
 
 dehex.py
-
-initMoveHomeStepCIRALLTIME.py
 
 loopProbeQuery.py
 
