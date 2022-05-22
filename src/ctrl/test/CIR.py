@@ -5,6 +5,7 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2022
 ###############################################################################
+import sys
 import datetime
 from EOLpython.Qlogger.messageHandler import QLogger as logger
 
@@ -44,10 +45,23 @@ class MTPProbeCIR():
         """
         # looptimeoutMS is actually a loopcount. Make into a time - JAA
         # Is this really the logic we want?? - JAA
+        # For status, Bit 0 = integrator busy, so shouldn't these check
+        # for 1,3,5,7 = integrator busy and 2,4,6 = integrator finished?
 
+        # Index to decide when to resend integrate command. If i reaches
+        # looptimeout, assume integrate command did not make it to probe
+        # and resend command.
         i = 0
+        looptimeoutMS = 3  # Should this be in config file so user tunable?-JAA
+
+        # Index to decide when to ask user to bail. If i reaches
+        # integratetimeout, assume there is a problem with the probe and ask
+        # user if they want to exit. (Should we be asking to reinit, check
+        # if probe is on, or some other mitigation approach? - JAA
+        j = 0
+        integratetimeout = 20
+
         s = -1
-        looptimeoutMS = 3
         while s != 5:
             s = self.init.getStatus()
             logger.printmsg("debug", "integrate loop 1, checking for " +
@@ -58,14 +72,29 @@ class MTPProbeCIR():
                 break
             logger.printmsg("debug", 'checking for finished integrator: ' +
                             'attempt ' + str(i))
+
             if i == looptimeoutMS:
                 logger.printmsg("warning", "integrate loop 1," +
                                 " re-send Integrate")
                 self.integrate()
             i = i + 1
 
+            if j == integratetimeout:
+                logger.printmsg("warning", "integrator not responding to " +
+                                           "start command. Exit? (y/n)")
+                cmdInput = sys.stdin.readline()
+                cmdInput = str(cmdInput).strip('\n')
+                if cmdInput == 'y':
+                    exit()
+                else:
+                    # Restart integrate count and ask again after
+                    # integratetimeout attempts
+                    j = -1
+            j = j + 1
+
         # check that integrator has finished
         i = 0
+        j = 0
         s = -1
         while s != 4:
             s = self.init.getStatus()
@@ -77,7 +106,21 @@ class MTPProbeCIR():
                 break
             logger.printmsg("debug", 'checking for finished integrator: ' +
                             'attempt ' + str(i))
+
             i = i + 1
+
+            if j == integratetimeout:
+                logger.printmsg("warning", "integrator not reporting " +
+                                           "finished. Exit? (y/n)")
+                cmdInput = sys.stdin.readline()
+                cmdInput = str(cmdInput).strip('\n')
+                if cmdInput == 'y':
+                    exit()
+                else:
+                    # Restart integrate count and ask again after
+                    # integratetimeout attempts
+                    j = -1
+            j = j + 1
 
         return True
 
