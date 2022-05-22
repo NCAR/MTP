@@ -289,7 +289,7 @@ class MTPProbeInit():
                 # success - no error. Break out of loop
                 errorStatus = maxAttempts
             else:
-                logger.printmsg('warning', " Init 1 status " + status +
+                logger.printmsg('warning', " Init 1 status " + str(status) +
                                 ", resending init1 command.")
             # if on first move status 6 for longer than expected
             # aka command sent properly, but actual movement
@@ -318,7 +318,7 @@ class MTPProbeInit():
                 # success
                 errorStatus = maxAttempts
             else:
-                logger.printmsg('warning', " Init 2 status " + status +
+                logger.printmsg('warning', " Init 2 status " + str(status) +
                                 ", resending init2 command.")
                 errorStatus = errorStatus + 1
 
