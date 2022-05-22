@@ -112,7 +112,7 @@ def main():
                 # Move hardcoded UART commands into move.py - JAA
                 echo = move.moveTo(b'U/1J0D28226J3R\r\n')
                 s = init.findChar(echo, b'@')
-                logger.printmsg('debug', "First angle, status = %r", s)
+                logger.printmsg('debug', "First angle, status = " + str(s))
 
         elif cmdInput == '4':
             # Read data at current position for three frequencies
@@ -131,6 +131,9 @@ def main():
 
         elif cmdInput == 'x':
             exit(1)
+
+        else:
+            logger.printmsg("info", "Unknown command. Please try again.")
 
 
 if __name__ == "__main__":
