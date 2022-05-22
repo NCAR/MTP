@@ -33,43 +33,57 @@ class MTPProbeCIR():
         self.getIntegrateFromProbe()
 
     def getIntegrateFromProbe(self):
-        # Need better logic to check for return values than loop set number of
-        # times - JAA
+        """
+        Check for integrate status. Loop looptimeoutMS times waiting for
+        integrate command to return. If no return by then, resend integrate
+        command. Do this indefinitely until get status 5 which indicates
+        integrator has started.
+
+        Once integrator has started, loop indefinitely until get status 4
+        indicating integrator has finished.
+        """
+        # looptimeoutMS is actually a loopcount. Make into a time - JAA
+        # Is this really the logic we want?? - JAA
+
         i = 0
-        looptimeMS = 2
-        while i < looptimeMS:
+        s = -1
+        looptimeoutMS = 3
+        while s != 5:
             s = self.init.getStatus()
             logger.printmsg("debug", "integrate loop 1, checking for " +
-                            "status=5, got status=" + s[0])
+                            "status=5, got status=" + str(s))
             if s == '5':
                 logger.printmsg("debug", "integrate loop 1, status 5 found, " +
                                 "integrator started")
                 break
-            if i == looptimeMS:
+            logger.printmsg("debug", 'checking for finished integrator: ' +
+                            'attempt ' + str(i))
+            if i == looptimeoutMS:
                 logger.printmsg("warning", "integrate loop 1," +
                                 " re-send Integrate")
-                self.serialPort.write(b'I 40\r\n')
-                i = looptimeMS/2
-                looptimeMS = i
+                self.integrate()
             i = i + 1
 
         # check that integrator has finished
         i = 0
-        while i < 3:
+        s = -1
+        while s != 4:
             s = self.init.getStatus()
             logger.printmsg("debug", "integrate loop 2, checking for " +
-                            "status=4, got status=" + s[0])
+                            "status=4, got status=" + str(s))
             if s == '4':
-                logger.printmsg("debug", "integrator has finished")
+                logger.printmsg("debug", "integrate loop 2, status 4 found, " +
+                                "integrator has finished")
                 break
             logger.printmsg("debug", 'checking for finished integrator: ' +
-                            str(i))
+                            'attempt ' + str(i))
             i = i + 1
+
         return True
 
     def readDatumFromProbe(self):
         self.serialPort.write(b'R\r\n')
-        data = self.init.readEchos(4)
+        data = self.init.readEchos(6)
 
         # Find counts in string. Expected string is R28:xxxx where xxxx is
         # 4-digit hex value.
@@ -148,6 +162,7 @@ class MTPProbeCIR():
         logger.printmsg("debug", "data from E line:" + str(data))
 
         nextTime = datetime.datetime.now()
-        logger.printmsg("debug", "E line creation took " + nextTime-firstTime)
+        logger.printmsg("debug", "E line creation took " +
+                        str(nextTime-firstTime))
 
         return data
