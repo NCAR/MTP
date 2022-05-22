@@ -136,6 +136,7 @@ class MTPEmulator():
             self.sport.write(string.encode('utf-8'))
 
         elif line[0] == 'U':  # Parse UART commands
+            logger.printmsg("DEBUG", "string starting with U" + line)
             # all commands echo exact command, then other responses
             if chaos == 'low':
                 duration = 0.03
@@ -148,6 +149,7 @@ class MTPEmulator():
             self.UART(line, chaos, state)
 
         elif line[0] == 'I':  # Integrate channel counts array "I 40"
+            logger.printmsg("DEBUG", "string starting with I" + line)
             self.status = '05'  # Odd number indicates integrator busy
             # Parse number out of line
             (cmd, value) = line.split()
@@ -164,6 +166,7 @@ class MTPEmulator():
             self.sport.write(string.encode('utf-8'))
 
         elif line[0] == 'R':  # Return counts from last integration
+            logger.printmsg("DEBUG", "string starting with R" + line)
             # Sending back 19000 counts for all channels/angles
             string = '\r\nR' + self.hex + ':4A38\r\n'
             self.sport.write(string.encode('utf-8'))
