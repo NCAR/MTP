@@ -129,14 +129,14 @@ class MTPEmulator():
             self.sport.write(b'Version:MTPH_Control.c-101103>101208\r\n')
 
         elif line[0] == 'C':  # Change SPI sequence
-            logger.printmsg("DEBUG", "string starting with C" + line)
+            logger.printmsg("DEBUG", "process string starting with C: " + line)
             # there are two echos for C's, both are identical
             # neither seems to have any status info about if it
             # actually set correctly
             self.sport.write(string.encode('utf-8'))
 
         elif line[0] == 'U':  # Parse UART commands
-            logger.printmsg("DEBUG", "string starting with U" + line)
+            logger.printmsg("DEBUG", "process string starting with U: " + line)
             # all commands echo exact command, then other responses
             if chaos == 'low':
                 duration = 0.03
@@ -149,7 +149,7 @@ class MTPEmulator():
             self.UART(line, chaos, state)
 
         elif line[0] == 'I':  # Integrate channel counts array "I 40"
-            logger.printmsg("DEBUG", "string starting with I" + line)
+            logger.printmsg("DEBUG", "process string starting with I: " + line)
             self.status = '05'  # Odd number indicates integrator busy
             # Parse number out of line
             (cmd, value) = line.split()
@@ -166,7 +166,7 @@ class MTPEmulator():
             self.sport.write(string.encode('utf-8'))
 
         elif line[0] == 'R':  # Return counts from last integration
-            logger.printmsg("DEBUG", "string starting with R" + line)
+            logger.printmsg("DEBUG", "process string starting with R: " + line)
             # Sending back 19000 counts for all channels/angles
             string = '\r\nR' + self.hex + ':4A38\r\n'
             self.sport.write(string.encode('utf-8'))
