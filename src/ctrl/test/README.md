@@ -47,12 +47,6 @@ The user menu provides the following functionality:
 
 ## Not updated yet
 
-genericCommandStats.py
-- not written yet
-- Can be used to do stats on inits, Channel change, Integrate, Read
-- Can't be used with move commands unless previously initialized
-- ctrl-c kills movement. Or 'movement' that the probe thinks it's doing, but isn't
-
 IWGDaisy.py
 
 Qt_manualProbeQuery.py
