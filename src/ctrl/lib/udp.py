@@ -57,7 +57,7 @@ class doUDP(object):
         self.sock_write_nidas = QUdpSocket()
 
         self.sock_write = QUdpSocket()
-        self.parent.sendingUDPLED.setPixmap(self.parent.ICON_YELLOW_LED.scaled(40,40))
+        self.parent.controlWindow.setLEDyellow(self.parent.controlWindow.sendingUDPLED)
 
         # RIC socket
         self.sock_write_ric= QUdpSocket()
@@ -129,7 +129,7 @@ class doUDP(object):
 
 
         # if led isn't green, set it so: red led logic later
-        self.parent.receivingIWGLED.setPixmap(self.parent.ICON_GREEN_LED.scaled(40,40))
+        self.parent.controlWindow.setLEDgreen(self.parent.controlWindow.receivingIWGLED)
         # Ensures that events will be processed at 
         # least once a second
         # doesn't because this is whole thing is an event to be queued 
@@ -144,8 +144,7 @@ class doUDP(object):
         # if IWG timer manages to timeout, then we haven't recieved 
         # an IWG packet in at least 5 s, sets IWG led to red
         # on receipt of IWG packet, will turn green
-        self.parent.receivingIWGLED.setPixmap(
-                self.parent.ICON_RED_LED.scaled(40,40))
+        self.parent.controlWindow.setLEDred(self.parent.controlWindow.receivingIWGLED)
         
     def sortIWG(self, IWGSplit):
         # grabs values needed for Aline
@@ -338,8 +337,8 @@ class doUDP(object):
     def timeoutUDP(self):
         # sets the sending UDP light to red if haven't sent udp in 50 seconds
         # 30 would probably do, but 50 for now
-        self.parent.sendingUDPLED.setPixmap(self.parent.ICON_RED_LED.scaled(40,40))
-        #logging.debug("UDP feed stopped sending. Probe may no longer be cycling")
+        self.parent.controlWindow.setLEDred(self.parent.controlWindow.sendingUDPLED)
+        logging.error("UDP feed stopped sending. Probe may no longer be cycling")
 
     def sendUDP(self, packet, savePacket):
         """ Send a packet out the udp port """
@@ -358,9 +357,8 @@ class doUDP(object):
         self.sock_write_nidas.writeDatagram(packet, self.udp_ip_nidas, self.udp_write_to_nidas)
         logging.debug("sent ric UDP")
 
-
         #logging.debug("sending udp packet %s", packet)
-        self.parent.sendingUDPLED.setPixmap(self.parent.ICON_GREEN_LED.scaled(40,40))
+        self.parent.controlWindow.setLEDgreen(self.parent.controlWindow.sendingUDPLED)
         # restart timer for gui
         self.udpTimer.start(50000) # in milliseconds
 

@@ -8,7 +8,9 @@ from PyQt5.QtWidgets import QApplication, QErrorMessage
 from lib.rootdir import getrootdir
 from lib.storeConfig import StoreConfig
 from lib.storePacket import StorePacket
+from model import modelMTP
 from lib.serialQt import SerialInit
+from lib.storePacket import StorePacket
 from view import controlWindow
 
 def initSaveIWGFile(flightNumber, projectName):
@@ -85,7 +87,7 @@ def main():
     logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
             filename="MTPControl.log", level=logging.INFO)
 
-    logging.warning("warning")
+
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(True)
 
@@ -116,15 +118,16 @@ def main():
         handle_error("SerialPort: " + str(err))
         sys.exit()
 
-    ex = controlWindow(app)
+    tempData = StorePacket()
+    # Currently IWG is updated only during process events
+    # select may change this
+    ex = controlWindow(app, tempData)
     ex.show()
 
     # Prompt flight number
     flightNumber = ex.getFlightNumber()
     # project name should be gotten from config file, hardcoded here for now
     projectName = 'TI3GER'
-    print(flightNumber)
-    print(projectName)
 
     dataFile = initSaveDataFile(flightNumber, projectName)
     iwgFile = initSaveIWGFile(flightNumber, projectName)
@@ -132,8 +135,10 @@ def main():
     ex.saveLocationBox.setText('~/Desktop/' + projectName + '/data')
     ex.flightNumberBox.setText(flightNumber)
     ex.projectNameBox.setText(projectName)
+
+    mtp = modelMTP(ex, serialPort, configStore, dataFile, iwgFile, tempData)
     # Will need data file and config dicts too
-    ex.mainloop(app, serialPort, configStore, dataFile, iwgFile)
+    mtp.mainloop(isScanning = True)
     # sys.exit(app.exec_())
     # ex.run()
 
