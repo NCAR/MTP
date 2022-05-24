@@ -66,5 +66,3 @@ read_UDP.py
 
 spikes.py
 - checks for spikes in B data line
-
-statsManualProbeQuery.py
