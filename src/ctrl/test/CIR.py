@@ -61,15 +61,10 @@ class MTPProbeCIR():
         j = 0
         integratetimeout = 20
 
-        s = -1
-        while s != 5:
-            s = self.init.getStatus()
-            logger.printmsg("debug", "integrate loop 1, checking for " +
-                            "status=5, got status=" + str(s))
-            if s == '5':
-                logger.printmsg("debug", "integrate loop 1, status 5 found, " +
-                                "integrator started")
+        while (True):
+            if self.checkIntegrateStatus("started"):
                 break
+
             logger.printmsg("debug", 'checking for finished integrator: ' +
                             'attempt ' + str(i))
 
@@ -96,15 +91,10 @@ class MTPProbeCIR():
         # check that integrator has finished
         i = 0
         j = 0
-        s = -1
-        while s != 4:
-            s = self.init.getStatus()
-            logger.printmsg("debug", "integrate loop 2, checking for " +
-                            "status=4, got status=" + str(s))
-            if s == '4':
-                logger.printmsg("debug", "integrate loop 2, status 4 found, " +
-                                "integrator has finished")
+        while (True):
+            if self.checkIntegrateStatus("finished"):
                 break
+
             logger.printmsg("debug", 'checking for finished integrator: ' +
                             'attempt ' + str(i))
 
@@ -124,6 +114,53 @@ class MTPProbeCIR():
             j = j + 1
 
         return True
+
+    def checkIntegrateStatus(self, stat):
+        """
+        Check integrate status
+         - Bit 0 = integrator busy
+         - Bit 1 = Stepper moving
+         - Bit 2 = Synthesizer out of lock
+         - Bit 3 = spare
+
+        Input: desired status: "started" or "finished"
+        Returns: True if desired status found, False if not
+
+        Works for any status return value (0-7). If status is odd, integrator
+        busy so integrator was started. If status is even, integrator finished.
+        -- BUT --
+        Logically the following should never occur:
+        - integrator busy while the stepper is moving [3, 7]
+        - synthesizer out of lock [4, 5, 6, 7]
+        We always get 4, 5 indicating synthesizer is always out of lock.
+        Ask Julie if this is O.K. - JAA
+        """
+
+        # Check for valid stat string
+        if stat != "started" and stat != "finished":
+            logger.printmsg("debug", "invalid status command" + str(stat) +
+                            "*** BUG IN CODE ***")
+            return False
+
+        s = self.init.getStatus()
+        logger.printmsg("debug", "integrate loop, checking for " +
+                        "integrator " + str(stat) + ", got status=" + str(s))
+
+        if stat == "started" and int(s) % 2 != 0:
+            # Number is odd -> integrator busy
+            logger.printmsg("debug", "integrator started")
+            if s == 3:
+                logger.printmsg("warning", "received status indicating" +
+                                " integrator busy while stepper moving." +
+                                " Should not occur. Either *** BUG IN CODE " +
+                                "or MTP instrument has an issue.")
+            return True
+        elif stat == "finished" and int(s) % 2 == 0:
+            # Number is even -> integrator finished
+            logger.printmsg("debug", "integrator has finished")
+            return True
+        else:
+            return False
 
     def readDatumFromProbe(self):
         self.serialPort.write(b'R\r\n')
