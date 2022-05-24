@@ -76,7 +76,8 @@ class MTPProbeCIR():
             if i == looptimeoutMS:
                 logger.printmsg("warning", "integrate loop 1," +
                                 " re-send Integrate")
-                self.integrate()
+                self.serialPort.write(b'I 40\r\n')
+                self.init.readEchos(4)
             i = i + 1
 
             if j == integratetimeout:
