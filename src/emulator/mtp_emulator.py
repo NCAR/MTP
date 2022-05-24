@@ -207,7 +207,7 @@ class MTPEmulator():
             # Line being sent (in hex) is:
             # Pt:2159 13808 13809 4370 13414 13404 13284 14439
             self.sport.write(
-                b'\r\nPt:B70 8FC B52 C0B 780 B68 97F B82 \r\n')
+                b'\r\nPt:86F 35F0 35F1 1112 3466 345C 33E4 3867 \r\n')
 
         elif line == 'N 1':  # Set Noise Diode On
             self.sport.write(b'\r\nND:01\r\n')
