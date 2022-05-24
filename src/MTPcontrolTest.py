@@ -50,7 +50,8 @@ def printMenu():
     print("2 = Move Home")
     print("3 = Step")
     print("4 = generic CIRS")
-    print("5 = CIRS ND on then off")
+    print("5 = E line")
+    print("6 = B line")
     print("9 = Probe On Check")
     print("q = Manual Probe Query")
     print("x = Exit")
@@ -116,8 +117,8 @@ def main():
 
                 # Move hardcoded UART commands into move.py - JAA
                 echo = move.moveTo(b'U/1J0D28226J3R\r\n')
-                s = init.findChar(echo, b'@')
-                logger.printmsg('debug', "First angle, status = " + str(s))
+                s = init.moveComplete(echo)
+                logger.printmsg('debug', "First angle reached = " + str(s))
 
         elif cmdInput == '4':
             # Read data at current position for three frequencies
@@ -127,7 +128,23 @@ def main():
         elif cmdInput == '5':
             # Read data at current position for three frequencies and for
             # noise diode on then off
+            # Need to add move to point at target - JAA
             data.readEline()
+
+        elif cmdInput == '6':
+            # Create B line
+            bline = 'B '
+            # Eventually move angle should be calculated using MAM.
+            # For now, this just tests the flow through the code. Angles will
+            # be confirmed and corrected if needed later. - JAA
+            for angle in [b'U/1J0D28226J3R', b'U/1J0D7110J3R',
+                          b'U/1J0D3698J3R', b'U/1J0D4835J3R', b'U/1J0D3698J3R',
+                          b'U/1J0D3413J3R', b'U/1J0D3414J3R', b'U/1J0D3697J3R',
+                          b'U/1J0D4836J3R', b'U/1J0D10810J3R']:
+                move.moveTo(angle)
+                bline += data.CIRS() + ' '  # Collect counts for three channels
+
+            logger.printmsg("debug", "data from B line:" + str(bline))
 
         elif cmdInput == 'q':
             # Go into binary command input mode
