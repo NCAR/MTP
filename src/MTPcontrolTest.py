@@ -135,18 +135,7 @@ def main():
 
         elif cmdInput == '6':
             # Create B line
-            bline = 'B '
-            # Eventually move angle should be calculated using MAM.
-            # For now, this just tests the flow through the code. Angles will
-            # be confirmed and corrected if needed later. - JAA
-            for angle in [b'U/1J0D28226J3R', b'U/1J0D7110J3R',
-                          b'U/1J0D3698J3R', b'U/1J0D4835J3R', b'U/1J0D3698J3R',
-                          b'U/1J0D3413J3R', b'U/1J0D3414J3R', b'U/1J0D3697J3R',
-                          b'U/1J0D4836J3R', b'U/1J0D10810J3R']:
-                move.moveTo(angle)
-                bline += data.CIRS() + ' '  # Collect counts for three channels
-
-            logger.printmsg("debug", "data from B line:" + str(bline))
+            data.readBline(move)
 
         elif cmdInput == '7':
             # Create housekeeping lines
