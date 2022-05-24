@@ -96,7 +96,7 @@ class MTPProbeInit():
     def clearBuffer(self):
         ''' Confirm that buffer is clear before send next command '''
         buf = self.readEchos(1)
-        if buf.find(b'') >= 0:
+        if len(buf) == 0:
             logger.printmsg("debug", "Buffer empty. OK to continue")
         else:
             logger.printmsg("warning", "Buffer not empty but it should be. " +
