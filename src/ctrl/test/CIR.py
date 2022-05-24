@@ -221,6 +221,40 @@ class MTPProbeCIR():
         self.serialPort.write(num)
         self.init.readEchos(4)
 
+    def readBline(self, move):
+        """
+        Read all data at current position for B line.
+
+        Returns a complete B line,
+        eg "B 019110 020510 019944 019133 020540 019973 019101 020507 ...
+        """
+        # Determine how long it takes to create the B line
+        firstTime = datetime.datetime.now()
+
+        self.b = ''
+        # Eventually move angle should be calculated using MAM.
+        # For now, this just tests the flow through the code. Angles will
+        # be confirmed and corrected if needed later. - JAA
+        for angle in [b'U/1J0D28226J3R', b'U/1J0D7110J3R', b'U/1J0D3698J3R',
+                      b'U/1J0D4835J3R', b'U/1J0D3698J3R', b'U/1J0D3413J3R',
+                      b'U/1J0D3414J3R', b'U/1J0D3697J3R', b'U/1J0D4836J3R',
+                      b'U/1J0D10810J3R']:
+            move.moveTo(angle)
+            self.b += self.CIRS() + ' '  # Collect counts for three channels
+        data = "B " + str(self.b)
+
+        logger.printmsg("debug", "data from B line:" + data)
+
+        nextTime = datetime.datetime.now()
+        logger.printmsg("debug", "B line creation took " +
+                        str(nextTime-firstTime))
+
+        return data
+
+    def getBdata(self):
+        """ Return the B data only (without B at the front) """
+        return(self.b)
+
     def readEline(self):
         """
         Read all data at current position for noise diode on and then off.
@@ -234,19 +268,24 @@ class MTPProbeCIR():
         firstTime = datetime.datetime.now()
 
         # Create E line
-        data = 'E '
-        self.setNoise(b'N 1\r\n')  # Turn noise diode on
-        data = data + self.CIRS()  # Collect counts for three channels
-        data = data + " "          # Add space between count sets
-        self.setNoise(b'N 0\r\n')  # Turn noise diode off
-        data = data + self.CIRS()  # Collect counts for three channels
-        logger.printmsg("info", "data from E line:" + str(data))
+        self.setNoise(b'N 1\r\n')      # Turn noise diode on
+        self.e = self.CIRS()           # Collect counts for three channels
+        self.e = self.e + " "          # Add space between count sets
+        self.setNoise(b'N 0\r\n')      # Turn noise diode off
+        self.e = self.e + self.CIRS()  # Collect counts for three channels
+        data = "E " + str(self.e)
+
+        logger.printmsg("info", "data from E line:" + data)
 
         nextTime = datetime.datetime.now()
         logger.printmsg("debug", "E line creation took " +
                         str(nextTime-firstTime))
 
         return data
+
+    def getEdata(self):
+        """ Return the E data only (without E at the front) """
+        return(self.e)
 
     def readM1line(self):
         """
