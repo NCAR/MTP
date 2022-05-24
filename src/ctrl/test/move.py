@@ -80,7 +80,9 @@ class MTPProbeMove():
                 # continue on with moving
             elif s == '5':
                 # do an integrate
-                self.serialPort.write(b'I 40\r\n')
+                # Why are we doing an integrate here?? - JAA
+                # If keeping, need read echos. Better to call CIR.integrate
+                #self.serialPort.write(b'I 40\r\n')
                 logger.printmsg('DEBUG', "isMovePossible, status = 5")
                 return 5
             elif s == '6':
