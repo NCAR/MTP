@@ -15,14 +15,10 @@ class MTPProbeMove():
         self.init = init
 
     def moveHome(self):
-        # When call move home during probe operation, check for existing
-        # return strings and handle them. - JAA
-        self.init.readEchos(3)
-
         errorStatus = 0
         # initiate movement home
         self.serialPort.write(b'U/1J0f0j256Z1000000J3R\r\n')
-        self.init.readEchos(3)
+        self.init.readEchos(4)
 
         # if spamming a re-init, this shouldn't be needed
         # or should be in the init phase anyway
@@ -38,7 +34,7 @@ class MTPProbeMove():
 
     def moveTo(self, location):
         self.serialPort.write(location)
-        return self.init.readEchos(3)
+        return self.init.readEchos(4)
 
     def initForNewLoop(self):
         # This is an init command
@@ -52,7 +48,7 @@ class MTPProbeMove():
         # step 0C
         self.serialPort.write(b'U/1j128z1000000P10R\r\n')
 
-        self.init.readEchos(3)
+        self.init.readEchos(4)
 
     def isMovePossibleFromHome(self, maxDebugAttempts, scanStatus):
         # returns 4 if move is possible otherwise does debugging

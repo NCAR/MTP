@@ -127,7 +127,7 @@ class MTPProbeCIR():
 
     def readDatumFromProbe(self):
         self.serialPort.write(b'R\r\n')
-        data = self.init.readEchos(6)
+        data = self.init.readEchos(4)
 
         # Find counts in string. Expected string is R28:xxxx where xxxx is
         # 4-digit hex value.
