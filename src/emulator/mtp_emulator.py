@@ -60,8 +60,10 @@ class MTPEmulator():
         # status if 04 indicates synthesizer out of lock. Maybe better to use
         # 00. Does probe return 04 regularly? If so, ask Julie if synthesizer
         # status out of lock is a concern... - JAA
-        self.status = '04'  # Even number indicates integrator not busy
+
         self.statusset = False
+
+        # First time thru set last command status to "start"
         self.commandstatus = {
             "lastcommand": "start",
             "timeoflastcommand": time.time(),  # float of seconds since epoc
@@ -70,6 +72,10 @@ class MTPEmulator():
         }
 
     def setcommandstatus(self, command, duration):
+        """
+        Keep track of last command run, what time it ran, and how long it takes
+        to run
+        """
         self.commandstatus['lastcommand'] = command
         self.commandstatus['timeoflastcommand'] = time.time()
         self.commandstatus['expectedduration'] = duration
@@ -112,7 +118,6 @@ class MTPEmulator():
 
         elif line[0] == '0X03':  # Restart firmware
             logger.printmsg("DEBUG", "hex Control-C char")
-            # This emulator does NOT emulate a firmware restart.
             # Only thing visible from firmware restart is another V command.
             time.sleep(20)  # sleep for 20 seconds
             if chaos == 'low':
@@ -150,18 +155,17 @@ class MTPEmulator():
 
         elif line[0] == 'I':  # Integrate channel counts array "I 40"
             logger.printmsg("DEBUG", "process string starting with I: " + line)
-            self.status = '05'  # Odd number indicates integrator busy
             # Parse number out of line
             (cmd, value) = line.split()
             # Convert byte to two ascii digits in hex
             val = int(value)
             self.hex = self.ntox((val >> 4) & 0x0f) + self.ntox(val & 0x0f)
             string = '\r\nI' + self.hex + '\r\n'
-            # This command starts the integrator,
-            # sets the integrator busy bit (status = 05)
-            # then waits 40us
-            # so the S should, if
-            duration = random.randrange(4, 5, 3)
+            # The MTP integrates for 40us. When you include overhead for
+            # sending the commmand, it takes longer, so set the expected
+            # command duration to a second or two. Then a call to status will
+            # return 05 during the command duration and 04 after that.
+            duration = random.randrange(1, 2, 3)*0.01
             self.setcommandstatus('I', duration)
             self.sport.write(string.encode('utf-8'))
 
@@ -172,10 +176,7 @@ class MTPEmulator():
             self.sport.write(string.encode('utf-8'))
 
         elif line[0] == 'S':  # Return firmware status
-            if chaos == 'low':
-                self.status = '04'  # Even number indicated integrator NOT busy
-            else:
-                self.status = self.conditionalStatus(chaos, state)
+            self.status = self.conditionalStatus(chaos, state)
             string = '\r\nST:' + self.status + '\r\n'
             self.sport.write(string.encode('utf-8'))
 
@@ -301,14 +302,13 @@ class MTPEmulator():
         if lastcommand == "I":
             logger.printmsg("debug", "conditional status I detected")
             # integrator has to start (05)
-            # and after 40 s integrator has to finish (04)
+            # and after 40 us integrator has to finish (04)
             # even/odd checking will get data in more cases
-            # but it accuracy suffers.
+            # but accuracy suffers.
             # if even/odd check perhaps log, but take anyway?
             # the more robust move should limit these.
 
-
-            if time.time() <= commandtime + dur:
+            if time.time() <= commandtime + dur:  # For first dir seconds
                 if chaos == 'low':
                     return '05'
                 elif chaos == 'medium':
@@ -319,7 +319,7 @@ class MTPEmulator():
                     # possibility that move went wrong, but integrator still
                     # started
                     return random.choice(['01', '03', '05', '07'])
-            else:
+            else:  # after dir seconds
                 if chaos == 'low':
                     return '04'
                 elif chaos == 'medium':
