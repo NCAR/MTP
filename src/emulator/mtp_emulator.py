@@ -299,13 +299,15 @@ class MTPEmulator():
         dur = self.commandstatus['expectedduration']
 
         if lastcommand == "I":
+            logger.printmsg("debug", "conditional status I detected")
             # integrator has to start (05)
             # and after 40 s integrator has to finish (04)
             # even/odd checking will get data in more cases
             # but it accuracy suffers.
             # if even/odd check perhaps log, but take anyway?
             # the more robust move should limit these.
-            logging.debug("conditional status I detected")
+
+
             if time.time() <= commandtime + dur:
                 if chaos == 'low':
                     return '05'
@@ -327,6 +329,10 @@ class MTPEmulator():
                     return random.choice(['00', '02', '04', '06'])
 
         elif lastcommand == "U":
+            # most of this is done, tested with probe so implementation
+            # here will be minimal.
+            logger.printmsg("debug", "conditional status U detected")
+
             # By setting status True here, only low chaos gets a return value.
             # self.statusset = True
             if time.time() <= commandtime+dur:
@@ -364,9 +370,6 @@ class MTPEmulator():
                         return(random.choice(['00', '01', '02', '03',
                                               '04', '05', '06', '07']))
 
-            # most of this is done, tested with probe so implementation
-            # here will be minimal.
-            logging.debug("conditional status U detected")
         else:
             return '04'
 
@@ -453,6 +456,10 @@ def parse_args():
         '--debug', dest='loglevel', action='store_const', const=logging.DEBUG,
         default=logging.INFO, help="Show debug log messages")
     parser.add_argument(
+        '--debug-socat', dest='sloglevel', action='store_const',
+        const=logging.DEBUG, default=logging.INFO,
+        help="Show socat debug log messages")
+    parser.add_argument(
         '--logmod', type=str, default=None, help="Limit logging to " +
         "given module")
     parser.add_argument(
@@ -489,8 +496,8 @@ def main():
     # to communicate over. When the control program is manually started, it
     # needs to connect to the userport.
     vports = MTPVirtualPorts()
-    if args.loglevel:
-        level = logging.getLevelName(args.loglevel)
+    if args.sloglevel:
+        level = logging.getLevelName(args.sloglevel)
 
     mtpport = vports.startPorts(level)
     print("Emulator connecting to virtual serial port: %s" % (mtpport))
