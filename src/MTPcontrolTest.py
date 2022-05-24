@@ -90,6 +90,11 @@ def main():
         if probeResponding is False or cmdInput == '9':
             probeResponding = init.bootCheck()
 
+        # Make sure we have read everything from the buffer for the previous
+        # command before continuing. If the buffer is not clear, this
+        # indicates a problem, so notify user.
+        init.clearBuffer()
+
         if cmdInput == '0':
             # Print status
             status = init.getStatus()

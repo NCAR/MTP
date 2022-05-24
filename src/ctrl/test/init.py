@@ -82,13 +82,25 @@ class MTPProbeInit():
         return True
 
     def readEchos(self, num):
-        ''' Read num lines ending in newline into buffer '''
+        '''
+        Read num newlines into buffer. So if port has a string \r\nS\r\n
+        it takes num=2 to read it.
+        '''
         buf = b''
         for i in range(num):
             buf = buf + self.serialPort.readline()
 
         logger.printmsg('debug', "read " + str(buf))
         return buf
+
+    def clearBuffer(self):
+        ''' Confirm that buffer is clear before send next command '''
+        buf = self.readEchos(1)
+        if buf.find(b'') >= 0:
+            logger.printmsg("debug", "Buffer empty. OK to continue")
+        else:
+            logger.printmsg("warning", "Buffer not empty but it should be. " +
+                            "BUG IN CODE needs to be fixed")
 
     def moveComplete(self, buf):
         '''
