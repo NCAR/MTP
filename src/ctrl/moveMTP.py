@@ -71,8 +71,9 @@ class moveMTP():
         self.parent.packetStore.setData("initSwitch", False)
         self.parent.packetStore.setData("init1Received", False)
         self.parent.packetStore.setData("init2Received", False)
-        # change led to yellow
-        self.parent.scanStatusLED.setPixmap(self.parent.ICON_YELLOW_LED.scaled(40,40))
+        # change scan status led to yellow
+        self.parent.controlWindow.setLEDyellow(
+                self.parent.controlWindow.scanStatusLED)
         # change text on button to "initializing"
         self.parent.reInitProbe.setText("Initializing")
         # set current mode to init 
@@ -764,7 +765,8 @@ class moveMTP():
         logging.debug("Overheat value = " + str(value))
         if value == 4096 or value == 0:
             logging.debug("Check overheat, value = 4096 or 0")
-            self.parent.overHeatLED.setPixmap(self.parent.ICON_YELLOW_LED.scaled(40, 40))
+            # set overHeatLED to yellow
+            self.parent.controlWindow.setLEDyellow(self.parent.controlWindow.overHeatLED)
         else:
             counts = 4096.0 - float(value)
             RR = (1.0/(counts/4096.0)) - 1.0
@@ -773,10 +775,13 @@ class moveMTP():
             # check that tsynth<50C
 
             if TSynth >= 50:
-                self.parent.overHeatLED.setPixmap(self.parent.ICON_RED_LED.scaled(40, 40))
+                # set overHeatLED to RED
+                self.parent.controlWindow.setLEDred(self.parent.controlWindow.overHeatLED)
+
                 logging.warning("TEMPERATURE OVER 50C")
             else:
-                self.parent.overHeatLED.setPixmap(self.parent.ICON_GREEN_LED.scaled(40, 40))
+                # set overHeatLED to green
+                self.parent.controlWindow.setLEDgreen(self.parent.controlWindow.overHeatLED)
 
              
             logging.debug("Check overheat, value =" + str(TSynth))

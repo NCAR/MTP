@@ -17,8 +17,8 @@ Depending on which platform python3 is installed on:
 
 [comment]: #  > python3 MTPctrl.py
 
-python view.py 
-python3 view.py
+python controller.py 
+python3 controller.py
 
 ```
 
