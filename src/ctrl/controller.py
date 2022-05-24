@@ -1,5 +1,7 @@
-import os  #path (exists, join, ), makedirs,
 import sys #argv
+from os import makedirs, path  # exists, join, dirname
+from time import strftime
+from glob import glob
 import argparse
 import logging
 from PyQt5.QtWidgets import QApplication, QErrorMessage
@@ -8,6 +10,47 @@ from lib.storeConfig import StoreConfig
 from lib.storePacket import StorePacket
 from lib.serialQt import SerialInit
 from view import controlWindow
+
+def initSaveIWGFile(flightNumber, projectName):
+    # Make iwg file path
+    IWG1Path = path.dirname(
+        'C:\\Users\\lroot\\Desktop\\'+ projectName +'\\data\\')
+    if not path.exists:
+        makedirs(IWG1Path)
+    saveIWGFileName = IWG1Path + '\\' + "IWG_" + strftime("%Y%m%d") +\
+        '_' + strftime("%H%M%S")+'.txt'
+    # reopen file, no good way to sort via IWG and
+    # flight number w/o changing initSaveDataFile
+    '''
+    for filename in glob.glob(path + '\\*_' + flightNumber + '.mtp'):
+        logging.debug("File exists")
+        saveDataFileName=filename
+    '''
+
+    logging.debug("initIWGDataFile")
+    return saveIWGFileName
+
+def initSaveDataFile(flightNumber, projectName):
+    # Make data file path
+    dataPath = path.dirname('C:\\Users\\lroot\\Desktop\\' + projectName +
+                           '\\data\\')
+    if not path.exists:
+        makedirs(dataPath)
+    saveDataFileName = dataPath + strftime("%Y%m%d") + '_' + \
+        strftime("%H%M%S") + '_' + flightNumber + '.mtp'
+    for filename in glob(dataPath + '\\*_' + flightNumber + '.mtp'):
+        logging.debug("File exists")
+        saveDataFileName = filename
+
+    # 'b' allows writing the data from a binary format
+    with open(saveDataFileName, "ab") as datafile:
+        # this will be rewritten each time the program restarts
+        datafile.write(str.encode("Instrument on " +
+                                  strftime("%X") + " " +
+                                  strftime("%m-%d-%y") + '\r\n'))
+    logging.debug("initSaveDataFile")
+    return saveDataFileName
+
 
 def handle_error(error):
     em = QErrorMessage()
@@ -24,7 +67,7 @@ def parse_args():
     parser.add_argument('--device', type=str, default='COM6',
         help="Device on which to receive messages from MTP instrument")
     parser.add_argument('--mtph', type=str, help="Path to Config.mtph",
-        default=os.path.join(getrootdir(), 'Config.mtph'))
+        default=path.join(getrootdir(), 'Config.mtph'))
 
     # Parse the command line arguments
     args = parser.parse_args()
@@ -80,9 +123,11 @@ def main():
     flightNumber = ex.getFlightNumber()
     # project name should be gotten from config file, hardcoded here for now
     projectName = 'TI3GER'
+    print(flightNumber)
+    print(projectName)
 
-    dataFile = ex.initSaveDataFile(flightNumber, projectName)
-    iwgFile = ex.initSaveIWGFile(flightNumber, projectName)
+    dataFile = initSaveDataFile(flightNumber, projectName)
+    iwgFile = initSaveIWGFile(flightNumber, projectName)
     logging.debug("dataFile: %r", dataFile)
     ex.saveLocationBox.setText('~/Desktop/' + projectName + '/data')
     ex.flightNumberBox.setText(flightNumber)
