@@ -240,10 +240,70 @@ class MTPProbeCIR():
         data = data + " "          # Add space between count sets
         self.setNoise(b'N 0\r\n')  # Turn noise diode off
         data = data + self.CIRS()  # Collect counts for three channels
-        logger.printmsg("debug", "data from E line:" + str(data))
+        logger.printmsg("info", "data from E line:" + str(data))
 
         nextTime = datetime.datetime.now()
         logger.printmsg("debug", "E line creation took " +
                         str(nextTime-firstTime))
 
         return data
+
+    def readM1line(self):
+        """
+        Read Engineering Multiplxr (M01) housekeeping data
+
+        Returns a complete M01 line,
+        eg M01: 2928 2307 2898 3078 1922 2919 2432 2945
+        """
+        self.serialPort.write(b'M 1\r\n')
+        self.m1 = self.init.readEchos(6)
+        self.m1 = self.init.sanitize(self.m1)  # clean up buffer & return data
+        data = "M01: " + str(self.m1)
+
+        logger.printmsg("info", "data from M01 line - " + data)
+
+        return(data)
+
+    def getM1data(self):
+        """ Return the M01 data only (without M01: at the front) """
+        return(self.m1)
+
+    def readM2line(self):
+        """
+        Read Engineering Multiplxr (M02) housekeeping data
+
+        Returns a complete M02 line,
+        eg M02: 2009 1240 1533 1668 1699 1395 4095 1309
+        """
+        self.serialPort.write(b'M 2\r\n')
+        self.m2 = self.init.readEchos(6)
+        self.m2 = self.init.sanitize(self.m2)  # clean up buffer & return data
+        data = "M02: " + str(self.m2)
+
+        logger.printmsg("info", "data from M02 line - " + data)
+
+        return(data)
+
+    def getM2data(self):
+        """ Return the M02 data only (without M02: at the front) """
+        return(self.m2)
+
+    def readPTline(self):
+        """
+        Read Platinum Multiplxr (Pt) housekeeping data
+
+        Returns a complete Pt line,
+        eg Pt: 2159 13808 13799 11732 13385 13404 13296 14439
+        """
+        self.serialPort.write(b'P\r\n')
+        self.pt = self.init.readEchos(6)
+        self.pt = self.init.sanitize(self.pt)  # clean up buffer & return data
+        data = "Pt: " + str(self.pt)
+
+        logger.printmsg("info", "data from Pt line - " + data)
+
+        return(data)
+
+    def getPtdata(self):
+        """ Return the Pt data only (without Pt: at the front) """
+        return(self.pt)

@@ -52,6 +52,7 @@ def printMenu():
     print("4 = generic CIRS")
     print("5 = E line")
     print("6 = B line")
+    print("7 = Housekeeping(M1/M2/Pt)")
     print("9 = Probe On Check")
     print("q = Manual Probe Query")
     print("x = Exit")
@@ -126,6 +127,7 @@ def main():
             logger.printmsg("debug", "data from one position:" + str(countStr))
 
         elif cmdInput == '5':
+            # Create E line
             # Read data at current position for three frequencies and for
             # noise diode on then off
             # Need to add move to point at target - JAA
@@ -145,6 +147,12 @@ def main():
                 bline += data.CIRS() + ' '  # Collect counts for three channels
 
             logger.printmsg("debug", "data from B line:" + str(bline))
+
+        elif cmdInput == '7':
+            # Create housekeeping lines
+            data.readM1line()
+            data.readM2line()
+            data.readPTline()
 
         elif cmdInput == 'q':
             # Go into binary command input mode

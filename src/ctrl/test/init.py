@@ -116,12 +116,21 @@ class MTPProbeInit():
         return False
 
     def sanitize(self, data):
+        """
+        Clean up buffer returned by multiplxr calls
+
+        Input: buffer as returned by firmware, e.g. b'\r\nM 1...
+        Output: string containing series of mutliplxr values,
+        e.g. 2928 2300 2898 3083 1920 2920 2431 2946
+        """
+        # Remove stuff before colon and \r\n from end of line. Effectively
+        # converts buffer returned from probe from binary to ascii.
         data = data[data.find(b':') + 1: len(data) - 3]
-        placeholder = data.decode('ascii')
-        place = placeholder.split(' ')
+        placeholder = data.decode('ascii')  # Convert ascii back to bytes
+        place = placeholder.split(' ')  # Split into list
         ret = ''
         for datum in place:
-            ret += '%06d' % int(datum, 16) + ' '
+            ret += '%d' % int(datum, 16) + ' '  # Convert from hex to ascii
 
         return ret
 
