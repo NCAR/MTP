@@ -54,8 +54,6 @@ Qt_manualProbeQuery.py
 
 dehex.py
 
-loopProbeQuery.py
-
 qtUDPread.py
 
 qtUDPwrite.py
