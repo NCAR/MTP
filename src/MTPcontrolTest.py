@@ -10,10 +10,11 @@ import argparse
 import logging
 import datetime
 from lib.config import config
-from ctrl.test.init import MTPProbeInit
-from ctrl.test.move import MTPProbeMove
-from ctrl.test.CIR import MTPProbeCIR
+from ctrl.util.init import MTPProbeInit
+from ctrl.util.move import MTPProbeMove
+from ctrl.util.CIR import MTPProbeCIR
 from ctrl.test.manualProbeQuery import MTPQuery
+from ctrl.lib.mtpcommand import MTPcommand
 from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
@@ -77,13 +78,16 @@ def main():
     # Initialize a config file (includes reading it into a dictionary)
     configfile = config(args.config)
 
+    # Dictionary of allowed commands to send to firmware
+    commandDict = MTPcommand()
+
     # Move readConfig out of viewer/MTPclient to lib/readConfig and
     # get port from there. Add --config to parse_args - JAA
     port = configfile.getInt('udp_send_port')
 
-    init = MTPProbeInit(args, port)
-    move = MTPProbeMove(init)
-    data = MTPProbeCIR(init)
+    init = MTPProbeInit(args, port, commandDict)
+    move = MTPProbeMove(init, commandDict)
+    data = MTPProbeCIR(init, commandDict)
 
     probeResponding = False
     while (1):
@@ -93,6 +97,8 @@ def main():
         # Check if probe is on and responding
         if probeResponding is False or cmdInput == '9':
             probeResponding = init.bootCheck()
+            if cmdInput == '9':
+                continue  # No need to continue; already executed command
 
         # Make sure we have read everything from the buffer for the previous
         # command before continuing. If the buffer is not clear, this

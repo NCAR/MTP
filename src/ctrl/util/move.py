@@ -10,26 +10,18 @@ from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 class MTPProbeMove():
 
-    def __init__(self, init):
+    def __init__(self, init, commandDict):
         self.serialPort = init.getSerialPort()
         self.init = init
+        self.commandDict = commandDict
 
     def moveHome(self):
         errorStatus = 0
         # initiate movement home
-        self.serialPort.write(b'U/1J0f0j256Z1000000J3R\r\n')
+        cmd = self.commandDict.getCommand("home1")
+        self.serialPort.write(cmd)
         self.init.readEchos(4)
 
-        # if spamming a re-init, this shouldn't be needed
-        # or should be in the init phase anyway
-        # self.serialPort.write(b'U/1j128z1000000P10R\r\n')
-        # self.init.readEchos(3)
-
-        # S needs to be 4 here
-        # otherwise call again
-        # unless S is 5
-        # then need to clear the integrator
-        # with a I (and wait 40 ms)
         return errorStatus
 
     def moveTo(self, location):
@@ -46,7 +38,8 @@ class MTPProbeMove():
         # first move command in loop errors:
         # status = 6, but no move
         # step 0C
-        self.serialPort.write(b'U/1j128z1000000P10R\r\n')
+        cmd = self.commandDict.getCommand("home2")
+        self.serialPort.write(cmd)
 
         self.init.readEchos(4)
 
@@ -79,11 +72,7 @@ class MTPProbeMove():
                 return 4
                 # continue on with moving
             elif s == '5':
-                # do an integrate
-                # Why are we doing an integrate here?? - JAA
-                # If keeping, need read echos. Better to call CIR.integrate
-                #self.serialPort.write(b'I 40\r\n')
-                logger.printmsg('DEBUG', "isMovePossible, status = 5")
+                logger.printmsg('DEBUG', "isMovePossible, status 5")
                 return 5
             elif s == '6':
                 # can be infinite,

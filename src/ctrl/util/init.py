@@ -14,12 +14,15 @@ from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 class MTPProbeInit():
 
-    def __init__(self, args, port):
+    def __init__(self, args, port, commandDict):
         ''' initial setup of serialPort, UDP socket '''
         self.serialPort = serial.Serial(args.device, 9600, timeout=0.15)
 
         self.udpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
         self.udpSocket.connect(('127.0.0.1', port))  # ip, port number
+
+        # Dictionary of allowed commands to send to firmware
+        self.commandDict = commandDict
 
     def getSerialPort(self):
         ''' return serial port '''
@@ -38,7 +41,8 @@ class MTPProbeInit():
 
         Return: status
         '''
-        self.serialPort.write(b'S\r\n')
+        cmd = self.commandDict.getCommand("status")
+        self.serialPort.write(cmd)
         answerFromProbe = self.readEchos(4)
         logger.printmsg('debug', "echos from status read: " +
                         str(answerFromProbe))
@@ -178,7 +182,8 @@ class MTPProbeInit():
         Send request for probe to return Firmware version. This is a good
         way to confirm the probe is on and responding to commands.
         '''
-        self.serialPort.write(b'V\r\n')
+        cmd = self.commandDict.getCommand("version")
+        self.serialPort.write(cmd)
         if self.findChar(self.readEchos(3),
                          b"MTPH_Control.c-101103>101208"):
             logger.printmsg('info',
@@ -191,26 +196,18 @@ class MTPProbeInit():
 
     def truncateBotchedMoveCommand(self):
         ''' Restart the firmware '''
-        # This fn sends string ‘Ctrl-C’, which is handled by the case
-        # statement in main() in the firmware that matches the first C and
-        # changes the SPI sequence (whatever that means) and then echos back
-        # “\r\nCtrl-C\r\n”. We actually want to send ‘0X03’ (Ascii 3, actual
-        # Control-C) which is caught by the interrupt routine and restarts the
-        # firmware.
-        #
-        # Before we change this, Catherine would like to test the current
-        # version with the probe. She believes she has seen a status change
-        # when sending the 'Ctrl-C' and would like to confirm we understand
-        # exactly what the 'C' case does.
+        # This fn sends ‘0X03’ (Ascii 3, actual Control-C) which is caught by
+        # the interrupt routine and restarts the firmware.
 
-        self.serialPort.write(b'Ctrl-C\r\n')
-        if self.findChar(self.readEchos(3), b'Ctrl-C\r\n'):
+        cmd = self.commandDict.getCommand("ctrl-C")
+        self.serialPort.write(cmd)
+        if self.findChar(self.readEchos(3), cmd):
             logger.printmsg('info',
-                            "Probe on, responding to Ctrl-C string prompt")
+                            "Probe on, responding to Ctrl-C prompt")
             return True
         else:
             logger.printmsg('info',
-                            "Probe not responding to Ctrl-C string prompt")
+                            "Probe not responding to Ctrl-C prompt")
             return False
 
     def probeOnCheck(self):
@@ -248,7 +245,8 @@ class MTPProbeInit():
         #  - Set polarity of home sensor to 1 ('f1')
         #  - Adjust the resolution to 256 micro-steps per step ('j256')
         #  - Set the top motor speed to 50000 micro-steps per second ('V50000')
-        self.serialPort.write(b'U/1f1j256V50000R\r\n')
+        cmd = self.commandDict.getCommand("init1")
+        self.serialPort.write(cmd)
 
         # Returns:
         #   U/1f1j256V50000R\r\n
@@ -273,7 +271,8 @@ class MTPProbeInit():
         #  - Set acceleration factor to 4000 micro-steps per second^2 ('L4000')
         #  - Set hold current to 30% of 3.0 Amp max ('h30')
         #  - Set running current to 100% of 3.0 Amp max ('m100')
-        self.serialPort.write(b'U/1L4000h30m100R\r\n')
+        cmd = self.commandDict.getCommand("init2")
+        self.serialPort.write(cmd)
 
         # normal return:
         # U/1f1j256V50000R\r\n
