@@ -119,20 +119,22 @@ def main():
             move.moveHome()
 
         elif cmdInput == '3':
-            # Step
+            """ Attempt a single step """
+            # isMovePossibleFromHome returns 4 is able to move
             if (move.isMovePossibleFromHome(maxDebugAttempts=12,
                                             scanStatus='potato') == 4):
                 move.initForNewLoop()
 
                 # Move hardcoded UART commands into move.py - JAA
+                # This move is not in mtpcommand.py
                 echo = move.moveTo(b'U/1J0D28226J3R\r\n')
                 s = init.moveComplete(echo)
-                logger.printmsg('debug', "First angle reached = " + str(s))
+                logger.printmsg('info', "First angle reached = " + str(s))
 
         elif cmdInput == '4':
             # Read data at current position for three frequencies
             countStr = data.CIRS()
-            logger.printmsg("debug", "data from one position:" + str(countStr))
+            logger.printmsg("info", "data from one position:" + str(countStr))
 
         elif cmdInput == '5':
             # Create E line

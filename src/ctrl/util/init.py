@@ -288,6 +288,11 @@ class MTPProbeInit():
         # 12 readEchos to get all the responses.
 
     def init(self, maxAttempts=6):
+        """
+        Initialize the probe
+
+        Returns: maxAttemps if success, any other integer is failure
+        """
 
         # The first time the probe is initialized, this returns b''.
         # If we want to re-initialise probe, there may be content in the
@@ -350,5 +355,5 @@ class MTPProbeInit():
 
         # We can get here if init fails after maxAttempts. We should
         # catch that case and not report successful init.
-        logger.printmsg('debug', "init successful")
+        logger.printmsg('info', "init successful")
         return errorStatus
