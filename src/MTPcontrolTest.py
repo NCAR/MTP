@@ -8,6 +8,7 @@
 import sys
 import argparse
 import logging
+import datetime
 from lib.config import config
 from ctrl.test.init import MTPProbeInit
 from ctrl.test.move import MTPProbeMove
@@ -53,6 +54,7 @@ def printMenu():
     print("5 = E line")
     print("6 = B line")
     print("7 = Housekeeping(M1/M2/Pt)")
+    print("8 = create Raw data and UDP")
     print("9 = Probe On Check")
     print("q = Manual Probe Query")
     print("x = Exit")
@@ -142,6 +144,68 @@ def main():
             data.readM1line()
             data.readM2line()
             data.readPTline()
+
+        elif cmdInput == '8':
+            # Create UDP packet
+            # This logic gets the housekeeping, then the Bline. Is that what
+            # we want? Does it matter? - JAA
+            udpLine = ''
+
+            # Determine how long it takes to create the B line
+            firstTime = datetime.datetime.now(datetime.timezone.utc)
+
+            # Get all the housekeeping data
+            raw = data.readM1line() + '\n'  # Read M1 data from the probe
+            udpLine = udpLine + data.getM1data()
+            raw = raw + data.readM2line() + '\n'  # Read M2 data from the probe
+            udpLine = udpLine + data.getM2data()
+            raw = raw + data.readPTline() + '\n'  # Read PT data from the probe
+            udpLine = udpLine + data.getPTdata()
+            raw = raw + data.readEline() + '\n'  # Read E data from the probe
+            udpLine = udpLine + data.getEdata()
+
+            # Get the Bline data
+            raw = data.readBline(move) + '\n' + raw  # Read B data from probe
+            udpLine = data.getBdata() + ' ' + udpLine
+
+            # UTC timestamp of Raw record is right after B line is collected
+            nowTime = datetime.datetime.now(datetime.timezone.utc)
+
+            # Get IWG line - TBD For now just use a static line - JAA
+            IWG = 'IWG1,20101002T194729,39.1324,-103.978,4566.43,,14127.9' + \
+                  ',,180.827,190.364,293.383,0.571414,-8.02806,318.85,' + \
+                  '318.672,-0.181879,-0.417805,-0.432257,-0.0980951,2.367' + \
+                  '93,-1.66016,-35.8046,16.3486,592.062,146.734,837.903,' + \
+                  '9.55575,324.104,1.22603,45.2423,,-22    .1676, '
+
+            # Generate timestamp for Raw data record
+            RAWformattedTime = "%04d%02d%02d %02d:%02d:%02d " % (
+                               nowTime.year, nowTime.month, nowTime.day,
+                               nowTime.hour, nowTime.minute, nowTime.second)
+
+            # Generate A line - TBD For now just use a static line - JAA
+            aline = '+03.00 00.00 +00.00 00.00 +00.00 0.00 273.15 00.16 ' + \
+                    '+39.913 +0.022 -105.118 +0.000 +073727 +072576 '
+
+            # Put it all together to create the RAW record
+            raw = 'A ' + RAWformattedTime + aline + '\n' + IWG + '\n' + raw
+
+            logger.printmsg("info", "RAW\n" + raw)
+
+            # Generate timestamp used in UDP packet
+            UDPformattedTime = "%04d%02d%02dT%02d%02d%02d " % (
+                               nowTime.year, nowTime.month, nowTime.day,
+                               nowTime.hour, nowTime.minute, nowTime.second)
+
+            # Put it all together to create the UDP packet
+            udpLine = "MTP " + UDPformattedTime + aline + udpLine
+            udpLine = udpLine.replace(' ', ',')
+            logger.printmsg("info", "UDP packet: " + udpLine)
+
+            logger.printmsg("debug", "Raw record creation took " +
+                            str(nowTime-firstTime))
+
+            # If need to test UDP send, use lib/udp.py
 
         elif cmdInput == 'q':
             # Go into binary command input mode

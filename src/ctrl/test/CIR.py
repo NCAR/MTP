@@ -343,6 +343,6 @@ class MTPProbeCIR():
 
         return(data)
 
-    def getPtdata(self):
+    def getPTdata(self):
         """ Return the Pt data only (without Pt: at the front) """
         return(self.pt)
