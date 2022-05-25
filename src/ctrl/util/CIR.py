@@ -247,7 +247,7 @@ class MTPProbeCIR():
             self.b += self.CIRS() + ' '  # Collect counts for three channels
         data = "B " + str(self.b)
 
-        logger.printmsg("debug", "data from B line:" + data)
+        logger.printmsg("info", "data from B line:" + data)
 
         nextTime = datetime.datetime.now()
         logger.printmsg("debug", "B line creation took " +

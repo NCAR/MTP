@@ -16,13 +16,25 @@ class MTPProbeMove():
         self.commandDict = commandDict
 
     def moveHome(self):
-        errorStatus = 0
-        # initiate movement home
+        """
+        initiate movement home
+
+        Return: True if successful or False if command failed
+        """
         cmd = self.commandDict.getCommand("home1")
         self.serialPort.write(cmd)
-        self.init.readEchos(4)
+        answerFromProbe = self.init.readEchos(4)
 
-        return errorStatus
+        status = self.init.findStat(answerFromProbe)
+        if status == '@':
+            # success
+            logger.printmsg('info', "init successful")
+            status = True
+        else:
+            # failure
+            status = False
+
+        return status
 
     def moveTo(self, location):
         self.serialPort.write(location)

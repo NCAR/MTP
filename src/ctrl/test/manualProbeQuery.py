@@ -47,9 +47,9 @@ class MTPQuery():
 
         # send command
         self.serialPort.write(query)
-        logger.printmsg("debug", "sending: " + str(query))
+        logger.printmsg("info", "sending: " + str(query))
 
         for i in range(4):  # Read up to 4 returned lines
             print(i)
             buf = self.serialPort.readline()
-            logger.printmsg("debug", "read " + str(buf))
+            logger.printmsg("info", "read " + str(buf))
