@@ -1,0 +1,152 @@
+###############################################################################
+# MTP probe control. Class contains functions that move the probe
+#
+# Written in Python 3
+#
+# COPYRIGHT:   University Corporation for Atmospheric Research, 2022
+###############################################################################
+import datetime
+from EOLpython.Qlogger.messageHandler import QLogger as logger
+
+
+class MTPDataFormat():
+
+    def __init__(self, init, data, commandDict):
+        self.serialPort = init.getSerialPort()
+        self.init = init
+        self.commandDict = commandDict
+        self.data = data
+
+    def setNoise(self, num):
+        self.serialPort.write(num)
+        self.init.readEchos(4)
+
+    def readBline(self, move):
+        """
+        Read data at 10 positions for B line.
+
+        Returns a complete B line,
+        eg "B 019110 020510 019944 019133 020540 019973 019101 020507 ...
+        """
+        logger.printmsg("info", "sit tight - scan typically takes 6 seconds")
+        # Determine how long it takes to create the B line
+        firstTime = datetime.datetime.now()
+
+        self.b = ''
+        # Eventually move angle should be calculated using MAM.
+        # For now, this just tests the flow through the code. Angles will
+        # be confirmed and corrected if needed later. - JAA
+        for angle in [b'U/1J0D28226J3R', b'U/1J0D7110J3R', b'U/1J0D3698J3R',
+                      b'U/1J0D4835J3R', b'U/1J0D3698J3R', b'U/1J0D3413J3R',
+                      b'U/1J0D3414J3R', b'U/1J0D3697J3R', b'U/1J0D4836J3R',
+                      b'U/1J0D10810J3R']:
+            move.moveTo(angle)
+            self.b += self.data.CIRS() + ' '  # Collect counts for 3 channels
+        data = "B " + str(self.b)
+
+        logger.printmsg("info", "data from B line:" + data)
+
+        nextTime = datetime.datetime.now()
+        logger.printmsg("debug", "B line creation took " +
+                        str(nextTime-firstTime))
+
+        return data
+
+    def getBdata(self):
+        """ Return the B data only (without B at the front) """
+        return(self.b)
+
+    def readEline(self):
+        """
+        Read all data at current position for noise diode on and then off.
+        Since this function doesn't check probe pointing, it could be at any
+        position, so pointing must be checked before using this fn.
+
+        Returns a complete E line,
+        eg "E 020807 022393 022128 019105 020672 020117"
+        """
+        # Determine how long it takes to create the E line
+        firstTime = datetime.datetime.now()
+
+        # Create E line
+        self.setNoise(b'N 1\r\n')      # Turn noise diode on
+        self.e = self.data.CIRS()           # Collect counts for three channels
+        self.e = self.e + " "          # Add space between count sets
+        self.setNoise(b'N 0\r\n')      # Turn noise diode off
+        self.e = self.e + self.data.CIRS()  # Collect counts for three channels
+        data = "E " + str(self.e)
+
+        logger.printmsg("info", "data from E line:" + data)
+
+        nextTime = datetime.datetime.now()
+        logger.printmsg("debug", "E line creation took " +
+                        str(nextTime-firstTime))
+
+        return data
+
+    def getEdata(self):
+        """ Return the E data only (without E at the front) """
+        return(self.e)
+
+    def readM1line(self):
+        """
+        Read Engineering Multiplxr (M01) housekeeping data
+
+        Returns a complete M01 line,
+        eg M01: 2928 2307 2898 3078 1922 2919 2432 2945
+        """
+        cmd = self.commandDict.getCommand("read_M1")
+        self.serialPort.write(cmd)
+        self.m1 = self.init.readEchos(6)
+        self.m1 = self.init.sanitize(self.m1)  # clean up buffer & return data
+        data = "M01: " + str(self.m1)
+
+        logger.printmsg("info", "data from M01 line - " + data)
+
+        return(data)
+
+    def getM1data(self):
+        """ Return the M01 data only (without M01: at the front) """
+        return(self.m1)
+
+    def readM2line(self):
+        """
+        Read Engineering Multiplxr (M02) housekeeping data
+
+        Returns a complete M02 line,
+        eg M02: 2009 1240 1533 1668 1699 1395 4095 1309
+        """
+        cmd = self.commandDict.getCommand("read_M2")
+        self.serialPort.write(cmd)
+        self.m2 = self.init.readEchos(6)
+        self.m2 = self.init.sanitize(self.m2)  # clean up buffer & return data
+        data = "M02: " + str(self.m2)
+
+        logger.printmsg("info", "data from M02 line - " + data)
+
+        return(data)
+
+    def getM2data(self):
+        """ Return the M02 data only (without M02: at the front) """
+        return(self.m2)
+
+    def readPTline(self):
+        """
+        Read Platinum Multiplxr (Pt) housekeeping data
+
+        Returns a complete Pt line,
+        eg Pt: 2159 13808 13799 11732 13385 13404 13296 14439
+        """
+        cmd = self.commandDict.getCommand("read_P")
+        self.serialPort.write(cmd)
+        self.pt = self.init.readEchos(6)
+        self.pt = self.init.sanitize(self.pt)  # clean up buffer & return data
+        data = "Pt: " + str(self.pt)
+
+        logger.printmsg("info", "data from Pt line - " + data)
+
+        return(data)
+
+    def getPTdata(self):
+        """ Return the Pt data only (without Pt: at the front) """
+        return(self.pt)

@@ -13,6 +13,7 @@ from lib.config import config
 from ctrl.util.init import MTPProbeInit
 from ctrl.util.move import MTPProbeMove
 from ctrl.util.CIR import MTPProbeCIR
+from ctrl.util.format import MTPDataFormat
 from ctrl.test.manualProbeQuery import MTPQuery
 from ctrl.lib.mtpcommand import MTPcommand
 from EOLpython.Qlogger.messageHandler import QLogger as logger
@@ -88,6 +89,7 @@ def main():
     init = MTPProbeInit(args, port, commandDict)
     move = MTPProbeMove(init, commandDict)
     data = MTPProbeCIR(init, commandDict)
+    fmt = MTPDataFormat(init, data, commandDict)
 
     probeResponding = False
     while (1):
@@ -141,40 +143,41 @@ def main():
             # Read data at current position for three frequencies and for
             # noise diode on then off
             # Need to add move to point at target - JAA
-            data.readEline()
+            fmt.readEline()
 
         elif cmdInput == '6':
             # Create B line
-            data.readBline(move)
+            fmt.readBline(move)
 
         elif cmdInput == '7':
             # Create housekeeping lines
-            data.readM1line()
-            data.readM2line()
-            data.readPTline()
+            fmt.readM1line()
+            fmt.readM2line()
+            fmt.readPTline()
 
         elif cmdInput == '8':
             # Create UDP packet
             # This logic gets the housekeeping, then the Bline. Is that what
             # we want? Does it matter? - JAA
+            logger.printmsg("info", "sit tight - scans typically take 17s")
             udpLine = ''
 
             # Determine how long it takes to create the B line
             firstTime = datetime.datetime.now(datetime.timezone.utc)
 
             # Get all the housekeeping data
-            raw = data.readM1line() + '\n'  # Read M1 data from the probe
-            udpLine = udpLine + data.getM1data()
-            raw = raw + data.readM2line() + '\n'  # Read M2 data from the probe
-            udpLine = udpLine + data.getM2data()
-            raw = raw + data.readPTline() + '\n'  # Read PT data from the probe
-            udpLine = udpLine + data.getPTdata()
-            raw = raw + data.readEline() + '\n'  # Read E data from the probe
-            udpLine = udpLine + data.getEdata()
+            raw = fmt.readM1line() + '\n'  # Read M1 data from the probe
+            udpLine = udpLine + fmt.getM1data()
+            raw = raw + fmt.readM2line() + '\n'  # Read M2 data from the probe
+            udpLine = udpLine + fmt.getM2data()
+            raw = raw + fmt.readPTline() + '\n'  # Read PT data from the probe
+            udpLine = udpLine + fmt.getPTdata()
+            raw = raw + fmt.readEline() + '\n'  # Read E data from the probe
+            udpLine = udpLine + fmt.getEdata()
 
             # Get the Bline data
-            raw = data.readBline(move) + '\n' + raw  # Read B data from probe
-            udpLine = data.getBdata() + ' ' + udpLine
+            raw = fmt.readBline(move) + '\n' + raw  # Read B data from probe
+            udpLine = fmt.getBdata() + ' ' + udpLine
 
             # UTC timestamp of Raw record is right after B line is collected
             nowTime = datetime.datetime.now(datetime.timezone.utc)
@@ -210,7 +213,7 @@ def main():
             udpLine = udpLine.replace(' ', ',')
             logger.printmsg("info", "UDP packet: " + udpLine)
 
-            logger.printmsg("debug", "Raw record creation took " +
+            logger.printmsg("info", "Raw record creation took " +
                             str(nowTime-firstTime))
 
             # If need to test UDP send, use lib/udp.py
