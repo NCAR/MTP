@@ -12,9 +12,10 @@ from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 class MTPProbeCIR():
 
-    def __init__(self, init):
+    def __init__(self, init, commandDict):
         self.serialPort = init.getSerialPort()
         self.init = init
+        self.commandDict = commandDict
 
     def changeFrequency(self, freq):
         self.serialPort.write(freq)
@@ -26,7 +27,8 @@ class MTPProbeCIR():
         self.init.readEchos(4)
 
     def integrate(self):
-        self.serialPort.write(b'I 40\r\n')
+        cmd = self.commandDict.getCommand("count")
+        self.serialPort.write(cmd)
         self.init.readEchos(4)
 
         # Check that S turns to 5 (integrator starts)
@@ -71,7 +73,8 @@ class MTPProbeCIR():
             if i == looptimeoutMS:
                 logger.printmsg("warning", "integrate loop 1," +
                                 " re-send Integrate")
-                self.serialPort.write(b'I 40\r\n')
+                cmd = self.commandDict.getCommand("count")
+                self.serialPort.write(cmd)
                 self.init.readEchos(4)
             i = i + 1
 
@@ -163,7 +166,8 @@ class MTPProbeCIR():
             return False
 
     def readDatumFromProbe(self):
-        self.serialPort.write(b'R\r\n')
+        cmd = self.commandDict.getCommand("count2")
+        self.serialPort.write(cmd)
         data = self.init.readEchos(4)
 
         # Find counts in string. Expected string is R28:xxxx where xxxx is
@@ -294,7 +298,8 @@ class MTPProbeCIR():
         Returns a complete M01 line,
         eg M01: 2928 2307 2898 3078 1922 2919 2432 2945
         """
-        self.serialPort.write(b'M 1\r\n')
+        cmd = self.commandDict.getCommand("read_M1")
+        self.serialPort.write(cmd)
         self.m1 = self.init.readEchos(6)
         self.m1 = self.init.sanitize(self.m1)  # clean up buffer & return data
         data = "M01: " + str(self.m1)
@@ -314,7 +319,8 @@ class MTPProbeCIR():
         Returns a complete M02 line,
         eg M02: 2009 1240 1533 1668 1699 1395 4095 1309
         """
-        self.serialPort.write(b'M 2\r\n')
+        cmd = self.commandDict.getCommand("read_M2")
+        self.serialPort.write(cmd)
         self.m2 = self.init.readEchos(6)
         self.m2 = self.init.sanitize(self.m2)  # clean up buffer & return data
         data = "M02: " + str(self.m2)
@@ -334,7 +340,8 @@ class MTPProbeCIR():
         Returns a complete Pt line,
         eg Pt: 2159 13808 13799 11732 13385 13404 13296 14439
         """
-        self.serialPort.write(b'P\r\n')
+        cmd = self.commandDict.getCommand("read_P")
+        self.serialPort.write(cmd)
         self.pt = self.init.readEchos(6)
         self.pt = self.init.sanitize(self.pt)  # clean up buffer & return data
         data = "Pt: " + str(self.pt)
