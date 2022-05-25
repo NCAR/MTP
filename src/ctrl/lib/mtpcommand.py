@@ -109,7 +109,7 @@ class MTPcommand():
 
 
         Python3 requires the strings to either use the b'' syntax or
-        be passsed through a str.encode(), which cumulatively causes 
+        be passsed through a str.encode(), which cumulatively causes
         some slowness.
         The \n after the \r is not strictly necessary for the probe,
         but pyQt's canReadLine checks for a \n, so not having it was
@@ -119,10 +119,10 @@ class MTPcommand():
         command_list = {
             # This first set of commands are firmware commands. The firmware
             # contains the actual command sent to the stepper motor.
-            'version': b'V\r\n',         # Request the MTP Firmware Version. The
-                                      # firmware version is hardcoded in 
+            'version': b'V\r\n',      # Request the MTP Firmware Version. The
+                                      # firmware version is hardcoded in
                                       # MTPH_Control.C
-            'status': b'S\r\n',          # Request the MTP Firmware Status
+            'status': b'S\r\n',       # Request the MTP Firmware Status
                                       # - Bit 0 = integrator busy
                                       # - Bit 1 = Stepper moving
                                       # - Bit 2 = Synthesizer out of lock
@@ -130,17 +130,17 @@ class MTPcommand():
             'ctrl-C': chr(3),         # Send ascii char "3" = Ctrl-C. Is caught
                                       # in firmware interrupt routine and
                                       # restarts the program.
-            'read_P': b'P\r\n',          # Read all 8 platinum RTD channels
+            'read_P': b'P\r\n',       # Read all 8 platinum RTD channels
                                       # Return components of P line
-            'read_M1': b'M 1\r\n',       # Read all 8 channels of multiplexer 1
+            'read_M1': b'M 1\r\n',    # Read all 8 channels of multiplexer 1
                                       # Return components of M1 line
-            'read_M2': b'M 2\r\n',       # Read all 8 channels of multiplexer 2
+            'read_M2': b'M 2\r\n',    # Read all 8 channels of multiplexer 2
                                       # Return components of M2 line
 
             # From VB6 sub integrate()
-            'count': b'I 40\r\n',        # Count up the chCounts array; integrate
+            'count': b'I 40\r\n',     # Count up the chCounts array; integrate
                                       # for 40 * 20mS
-            'count2': b'R\r\n',          # Read results of last integration from
+            'count2': b'R\r\n',       # Read results of last integration from
                                       # counter (counts for each channel)
 
             # From VB6 sub Noise() - called by Eline(). Noise diode.
@@ -157,26 +157,27 @@ class MTPcommand():
             # decimal always required.
             # operate with "C" mode ( New SNP-1216 Synthesizers in 'C' mode )
             # This won't work because chan is not defined. Just a placeholder
-            # 
 
-            # Have switch in storePacket called tuneMode that stores either C or F
-            # to switch between these
-            # must be a manual switch, can't find anything that would copy the 
+            # Have switch in storePacket called tuneMode that stores either C
+            # or F to switch between these
+            # must be a manual switch, can't find anything that would copy the
             # tuneF or tuneC functions to tune (actually called) in vb6
             # 'tuneC': 'C ' + chan + '\r',
 
             # VB6 sub nwtune();
             # 'tuneF': 'F ' + chan + '\r',
-            
+
             # From VB6 sub Init()
             'init': b'U/1f1j256V5000L5000h30m100R\r\n',  # initialize
 
             # From VB6 sub initScan() - looks like these two togeter accomplish
             # same set of commands as one above - with different values.
-            'init1': b'U/1f1j256V50000R\r\n',  # direction,top speed, uSteps/step
+            'init1': b'U/1f1j256V50000R\r\n',  # direction,top speed,
+                                               # uSteps/step
             'init2': b'U/1L4000h30m100R\r\n',  # acceration, holding current,
-                                            # motor current
-            'init3':b'U/1j8v800V3000L20m70R\r\n', # from WFP_Init.txt believe to be unused
+                                               # motor current
+            'init3': b'U/1j8v800V3000L20m70R\r\n',  # from WFP_Init.txt believe
+                                                    # to be unused
 
             # From VB6 sub homeScan() - These three step down in resolution, so
             # maybe finer and finer adjustment of home position?
@@ -191,8 +192,8 @@ class MTPcommand():
             # From VB6 sub moveScan(). Move the MTP Nsteps.
             # This syntax won't work because Nsteps is not defined - just a
             # placeholder.
-            'move_fwd_front': 'U/1J0P', # + Nsteps + 'J3R\r',  # If Nsteps >= 0
-            'move_bak_front': 'U/1J0D', #+ Nsteps + 'J3R\r',  # If Nsteps < 0
+            'move_fwd_front': 'U/1J0P',  # + Nsteps + 'J3R\r', # If Nsteps >= 0
+            'move_bak_front': 'U/1J0D',  # + Nsteps + 'J3R\r', # If Nsteps < 0
             'move_end': 'J3R\r\n',
         }
 
