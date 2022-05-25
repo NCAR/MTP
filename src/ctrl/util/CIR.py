@@ -223,7 +223,7 @@ class MTPProbeCIR():
 
     def readBline(self, move):
         """
-        Read all data at current position for B line.
+        Read data at 10 positions for B line.
 
         Returns a complete B line,
         eg "B 019110 020510 019944 019133 020540 019973 019101 020507 ...
