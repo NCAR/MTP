@@ -97,6 +97,7 @@ def main():
         cmdInput = printMenu()
 
         # Check if probe is on and responding
+        # Separate on and responding so can pop up waiting for radiometer
         if probeResponding is False or cmdInput == '9':
             probeResponding = init.bootCheck()
             if cmdInput == '9':
@@ -125,7 +126,6 @@ def main():
             # isMovePossibleFromHome returns 4 is able to move
             if (move.isMovePossibleFromHome(maxDebugAttempts=12,
                                             scanStatus='potato') == 4):
-                move.initForNewLoop()
 
                 # Move hardcoded UART commands into move.py - JAA
                 # This move is not in mtpcommand.py
