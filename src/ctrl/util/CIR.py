@@ -217,5 +217,5 @@ class MTPProbeCIR():
             logger.printmsg("debug", "tune: chan = " + chan)
             cmd = str.encode(str(mode) + str(chan) + "\r\n")
             data = data + self.CIR(cmd) + " "
-            logger.printmsg("debug", "-----")
+            logger.printmsg("debug", "freq set to " + str(cmd))
         return data.strip()  # remove trailing space
