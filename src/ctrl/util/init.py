@@ -80,7 +80,8 @@ class MTPProbeInit():
         '''
         while self.probeOnCheck() is False:
             time.sleep(10)
-            logger.printmsg('error', "probe off or not responding")
+            logger.printmsg('info', "probe off or not responding." +
+                            "Will retry in 10 seconds")
         logger.printmsg('info', "Probe on check returns true")
 
         return True
