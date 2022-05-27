@@ -40,21 +40,6 @@ class MTPProbeMove():
         self.serialPort.write(location)
         return self.init.readEchos(4)
 
-    def initForNewLoop(self):
-        # This is an init command
-        # but it moves the motor faster, so not desired
-        # in initial startup/go home ?
-        # Correct, necessary before move-to-angle commands
-
-        # do a check for over voltage
-        # first move command in loop errors:
-        # status = 6, but no move
-        # step 0C
-        cmd = self.commandDict.getCommand("home2")
-        self.serialPort.write(cmd)
-
-        self.init.readEchos(4)
-
     def isMovePossibleFromHome(self, maxDebugAttempts, scanStatus):
         # returns 4 if move is possible otherwise does debugging
         # debugging needs to know if it's in the scan or starting
