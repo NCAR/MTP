@@ -91,6 +91,9 @@ class MTPProbeInit():
         Read num newlines into buffer. So if port has a string \r\nS\r\n
         it takes num=2 to read it.
         '''
+        # First echo will be exact duplicate of command sent. Check for
+        # that. This will ensure command wasn't corrupted on way to/from
+        # probe.
         buf = b''
         for i in range(num):
             buf = buf + self.serialPort.readline()
