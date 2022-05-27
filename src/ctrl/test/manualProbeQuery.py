@@ -4,6 +4,12 @@
 #
 # Written in Python 3
 #
+# Usage is:
+# 1) Start emulator
+# 2) python3 MTPmanualProbeQuery.py <userport_from_emulator>
+#   -- or --
+# 2) python3 MTPmanualProbeQuery.py COM6
+#
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2022
 ###############################################################################
 from ctrl.lib.mtpcommand import MTPcommand
@@ -41,10 +47,20 @@ class MTPQuery():
             if query == 'r':
                 buf = self.serialPort.readline()
                 logger.printmsg("info", "read " + str(buf))
+                continue
 
             query = query + '\r\n'
 
-            if query == '\x03':  # Ctrl-C
+            if query == 'C\r\n':  # Ctrl-C
+                fghz = 55.51
+                fby4 = (1000 * fghz)/4  # MHz
+                # convert to SNP channel (integer) 0.5 MHz = step size
+                chan = '{:.5}'.format(str(fby4/0.5))
+                cmd = 'C' + chan + '\r\n'
+                self.sendCmd(cmd)
+                continue
+
+            if query == '\x03\r\n':  # Ctrl-C
                 self.sendCmd(query)
                 continue
 
@@ -56,6 +72,11 @@ class MTPQuery():
                     print(self.commandlist[i])
                     self.sendCmd(query)
                     break
+                else:  # Confirm with user
+                    answer = input("Command not recognized: " + query +
+                                   "Enter 'y' to send anyway\n")
+                    if answer == 'y':
+                        self.sendCmd(query)
 
             if i == len(self.commandlist)-1:
                 # If didn't find a valid command, warn user
@@ -73,3 +94,6 @@ class MTPQuery():
             print(i)
             buf = self.serialPort.readline()
             logger.printmsg("info", "read " + str(buf))
+
+        # Add parsing temperature call from M line so if working for a while
+        # can intermittently check probe temperature.
