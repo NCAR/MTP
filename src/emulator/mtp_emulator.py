@@ -237,7 +237,9 @@ class MTPEmulator():
         | Z | Home and Initialize motor
         | z | Set current position without moving motor.
         | P | Move motor relative number of steps in positive direction
+        |   | = counter-clockwise
         | D | Move motor relative number of steps in negative direction
+        |   | = clockwise - what we want!
         | R | run command string
 
         Returned value meanings (e.g. ff/0@ = No error):
