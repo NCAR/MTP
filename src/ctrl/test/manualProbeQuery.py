@@ -72,15 +72,14 @@ class MTPQuery():
                     print(self.commandlist[i])
                     self.sendCmd(query)
                     break
-                else:  # Confirm with user
-                    answer = input("Command not recognized: " + query +
-                                   "Enter 'y' to send anyway\n")
-                    if answer == 'y':
-                        self.sendCmd(query)
 
             if i == len(self.commandlist)-1:
                 # If didn't find a valid command, warn user
                 logger.printmsg("info", "Command not in valid cmd list")
+                answer = input("Command not recognized: " + query +
+                               "Enter 'y' to send anyway\n")
+                if answer == 'y':
+                    self.sendCmd(query)
 
     def sendCmd(self, query):
         """ Send command to probe """
