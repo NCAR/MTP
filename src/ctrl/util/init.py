@@ -90,25 +90,59 @@ class MTPProbeInit():
         '''
         Read num newlines into buffer. So if port has a string \r\nS\r\n
         it takes num=2 to read it.
+
+        Values returned from probe follow the pattern:
+         - one or more empty lines (b'') ; may be all empty lines because
+           probe returns nothing
+         - Then three or more lines denoted by presence of \r\n
+         - When you get empty lines again, you are done.
         '''
         # First echo will be exact duplicate of command sent. Check for
         # that. This will ensure command wasn't corrupted on way to/from
-        # probe.
+        # probe. Echo begins and ends with \r\n
         buf = b''
+
         for i in range(num):
             buf = buf + self.serialPort.readline()
+            i = i + 1
+
+        # Make sure you found ALL the data
+        # But guard against the case where the probe is returning data
+        # forever (no idea if/when this would happen, but just in case..)
+        i = 0
+        while True:
+            line = self.serialPort.readline()
+            i = i + 1
+            if len(line) == 0:  # Found a blank line
+                break
+            else:
+                buf = buf + line
+            if i > 20:  # No legit command should return 20 lines => error!
+                self.handleNonemptyBuffer()
+
+        # And one final check that you got it all
+        self.clearBuffer()
 
         logger.printmsg('debug', "read " + str(buf))
         return buf
 
+    def handleNonemptyBuffer(self):
+        """
+        Put this in it's own function so later it can be updated to gracefully
+        warn user when in realtime mode
+        """
+        logger.printmsg("warning", "Buffer not empty but it should be. " +
+                        "BUG IN CODE needs to be fixed")
+        exit(1)
+
     def clearBuffer(self):
         ''' Confirm that buffer is clear before send next command '''
-        buf = self.readEchos(1)
+        buf = self.serialPort.readline()
+        logger.printmsg('debug', "clearBuffer read " + str(buf))
         if len(buf) == 0:
             logger.printmsg("debug", "Buffer empty. OK to continue")
         else:
-            logger.printmsg("warning", "Buffer not empty but it should be. " +
-                            "BUG IN CODE needs to be fixed")
+            self.handleNonemptyBuffer()
 
     def moveComplete(self, buf):
         '''
