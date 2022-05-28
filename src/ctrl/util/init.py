@@ -36,7 +36,7 @@ class MTPProbeInit():
         '''
         Query probe for status
 
-        status can have values X=[0-6], otherwise error = -1
+        status can have values X=[0-7], otherwise error = -1
         check for T in ST:0X
 
         Return: status
@@ -46,8 +46,20 @@ class MTPProbeInit():
         answerFromProbe = self.readEchos(4)
         logger.printmsg('debug', "echos from status read: " +
                         str(answerFromProbe))
+
         # Offset assumes probe responds "...T:0X" where X is desired char
-        return self.findChar(answerFromProbe, b'T', offset=3)
+        status = self.findChar(answerFromProbe, b'T', offset=3)
+
+        # Status command report status of init, move, and sythesizer
+        # At this point, any status 0-7 is fine. Just make sure we
+        # get a valid status.
+        if int(status) not in range(0, 8):
+            logger.printmsg("error", "Unexpected status value " + str(status) +
+                            " should be integer in range 0-7")
+            # Shouldn't ever get here, so...
+            exit(1)
+
+        return status
 
     def findChar(self, array, binaryString, offset=0):
         '''
@@ -346,7 +358,9 @@ class MTPProbeInit():
         while errorStatus < maxAttempts:
             errorStatus = errorStatus + 1
             answerFromProbe = self.sendInit1()
-            # check for errors/decide if resend?
+            # check for errors/decide if resend? It is common on boot to
+            # get a 'B' = Illegal command sent on first init1 and success
+            # immediately after send second init1
             status = self.findStat(answerFromProbe)
             if status == '@':
                 # success - no error. Break out of loop
@@ -370,7 +384,6 @@ class MTPProbeInit():
             # Probe needs power cycle
 
         status = self.getStatus()
-        # Should check status here. What are we looking for? - JAA
 
         errorStatus = 0
         while errorStatus < maxAttempts:
@@ -385,11 +398,13 @@ class MTPProbeInit():
                                 ", resending init2 command.")
                 errorStatus = errorStatus + 1
 
-        # After both is status of 7 ok?
-        # no
-        # 4 is preferred status
-        # if after both inits status = 5
-        # do an integrate, then a read to clear
+        status = self.getStatus()
+
+        # After both init commands,
+        # status = 6,7 indicates probe thinks it is moving, clears when home1
+        # status = 5,7 indicates probe thinks it is integrating, send "I" to
+        #              clear
+        # status = 4 is preferred status
 
         # We can get here if init fails after maxAttempts. We should
         # catch that case and not report successful init.
