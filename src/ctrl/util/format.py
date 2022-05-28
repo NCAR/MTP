@@ -17,6 +17,10 @@ class MTPDataFormat():
         self.commandDict = commandDict
         self.data = data
 
+        # Read elAngles from Config.mtph, for now... - JAA
+        self.zel = -179.8
+        self.elAngles = [80, 55, 42, 25, 12, 0, -12, -25, -42, -80]
+
     def setNoise(self, num):
         self.serialPort.write(num)
         self.init.readEchos(4)
@@ -33,15 +37,33 @@ class MTPDataFormat():
         firstTime = datetime.datetime.now()
 
         self.b = ''
-        # Eventually move angle should be calculated using MAM.
-        # For now, this just tests the flow through the code. Angles will
-        # be confirmed and corrected if needed later. - JAA
-        for angle in [b'U/1J0D28226J3R', b'U/1J0D7110J3R', b'U/1J0D3698J3R',
-                      b'U/1J0D4835J3R', b'U/1J0D3698J3R', b'U/1J0D3413J3R',
-                      b'U/1J0D3414J3R', b'U/1J0D3697J3R', b'U/1J0D4836J3R',
-                      b'U/1J0D10810J3R']:
-            move.moveTo(angle)
+        self.currentClkStep = 0
+
+        # Add status checks after each move and after each CIR,
+        # and warn if not '4'
+
+        # GV angles are b'U/1J0D28226J3R', b'U/1J0D7110J3R', b'U/1J0D3698J3R',
+        #               b'U/1J0D4835J3R', b'U/1J0D3698J3R', b'U/1J0D3413J3R',
+        #               b'U/1J0D3414J3R', b'U/1J0D3697J3R', b'U/1J0D4836J3R',
+        #               b'U/1J0D10810J3R']:
+        for angle in self.elAngles:
+
+            pitchCorrect = False
+            if pitchCorrect:
+                # Need to add fEc correction -> JAA
+                # angle = angle + self.fEc(pitchFrame, rollFrame, angle, MAM)
+                # For now just ...
+                break
+            else:
+                logger.printmsg("info", "not correcting Pitch")
+                logger.printmsg("debug", "Zel to be added to targetEl: "
+                                + str(self.zel))
+            angle = angle + self.zel
+
+            moveToCommand = self.getAngle(angle)
+            move.moveTo(moveToCommand)
             self.b += self.data.CIRS() + ' '  # Collect counts for 3 channels
+
         data = "B " + str(self.b)
 
         logger.printmsg("info", "data from B line:" + data)
@@ -51,6 +73,53 @@ class MTPDataFormat():
                         str(nextTime-firstTime))
 
         return data
+
+    def getAngle(self, targetEl):
+
+        # 128 step resolution from init.py::moveHome
+        stepDeg = 80/20 * (128 * (200/360))
+        logger.printmsg("debug", "stepDeg: " + str(stepDeg))
+
+        targetClkStep = targetEl * stepDeg
+        logger.printmsg("debug", "targetClkStep: " + str(targetClkStep))
+
+        logger.printmsg("debug", "currentClkStep: " + str(self.currentClkStep))
+
+        # nsteps check here
+        nstep = targetClkStep - self.currentClkStep
+        logger.printmsg("debug", "calculated nstep: " + str(nstep))
+        # Figure out if need this when implement MAM correction - JAA
+        # if nstep == 0:
+        #     logger.printmsg("info", "nstep is zero loop")
+        #     # suspect this occurs when pitch/roll/z are 0
+        #     # need to have a catch case when above are nan's
+        #     return
+
+        # save current step so difference is actual step difference
+        self.currentClkStep = self.currentClkStep + int(nstep)
+        logger.printmsg("debug", "currentClkStep + nstep: " +
+                        str(self.currentClkStep))
+
+        # drop everything after the decimal point:
+        nstepSplit = str(nstep).split('.')
+        nstep = nstepSplit[0]
+
+        if nstep[0] == '-':  # first char of nstep -> negative number
+            nstepSplit = str(nstep).split('-')  # Split '-' off
+            # right justify, pad with zeros if necessary to get to 6 digits
+            nstep = nstepSplit[1].rjust(6, '0')
+            frontCommand = 'U/1J0D'  # + Nsteps + 'J3R\r', # If Nsteps < 0
+        else:
+            # Should never get here
+            # frontCommand = 'U/1J0P'  # + Nsteps + 'J3R\r', # If Nsteps >= 0
+            logger.printmsg("debug", "positive step found" +
+                            "*** SOMETHING IS WRONG ***")
+
+        backCommand = nstep + 'J3R\r\n'
+
+        logger.printmsg("DEBUG", "Command to move to " + str(targetEl) +
+                        " is " + frontCommand + backCommand)
+        return (frontCommand + backCommand).encode('ascii')
 
     def getBdata(self):
         """ Return the B data only (without B at the front) """
