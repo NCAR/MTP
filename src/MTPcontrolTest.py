@@ -121,14 +121,13 @@ def main():
             move.moveHome()
 
         elif cmdInput == '3':
-            """ Attempt a single step """
-            # isMovePossibleFromHome returns 4 is able to move
+            """ Attempt a single move """
+            # isMovePossibleFromHome() returns 4 if able to move
             if (move.isMovePossibleFromHome(maxDebugAttempts=12,
                                             scanStatus='potato') == 4):
 
-                # Move hardcoded UART commands into move.py - JAA
-                # This move is not in mtpcommand.py
-                echo = move.moveTo(b'U/1J0D28226J3R\r\n')
+                # Move to first angle in readBline
+                echo = move.moveTo(fmt.getAngle(80))
                 s = init.moveComplete(echo)
                 logger.printmsg('info', "First angle reached = " + str(s))
 
