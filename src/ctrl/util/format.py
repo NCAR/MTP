@@ -37,7 +37,7 @@ class MTPDataFormat():
         firstTime = datetime.datetime.now()
 
         self.b = ''
-        self.currentClkStep = 0
+        currentClkStep = 0
 
         # Add status checks after each move and after each CIR,
         # and warn if not '4'
@@ -58,9 +58,9 @@ class MTPDataFormat():
                 logger.printmsg("info", "not correcting Pitch")
                 logger.printmsg("debug", "Zel to be added to targetEl: "
                                 + str(self.zel))
-            angle = angle + self.zel
 
-            moveToCommand = self.getAngle(angle)
+            moveToCommand, currentClkStep = self.getAngle(angle,
+                                                          currentClkStep)
             echo = move.moveTo(moveToCommand)
             if self.init.moveComplete(echo):
                 # Collect counts for 3 channels
@@ -81,7 +81,16 @@ class MTPDataFormat():
 
         return data
 
-    def getAngle(self, targetEl):
+    def getAngle(self, targetEl, currentClkStep):
+        """
+        Calculate move command needed to point probe at target elevation.
+
+        Input: Target elevation
+               current location of probe
+
+        Return: move command
+        """
+        targetEl = targetEl + self.zel
 
         # 128 step resolution from init.py::moveHome
         stepDeg = 80/20 * (128 * (200/360))
@@ -90,10 +99,10 @@ class MTPDataFormat():
         targetClkStep = targetEl * stepDeg
         logger.printmsg("debug", "targetClkStep: " + str(targetClkStep))
 
-        logger.printmsg("debug", "currentClkStep: " + str(self.currentClkStep))
+        logger.printmsg("debug", "currentClkStep: " + str(currentClkStep))
 
         # nsteps check here
-        nstep = targetClkStep - self.currentClkStep
+        nstep = targetClkStep - currentClkStep
         logger.printmsg("debug", "calculated nstep: " + str(nstep))
         # Figure out if need this when implement MAM correction - JAA
         # if nstep == 0:
@@ -103,9 +112,9 @@ class MTPDataFormat():
         #     return
 
         # save current step so difference is actual step difference
-        self.currentClkStep = self.currentClkStep + int(nstep)
+        currentClkStep = currentClkStep + int(nstep)
         logger.printmsg("debug", "currentClkStep + nstep: " +
-                        str(self.currentClkStep))
+                        str(currentClkStep))
 
         # drop everything after the decimal point:
         nstepSplit = str(nstep).split('.')
@@ -120,13 +129,14 @@ class MTPDataFormat():
             # Should never get here
             # frontCommand = 'U/1J0P'  # + Nsteps + 'J3R\r', # If Nsteps >= 0
             logger.printmsg("debug", "positive step found" +
-                            "*** SOMETHING IS WRONG ***")
+                            "*** SOMETHING IS WRONG *** Need to update code")
+            exit(1)
 
         backCommand = nstep + 'J3R\r\n'
 
         logger.printmsg("DEBUG", "Command to move to " + str(targetEl) +
                         " is " + frontCommand + backCommand)
-        return (frontCommand + backCommand).encode('ascii')
+        return (frontCommand + backCommand).encode('ascii'), currentClkStep
 
     def getBdata(self):
         """ Return the B data only (without B at the front) """
