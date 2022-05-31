@@ -30,6 +30,7 @@ class MTPProbeMove():
         # - b’U/1J3R’ -> turn on both drivers
         if self.sendHome("home1"):  # success
             status = self.init.getStatus()
+            # After home 1, acceptable status values are ...? - JAA
         else:
             logger.printmsg('warning', " **** Need to update code.")
             exit(1)
@@ -51,10 +52,12 @@ class MTPProbeMove():
         #         Need to double check the VB6. - JAA)
         if self.sendHome("home2"):  # success
             status = self.init.getStatus()
+            # After home 2, acceptable status values are ...? - JAA
         else:
             logger.printmsg('warning', " **** Need to update code.")
             exit(1)
 
+        logger.printmsg('info', "home successful")
         return status
 
     def sendHome(self, home):
@@ -79,7 +82,7 @@ class MTPProbeMove():
         self.serialPort.write(location)
         return self.init.readEchos(4)
 
-    def isMovePossibleFromHome(self, maxDebugAttempts, scanStatus):
+    def isMovePossibleFromHome(self, maxDebugAttempts=12):
         # returns 4 if move is possible otherwise does debugging
         # debugging needs to know if it's in the scan or starting
         # and how many debug attempts have been made
@@ -92,7 +95,7 @@ class MTPProbeMove():
             # Check if integrator busy (status = 1,3,5,7)
             # Integrate logic ensures integrate has completed, so here just
             # send b'I/r/n' to clear integrator bit.
-            if s == '1' or s == '3' or s == '5' or s == '7':
+            if int(s) %2 != 0:  # s is odd
                 cmd = self.commandDict.getCommand("count")
                 self.serialPort.write(cmd)
                 self.init.readEchos(4)
@@ -108,7 +111,7 @@ class MTPProbeMove():
                 # Clear integrator failed
                 logger.printmsg("error", "Clear integrator failed. " +
                                 "#### Need to update code")
-                exit(1)
+                return False
             elif s == '2' or s == '6':
                 # moveHome() should have cleared this. Warn user.
                 # If this occurs, can we send a 'z' to fix it? - JAA (try it)
@@ -117,7 +120,7 @@ class MTPProbeMove():
                                 "check should only be called AFTER moveHome." +
                                 " Something is wrong. " +
                                 "#### Need to update code")
-                exit(1)
+                return False
 
             # OK to move if synthesizer out of lock (4) or if all clear (0)
             if s == '0' or s == '4':

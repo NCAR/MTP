@@ -122,20 +122,39 @@ def main():
 
         elif cmdInput == '3':
             """ Attempt a single move """
+            # Determine how long it takes to read three frequencies
+            firstTime = datetime.datetime.now(datetime.timezone.utc)
+
             # isMovePossibleFromHome() returns 4 if able to move
-            if (move.isMovePossibleFromHome(maxDebugAttempts=12,
-                                            scanStatus='potato') == 4):
+            if (move.isMovePossibleFromHome()):
 
                 # Move to first angle in readBline
                 cmd, currentClkStep = fmt.getAngle(80, 0)
                 echo = move.moveTo(cmd)
                 s = init.moveComplete(echo)
                 logger.printmsg('info', "First angle reached = " + str(s))
+            else:
+                exit(1)
+
+            # Command finished
+            nowTime = datetime.datetime.now(datetime.timezone.utc)
+            logger.printmsg("info", "single move took " +
+                            str(nowTime-firstTime))
+
 
         elif cmdInput == '4':
+            # Determine how long it takes to read three frequencies
+            firstTime = datetime.datetime.now(datetime.timezone.utc)
+
             # Read data at current position for three frequencies
             countStr = data.CIRS()
+
+            # Command finished
+            nowTime = datetime.datetime.now(datetime.timezone.utc)
+
             logger.printmsg("info", "data from one position:" + str(countStr))
+            logger.printmsg("info", "freq triplet creation took " +
+                            str(nowTime-firstTime))
 
         elif cmdInput == '5':
             # Create E line
