@@ -63,10 +63,11 @@ class MTPProbeCIR():
         integratetimeout = 20
 
         while (True):
-            if self.checkIntegrateStatus("started"):
+            s = self.init.getStatus()
+            if self.checkIntegrateStatus("started", s):
                 break
 
-            logger.printmsg("debug", 'checking for finished integrator: ' +
+            logger.printmsg("debug", 'checking for started integrator: ' +
                             'attempt ' + str(i))
 
             if i == looptimeoutMS:
@@ -94,7 +95,8 @@ class MTPProbeCIR():
         i = 0
         j = 0
         while (True):
-            if self.checkIntegrateStatus("finished"):
+            s = self.init.getStatus()
+            if self.checkIntegrateStatus("finished", s):
                 break
 
             logger.printmsg("debug", 'checking for finished integrator: ' +
@@ -117,7 +119,7 @@ class MTPProbeCIR():
 
         return True
 
-    def checkIntegrateStatus(self, stat):
+    def checkIntegrateStatus(self, stat, s):
         """
         Check integrate status
          - Bit 0 = integrator busy
@@ -144,7 +146,6 @@ class MTPProbeCIR():
                             "*** BUG IN CODE ***")
             return False
 
-        s = self.init.getStatus()
         logger.printmsg("debug", "integrate loop, checking for " +
                         "integrator " + str(stat) + ", got status=" + str(s))
 
@@ -156,6 +157,11 @@ class MTPProbeCIR():
                                 " integrator busy while stepper moving." +
                                 " Should not occur. Either *** BUG IN CODE " +
                                 "or MTP instrument has an issue.")
+            return True
+        elif stat == "started" and int(s) % 2 == 0:
+            # Number is even -> integrator finished
+            logger.printmsg("debug", "integrator finished before started" +
+                            "Too fast. How can I catch start?")  # JAA
             return True
         elif stat == "finished" and int(s) % 2 == 0:
             # Number is even -> integrator finished
