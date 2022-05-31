@@ -76,7 +76,7 @@ class MTPDataFormat():
         logger.printmsg("info", "data from B line:" + data)
 
         nextTime = datetime.datetime.now()
-        logger.printmsg("debug", "B line creation took " +
+        logger.printmsg("info", "B line creation took " +
                         str(nextTime-firstTime))
 
         return data
@@ -165,7 +165,7 @@ class MTPDataFormat():
         logger.printmsg("info", "data from E line:" + data)
 
         nextTime = datetime.datetime.now()
-        logger.printmsg("debug", "E line creation took " +
+        logger.printmsg("info", "E line creation took " +
                         str(nextTime-firstTime))
 
         return data
