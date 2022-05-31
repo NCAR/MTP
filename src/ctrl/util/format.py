@@ -21,9 +21,9 @@ class MTPDataFormat():
         self.zel = -179.8
         self.elAngles = [80, 55, 42, 25, 12, 0, -12, -25, -42, -80]
 
-    def setNoise(self, num):
-        self.serialPort.write(num)
-        self.init.readEchos(4)
+    def setNoise(self, cmd):
+        self.serialPort.write(cmd)
+        self.init.readEchos(4, cmd)
 
     def readBline(self, move):
         """
@@ -183,7 +183,7 @@ class MTPDataFormat():
         """
         cmd = self.commandDict.getCommand("read_M1")
         self.serialPort.write(cmd)
-        self.m1 = self.init.readEchos(6)
+        self.m1 = self.init.readEchos(6, cmd)
         self.m1 = self.init.sanitize(self.m1)  # clean up buffer & return data
         data = "M01: " + str(self.m1)
 
@@ -204,7 +204,7 @@ class MTPDataFormat():
         """
         cmd = self.commandDict.getCommand("read_M2")
         self.serialPort.write(cmd)
-        self.m2 = self.init.readEchos(6)
+        self.m2 = self.init.readEchos(6, cmd)
         self.m2 = self.init.sanitize(self.m2)  # clean up buffer & return data
         data = "M02: " + str(self.m2)
 
@@ -225,7 +225,7 @@ class MTPDataFormat():
         """
         cmd = self.commandDict.getCommand("read_P")
         self.serialPort.write(cmd)
-        self.pt = self.init.readEchos(6)
+        self.pt = self.init.readEchos(6, cmd)
         self.pt = self.init.sanitize(self.pt)  # clean up buffer & return data
         data = "Pt: " + str(self.pt)
 
