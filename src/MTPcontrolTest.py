@@ -82,11 +82,10 @@ def main():
     # Dictionary of allowed commands to send to firmware
     commandDict = MTPcommand()
 
-    # Move readConfig out of viewer/MTPclient to lib/readConfig and
-    # get port from there. Add --config to parse_args - JAA
+    # Get port from config file
     port = configfile.getInt('udp_send_port')
 
-    init = MTPProbeInit(args, port, commandDict)
+    init = MTPProbeInit(args, port, commandDict, args.loglevel)
     move = MTPProbeMove(init, commandDict)
     data = MTPProbeCIR(init, commandDict)
     fmt = MTPDataFormat(init, data, commandDict)
@@ -159,7 +158,8 @@ def main():
             # Create E line
             # Read data at current position for three frequencies and for
             # noise diode on then off
-            # Need to add move to point at target - JAA
+            # During scan looping, ensure send moveHome() before read Eline so
+            # are pointing at target
             fmt.readEline()
 
         elif cmdInput == '6':
@@ -174,8 +174,9 @@ def main():
 
         elif cmdInput == '8':
             # Create UDP packet
-            # This logic gets the housekeeping, then the Bline. Is that what
-            # we want? Does it matter? - JAA
+            # During scan looping, ensure send moveHome() before read house-
+            # keeping and Eline so pointing at target. Then get Bline.
+            # Is this order what we want? Does it matter? - JAA
             logger.printmsg("info", "sit tight - scans typically take 17s")
             udpLine = ''
 

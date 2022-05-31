@@ -40,12 +40,12 @@ class MTPProbeCIR():
         # eg: echo when buffer is sending to probe is same
         # as echo from probe: both "C#####\r\n"
         # Catch tune echos
-        self.init.readEchos(4)
+        self.init.readEchos(4, freq)
 
     def integrate(self):
         cmd = self.commandDict.getCommand("count")
         self.serialPort.write(cmd)
-        self.init.readEchos(4)
+        self.init.readEchos(4, cmd)
 
         # Check that S turns to 5 (integrator starts)
         # and that S turns back to 4 (integrator finished) to move on
@@ -93,7 +93,7 @@ class MTPProbeCIR():
                                 " re-send Integrate")
                 cmd = self.commandDict.getCommand("count")
                 self.serialPort.write(cmd)
-                self.init.readEchos(4)
+                self.init.readEchos(4, cmd)
             i = i + 1
 
             if j == integratetimeout:
@@ -191,7 +191,7 @@ class MTPProbeCIR():
     def readDatumFromProbe(self):
         cmd = self.commandDict.getCommand("count2")
         self.serialPort.write(cmd)
-        data = self.init.readEchos(4)
+        data = self.init.readEchos(4, cmd)
 
         # Find counts in string. Expected string is R28:xxxx where xxxx is
         # 4-digit hex value.
