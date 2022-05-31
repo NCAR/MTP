@@ -33,7 +33,7 @@ class MTPProbeMove():
             # After home 1, acceptable status values are ...? - JAA
         else:
             logger.printmsg('warning', " **** Need to update code.")
-            exit(1)
+            return False
 
         # home2
         # After home1, probe returns success but any subsequent clockwise move
@@ -55,7 +55,7 @@ class MTPProbeMove():
             # After home 2, acceptable status values are ...? - JAA
         else:
             logger.printmsg('warning', " **** Need to update code.")
-            exit(1)
+            return False
 
         logger.printmsg('info', "home successful")
         return status
