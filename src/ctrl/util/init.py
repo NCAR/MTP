@@ -71,12 +71,12 @@ class MTPProbeInit():
         '''
         index = array.find(binaryString)
         if index > -1:
-            logger.printmsg('debug', "status with offset: " +
+            logger.printmsg('debug', "status: " +
                             chr(array[index+offset]))
             return chr(array[index+offset])
         else:
-            logger.printmsg('error', "status with offset unknown, unable to " +
-                            "find " + str(binaryString) + ": " + str(array))
+            logger.printmsg('error', "status unknown, unable to " +
+                            "find " + str(binaryString) + " in " + str(array))
             return False
 
     def bootCheck(self):
