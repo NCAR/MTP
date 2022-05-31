@@ -16,6 +16,23 @@ class MTPProbeCIR():
         self.init = init
         self.commandDict = commandDict
 
+        self.fcmd = []
+        # Update to read from Config.mtph - JAA
+        fghz = [55.51, 56.65, 58.8]  # freq in gigahertz
+
+        # either 'C' or 'F' (set in lib/storePacket.py)
+        # F mode formatting #####.# instead of cmode formatting #####
+        # Eventually get from  packetStore.getData("tuneMode") always = 'C'
+        mode = 'C'  # Always use 'C'. 'F' prone to frequency collapse
+
+        # Convert freq to integer to send to Firmware
+        for f in fghz:
+            fby4 = (1000 * f)/4  # MHz
+            # convert to SNP channel (integer) 0.5 MHz = step size
+            chan = '{:.5}'.format(str(fby4/0.5))
+            logger.printmsg("debug", "tune: chan = " + chan)
+            self.fcmd.append(str.encode(str(mode) + str(chan) + "\r\n"))
+
     def changeFrequency(self, freq):
         self.serialPort.write(freq)
         # no official response, just echos
@@ -161,8 +178,8 @@ class MTPProbeCIR():
             return True
         elif stat == "started" and int(s) % 2 == 0:
             # Number is even -> integrator finished
-            logger.printmsg("debug", "integrator finished before started" +
-                            "Too fast. How can I catch start?")  # JAA
+            logger.printmsg("debug", "integrator finished before started. " +
+                            " Too fast. How can I catch start?")  # JAA
             return True
         elif stat == "finished" and int(s) % 2 == 0:
             # Number is even -> integrator finished
@@ -206,23 +223,7 @@ class MTPProbeCIR():
         """
         data = ''
 
-        # Convert freq to integer to send to Firmware
-        # Since they don't change, this conversion could be removed from
-        # the loop and just done once to save time. - per Catherine
-        # Update to read from Config.mtph - JAA
-        fghz = [55.51, 56.65, 58.8]  # freq in gigahertz
-
-        # either 'C' or 'F' (set in lib/storePacket.py)
-        # F mode formatting #####.# instead of cmode formatting #####
-        # not sure it makes a difference
-        # Eventually get from  packetStore.getData("tuneMode")
-        mode = 'C'
-        for f in fghz:
-            fby4 = (1000 * f)/4  # MHz
-            # convert to SNP channel (integer) 0.5 MHz = step size
-            chan = '{:.5}'.format(str(fby4/0.5))
-            logger.printmsg("debug", "tune: chan = " + chan)
-            cmd = str.encode(str(mode) + str(chan) + "\r\n")
+        for cmd in self.fcmd:
             data = data + self.CIR(cmd) + " "
             logger.printmsg("debug", "freq set to " + str(cmd))
         return data.strip()  # remove trailing space
