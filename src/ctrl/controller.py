@@ -70,6 +70,9 @@ def parse_args():
         help="Device on which to receive messages from MTP instrument")
     parser.add_argument('--mtph', type=str, help="Path to Config.mtph",
         default=path.join(getrootdir(), 'Config.mtph'))
+    parser.add_argument('--gui', type=bool,
+            help="True (for gui) or False (for no gui)",
+            default = True)
 
     # Parse the command line arguments
     args = parser.parse_args()
@@ -136,7 +139,8 @@ def main():
     ex.flightNumberBox.setText(flightNumber)
     ex.projectNameBox.setText(projectName)
 
-    mtp = modelMTP(ex, serialPort, configStore, dataFile, iwgFile, tempData)
+    mtp = modelMTP(ex, serialPort, configStore, dataFile,
+            iwgFile, tempData, args.gui )
     # Will need data file and config dicts too
     mtp.mainloop(isScanning = True)
     # sys.exit(app.exec_())

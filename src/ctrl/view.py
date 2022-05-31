@@ -454,19 +454,19 @@ class controlWindow(QWidget):
         painter.end()
 
     def setLEDred(self, led):
-        led.setPixmap(self.ICON_RED_LED.scaled(40,40))
+        led.setPixmap(self.ICON_RED_LED.scaled(40, 40))
 
     def setLEDyellow(self, led):
-        led.setPixmap(self.ICON_YELLOW_LED.scaled(40,40))
+        led.setPixmap(self.ICON_YELLOW_LED.scaled(40, 40))
 
     def setLEDgreen(self, led):
-        led.setPixmap(self.ICON_GREEN_LED.scaled(40,40))
+        led.setPixmap(self.ICON_GREEN_LED.scaled(40, 40))
 
     def getFlightNumber(self):
         # Dialog for setting flight number
         flightNum, ok = QInputDialog.getText(self, self.tr('FlightNum'),
-                        self.tr('''Please enter flight number
-                        (eg. TF00, RF01, FF00, CF05)'''))
+                                        self.tr('''Please enter flight number
+                                        (eg. TF00, RF01, FF00, CF05)'''))
 
         # if ok is clicked
         if ok:
@@ -487,7 +487,8 @@ class controlWindow(QWidget):
         self.elAngleBox.clear()
         self.elAngleBox.setText(angle)
 
-    def updateGUIEndOfLoop(self, elapsedTime, totalCycles, cyclesSinceLastStop):
+    def updateGUIEndOfLoop(self, elapsedTime,
+                           totalCycles, cyclesSinceLastStop):
         self.loopTimerBox.clear()
         self.loopTimerBox.setText("{:0.2f}".format(elapsedTime))
         self.totalNumFramesBox.clear()
