@@ -116,7 +116,6 @@ class MTPProbeInit():
 
         for i in range(num):
             buf = buf + self.serialPort.readline()
-            i = i + 1
 
         # Make sure you found ALL the data
         # But guard against the case where the probe is returning data
