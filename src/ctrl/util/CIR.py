@@ -42,8 +42,7 @@ class MTPProbeCIR():
         integrator has started.
 
         Once integrator has started, loop indefinitely until get status 4
-        indicating integrator has finished.  Integrator MUST finish before
-        we leave this loop, or counts are suspect.
+        indicating integrator has finished.
         """
         # looptimeoutMS is actually a loopcount. Make into a time - JAA
         # Is this really the logic we want?? - JAA

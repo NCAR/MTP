@@ -123,7 +123,8 @@ def main():
         elif cmdInput == '3':
             """ Attempt a single move """
             # isMovePossibleFromHome() returns 4 if able to move
-            if (move.isMovePossibleFromHome()):
+            if (move.isMovePossibleFromHome(maxDebugAttempts=12,
+                                            scanStatus='potato') == 4):
 
                 # Move to first angle in readBline
                 echo = move.moveTo(fmt.getAngle(80))

@@ -79,55 +79,51 @@ class MTPProbeMove():
         self.serialPort.write(location)
         return self.init.readEchos(4)
 
-    def isMovePossibleFromHome(self, maxDebugAttempts=12):
-        """
-        Determine if status allows probe to begin a complete scan.
-
-        This should only be called after home command when probe is in home
-        position, i.e. pointed at target.
-
-        Returns: 0, 4 if move is possible otherwise does debugging
-        """
+    def isMovePossibleFromHome(self, maxDebugAttempts, scanStatus):
+        # returns 4 if move is possible otherwise does debugging
+        # debugging needs to know if it's in the scan or starting
+        # and how many debug attempts have been made
+        # should also be a case statement, 6, 4, 7 being most common
 
         counter = 0
         while counter < maxDebugAttempts:
             s = self.init.getStatus()
             counter = counter + 1
-
-            # Check if integrator busy (status = 1,3,5,7)
-            # Integrate logic ensures integrate has completed, so here just
-            # send b'I/r/n' to clear integrator bit.
-            if s == '1' or s == '3' or s == '5' or s == '7':
-                cmd = self.commandDict.getCommand("clear")
-                self.serialPort.write(cmd)
-                self.init.readEchos(4)
-                # What does this return? How do we determine success? - JAA
-
-            # Check if stepper moving (status = 2, 3, 6, 7)
-            # but success clearing integrator means we only need to check 2, 6
-            if s == '3' or s == '7':
-                # Clear integrator failed
-                logger.printmsg("error", "Clear integrator failed. " +
-                                "#### Need to update code")
-                exit(1)
-            elif s == '2' or s == '6':
-                # moveHome() should have cleared this. Warn user.
-                # If this occurs, can we send a 'z' to fix it? - JAA (try it)
-                #  - z = Set current position without moving motor.
-                logger.printmsg("error", "Clear stepper moving failed. This " +
-                                "check should only be called AFTER moveHome." +
-                                " Something is wrong. " +
-                                "#### Need to update code")
-                exit(1)
-
-            # OK to move if synthesizer out of lock (4) or if all clear (0)
-            if s == '0' or s == '4':
-                # synthesizer out of lock
-                logger.printmsg("debug", "isMovePossible is 4 - yes, return")
-                return True
+            if s == '0':
+                # integrator busy, Stepper not moving, Synthesizer out of lock,
+                # and spare = 0
+                logger.printmsg('DEBUG', 'isMovePossible status 0')
+                return 0
+            elif s == '1':
+                logger.printmsg('DEBUG', 'isMovePossible status 1')
+                return 1
+            elif s == '2':
+                logger.printmsg('DEBUG', 'isMovePossible status 2')
+                return 2
+            elif s == '3':
+                logger.printmsg('DEBUG', 'isMovePossible status 3')
+                return 3
+            elif s == '4':
+                logger.printmsg('DEBUG', "isMovePossible is 4 - yes, return")
+                return 4
                 # continue on with moving
-
+            elif s == '5':
+                logger.printmsg('DEBUG', "isMovePossible, status 5")
+                return 5
+            elif s == '6':
+                # can be infinite,
+                # can also be just wait a bit
+                s = self.init.getStatus()
+                if counter < maxDebugAttempts:
+                    logger.printmsg('debug',
+                                    "isMovePossible, status = 6, counter = " +
+                                    str(counter))
+                else:
+                    logger.printmsg('error',
+                                    "isMovePossible, status = 6, counter = " +
+                                    str(counter))
+                    return -1
+            elif s == '7':
+                logger.printmsg('debug', 'isMovePossible status 7')
             else:
-                logger.printmsg("error", "Home, status = " + str(s) +
-                                " Something is wrong. ### Need to update code")
-                exit(1)
+                logger.printmsg('error', "Home, status = " + str(s))
