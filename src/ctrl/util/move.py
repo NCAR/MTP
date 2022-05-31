@@ -64,7 +64,7 @@ class MTPProbeMove():
         """ Send home command to probe """
         cmd = self.commandDict.getCommand(home)
         self.serialPort.write(cmd)
-        answerFromProbe = self.init.readEchos(5)
+        answerFromProbe = self.init.readEchos(5, cmd)
 
         status = self.init.findStat(answerFromProbe)
         if status == '@':
@@ -80,7 +80,7 @@ class MTPProbeMove():
 
     def moveTo(self, location):
         self.serialPort.write(location)
-        return self.init.readEchos(5)
+        return self.init.readEchos(5, location)
 
     def isMovePossibleFromHome(self, maxDebugAttempts=12):
         # returns 4 if move is possible otherwise does debugging
@@ -98,10 +98,10 @@ class MTPProbeMove():
             if int(s) % 2 != 0:  # s is odd
                 cmd = self.commandDict.getCommand("count")
                 self.serialPort.write(cmd)
-                self.init.readEchos(4)
+                self.init.readEchos(4, cmd)
                 cmd = self.commandDict.getCommand("count2")
                 self.serialPort.write(cmd)
-                self.init.readEchos(4)
+                self.init.readEchos(4, cmd)
                 s = self.init.getStatus()
                 # What does this return? How do we determine success? - JAA
 

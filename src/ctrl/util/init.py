@@ -101,10 +101,13 @@ class MTPProbeInit():
 
         return True
 
-    def readEchos(self, num):
+    def readEchos(self, num, cmd=b''):
         '''
         Read num newlines into buffer. So if port has a string \r\nS\r\n
         it takes num=2 to read it.
+
+        Also confirms that first echo matches command sent to probe if
+        command is supplied to this function. (Default cmd=b'' skips this test.
 
         Values returned from probe follow the pattern:
          - one or more empty lines (b'') ; may be all empty lines because
@@ -112,13 +115,19 @@ class MTPProbeInit():
          - Then three or more lines denoted by presence of \r\n
          - When you get empty lines again, you are done.
         '''
-        # First echo will be exact duplicate of command sent. Check for
-        # that. This will ensure command wasn't corrupted on way to/from
-        # probe. Echo begins and ends with \r\n -- JAA
         buf = b''
 
         for i in range(num):
             buf = buf + self.serialPort.readline()
+
+            # First echo will be exact duplicate of command sent. Check for
+            # it to ensure command wasn't corrupted on way to/from probe.
+            # Echo begins and ends with \r\n so need to read 2 lines to get
+            # first echo (lines 0 and 1). Add \r\n to cmd to match echo.
+            if i == 1 and len(cmd) != 0:
+                if buf != b'\r\n' + cmd:
+                    logger.printmsg("warning", "initial echo from probe did " +
+                                    "NOT match command sent. Sent " + str(cmd))
 
         if self.loglevel == "DEBUG":
             # Make sure you found ALL the data - only do this in debug mode
@@ -153,7 +162,7 @@ class MTPProbeInit():
         warn user when in realtime mode
         """
         logger.printmsg("warning", "Buffer not empty but it should be. " +
-                        "BUG IN CODE needs to be fixed")
+                        "BUG IN CODE #### Needs to update code.")
         exit(1)
 
     def clearBuffer(self):
@@ -323,7 +332,7 @@ class MTPProbeInit():
         #  Step:\r\n
         #
 
-        return self.readEchos(5)
+        return self.readEchos(5, cmd)
 
     def sendInit2(self):
         # Init2
@@ -342,7 +351,7 @@ class MTPProbeInit():
         # \x1b[A\x1b[BU/1f1j256V50000R
         # Step:\xff/0B\r\n'
         #
-        return self.readEchos(5)
+        return self.readEchos(5, cmd)
         # By the time we have sent maxAttempts (6) Init1 and 6 init2, we need
         # 12 readEchos to get all the responses.
 
@@ -361,7 +370,7 @@ class MTPProbeInit():
         emptyAnswer = re.compile(b'')
         if not emptyAnswer.match(answerFromProbe):
             logger.printmsg('error', " Need to handle probe response " +
-                            str(answerFromProbe) + "*** Update code")
+                            str(answerFromProbe) + "#### Need to update code")
 
         errorStatus = 0
         while errorStatus < maxAttempts:
