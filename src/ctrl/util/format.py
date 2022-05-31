@@ -39,6 +39,12 @@ class MTPDataFormat():
         self.b = ''
         self.currentClkStep = 0
 
+        if not (move.isMovePossibleFromHome()):
+            logger.printmsg("error", "Probe needs to be in home position " +
+                            "before start complete scan. #### Need to update" +
+                            " code")
+            exit(1)
+
         # Add status checks after each move and after each CIR,
         # and warn if not '4'
 
@@ -83,7 +89,7 @@ class MTPDataFormat():
 
     def getAngle(self, targetEl):
 
-        # 128 step resolution from init.py::moveHome
+        # 128 step resolution from init.py::moveHome()
         stepDeg = 80/20 * (128 * (200/360))
         logger.printmsg("debug", "stepDeg: " + str(stepDeg))
 
