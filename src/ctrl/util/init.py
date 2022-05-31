@@ -352,11 +352,10 @@ class MTPProbeInit():
         emptyAnswer = re.compile(b'')
         if not emptyAnswer.match(answerFromProbe):
             logger.printmsg('error', " Need to handle probe response " +
-                            str(answerFromProbe))
+                            str(answerFromProbe) + "*** Update code")
 
         errorStatus = 0
         while errorStatus < maxAttempts:
-            errorStatus = errorStatus + 1
             answerFromProbe = self.sendInit1()
             # check for errors/decide if resend? It is common on boot to
             # get a 'B' = Illegal command sent on first init1 and success
@@ -368,6 +367,7 @@ class MTPProbeInit():
             else:
                 logger.printmsg('warning', " Init 1 status " + str(status) +
                                 ", resending init1 command.")
+                errorStatus = errorStatus + 1
             # if on first move status 6 for longer than expected
             # aka command sent properly, but actual movement
             # not initiated, need a Ctrl-c then re-init, re-home
