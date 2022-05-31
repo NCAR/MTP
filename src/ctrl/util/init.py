@@ -158,12 +158,10 @@ class MTPProbeInit():
 
     def handleNonemptyBuffer(self):
         """
-        Put this in it's own function so later it can be updated to gracefully
-        warn user when in realtime mode
+        Warn user when buffer expected to be empty, but it isn't
         """
         logger.printmsg("warning", "Buffer not empty but it should be. " +
                         "BUG IN CODE #### Needs to update code.")
-        exit(1)
 
     def clearBuffer(self):
         ''' Confirm that buffer is clear before send next command '''

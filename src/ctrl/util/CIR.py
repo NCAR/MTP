@@ -155,7 +155,9 @@ class MTPProbeCIR():
         - integrator busy while the stepper is moving [3, 7]
         - synthesizer out of lock [4, 5, 6, 7]
         We always get 4, 5 indicating synthesizer is always out of lock.
-        Ask Julie if this is O.K. - JAA
+        Discussed with Josh and Julie May 2022. Synthesizer out of lock
+        indicates a problem, but this is how it has always been. Not going to
+        address right now.
         """
 
         # Check for valid stat string
