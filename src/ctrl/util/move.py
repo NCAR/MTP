@@ -17,21 +17,60 @@ class MTPProbeMove():
 
     def moveHome(self):
         """
-        initiate movement home
+        Initiate movement home. Home is accomplished by sending two separate
+        commands one after the other.
 
         Return: True if successful or False if command failed
         """
-        cmd = self.commandDict.getCommand("home1")
+        # home1
+        # - turn off both drivers ('J0')
+        # - b’U/1f0R’ -> set polarity of home sensor to 0
+        # - b’U/1j256R’ -> adjust step resolution to 256
+        # - b’U/1Z1000000R’ -> Home and Initialize motor
+        # - b’U/1J3R’ -> turn on both drivers
+        if self.sendHome("home1"):  # success
+            status = self.init.getStatus()
+        else:
+            logger.printmsg('warning', " **** Need to update code.")
+            exit(1)
+
+        # home2
+        # After home1, probe returns success but any subsequent clockwise move
+        # ('D' commands) don't actually move the probe (though counter-
+        # clockwise'P' commands DO move it - not sure why). After a home2, 'D'
+        # commands work.
+        # - b'U/1j128' -> Adjust the resolution to 128 micro-steps per step.
+        #        (critical because subsequent move commands assume a 128
+        #         resolution. If resolution is left at 256 from home1, movement
+        #         will be twice as big.)
+        # - b'U/1Z1000000' -> Home & Initialize the motor.
+        #        (sets the current position; suspect this is the magic that
+        #         lets the 'D' command work.)
+        # - b'U/1P10' -> Move motor 10 steps in positive direction.
+        #        (No idea why this backup is needed.
+        #         Need to double check the VB6. - JAA)
+        if self.sendHome("home2"):  # success
+            status = self.init.getStatus()
+        else:
+            logger.printmsg('warning', " **** Need to update code.")
+            exit(1)
+
+        return status
+
+    def sendHome(self, home):
+        """ Send home command to probe """
+        cmd = self.commandDict.getCommand(home)
         self.serialPort.write(cmd)
         answerFromProbe = self.init.readEchos(4)
 
         status = self.init.findStat(answerFromProbe)
         if status == '@':
             # success
-            logger.printmsg('info', "init successful")
+            logger.printmsg('info', home + " successful")
             status = True
         else:
             # failure
+            logger.printmsg('warning', home + " failed with status: " + status)
             status = False
 
         return status
