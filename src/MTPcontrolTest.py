@@ -110,8 +110,7 @@ def main():
 
         if cmdInput == '0':
             # Print status
-            status = init.getStatus()
-            # Should check status here. What are we looking for? - JAA
+            init.getStatus()
 
         elif cmdInput == '1':
             # Initialize probe
