@@ -64,7 +64,7 @@ class MTPProbeMove():
         """ Send home command to probe """
         cmd = self.commandDict.getCommand(home)
         self.serialPort.write(cmd)
-        answerFromProbe = self.init.readEchos(4)
+        answerFromProbe = self.init.readEchos(5)
 
         status = self.init.findStat(answerFromProbe)
         if status == '@':
@@ -80,7 +80,7 @@ class MTPProbeMove():
 
     def moveTo(self, location):
         self.serialPort.write(location)
-        return self.init.readEchos(4)
+        return self.init.readEchos(5)
 
     def isMovePossibleFromHome(self, maxDebugAttempts=12):
         # returns 4 if move is possible otherwise does debugging

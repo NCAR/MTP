@@ -9,12 +9,13 @@ import re
 import time
 import serial
 import socket
+import logging
 from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
 class MTPProbeInit():
 
-    def __init__(self, args, port, commandDict):
+    def __init__(self, args, port, commandDict, loglevel):
         ''' initial setup of serialPort, UDP socket '''
         self.serialPort = serial.Serial(args.device, 9600, timeout=0.15)
 
@@ -23,6 +24,8 @@ class MTPProbeInit():
 
         # Dictionary of allowed commands to send to firmware
         self.commandDict = commandDict
+
+        self.loglevel = logging.getLevelName(loglevel)
 
     def getSerialPort(self):
         ''' return serial port '''
@@ -111,30 +114,37 @@ class MTPProbeInit():
         '''
         # First echo will be exact duplicate of command sent. Check for
         # that. This will ensure command wasn't corrupted on way to/from
-        # probe. Echo begins and ends with \r\n
+        # probe. Echo begins and ends with \r\n -- JAA
         buf = b''
 
         for i in range(num):
             buf = buf + self.serialPort.readline()
 
-        # Make sure you found ALL the data
-        # But guard against the case where the probe is returning data
-        # forever (no idea if/when this would happen, but just in case..)
-        i = 0
-        while True:
-            line = self.serialPort.readline()
-            i = i + 1
-            if len(line) == 0:  # Found a blank line
-                break
-            else:
-                buf = buf + line
-            if i > 20:  # No legit command should return 20 lines => error!
-                self.handleNonemptyBuffer()
+        if self.loglevel == "DEBUG":
+            # Make sure you found ALL the data - only do this in debug mode
+            # because it adds too much time to scan cycle. When run with this
+            # enabled, CIRS scan takes 5 seconds, but when comment out this
+            # block, CIRS takes .03 seconds!!!
 
-        # And one final check that you got it all
-        self.clearBuffer()
+            i = 0
+            while True:
+                line = self.serialPort.readline()
+                i = i + 1
+                if len(line) == 0:  # Found a blank line
+                    break
+                else:
+                    buf = buf + line
+                    logger.printmsg('debug', 'Needed more readEchos!! ' +
+                                    str(buf) + '**** Need to update code.')
+                # Guard against the case where the probe is returning data
+                # forever (no idea if/when this would happen, but just in case)
+                if i > 20:  # No legit command should return 20 lines => error!
+                    self.handleNonemptyBuffer()
 
-        logger.printmsg('debug', "read " + str(buf))
+            # And one final check that you got it all
+            self.clearBuffer()
+
+        logger.printmsg('info', "read " + str(buf))
         return buf
 
     def handleNonemptyBuffer(self):
@@ -313,7 +323,7 @@ class MTPProbeInit():
         #  Step:\r\n
         #
 
-        return self.readEchos(4)
+        return self.readEchos(5)
 
     def sendInit2(self):
         # Init2
@@ -332,7 +342,7 @@ class MTPProbeInit():
         # \x1b[A\x1b[BU/1f1j256V50000R
         # Step:\xff/0B\r\n'
         #
-        return self.readEchos(4)
+        return self.readEchos(5)
         # By the time we have sent maxAttempts (6) Init1 and 6 init2, we need
         # 12 readEchos to get all the responses.
 

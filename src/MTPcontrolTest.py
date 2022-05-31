@@ -86,7 +86,7 @@ def main():
     # get port from there. Add --config to parse_args - JAA
     port = configfile.getInt('udp_send_port')
 
-    init = MTPProbeInit(args, port, commandDict)
+    init = MTPProbeInit(args, port, commandDict, args.loglevel)
     move = MTPProbeMove(init, commandDict)
     data = MTPProbeCIR(init, commandDict)
     fmt = MTPDataFormat(init, data, commandDict)
