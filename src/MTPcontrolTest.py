@@ -141,7 +141,6 @@ def main():
             logger.printmsg("info", "single move took " +
                             str(nowTime-firstTime))
 
-
         elif cmdInput == '4':
             # Determine how long it takes to read three frequencies
             firstTime = datetime.datetime.now(datetime.timezone.utc)
