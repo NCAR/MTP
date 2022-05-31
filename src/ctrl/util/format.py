@@ -61,8 +61,15 @@ class MTPDataFormat():
             angle = angle + self.zel
 
             moveToCommand = self.getAngle(angle)
-            move.moveTo(moveToCommand)
-            self.b += self.data.CIRS() + ' '  # Collect counts for 3 channels
+            echo = move.moveTo(moveToCommand)
+            if self.init.moveComplete(echo):
+                # Collect counts for 3 channels
+                self.b += self.data.CIRS() + ' '
+            else:
+                # Problem with move - command not completed.
+                logger.printmsg("warning", "Bline move not returning " +
+                                "completion. **** Need to update code.")
+                exit(1)
 
         data = "B " + str(self.b)
 
