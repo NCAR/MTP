@@ -138,6 +138,7 @@ class MTPcommand():
                                       # Return components of M2 line
 
             # From VB6 sub integrate()
+            'clear': b'I\r\n',        # clear integrate status
             'count': b'I 40\r\n',     # Count up the chCounts array; integrate
                                       # for 40 * 20mS
             'count2': b'R\r\n',       # Read results of last integration from
