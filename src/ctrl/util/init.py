@@ -9,12 +9,13 @@ import re
 import time
 import serial
 import socket
+import logging
 from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
 class MTPProbeInit():
 
-    def __init__(self, args, port, commandDict):
+    def __init__(self, args, port, commandDict, loglevel):
         ''' initial setup of serialPort, UDP socket '''
         self.serialPort = serial.Serial(args.device, 9600, timeout=0.15)
 
@@ -23,6 +24,8 @@ class MTPProbeInit():
 
         # Dictionary of allowed commands to send to firmware
         self.commandDict = commandDict
+
+        self.loglevel = logging.getLevelName(loglevel)
 
     def getSerialPort(self):
         ''' return serial port '''
@@ -98,10 +101,13 @@ class MTPProbeInit():
 
         return True
 
-    def readEchos(self, num):
+    def readEchos(self, num, cmd=b''):
         '''
         Read num newlines into buffer. So if port has a string \r\nS\r\n
         it takes num=2 to read it.
+
+        Also confirms that first echo matches command sent to probe if
+        command is supplied to this function. (Default cmd=b'' skips this test.
 
         Values returned from probe follow the pattern:
          - one or more empty lines (b'') ; may be all empty lines because
@@ -109,32 +115,45 @@ class MTPProbeInit():
          - Then three or more lines denoted by presence of \r\n
          - When you get empty lines again, you are done.
         '''
-        # First echo will be exact duplicate of command sent. Check for
-        # that. This will ensure command wasn't corrupted on way to/from
-        # probe. Echo begins and ends with \r\n
         buf = b''
 
         for i in range(num):
             buf = buf + self.serialPort.readline()
 
-        # Make sure you found ALL the data
-        # But guard against the case where the probe is returning data
-        # forever (no idea if/when this would happen, but just in case..)
-        i = 0
-        while True:
-            line = self.serialPort.readline()
-            i = i + 1
-            if len(line) == 0:  # Found a blank line
-                break
-            else:
-                buf = buf + line
-            if i > 20:  # No legit command should return 20 lines => error!
-                self.handleNonemptyBuffer()
+            # First echo will be exact duplicate of command sent. Check for
+            # it to ensure command wasn't corrupted on way to/from probe.
+            # Echo begins and ends with \r\n so need to read 2 lines to get
+            # first echo (lines 0 and 1). Add \r\n to cmd to match echo.
+            if i == 1 and len(cmd) != 0:
+                if buf != b'\r\n' + cmd:
+                    logger.printmsg("warning", "initial echo from probe did " +
+                                    "NOT match command sent. Sent " + str(cmd))
 
-        # And one final check that you got it all
-        self.clearBuffer()
+        if self.loglevel == "DEBUG":
+            # Make sure you found ALL the data - only do this in debug mode
+            # because it adds too much time to scan cycle. When run with this
+            # enabled, CIRS scan takes 5 seconds, but when comment out this
+            # block, CIRS takes .03 seconds!!!
 
-        logger.printmsg('debug', "read " + str(buf))
+            i = 0
+            while True:
+                line = self.serialPort.readline()
+                i = i + 1
+                if len(line) == 0:  # Found a blank line
+                    break
+                else:
+                    buf = buf + line
+                    logger.printmsg('debug', 'Needed more readEchos!! ' +
+                                    str(buf) + '**** Need to update code.')
+                # Guard against the case where the probe is returning data
+                # forever (no idea if/when this would happen, but just in case)
+                if i > 20:  # No legit command should return 20 lines => error!
+                    self.handleNonemptyBuffer()
+
+            # And one final check that you got it all
+            self.clearBuffer()
+
+        logger.printmsg('info', "read " + str(buf))
         return buf
 
     def handleNonemptyBuffer(self):
@@ -143,7 +162,7 @@ class MTPProbeInit():
         warn user when in realtime mode
         """
         logger.printmsg("warning", "Buffer not empty but it should be. " +
-                        "BUG IN CODE needs to be fixed")
+                        "BUG IN CODE #### Needs to update code.")
         exit(1)
 
     def clearBuffer(self):
@@ -187,8 +206,10 @@ class MTPProbeInit():
 
         return ret
 
-    def findStat(self, array):
+    def findStat(self, buf):
         '''
+        Find status value returned by probe after UART command
+
         UART returned value meanings (e.g. ff/0@ = No error):
             ff - RS485 line turnaround char; starts message
             /  - start char
@@ -204,26 +225,30 @@ class MTPProbeInit():
                 Ascii K/k =Hex 4B/6B - Move not allowed
                 Ascii O/o =Hex 4F/6F - Already executing command
                                         when another received
+
+        Return: Character indicating UART status, or -1 if status could not
+                be determined.
         '''
-        # UART returns "Step:\xff/0<status char>\r\n". To differentiate
-        # this from noise, search for entire string. - JAA
-        # otherwise error = -1
         ustat = [b'@', b'`', b'A', b'a', b'B', b'b', b'C', b'c', b'D', b'd',
                  b'E', b'e', b'G', b'g', b'I', b'i', b'K', b'k', b'O', b'o']
 
         i = 0
         index = -1
         while index == -1 and i < len(ustat):
-            index = array.find(ustat[i])
+            # UART returns "Step:\xff/0<status char>\r\n". To differentiate
+            # this from noise which might randomly return a char in ustat,
+            # search for entire string.
+            statStr = b'Step:\xff/0' + ustat[i] + b'\r\n'
+            index = buf.find(statStr)
             i = i + 1
 
         if index > -1:
-            # logger.printmsg('debug', "status: " + str(array[index]) + ", " +
-            #                  str(array))
-            return chr(array[index])
+            logger.printmsg("debug", "Found status " + chr(buf[index+8]) +
+                            " in " + str(buf) + " at index " + str(i))
+            return chr(buf[index+8])
         else:
             logger.printmsg('error', "status unknown, unable to find status " +
-                            "in: " + str(array))
+                            "in: " + str(buf))
             return -1
 
     def probeResponseCheck(self):
@@ -289,59 +314,27 @@ class MTPProbeInit():
                         "something's wrong")
         return False
 
-    def sendInit1(self):
-        # Init1
-        #  - Set polarity of home sensor to 1 ('f1')
-        #  - Adjust the resolution to 256 micro-steps per step ('j256')
-        #  - Set the top motor speed to 50000 micro-steps per second ('V50000')
-        cmd = self.commandDict.getCommand("init1")
-        self.serialPort.write(cmd)
-
-        # Returns:
-        #   U/1f1j256V50000R\r\n
-        #   U:U/1f1j256V50000R\r\n
-        #   Step:\xff/0@\r\n - indicating success
-        #
-        # if already set to this last line replaced by
-        #   Step:\xff/0B\r\n - indicating Illegal command sent
-        #
-        # Have seen this near boot: ( too early in boot phase (?) )
-        #  b'\x1b[A\x1b[BU/1f1j256V50000R\r\n'
-        # And this in cycles
-        #  Step:\xff/0@\r\n - makes ascii parser die
-        #  Step:/0C\r\n - makes fix for above not work
-        #  Step:\r\n
-        #
-
-        return self.readEchos(4)
-
-    def sendInit2(self):
-        # Init2
-        #  - Set acceleration factor to 4000 micro-steps per second^2 ('L4000')
-        #  - Set hold current to 30% of 3.0 Amp max ('h30')
-        #  - Set running current to 100% of 3.0 Amp max ('m100')
-        cmd = self.commandDict.getCommand("init2")
-        self.serialPort.write(cmd)
-
-        # normal return:
-        # U/1f1j256V50000R\r\n
-        # U:U/1f1j256V50000R\r\n
-        # b'Step:\xff/0@\r\n'
-
-        # error returns:
-        # \x1b[A\x1b[BU/1f1j256V50000R
-        # Step:\xff/0B\r\n'
-        #
-        return self.readEchos(4)
-        # By the time we have sent maxAttempts (6) Init1 and 6 init2, we need
-        # 12 readEchos to get all the responses.
-
-    def init(self, maxAttempts=6):
+    def init(self):
         """
         Initialize the probe
 
-        Returns: maxAttemps if success, any other integer is failure
+        Returns: True on success, False on failure
         """
+        # Comments from Catherine
+        # if on first move status 6 for longer than expected
+        # aka command sent properly, but actual movement
+        # not initiated, need a Ctrl-c then re-init, re-home
+        # Since this is not implemented, if get status=6 in status window,
+        # must power cycle probe to clear and get code working
+
+        # overall error conditions
+        # 1) no command gets any response
+        # - gets one echo, but not second echo
+        # - because command collision in init commands
+        # Probe needs power cycle
+        # 2) stuck at Status 5 wih init/home
+        # - unable to find commands to recover
+        # Probe needs power cycle
 
         # The first time the probe is initialized, this returns b''.
         # If we want to re-initialise probe, there may be content in the
@@ -351,53 +344,42 @@ class MTPProbeInit():
         emptyAnswer = re.compile(b'')
         if not emptyAnswer.match(answerFromProbe):
             logger.printmsg('error', " Need to handle probe response " +
-                            str(answerFromProbe) + "*** Update code")
+                            str(answerFromProbe) + "#### Need to update code")
 
-        errorStatus = 0
-        while errorStatus < maxAttempts:
-            answerFromProbe = self.sendInit1()
-            # check for errors/decide if resend? It is common on boot to
-            # get a 'B' = Illegal command sent on first init1 and success
-            # immediately after send second init1
-            status = self.findStat(answerFromProbe)
-            if status == '@':
-                # success - no error. Break out of loop
-                errorStatus = maxAttempts
-            else:
-                logger.printmsg('warning', " Init 1 status " + str(status) +
-                                ", resending init1 command.")
-                errorStatus = errorStatus + 1
-            # if on first move status 6 for longer than expected
-            # aka command sent properly, but actual movement
-            # not initiated, need a Ctrl-c then re-init, re-home
-            # Since this is not implemented, if get status=6 in status window,
-            # must power cycle probe to clear and get code working
+        # Init1
+        #  - Set polarity of home sensor to 1 ('f1')
+        #  - Adjust the resolution to 256 micro-steps per step ('j256')
+        #  - Set the top motor speed to 50000 micro-steps per second ('V50000')
+        #
+        # Returns:
+        #   U/1f1j256V50000R\r\n
+        #   U:U/1f1j256V50000R\r\n
+        #   Step:\xff/0@\r\n - indicating success
+        #
+        # if already set to this last line replaced by
+        #   Step:\xff/0B\r\n - indicating Illegal command sent
+        if self.sendInit("init1"):
+            self.getStatus()
+            # Status can be any of 0-7, so don't check getStatus return
+            logger.printmsg('info', "init1 succeeded")
+        else:
+            logger.printmsg('warning', "init1 failed #### Need to update code")
 
-            # overall error conditions
-            # 1) no command gets any response
-            # - gets one echo, but not second echo
-            # - because command collision in init commands
-            # Probe needs power cycle
-            # 2) stuck at Status 5 wih init/home
-            # - unable to find commands to recover
-            # Probe needs power cycle
-
-        status = self.getStatus()
-
-        errorStatus = 0
-        while errorStatus < maxAttempts:
-            answerFromProbe = self.sendInit2()
-            # check for errors/decide if resend?
-            status = self.findStat(answerFromProbe)
-            if status == '@':
-                # success
-                errorStatus = maxAttempts
-            else:
-                logger.printmsg('warning', " Init 2 status " + str(status) +
-                                ", resending init2 command.")
-                errorStatus = errorStatus + 1
-
-        status = self.getStatus()
+        # Init2
+        #  - Set acceleration factor to 4000 micro-steps per second^2 ('L4000')
+        #  - Set hold current to 30% of 3.0 Amp max ('h30')
+        #  - Set running current to 100% of 3.0 Amp max ('m100')
+        #
+        # normal return:
+        # U/1f1j256V50000R\r\n
+        # U:U/1f1j256V50000R\r\n
+        # b'Step:\xff/0@\r\n'
+        if self.sendInit("init2"):
+            self.getStatus()
+            # Status can be any of 0-7, so don't check getStatus return
+            logger.printmsg('info', "init2 succeeded")
+        else:
+            logger.printmsg('warning', "init2 failed #### Need to update code")
 
         # After both init commands,
         # status = 6,7 indicates probe thinks it is moving, clears when home1
@@ -405,7 +387,27 @@ class MTPProbeInit():
         #              clear
         # status = 4 is preferred status
 
-        # We can get here if init fails after maxAttempts. We should
-        # catch that case and not report successful init.
         logger.printmsg('info', "init successful")
-        return errorStatus
+        return(True)
+
+    def sendInit(self, init, maxAttempts=6):
+        """ Send init command to probe. Handles init1 and init2 """
+        errorStatus = 0
+        while errorStatus < maxAttempts:
+            cmd = self.commandDict.getCommand("init")
+            self.serialPort.write(cmd)
+            answerFromProbe = self.readEchos(5, cmd)
+
+            # check for errors/decide if resend? It is common on boot to
+            # get a 'B' = Illegal command sent on first init1 and success
+            # immediately after send second init1
+            status = self.findStat(answerFromProbe)
+            if status == '@':
+                # success - no error. Break out of loop
+                return(True)
+            else:
+                logger.printmsg('warning', init + " status " + str(status) +
+                                ", resending " + init + " command.")
+                errorStatus = errorStatus + 1
+
+        return(False)
