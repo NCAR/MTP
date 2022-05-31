@@ -206,8 +206,10 @@ class MTPProbeInit():
 
         return ret
 
-    def findStat(self, array):
+    def findStat(self, buf):
         '''
+        Find status value returned by probe after UART command
+
         UART returned value meanings (e.g. ff/0@ = No error):
             ff - RS485 line turnaround char; starts message
             /  - start char
@@ -223,26 +225,30 @@ class MTPProbeInit():
                 Ascii K/k =Hex 4B/6B - Move not allowed
                 Ascii O/o =Hex 4F/6F - Already executing command
                                         when another received
+
+        Return: Character indicating UART status, or -1 if status could not
+                be determined.
         '''
-        # UART returns "Step:\xff/0<status char>\r\n". To differentiate
-        # this from noise, search for entire string. - JAA
-        # otherwise error = -1
         ustat = [b'@', b'`', b'A', b'a', b'B', b'b', b'C', b'c', b'D', b'd',
                  b'E', b'e', b'G', b'g', b'I', b'i', b'K', b'k', b'O', b'o']
 
         i = 0
         index = -1
         while index == -1 and i < len(ustat):
-            index = array.find(ustat[i])
+            # UART returns "Step:\xff/0<status char>\r\n". To differentiate
+            # this from noise which might randomly return a char in ustat,
+            # search for entire string.
+            statStr = b'Step:\xff/0' + ustat[i] + b'\r\n'
+            index = buf.find(statStr)
             i = i + 1
 
         if index > -1:
-            # logger.printmsg('debug', "status: " + str(array[index]) + ", " +
-            #                  str(array))
-            return chr(array[index])
+            logger.printmsg("debug", "Found status " + chr(buf[index+8]) +
+                            " in " + str(buf) + " at index " + str(i))
+            return chr(buf[index+8])
         else:
             logger.printmsg('error', "status unknown, unable to find status " +
-                            "in: " + str(array))
+                            "in: " + str(buf))
             return -1
 
     def probeResponseCheck(self):
