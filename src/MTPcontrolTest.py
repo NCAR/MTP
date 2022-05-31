@@ -127,8 +127,8 @@ def main():
                                             scanStatus='potato') == 4):
 
                 # Move to first angle in readBline
-                echo = move.moveTo(b'U/1J0D28226J3R\r\n')
-                #echo = move.moveTo(fmt.getAngle(80)) - JAA
+                cmd, currentClkStep = fmt.getAngle(80, 0)
+                echo = move.moveTo(cmd)
                 s = init.moveComplete(echo)
                 logger.printmsg('info', "First angle reached = " + str(s))
 
