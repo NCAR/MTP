@@ -95,7 +95,7 @@ class MTPProbeMove():
             # Check if integrator busy (status = 1,3,5,7)
             # Integrate logic ensures integrate has completed, so here just
             # send b'I/r/n' to clear integrator bit.
-            if int(s) %2 != 0:  # s is odd
+            if int(s) % 2 != 0:  # s is odd
                 cmd = self.commandDict.getCommand("count")
                 self.serialPort.write(cmd)
                 self.init.readEchos(4)
