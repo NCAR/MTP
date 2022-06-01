@@ -5,6 +5,7 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2022
 ###############################################################################
+import time
 from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
@@ -65,6 +66,14 @@ class MTPProbeMove():
         cmd = self.commandDict.getCommand(home)
         self.serialPort.write(cmd)
         answerFromProbe = self.init.readEchos(5, cmd)
+        # If readEchos called before probe finished moving, get "Step:"
+        # without \xff/0@ eg status has not yet been appended to response
+        # Can't send a status to figure that out since that would be a
+        # readEchos, so instead look for "Step:\r\n" and resend
+        if answerFromProbe.find(b'Step:\r\n'):  # status missing
+            time.sleep(1)  # Give time for probe to finish moving
+            self.serialPort.write(cmd)  # Resend home command
+            answerFromProbe = self.init.readEchos(5, cmd)
 
         status = self.init.findStat(answerFromProbe)
         if status == '@':
