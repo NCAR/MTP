@@ -127,9 +127,9 @@ class MTPcommand():
                                       # - Bit 1 = Stepper moving
                                       # - Bit 2 = Synthesizer out of lock
                                       # - Bit 3 = spare
-            'ctrl-C': chr(3),         # Send ascii char "3" = Ctrl-C. Is caught
-                                      # in firmware interrupt routine and
-                                      # restarts the program.
+            'ctrl-C': chr(3).encode('ascii'), # Send ascii char "3" = Ctrl-C.
+                                      # Is caught in firmware interrupt
+                                      # routine and restarts the program.
             'read_P': b'P\r\n',       # Read all 8 platinum RTD channels
                                       # Return components of P line
             'read_M1': b'M 1\r\n',    # Read all 8 channels of multiplexer 1
