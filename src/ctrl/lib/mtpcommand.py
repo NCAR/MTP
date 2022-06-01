@@ -127,9 +127,10 @@ class MTPcommand():
                                       # - Bit 1 = Stepper moving
                                       # - Bit 2 = Synthesizer out of lock
                                       # - Bit 3 = spare
-            'ctrl-C': chr(3).encode('ascii'), # Send ascii char "3" = Ctrl-C.
-                                      # Is caught in firmware interrupt
-                                      # routine and restarts the program.
+            'ctrl-C': chr(3).encode('ascii'),  # Send ascii char "3" = Ctrl-C
+                                               # Is caught in firmware
+                                               # interrupt routine and restarts
+                                               # the program.
             'read_P': b'P\r\n',       # Read all 8 platinum RTD channels
                                       # Return components of P line
             'read_M1': b'M 1\r\n',    # Read all 8 channels of multiplexer 1
@@ -168,7 +169,7 @@ class MTPcommand():
             # 'tuneF': 'F ' + chan + '\r',
 
             # From VB6 sub Init()
-            #'init': b'U/1f1j256V5000L5000h30m100R\r\n',  # initialize
+            # 'init': b'U/1f1j256V5000L5000h30m100R\r\n',  # initialize
 
             # From VB6 sub initScan() - looks like these two togeter accomplish
             # same set of commands as one above - with different values.
@@ -176,8 +177,8 @@ class MTPcommand():
                                                # uSteps/step
             'init2': b'U/1L4000h30m100R\r\n',  # acceration, holding current,
                                                # motor current
-            #'init3': b'U/1j8v800V3000L20m70R\r\n',  # from WFP_Init.txt believe
-                                                    # to be unused
+            # 'init3': b'U/1j8v800V3000L20m70R\r\n',  # from WFP_Init.txt
+            #                                         # believe to be unused
 
             # From VB6 sub homeScan() - These three step down in resolution, so
             # maybe finer and finer adjustment of home position?
@@ -187,7 +188,7 @@ class MTPcommand():
             # another home2. Keeping this as the last one
             # makes the steps (with the same move command)
             # taken by the mirror about 2x as large
-            #'home3': b'U/1j64z1000000P10R\r\n',
+            # 'home3': b'U/1j64z1000000P10R\r\n',
 
             # From VB6 sub moveScan(). Move the MTP Nsteps.
             # This syntax won't work because Nsteps is not defined - just a
