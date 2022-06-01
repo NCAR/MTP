@@ -40,12 +40,12 @@ class MTPProbeCIR():
         # eg: echo when buffer is sending to probe is same
         # as echo from probe: both "C#####\r\n"
         # Catch tune echos
-        self.init.readEchos(4, freq)
+        self.init.readEchos(2, freq)
 
     def integrate(self):
         cmd = self.commandDict.getCommand("count")
         self.serialPort.write(cmd)
-        self.init.readEchos(4, cmd)
+        self.init.readEchos(2, cmd)
 
         # Check that S turns to 5 (integrator starts)
         # and that S turns back to 4 (integrator finished) to move on
@@ -80,6 +80,7 @@ class MTPProbeCIR():
         j = 0
         integratetimeout = 20
 
+        # check that integrator has started
         while (True):
             s = self.init.getStatus()
             if self.checkIntegrateStatus("started", s):
@@ -193,14 +194,15 @@ class MTPProbeCIR():
     def readDatumFromProbe(self):
         cmd = self.commandDict.getCommand("count2")
         self.serialPort.write(cmd)
-        data = self.init.readEchos(4, cmd)
+        data = self.init.readEchos(2, cmd)
 
         # Find counts in string. Expected string is R28:xxxx where xxxx is
         # 4-digit hex value.
         # Need to beef up checking return value - JAA
         logger.printmsg("debug", "Return value is " + str(data))
         findColon = data.find(b':')
-        hexcounts = data[findColon+1:findColon+5]
+        hexcounts = data[findColon+1:findColon+7]
+        logger.printmsg("debug", "Return hex counts is " + str(hexcounts))
 
         # translate from hex and format as 6-digit integer
         datum = '%06d' % int(hexcounts.decode('ascii'), 16)

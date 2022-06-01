@@ -160,7 +160,7 @@ class MTPEmulator():
             # Convert byte to two ascii digits in hex
             val = int(value)
             self.hex = self.ntox((val >> 4) & 0x0f) + self.ntox(val & 0x0f)
-            string = '\r\nI' + self.hex + '\r\n'
+            string = 'I' + self.hex + '\r\n'
             # The MTP integrates for 40us. When you include overhead for
             # sending the commmand, it takes longer, so set the expected
             # command duration to a second or two. Then a call to status will
@@ -172,7 +172,7 @@ class MTPEmulator():
         elif line[0] == 'R':  # Return counts from last integration
             logger.printmsg("DEBUG", "process string starting with R: " + line)
             # Sending back 19000 counts for all channels/angles
-            string = '\r\nR' + self.hex + ':4A38\r\n'
+            string = 'R' + self.hex + ':4A38\r\n'
             self.sport.write(string.encode('utf-8'))
 
         elif line[0] == 'S':  # Return firmware status
