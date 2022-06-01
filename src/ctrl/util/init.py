@@ -122,10 +122,10 @@ class MTPProbeInit():
 
             # First echo will be exact duplicate of command sent. Check for
             # it to ensure command wasn't corrupted on way to/from probe.
-            # Echo begins and ends with \r\n so need to read 2 lines to get
-            # first echo (lines 0 and 1). Add \r\n to cmd to match echo.
-            if i == 1 and len(cmd) != 0:
-                if buf != b'\r\n' + cmd:
+            # Echo ends with \r\n so only need to read 1 line to get
+            # first echo (lines 0)
+            if i == 0 and len(cmd) != 0:
+                if buf != cmd:
                     logger.printmsg("warning", "initial echo from probe did " +
                                     "NOT match command sent. Sent " + str(cmd))
 
@@ -343,6 +343,7 @@ class MTPProbeInit():
         if not emptyAnswer.match(answerFromProbe):
             logger.printmsg('error', " Need to handle probe response " +
                             str(answerFromProbe) + "#### Need to update code")
+            return(False)
 
         # Init1
         #  - Set polarity of home sensor to 1 ('f1')
@@ -362,6 +363,7 @@ class MTPProbeInit():
             logger.printmsg('info', "init1 succeeded")
         else:
             logger.printmsg('warning', "init1 failed #### Need to update code")
+            return(False)
 
         # Init2
         #  - Set acceleration factor to 4000 micro-steps per second^2 ('L4000')
@@ -378,6 +380,7 @@ class MTPProbeInit():
             logger.printmsg('info', "init2 succeeded")
         else:
             logger.printmsg('warning', "init2 failed #### Need to update code")
+            return(False)
 
         # After both init commands,
         # status = 6,7 indicates probe thinks it is moving, clears when home1
@@ -392,7 +395,7 @@ class MTPProbeInit():
         """ Send init command to probe. Handles init1 and init2 """
         errorStatus = 0
         while errorStatus < maxAttempts:
-            cmd = self.commandDict.getCommand("init")
+            cmd = self.commandDict.getCommand(init)
             self.serialPort.write(cmd)
             answerFromProbe = self.readEchos(5, cmd)
 
