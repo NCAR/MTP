@@ -73,7 +73,8 @@ class MTPProbeMove():
             status = True
         else:
             # failure
-            logger.printmsg('warning', home + " failed with status: " + status)
+            logger.printmsg('warning', home + " failed with status: " +
+                            str(status))
             status = False
 
         return status
