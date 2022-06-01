@@ -106,7 +106,7 @@ class MTPEmulator():
     def interpretCommand(self, line, chaos, state):
         """ Parse command and send appropriate response back over port """
         # All lines echo immediately, then have actual responses
-        string = '\r\n' + line + '\r\n'
+        string = line + '\r\n'
         self.sport.write(string.encode('utf-8'))
 
         if line[0] == 'V':  # Firmware Version
