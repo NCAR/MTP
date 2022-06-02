@@ -69,9 +69,18 @@ class MTPProbeMove():
         # If readEchos called before probe finished moving, get "Step:"
         # without \xff/0@ eg status has not yet been appended to response
         # Can't send a status to figure that out since that would be a
-        # readEchos, so instead look for "Step:\r\n" and resend
+        # readEchos, so instead look for "Step:\r\n", give the probe time to
+        # finish moving, and resend home command. Complete cycle of probe all
+        # the way around can take 5 secs but after B line, only needs one
+        # second to get home. In order to keep the typical scan loop quick,
+        # handle it first, then handle unlikely case of coming home from
+        # some other location.
         if answerFromProbe.find(b'Step:\r\n') != -1:  # status missing
-            time.sleep(2)  # Give time for probe to finish moving
+            time.sleep(1)  # Quick wait after B line
+            self.serialPort.write(cmd)  # Resend home command
+            answerFromProbe = self.init.readEchos(4, cmd)
+        if answerFromProbe.find(b'Step:\r\n') != -1:  # status still missing
+            time.sleep(5)  # Longer wait to cover complete revolution
             self.serialPort.write(cmd)  # Resend home command
             answerFromProbe = self.init.readEchos(4, cmd)
 
