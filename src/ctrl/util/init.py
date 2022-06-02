@@ -150,8 +150,8 @@ class MTPProbeInit():
                 if i > 20:  # No legit command should return 20 lines => error!
                     self.handleNonemptyBuffer()
 
-            # And one final check that you got it all
-            self.clearBuffer()
+        # And one final check that you got it all
+        self.clearBuffer()
 
         logger.printmsg('info', "read " + str(buf))
         return buf
@@ -168,7 +168,7 @@ class MTPProbeInit():
         buf = self.serialPort.readline()
         logger.printmsg('debug', "clearBuffer read " + str(buf))
         if len(buf) == 0:
-            logger.printmsg("debug", "Buffer empty. OK to continue")
+            logger.printmsg("info", "Buffer empty. OK to continue")
         else:
             self.handleNonemptyBuffer()
 
