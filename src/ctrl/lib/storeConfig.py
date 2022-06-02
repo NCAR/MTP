@@ -6,8 +6,8 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
-import logging
 from os import path
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
 class StoreConfig():
@@ -26,24 +26,24 @@ class StoreConfig():
 
             # From config.mtph
             'Program': 'MTPcontroller.py',
-	    'Aircraft': 'NGV',
+    	    'Aircraft': 'NGV',
             'NominalPitch': 3,
-            'Offsets':[1,2,3],
-	    'OffsetYi':0,
-	    'OffsetPi':0,
-	    'OffsetRi':0,
-	    'Frequencies':[3, 55.51,56.65,58.8],
-	    'Integ.Time': 200.0, #mS note that this can't currently be changed
+            'Offsets':[1.0,2.0,3.0],
+	        'OffsetYi':0,
+    	    'OffsetPi':0,
+	        'OffsetRi':0,
+    	    'Frequencies':[3.0, 55.51,56.65,58.8],
+	        'Integ.Time': 200.0, #mS note that this can't currently be changed
             'El. Angles':[10,-179.8, 80.00, 55.00, 42.00, 25.00, 12.00, 0.00, -12.00, -25.00, -42.00, -80.00],
             # From config.yml
             # Program uses these in flight, GUIRefresh displays
-	    'Project': 'Default', 
-	    'Flight #': 00,
-	    'PI':'Default',
+    	    'Project': 'Default', 
+	        'Flight #': 00,
+    	    'PI':'Default',
             'SaveFileLocation':'',
             #Everything below should be on Config Tab
             'LogFileLocation':'',
-	    'ErrorLogging': False,
+	        'ErrorLogging': False,
             'AcserverIP': '192.168.84.2',
             'USBPort': 'COM6', #COM6 windows, /dev/ttyUSB# otherwise
             # These shouldn't change unless the math behind one of them does
@@ -87,18 +87,22 @@ class StoreConfig():
 
     def setArray(self, key, index, value, lab):
         """ Sets individual element of an array in configStore """
-        logging.debug("setArray")
+        logger.printmsg("debug", "setArray")
         if lab: 
-            logging.debug("setArray: lab")
+            logger.printmsg("debug", "setArray: lab")
             a = self.config_lab[key]
-            a[index] = int(value)
+            a[index] = float(value)
         else:
-            logging.debug("setArray: notlab, key %r", key)
+            logger.printmsg("debug",
+                    "setArray: notlab, key %r".format(key))
             a = self.config[key]
-            logging.debug("setArray: notlab, a %r, value %r, index %r", a, value, index)
-            a[index] = int(value)
-            logging.debug("setArray: notlab, done a %r", a)
-            logging.debug("setArray: notlab, done self.config{key] %r", self.config[key])
+            logger.printmsg("debug",
+                    "setArray: notlab, a %r, value %r, index %r".format(a, value, index))
+            a[index] = float(value)
+            logger.printmsg("debug",
+                    "setArray: notlab, done a %r".format(a))
+            logger.printmsg("debug",
+                    "setArray: notlab, done self.config[key] %r".format(self.config[key]))
 
     def setData(self, key, data, lab):
         """ Return true if sucessfully written """
@@ -111,39 +115,47 @@ class StoreConfig():
         # Loads Data from Config.mtph
         # Throws error if not found
 
-        logging.debug("loadConfigMTP")
+        logger.printmsg("debug", "loadConfigMTP")
         
         with open(args.mtph, 'r') as configFile:
             lines = configFile.readlines()
             for line in lines:
-                if line[0] == '[':
+                logger.printmsg("debug", "New line in config file = " + line)
+                if line == '\n' or line == '' or line == '\r\n':
+                    logger.printmsg("debug", "empty line in config file")
+                elif line[0] == '[':
                     key = line[1:len(line)-2]
                     array = []
                     index = 0
                 else:
-                    if line == '\n':
-                        break;
-                    elif key == 'Program' or key == 'Aircraft' or key == 'NominalPitch':
+                    if key == 'Program' or key == 'Aircraft' or key == 'NominalPitch':
                         self.setData(key, line, lab = False)
-                        logging.debug("program/aircraft/nominalPitch case")
+                        logger.printmsg("debug",
+                                "program/aircraft/nominalPitch case key = " +
+                                key + ' line value = ' + line)
                     elif key == 'Offsets' or key == 'Frequencies' or key == 'El.Angles':
-                        line = line.split('\'')
-                        line = line[0]
-                        line = line.split(' ')
-                        line = line[0]
-                        logging.debug("load config, split: %r", line)
-                        logging.debug("load config, index %r", index)
+                        # split off comments
+                        lineSplit = line.split('\'')
+                        line = lineSplit[0]
+                        # split off line endings
+                        lineSplit = line.splitlines()
+                        line = lineSplit[0]
+                        # split off whitespace
+                        lineSplit = line.split(' ')
+                        line = lineSplit[0]
+                        logger.printmsg("debug", "load config, split: %r", str(line))
+                        logger.printmsg("debug", "load config, index %r", str(index))
                         self.setArray(key, index, line, lab = False)
                         index = index + 1
                     elif key == 'Integ. Time':
-                        blah
+                        # firmware defaults to 40 regardless of what's sent
+                        logger.printmsg("debug", "Config.mtph integrate")
                     elif key == 'End':
-                        logging.info("Config.mtph end of file reached")
+                        logger.printmsg("debug", "Config.mtph end of file reached")
                     else:
-                        logging.error("Config.mtph unknown key %r", key)
+                        logger.printmsg("debug", "Config.mtph unknown key %r", key)
 
                     # They come in with newlines, hence -1
-            logging.debug("Reading config.mtph: %r", lines)
 
 
     def saveData(self, saveFile):
@@ -158,7 +170,7 @@ class StoreConfig():
                 saveFile.write(self.config[index])
         #saves config.yaml changes?
         for index in range([8,len(self.config)]):
-            logging.debug("range 8-end")
+            logger.printmsg("debug", "range 8-end")
 
     def appendData(self, key, data):
         """ Append data, used when building eline, aline, bline and other QByteArray's """
@@ -170,8 +182,8 @@ class StoreConfig():
         setData(data = False, lab = False)
         setData(data = False, lab = False)
         if changeName[0:2] == 'Lab':
-            logging.debug("Setting to lab mode")
-            logging.debug("Setting to lab mode")
+            logger.printmsg("debug", "Setting to lab mode")
+            logger.printmsg("debug", "Setting to lab mode")
             setData(changeName, data = True, lab = True)
         else:
             setData(changeName, data = True, lab = False)

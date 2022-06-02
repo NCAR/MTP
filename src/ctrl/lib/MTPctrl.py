@@ -5,15 +5,9 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
-import logging
 from serialInst import SerialInst
 from mtpcommand import MTPcommand
-
-logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
-            filename="MTPControl.log", level=logging.DEBUG)
-#logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
-
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 def main():
     device = SerialInst()
@@ -56,7 +50,7 @@ class MTPctrl(object):
         # Get the response
         response = self.device.readData()
         # MTP returns sent command before returns response
-        logger.info('Received response ' + response)
+        logger.printmsg("info", "Received response " + response)
 
     def homeScan(self):
         """

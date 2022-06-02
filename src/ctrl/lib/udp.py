@@ -7,16 +7,12 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
-import logging
 import time
 import math
 from PyQt5.QtNetwork import QUdpSocket, QHostAddress
 from PyQt5.QtCore import QTimer
-#import socket
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 
-logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
-    filename="MTPControl.log", level=logging.DEBUG)
-#logging.basicConfig(level=logging.WARNING)
 class doUDP(object):
 
     def __init__(self, parent, app, iwgFile, device=None):
@@ -85,25 +81,25 @@ class doUDP(object):
         while self.sock_read.hasPendingDatagrams():
             self.networkDatagram = self.sock_read.receiveDatagram(2048)
             # returns networkDatagram type
-            #logging.debug( "in IWG read while loop")
+            #logger.printmsg("debug",  "in IWG read while loop")
 
-        #logging.debug( "after IWG read while loop")
+        #logger.printmsg("debug",  "after IWG read while loop")
 
         # returns QByteArray
         IWG1Data = self.networkDatagram.data().data().decode('ascii')
         # nope, .data() returns string (binary)
-        #logging.debug("Does iwg networkDatagram really return QByte array? %s", self.networkDatagram.data())
+        #logger.printmsg("debug", "Does iwg networkDatagram really return QByte array? %s", self.networkDatagram.data())
 
         # format here is to preserve IWG format for VB6 processing
-        logging.debug(str(time.gmtime()) + "length of iwg: " + str(len(IWG1Data)))
+        logger.printmsg("debug", str(time.gmtime()) + "length of iwg: " + str(len(IWG1Data)))
         stringIWGSplit = str(IWG1Data).split(',') 
         #send this to save15
         IWGArray = stringIWGSplit[:32]
 
         stringIWG = ','.join(IWGArray)
-        logging.debug(stringIWG)
+        logger.printmsg("debug", stringIWG)
 
-        #logging.debug(self.data[0])
+        #logger.printmsg("debug", self.data[0])
         # Stores data 
         # Stores IWG w/o newline char
         self.parent.iwgStore = IWG1Data
@@ -113,14 +109,14 @@ class doUDP(object):
         with open(self.IWGFile,'a') as iwgFile:
             # Close " here is on a new line
             iwgFile.write("\"" + stringIWG + "\r\n\"\r\n")
-            logging.debug("IWG written")
+            logger.printmsg("debug", "IWG written")
             iwgFile.close()
 
         # changes the recieved iwg buffer of type QNetworkDatagram
         # into something more accessable:
         # do this in sortIWG
         #self.data = str(self.data).split(',')
-        #logging.debug("iwg buffer:" +self.data[1])
+        #logger.printmsg("debug", "iwg buffer:" +self.data[1])
         #self.parent.packetStore.setData("IWGSplit", self.data)
 
         # resets led timout timer
@@ -137,7 +133,7 @@ class doUDP(object):
 
         self.sortIWG(IWGArray)
 
-        #logging.info("Getting Iwg Data") 
+        #logger.printmsg("info("Getting Iwg Data") 
 
 
     def timeoutIWG(self):
@@ -149,12 +145,12 @@ class doUDP(object):
     def sortIWG(self, IWGSplit):
         # grabs values needed for Aline
         # calls keep15, and avgVal for each
-        # logging.debug( self.parent.packetStore.getData("IWGSplit"))
+        # logger.printmsg("debug",  self.parent.packetStore.getData("IWGSplit"))
         #IWGSplit = self.parent.iwgStore.split(',')
         # IWGSplit passed, already split from getIWG
-        #logging.debug(IWGSplit[0])
-        #logging.debug(IWGSplit[1])
-        #logging.debug(IWGSplit[0:1])
+        #logger.printmsg("debug", IWGSplit[0])
+        #logger.printmsg("debug", IWGSplit[1])
+        #logger.printmsg("debug", IWGSplit[0:1])
         self.keep15("pitch", IWGSplit[16])
         self.keep15("roll", IWGSplit[17])
         # Zp is pressure Altitude
@@ -173,12 +169,12 @@ class doUDP(object):
         self.keep15("lat",  self.parent.packetStore.getArray("IWGSplit", 2))
         self.keep15("lon",  self.parent.packetStore.getArray("IWGSplit", 3))
         '''
-        # logging.debug("sortIWG")
+        # logger.printmsg("debug", "sortIWG")
 
 
     def keep15(self, name, latestValue): 
         # self.list = self.parent.packetStore.getData(name)
-        # logging.debug("list: %s", self.list) # more like a qbyte array
+        # logger.printmsg("debug", "list: %s", self.list) # more like a qbyte array
         
         if self.parent.packetStore.getData("firstUDP"):
             templist = [0]
@@ -189,9 +185,9 @@ class doUDP(object):
         else:
             templist = self.getArray(name)
            
-            # logging.debug(templist)
+            # logger.printmsg("debug", templist)
             nval = len(templist)
-            #logging.debug("nval: %s", nval)
+            #logger.printmsg("debug", "nval: %s", nval)
     
             # Sometimes IWG packet doesn't fill out values
             # check if roll/pitch is zero in goAngle
@@ -216,9 +212,9 @@ class doUDP(object):
                 i = 0
                 while i < nval: 
                     # shuffle list
-                    # logging.debug("nval :: i " )
-                    #logging.debug( nval-i )
-                    #logging.debug( nval-(i+1))
+                    # logger.printmsg("debug", "nval :: i " )
+                    #logger.printmsg("debug",  nval-i )
+                    #logger.printmsg("debug",  nval-(i+1))
 
                     templist[nval-i] = templist[nval-(i+1)]
                     i = i+1
@@ -234,10 +230,10 @@ class doUDP(object):
             self.setArray(name, templist)
             self.averageVal(name)
 
-            # logging.debug("in keep15")
+            # logger.printmsg("debug", "in keep15")
 
     def getArray(self, name):
-        logging.debug( name)
+        logger.printmsg("debug",  name)
         if name =='pitch':
             templist = self.parent.packetStore.getData('pitch15')
         elif name == 'roll':
@@ -251,7 +247,7 @@ class doUDP(object):
         elif name == 'lon':
             templist = self.parent.packetStore.getData('lon15')
         else: 
-            logging.error("Undefined arrayName in udp keep15")
+            logger.printmsg("debug", "Undefined arrayName in udp keep15")
             templist  = []
         return templist
 
@@ -269,19 +265,19 @@ class doUDP(object):
         elif name == 'lon':
             self.parent.packetStore.setData('lon15', data)
         else: 
-            logging.error("Undefined arrayName in udp keep15")
+            logger.printmsg("debug", "Undefined arrayName in udp keep15")
         #self.parent.packetStore.setData(name, self.list)
 
 
     def averageVal(self, name):
-        # logging.debug("in averageVal")
+        # logger.printmsg("debug", "in averageVal")
         # takes in name, grabs name+array
 
         #data = self.parent.packetStore.getData(name)
         data15 = self.getArray(name) 
         nval = len(data15)
         # nval is 16
-        #logging.debug("averageval nval = len(data_, should be 15: %s", nval)
+        #logger.printmsg("debug", "averageval nval = len(data_, should be 15: %s", nval)
 
         avg = 0
         rms = 0
@@ -289,28 +285,28 @@ class doUDP(object):
         count = 0
         # calculates average and root mean square error
         while i < nval:
-            #logging.debug(data15[i])
+            #logger.printmsg("debug", data15[i])
             #datum = float(self.parent.packetStore.getArray(name,i))
             datum = float(data15[i])
             i = i + 1 
-            logging.debug('averageVal datum %r', datum)
+            logger.printmsg("debug", 'averageVal datum %r', datum)
             try:
                 if math.isnan(datum):
-                    logging.debug("NaN value found in IWG")
+                    logger.printmsg("debug", "NaN value found in IWG")
                 else:
-                    logging.debug(datum)
+                    logger.printmsg("debug", datum)
                     avg = avg + datum
                     rms = rms + (datum * datum)
                     count = count + 1
             except:
-                logging.WARNING("Nan value: except statement in averageVal")
+                logger.printmsg("debug", "Nan value: except statement in averageVal")
 
-            logging.debug(datum)
+            logger.printmsg("debug", datum)
             avg = avg + datum
             rms = rms + (datum * datum)
             count = count + 1
         avg = avg/count
-        # logging.debug("avg %f", avg)
+        # logger.printmsg("debug", "avg %f", avg)
         if rms - (avg * avg) * nval >0:
             if nval > 1:
                 rms = math.sqrt((rms - (avg * avg) * nval)/(nval-1))
@@ -320,8 +316,8 @@ class doUDP(object):
             rms = 0.0
         
         # checks value of avg and rms
-        # logging.debug("rms: %f   , avg: %f",  rms, avg)
-        # logging.debug(name + "avg")
+        # logger.printmsg("debug", "rms: %f   , avg: %f",  rms, avg)
+        # logger.printmsg("debug", name + "avg")
         # saves avg and rms in nameAvg and nameRMS
         # truncate values to third decimal place
         avg = float(avg * 1000) / 1000.0
@@ -329,7 +325,7 @@ class doUDP(object):
 
         #keeping these in the packet store because they are single values
         # may remove if time still an issue
-        logging.debug("Got IWG,name = %s",str(name) + 'avg or rms')
+        logger.printmsg("debug", "Got IWG,name = %s",str(name) + 'avg or rms')
         self.parent.packetStore.setData(str(name) + 'avg', avg)
         self.parent.packetStore.setData(str(name) + 'rms', rms)
         
@@ -338,7 +334,7 @@ class doUDP(object):
         # sets the sending UDP light to red if haven't sent udp in 50 seconds
         # 30 would probably do, but 50 for now
         self.parent.controlWindow.setLEDred(self.parent.controlWindow.sendingUDPLED)
-        logging.error("UDP feed stopped sending. Probe may no longer be cycling")
+        logger.printmsg("debug", "UDP feed stopped sending. Probe may no longer be cycling")
 
     def sendUDP(self, packet, savePacket):
         """ Send a packet out the udp port """
@@ -346,18 +342,18 @@ class doUDP(object):
         self.sock_write_nidas.writeDatagram(
                 bytes(savePacket, 'utf-8'), 
                 self.udp_ip_nidas, self.udp_write_to_nidas)
-        logging.debug("sent ric UDP")
+        logger.printmsg("debug", "sent ric UDP")
         # real time viewing software - writes to localhost
         self.sock_write.writeDatagram(packet, self.udp_ip_local, self.udp_write_port)
-        logging.debug("sent UDP")
+        logger.printmsg("debug", "sent UDP")
         # Writes to R.I.C. 
         self.sock_write_ric.writeDatagram(packet, self.udp_ip_nidas, self.udp_write_ric_port)
-        logging.debug("sent ric UDP")
+        logger.printmsg("debug", "sent ric UDP")
         #nidas
         self.sock_write_nidas.writeDatagram(packet, self.udp_ip_nidas, self.udp_write_to_nidas)
-        logging.debug("sent ric UDP")
+        logger.printmsg("debug", "sent ric UDP")
 
-        #logging.debug("sending udp packet %s", packet)
+        #logger.printmsg("debug", "sending udp packet %s", packet)
         self.parent.controlWindow.setLEDgreen(self.parent.controlWindow.sendingUDPLED)
         # restart timer for gui
         self.udpTimer.start(50000) # in milliseconds

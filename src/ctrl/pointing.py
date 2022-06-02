@@ -15,9 +15,9 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
 from math import cos, sin, atan, asin, sqrt, log, pow
-import logging
 from PyQt5 import QtCore
-from lib.mtpcommand import MTPcommand
+from EOLpython.Qlogger.messageHandler import QLogger as logger
+from ctrl.lib.mtpcommand import MTPcommand
 
 class pointMTP():
     
@@ -81,28 +81,31 @@ class pointMTP():
     def getAngle(self, targetEl, zel):
         # changed from goAngle because editor says that would be overriding something
         # though I can't find what or where that would be
-        # logging.debug("moveMTP goAngle/getAngle called, targetEl: %s", targetEl)
-        logging.debug("Zel to be added to targetEl: %s", zel)
+        # logger.printmsg("debug", "moveMTP goAngle/getAngle called, targetEl: %s", targetEl)
+        logger.printmsg("debug", "Zel to be added to targetEl: %s", zel)
         if self.parent.packetStore.getData("pitchCorrect"):
-            logging.info("Correcting Pitch")
+            # should log as info
+            logger.printmsg("debug", "Correcting Pitch")
             # targetClkAngle = self.configMam()
         else:
-            logging.info("Using instantanious MAM")
+            # should log as warning
+            logger.printmsg("debug", "Using instantanious MAM")
             targetClkAngle = zel + targetEl
 
         stepDeg = self.parent.packetStore.getData("stepsDegree") 
-        logging.debug("stepDeg: %s", stepDeg)
+        logger.printmsg("debug", "stepDeg: %s", stepDeg)
         targetClkStep = targetClkAngle * stepDeg
-        logging.debug("targetClkStep: %s", targetClkStep)
+        logger.printmsg("debug", "targetClkStep: %s", targetClkStep)
 
         currentClkStep = self.parent.packetStore.getData("currentClkStep")
-        logging.debug("currentClkStep: %s", currentClkStep)
+        logger.printmsg("debug", "currentClkStep: %s", currentClkStep)
         #self.parent.packetStore.setData("Nsteps", self.targetClkStep - self.parent.packetStore.getData("currentClkStep"))
         # nsteps check here
         nstep = targetClkStep - currentClkStep
-        logging.debug("calculated nstep: %r", nstep)
+        logger.printmsg("debug", "calculated nstep: %r", nstep)
         if nstep == 0:
-            logging.info("nstep is zero loop")
+            # should log as info or warning
+            logger.printmsg("debug", "nstep is zero loop")
             # suspect this occurs when pitch/roll/z are 0
             # need to have a catch case when above are nan's
             return
@@ -110,12 +113,12 @@ class pointMTP():
         # move to moveScan/ check logic against that
         # save current step so difference is actual step difference 
         self.parent.packetStore.setData("currentClkStep", currentClkStep + int(nstep))
-        logging.debug("currentClkStep + nstep: %s ", currentClkStep + int(nstep))
+        logger.printmsg("debug", "currentClkStep + nstep: %s ", currentClkStep + int(nstep))
 
         # drop everything after the decimal point:
         nstepSplit = str(nstep).split('.')
         nstep = nstepSplit[0]
-        #logging.debug(" strip nstp of everything after (and including) the decimal point: %s", self.nstepSplit[0])
+        #logger.printmsg("debug", " strip nstp of everything after (and including) the decimal point: %s", self.nstepSplit[0])
         # Split '-' off
         #right justify, pad with zeros if necessary to get to 6 numerical values
         if nstep[0] == '-':
@@ -128,9 +131,10 @@ class pointMTP():
             nstep = nstepSplit[0].rjust(6,'0')
         ''' Shouldn't need mulitple checks for this?
         # preceeded with a + or -
-        #logging.debug("unrounded: %s, rounded nstep value to 0, does this get rid of '.' ?: 6.0f", str(self.nstep)) 
+        #logger.printmsg("debug", "unrounded: %s, rounded nstep value to 0, does this get rid of '.' ?: 6.0f", str(self.nstep)) 
         if self.nstep is 0.0:
-            logging.error(" moving 0 steps, nstep calculation turned to 0")
+            # should log as error
+            logger.printmsg("debug", " moving 0 steps, nstep calculation turned to 0")
             # suspect this occurs when pitch/roll/z are 0
             # need to have a catch case when above are nan's
         '''

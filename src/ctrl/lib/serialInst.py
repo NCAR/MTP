@@ -28,14 +28,8 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
-import logging
 import serial
-
-logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
-    filename="MTPControl.log", level=logging.DEBUG)
-#logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
-
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 class SerialInst(object):
 
@@ -63,21 +57,21 @@ class SerialInst(object):
         try:
             self.sport = serial.Serial(self.device, 9600, timeout=0)
             if self.sport.isOpen():
-                logger.info("port is open")
+                logger.printmsg("debug", "port is open")
         except serial.SerialException as ex:
-            logger.info("Port is unavailable: " + str(ex))
+            logger.printmsg("debug", "Port is unavailable: " + str(ex))
             exit()
 
     def getSerial(self):
         """ Return the pointer to the serial port """
-        logger.debug("Connected to serial port " + self.sport.name)
+        logger.printmsg("debug", "Connected to serial port " + self.sport.name)
         return self.sport
 
     def sendCommand(self, command):
         """ Send a command to the serial port """
         self.sport.write(command)
         self.sport.flush()
-        logger.info('Sending command - ' + str(command))
+        logger.printmsg("debug", 'Sending command - ' + str(command))
 
     def readData(self):
         """
@@ -92,11 +86,14 @@ class SerialInst(object):
         byte = ""
         while True:
             byte = self.sport.read()
-            logging.debug("serial port read byte r: %r, byte.decode(utf-8): %r", byte, byte.decode("utf-8"))
+            logger.printmsg("debug",
+                    "serial port read byte r: %r, byte.decode(utf-8): %r",
+                    byte, byte.decode("utf-8"))
             if byte.decode("utf-8") == "\n":
                 break
             message += byte.decode("utf-8")
-        logger.debug("read data: %r, rstrip read data:  ", message,  message.rstrip())
+        logger.printmsg("debug",
+                "read data: %r, rstrip read data:  ", message,  message.rstrip())
         return(message.rstrip())
 
     def close(self):

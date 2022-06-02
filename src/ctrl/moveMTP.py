@@ -5,17 +5,17 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
-import logging
 import time
-from pointing import pointMTP
 from PyQt5 import QtCore
-from lib.mtpcommand import MTPcommand
+from ctrl.lib.mtpcommand import MTPcommand
 # Ugh. Format has aline, so needs to be in model.py
 # can't figure out how to pass that instance of formatMTP
 # New instance here should store to the same packetStore
-from formatMTP import formatMTP
-class moveMTP():
-    
+from ctrl.formatMTP import formatMTP
+from ctrl.pointing import pointMTP
+from EOLpython.Qlogger.messageHandler import QLogger as logger
+
+class moveMTP():    
     
     def __init__(self, parent, serialPort):
         varDict = {
@@ -52,8 +52,11 @@ class moveMTP():
                     # if GUI is True
                     if self.parent.gui:
                         self.parent.controlWindow.iwgProcessEvents()
-                    logging.error("probe off or not responding")
-                logging.info("Probe on check returns true")
+                    # Reporting as error stops program execution, that's an issue
+                    # should be an error report or an info, but
+                    # continuing to try is prefered
+                    logger.printmsg("debug", "probe off or not responding")
+                logger.printmsg("debug", "Probe on check returns true")
                 probeResponding = True
             self.readEchos(3)
             self.init()
@@ -88,13 +91,13 @@ class moveMTP():
 
     def Bline(self, angles, nfreq):
 
-        logging.debug("Bline")
+        logger.printmsg("debug", "Bline")
         # All R values have spaces in front
-        logging.debug(angles)
+        logger.printmsg("debug", angles)
         numAngles = angles[0]
         zel = angles[1]
         elAngles = angles[2:numAngles+2]
-        logging.debug(elAngles)
+        logger.printmsg("debug",elAngles)
         data = ''
         angleIndex = 0  # 1-10
         for angle in elAngles:
@@ -103,7 +106,7 @@ class moveMTP():
                 # update GUI
                 self.parent.controlWindow.updateAngle(str(angle))
             angleIndex = angleIndex + 1
-            logging.debug("el angle: %f, ScanAngleNumber: %f",
+            logger.printmsg("debug", "el angle: %f, ScanAngleNumber: %f",
                           angle, angleIndex)
             self.parent.controlWindow.iwgProcessEvents()
 
@@ -117,7 +120,8 @@ class moveMTP():
                 angle = angle + self.point.fEc(pitchFrame, rollFrame,
                                                 angle, EmaxFlag)
             else:
-                logging.info("not correcting Pitch")
+                # should also be an info or error
+                logger.printmsg("debug", "not correcting Pitch")
                 angle = angle + zel
 
             # get pitch corrected angle and
@@ -134,11 +138,11 @@ class moveMTP():
             self.moveCheckAgain(str.encode(moveToCommand), sleepTime,
                                 isHome=False)
 
-            # logging.debug("Bline find the @: %r", echo)
+            # logger.printmsg("debug", "Bline find the @: %r", echo)
             # wait until Step:\xddff/0@\r\n is received
 
             data = data + self.integrate(nfreq)
-            logging.debug(data)
+            logger.printmsg("debug", data)
 
         return data
 
@@ -160,7 +164,7 @@ class moveMTP():
             if echo == b'-1' and isHome:
                 self.serialPort.sendCommand((sentCommand))
                 i = i+1
-                logging.debug("moveCheckAgain: sending move again, %r", echo)
+                logger.printmsg("debug", "moveCheckAgain: sending move again, %r", echo)
             elif echo == b'-1' and sFlag:
                 # check to see if empty 'Step' was received
                 # in readUntilFound - means motor didn't actually
@@ -169,11 +173,11 @@ class moveMTP():
                 # that get empty steps wont be stacking
                 self.serialPort.sendCommand((sentCommand))
                 i = i+1
-                logging.debug("moveCheckAgain: timeout")
+                logger.printmsg("debug", "moveCheckAgain: timeout")
             else:
-                logging.debug("moveCheckAgain: @ recieved %r, i = %s", echo, i)
+                logger.printmsg("debug", "moveCheckAgain: @ recieved %r, i = %s", echo, i)
                 i = 5
-        logging.debug("sentCommand %s", sentCommand)
+        logger.printmsg("debug", "sentCommand %s", sentCommand)
 
         # Too soon and status is always 6: homescan needs longer
         i = 0
@@ -187,23 +191,23 @@ class moveMTP():
             # for when it is actually called by home
             status, sFlag, foundIndex = self.readUntilFound(b'T',
                                                             10, 10, False)
-            logging.debug("FindtheT status: %r", status)
+            logger.printmsg("debug", "FindtheT status: %r", status)
             # in case statusNum ==7, S was found, but ST## wasn't
             if status != b'-1':
                 findTheT = status.data().find(b'T')
                 if findTheT >= 0:
                     # status 04 is correct statu, others require re-prompt
                     statusNum = status[findTheT + 3]
-                    logging.debug('statusnum: %r', statusNum)
+                    logger.printmsg("debug", 'statusnum: %r', statusNum)
                     if statusNum == '4':
-                        logging.debug('status is 4')
+                        logger.printmsg("debug", 'status is 4')
                         return True
                     elif statusNum == '7':
                         self.serialPort.sendCommand(
                                 self.commandDict.getCommand('count'))
                         self.serialPort.sendCommand(
                                 self.commandDict.getCommand('count2'))
-                        logging.debug("status 7: send integrate/read to fix")
+                        logger.printmsg("debug", "status 7: send integrate/read to fix")
                     elif statusNum == '6':
                         # i = i + 1
                         time.sleep(sleepTime/2)
@@ -211,31 +215,32 @@ class moveMTP():
                             # Longer wait to prevent long homescans,
                             # malset channels (eg. ST:04\r\nS\r\nST:00)
                             time.sleep(sleepTime/2)
-                            logging.debug('''moveCheckAgain, i<maxLoops/2,
+                            # three quotes for line break
+                            logger.printmsg("debug", '''moveCheckAgain, i<maxLoops/2,
                                           i = %r, mL/2 = %r''', i, maxLoops/2)
                         elif isHome:
                             # Status 6 needs the command (j0f0) sent again
                             self.moveCheckAgain(sentCommand, sleepTime, isHome)
-                            logging.debug("moveCheckAgain, isHome %s", isHome)
+                            logger.printmsg("debug", "moveCheckAgain, isHome %s", isHome)
                         else:
                             # Status 6 with Move commands needs a wait
                             # do the status check again
-                            logging.debug('moveCheckAgain T found, status 6')
+                            logger.printmsg("debug","moveCheckAgain T found, status 6")
                     else:
-                        logging.debug("moveCheckAgain:status not 4,6,7: %s",
+                        logger.printmsg("debug", "moveCheckAgain:status not 4,6,7: %s",
                                 statusNum)
                         return
                 else:
-                    logging.debug("moveCheckAgain: T not found")
+                    logger.printmsg("debug", "moveCheckAgain: T not found")
             else:
                 # send status again
-                logging.debug("moveCheckAgain: T not found")
+                logger.printmsg("debug", "moveCheckAgain: T not found")
                 # i = i + 1
-        logging.debug("moveCheckAgain timeout %s ", status)
+        logger.printmsg("debug", "moveCheckAgain timeout %s ", status)
 
 
     def m01(self):
-        logging.debug("M01")
+        logger.printmsg("debug", "M01")
         self.serialPort.sendCommand((self.commandDict.getCommand("read_M1")))
         # echo will echo "M  1" so have to scan for the : in the M line
         m, sFlag, foundIndex = self.readUntilFound(b'M01:',
@@ -245,7 +250,7 @@ class moveMTP():
         return m01
 
     def m02(self):
-        logging.debug("M02")
+        logger.printmsg("debug", "M02")
         self.serialPort.sendCommand((self.commandDict.getCommand("read_M2")))
         m, sFlag, foundIndex = self.readUntilFound(b'M02:',
                                                    100, 20, isHome=False)
@@ -253,7 +258,7 @@ class moveMTP():
         return m02
 
     def pt(self):
-        logging.debug("pt")
+        logger.printmsg("debug", "pt")
         self.serialPort.sendCommand((self.commandDict.getCommand("read_P")))
         p, sFlag, foundIndex = self.readUntilFound(b':', 100, 20, isHome=False)
         pt = self.formatMTP.decode(p)
@@ -262,7 +267,7 @@ class moveMTP():
 
     def Eline(self, nfreq):
         data = 0
-        logging.debug("Eline")
+        logger.printmsg("debug", "Eline")
         # has a loop in small program and init probe
         self.moveHome()
         #self.isMovePossibleFromHome(maxDebugAttempts=10, scanStatus='potato')
@@ -312,11 +317,11 @@ class moveMTP():
             # serial qt is uesd in main probram, so need the timeout
             readLine = self.serialPort.canReadLine(500)
             if readLine is None:
-                logging.debug("Nothing to read")
+                logger.printmsg("debug", "readEchos: Nothing to read")
             else:
                 buf = buf + readLine
 
-        logging.debug("read %r", buf)
+        logger.printmsg("debug", "read %r".format(buf))
         return buf
 
 
@@ -370,20 +375,23 @@ class moveMTP():
                 errorStatus = 12
                 # success
             elif self.findChar(answerFromProbe, b'B') != -1:
-                logging.warning(" Init 1 status B, resending.")
+                # should be info or warning
+                logger.printmsg("debug", " Init 1 status B, resending.")
                 errorStatus = errorStatus + 1
             elif self.findChar(answerFromProbe, b'C') != -1:
-                logging.warning(" Init 1 status C, resending.")
+                # should be logged as an error or warning
+                logger.printmsg("debug", "Init 1 status C, resending.")
                 errorStatus == errorStatus + 1
             else:
-                logging.warning(" Init 1 status else, resending.")
+                # should log as warning
+                logger.printmsg("debug", "Init 1 status else, resending.")
                 errorStatus == errorStatus + 1
 
         self.serialPort.sendCommand(b'S\r\n')
 
         buf = self.readEchos(3)
-        logging.debug("readEchos, should have no response: ")
-        logging.debug(buf)
+        logger.printmsg("debug", "readEchos, should have no response: ")
+        logger.printmsg("debug", buf)
 
         errorStatus = 0
         # 12 is arbirtary choice. Will tune in main program.
@@ -394,13 +402,16 @@ class moveMTP():
                 errorStatus = 12
                 # success
             elif self.findChar(answerFromProbe, b'B') != -1:
-                logging.warning(" Init 2 status B, resending.")
+                # should be a warning
+                logger.printmsg("debug", " Init 2 status B, resending.")
                 errorStatus = errorStatus + 1
             elif self.findChar(answerFromProbe, b'C') != -1:
-                logging.warning(" Init 2 status C, resending.")
+                # should log as a warning
+                logger.printmsg("debug", " Init 2 status C, resending.")
                 errorStatus == errorStatus + 1
             else:
-                logging.warning(" Init 2 status else, resending.")
+                # should log as warning
+                logger.printmsg("debug", " Init 2 status else, resending.")
                 errorStatus = errorStatus + 1
 
         # After both is status of 7 ok?
@@ -420,7 +431,7 @@ class moveMTP():
         isFirst = True
         for freq in nfreq:
             # tune echos received in tune function
-            logging.debug("Frequency/channel:" + str(freq))
+            logger.printmsg("debug", "Frequency/channel:" + str(freq))
             self.tune(freq, isFirst)
             # other channels than the first need resetting ocasionally.
             # isFirst = False
@@ -434,25 +445,25 @@ class moveMTP():
                     "count2")))
                 echo, sFlag, foundIndex = \
                     self.readUntilFound(b'R28:', 10, 20, isHome=False)
-                logging.debug("reading R echo %r", echo)
+                logger.printmsg("debug", "reading R echo %r", echo)
 
-            logging.debug("Echo [foundIndex] = %r, echo[foundIndex + 4] = %r",
+            logger.printmsg("debug", "Echo [foundIndex] = %r, echo[foundIndex + 4] = %r",
                           echo[foundIndex], echo[foundIndex+4])
             # above to get rid of extra find when probe loop time is issue
             findSemicolon = echo.data().find(b'8')
-            # logging.debug("r value data: %s, %s, %s",echo[findSemicolon],
+            # logger.printmsg("debug", "r value data: %s, %s, %s",echo[findSemicolon],
             # echo[findSemicolon+1], echo[findSemicolon+6])
             datum = echo[findSemicolon+2: findSemicolon+8]
             # generally 4:10, ocasionally not. up to, not include last val
-            logging.debug(datum)
+            logger.printmsg("debug", datum)
 
             # translate from hex:
             datum = '%06d' % int(datum.data().decode('ascii'), 16)
 
             # append to string:
             data = data + ' ' + datum
-            logging.debug(data)
-        logging.debug(data)
+            logger.printmsg("debug", data)
+        logger.printmsg("debug", data)
         return data
 
     def getIntegrateFromProbe(self):
@@ -463,7 +474,7 @@ class moveMTP():
         looptimeMS = 2
         looping = True
         while i < looptimeMS:
-            logging.debug("integrate loop 1, checking for odd number")
+            logger.printmsg("debug", "integrate loop 1, checking for odd number")
             if self.waitForStatus(b'5'):
                 break
             if i == looptimeMS:
@@ -476,11 +487,11 @@ class moveMTP():
         # check that integrator has finished
         i = 0
         while i < 3:
-            logging.debug("integrate loop 2, checking for even number")
+            logger.printmsg("debug", "integrate loop 2, checking for even number")
             if self.waitForStatus(b'4'):
                 break
             i = i + 1
-            logging.debug("integrator has finished")
+            logger.printmsg("debug", "integrator has finished")
         return True
 
 
@@ -500,24 +511,25 @@ class moveMTP():
         while i < 5:
             self.serialPort.sendCommand(
                 self.commandDict.getCommand("status"))
-            logging.debug("sent status request")
+            logger.printmsg("debug", "sent status request")
             echo, sFlag, foundIndex = self.readUntilFound(
                     b'S', 37, 55, isHome=False)
-            logging.debug("status: %s, received Status: %s, ", status, echo)
+            logger.printmsg("debug", "status: %s, received Status: %s, ", status, echo)
             if echo != b'-1':
                 statusFound = echo.data().find(status)
                 if statusFound >= 0:
-                    logging.debug("status searched: %s , found: %s",
+                    logger.printmsg("debug", "status searched: %s , found: %s",
                             int(status), int(echo[statusFound]))
                     return True
                 else:
-                    logging.debug("status searched for: %r , found: %r",
+                    logger.printmsg("debug", "status searched for: %r , found: %r",
                             status, echo)
                 i = i + 1
             else:
-                logging.debug("waitForStatus' readUntilFound timeout")
+                logger.printmsg("debug", "waitForStatus' readUntilFound timeout")
                 i = i + 1
-        logging.warning(" waitForStatus timed out: %s", int(status))
+        # should log as warning
+        logger.printmsg("warning", " waitForStatus timed out: %s", int(status))
         return False
     
     def tune(self, fghz, isFirst):
@@ -525,7 +537,7 @@ class moveMTP():
         # fghz is frequency in gigahertz
         fby4 = (1000 * fghz)/4  # MHz
         chan = fby4/0.5  # convert to SNP channel (integer) 0.5 MHz = step size
-        logging.debug("tune: chan = %s", chan)
+        logger.printmsg("debug", "tune: chan = %s", chan)
 
         # either 'C' or 'F' set in packetStore
         # F mode formatting #####.# instead of cmode formatting #####
@@ -537,7 +549,7 @@ class moveMTP():
         self.serialPort.sendCommand(
             str.encode(str(mode) + '{:.5}'.format(str(chan)) + "\r\n"))
         # \n added by encode I believe
-        # logging.debug(
+        # logger.printmsg("debug",
         # "Tuning: currently using mode C as that's what's called in vb6")
         # no official response, just echos
         # and echos that are indistinguishable from each other
@@ -573,30 +585,29 @@ class moveMTP():
             self.parent.controlWindow.iwgProcessEvents()
 
             echo = self.serialPort.canReadAllLines(canReadLineTimeout)  # msec
-            logging.debug("read until found: ")
-            logging.debug(binaryString)
-            logging.debug(echo)
+            logger.printmsg("debug", "read until found: %r", binaryString)
+            logger.printmsg("debug", echo)
             foundIndex = -1
-            # logging.debug(echo)
+            # logger.printmsg("debug", echo)
             if echo is None or echo == b'':
-                logging.debug(" readUntilFound: none case")
+                logger.printmsg("debug", "readUntilFound: none case")
                 i = i + 1
             else:
                 saveIndex = echo.data().find(binaryString)
                 if saveIndex >= 0:
-                    logging.debug("received binary string match %r", echo)
+                    logger.printmsg("debug", "received binary string match %r", echo)
                     foundIndex = saveIndex
-                    logging.debug("foundIndex: %r", foundIndex)
+                    logger.printmsg("debug", "foundIndex: %r", foundIndex)
                     return echo, sFlag, foundIndex
                 elif echo.data().find(b'S') >= 0:
-                    logging.debug("Found an S, setting sFlag to True")
+                    logger.printmsg("debug", "Found an S, setting sFlag to True")
                     sFlag = True
                     if isHome:
                         return b'-1', sFlag, foundIndex
                 else:
-                    logging.debug("didn't recieve binary string this loop")
+                    logger.printmsg("debug", "didn't recieve binary string this loop")
                     i = i + 1
-        logging.debug("readUntilFound timeout: returning b'-1'")
+        logger.printmsg("debug", "readUntilFound timeout: returning b'-1'")
         return b'-1', sFlag, foundIndex
 
 
@@ -604,44 +615,48 @@ class moveMTP():
         self.parent.controlWindow.iwgProcessEvents()
         if self.findChar(self.readEchos(3),
                          b"MTPH_Control.c-101103>101208") != -1:
-            logging.info("Probe on, Version string detected")
+            # should log as info
+            logger.printmsg("debug", "Probe on, Version string detected")
             return True
         else:
-            logging.debug("""No version startup string from probe found,
+            logger.printmsg("debug", """No version startup string from probe found,
                           sending V prompt""")
             if self.probeResponseCheck():
                 return True
             else:
                 if self.truncateBotchedMoveCommand():
-                    logging.warning("""truncateBotchedMoveCommand called,
+                    # should log as warning
+                    logger.printmsg("debug", """truncateBotchedMoveCommand called,
                                     ctrl-c success""")
                     return True
                 else:
-                    logging.error("""probe not responding to
+                    # should log as error
+                    logger.printmsg("debug", """probe not responding to
                                   truncateBotchedMoveCommand ctrl-c,
                                   power cycle necessary""")
                     return False
-
-        logging.error(
+        # should log as error
+        logger.printmsg("debug", 
             "probeOnCheck all previous logic tried, something's wrong")
         return False
     def probeResponseCheck(self):
         self.serialPort.sendCommand(b'V\r\n')
         if self.findChar(self.readEchos(3),
                          b"MTPH_Control.c-101103>101208") != -1:
-            logging.info("Probe on, responding to version string prompt")
+            logger.printmsg("debug", "Probe on, responding to version string prompt")
             return True
         else:
-            logging.info("Probe not responding to version string prompt")
+            # should log as info or warning
+            logger.printmsg("debug", "Probe not responding to version string prompt")
             return False
 
     def truncateBotchedMoveCommand(self):
         self.serialPort.sendCommand(b'Ctrl-C\r\n')
         if self.findChar(self.readEchos(3), b'Ctrl-C\r\n') != -1:
-            logging.info("Probe on, responding to Ctrl-C string prompt")
+            logger.printmsg("debug", "Probe on, responding to Ctrl-C string prompt")
             return True
         else:
-            logging.info("Probe not responding to Ctrl-C string prompt")
+            logger.printmsg("debug", "Probe not responding to Ctrl-C string prompt")
             return False
 
 
@@ -650,18 +665,19 @@ class moveMTP():
         # status = 0-6, C, B, or @
         # otherwise error = -1
         # saveIndex = echo.data().find(binaryString)
-        logging.debug("findChar:array %r", array)
+        logger.printmsg("debug", "findChar:array %r", array)
         if array == b'':
-            logging.debug("findChar:array is none %r", array)
+            logger.printmsg("debug", "findChar:array is none %r", array)
             # if there is no data
             return -1
         else:
             index = array.data().find(binaryCharacter)
             if index > -1:
-                # logging.debug("status: %r, %r", array[index], array)
+                # logger.printmsg("debug", "status: %r, %r", array[index], array)
                 return array[index]
             else:
-                logging.error("status unknown, unable to find %r: %r",
+                # should log as error
+                logger.printmsg("debug", "status unknown, unable to find %r: %r",
                               binaryCharacter, array)
                 return -1
 
