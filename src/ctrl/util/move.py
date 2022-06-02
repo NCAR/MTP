@@ -65,7 +65,7 @@ class MTPProbeMove():
         """ Send home command to probe """
         cmd = self.commandDict.getCommand(home)
         self.serialPort.write(cmd)
-        answerFromProbe = self.init.readEchos(4, cmd)
+        answerFromProbe = self.init.readEchos(3, cmd)
         # If readEchos called before probe finished moving, get "Step:"
         # without \xff/0@ eg status has not yet been appended to response
         # Can't send a status to figure that out since that would be a
