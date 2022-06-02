@@ -211,18 +211,18 @@ class formatMTP():
         udpArray.append(self.udpFormat(self.parent.m02Store, 'm'))
         udpArray.append(self.udpFormat(self.parent.ptStore, 'p'))
         udpArray.append(self.udpFormat(self.parent.elineStore, 'e'))
-        logger.printmsg("debug", udpArray)
+        logger.printmsg("debug", str(udpArray))
         return udpArray
 
     def udpFormat(self, arrayToFormat, identifier):
         logger.printmsg("debug", "udpFormater")
-        logger.printmsg("debug", arrayToFormat)
+        logger.printmsg("debug", str(arrayToFormat))
         # remove spaces, add commas, remove a/b/m01:/m02:/pt:/e
         # commas always after, including end line comma
         arrayToFormat = str.replace(arrayToFormat, ' ', ',')
-        logger.printmsg("debug", arrayToFormat)
+        logger.printmsg("debug", str(arrayToFormat))
         end = int(len(arrayToFormat))
-        logger.printmsg("debug", end)
+        logger.printmsg("debug", str(end))
         if identifier == 'm':
             # remove "M0#:"
             arrayToFormat = arrayToFormat[4:end-1]

@@ -93,11 +93,11 @@ class moveMTP():
 
         logger.printmsg("debug", "Bline")
         # All R values have spaces in front
-        logger.printmsg("debug", angles)
+        logger.printmsg("debug", str(angles))
         numAngles = angles[0]
         zel = angles[1]
         elAngles = angles[2:numAngles+2]
-        logger.printmsg("debug",elAngles)
+        logger.printmsg("debug",str(elAngles))
         data = ''
         angleIndex = 0  # 1-10
         for angle in elAngles:
@@ -106,8 +106,8 @@ class moveMTP():
                 # update GUI
                 self.parent.controlWindow.updateAngle(str(angle))
             angleIndex = angleIndex + 1
-            logger.printmsg("debug", "el angle: %f, ScanAngleNumber: %f",
-                          angle, angleIndex)
+            logger.printmsg("debug", "el angle: %f, ScanAngleNumber: %f".format(
+                          str(angle), str(angleIndex)))
             self.parent.controlWindow.iwgProcessEvents()
 
             # packetStore pitchCorrect should be button
@@ -142,7 +142,7 @@ class moveMTP():
             # wait until Step:\xddff/0@\r\n is received
 
             data = data + self.integrate(nfreq)
-            logger.printmsg("debug", data)
+            logger.printmsg("debug", str(data))
 
         return data
 
@@ -164,7 +164,7 @@ class moveMTP():
             if echo == b'-1' and isHome:
                 self.serialPort.sendCommand((sentCommand))
                 i = i+1
-                logger.printmsg("debug", "moveCheckAgain: sending move again, %r", echo)
+                logger.printmsg("debug", "moveCheckAgain: sending move again, %r", str(echo))
             elif echo == b'-1' and sFlag:
                 # check to see if empty 'Step' was received
                 # in readUntilFound - means motor didn't actually
@@ -175,9 +175,11 @@ class moveMTP():
                 i = i+1
                 logger.printmsg("debug", "moveCheckAgain: timeout")
             else:
-                logger.printmsg("debug", "moveCheckAgain: @ recieved %r, i = %s", echo, i)
+                logger.printmsg("debug",
+                        "moveCheckAgain: @ recieved %r, i = %s".format(
+                            str(echo), str(i)))
                 i = 5
-        logger.printmsg("debug", "sentCommand %s", sentCommand)
+        logger.printmsg("debug", "sentCommand %s", str(sentCommand))
 
         # Too soon and status is always 6: homescan needs longer
         i = 0
@@ -191,14 +193,14 @@ class moveMTP():
             # for when it is actually called by home
             status, sFlag, foundIndex = self.readUntilFound(b'T',
                                                             10, 10, False)
-            logger.printmsg("debug", "FindtheT status: %r", status)
+            logger.printmsg("debug", "FindtheT status: %r", str(status))
             # in case statusNum ==7, S was found, but ST## wasn't
             if status != b'-1':
                 findTheT = status.data().find(b'T')
                 if findTheT >= 0:
                     # status 04 is correct statu, others require re-prompt
                     statusNum = status[findTheT + 3]
-                    logger.printmsg("debug", 'statusnum: %r', statusNum)
+                    logger.printmsg("debug", 'statusnum: %r', str(statusNum))
                     if statusNum == '4':
                         logger.printmsg("debug", 'status is 4')
                         return True
@@ -217,18 +219,19 @@ class moveMTP():
                             time.sleep(sleepTime/2)
                             # three quotes for line break
                             logger.printmsg("debug", '''moveCheckAgain, i<maxLoops/2,
-                                          i = %r, mL/2 = %r''', i, maxLoops/2)
+                                          i = %r, mL/2 = %r'''.format(str(i),
+                                              str(maxLoops/2)))
                         elif isHome:
                             # Status 6 needs the command (j0f0) sent again
                             self.moveCheckAgain(sentCommand, sleepTime, isHome)
-                            logger.printmsg("debug", "moveCheckAgain, isHome %s", isHome)
+                            logger.printmsg("debug", "moveCheckAgain, isHome %s", str(isHome))
                         else:
                             # Status 6 with Move commands needs a wait
                             # do the status check again
                             logger.printmsg("debug","moveCheckAgain T found, status 6")
                     else:
                         logger.printmsg("debug", "moveCheckAgain:status not 4,6,7: %s",
-                                statusNum)
+                                str(statusNum))
                         return
                 else:
                     logger.printmsg("debug", "moveCheckAgain: T not found")
@@ -236,7 +239,7 @@ class moveMTP():
                 # send status again
                 logger.printmsg("debug", "moveCheckAgain: T not found")
                 # i = i + 1
-        logger.printmsg("debug", "moveCheckAgain timeout %s ", status)
+        logger.printmsg("debug", "moveCheckAgain timeout %s ", str(status))
 
 
     def m01(self):
@@ -321,7 +324,7 @@ class moveMTP():
             else:
                 buf = buf + readLine
 
-        logger.printmsg("debug", "read %r".format(buf))
+        logger.printmsg("debug", "read %r", str(buf))
         return buf
 
 
@@ -391,7 +394,7 @@ class moveMTP():
 
         buf = self.readEchos(3)
         logger.printmsg("debug", "readEchos, should have no response: ")
-        logger.printmsg("debug", buf)
+        logger.printmsg("debug", str(buf.data()))
 
         errorStatus = 0
         # 12 is arbirtary choice. Will tune in main program.
@@ -445,25 +448,26 @@ class moveMTP():
                     "count2")))
                 echo, sFlag, foundIndex = \
                     self.readUntilFound(b'R28:', 10, 20, isHome=False)
-                logger.printmsg("debug", "reading R echo %r", echo)
+                logger.printmsg("debug", "reading R echo %r", str(echo))
 
-            logger.printmsg("debug", "Echo [foundIndex] = %r, echo[foundIndex + 4] = %r",
-                          echo[foundIndex], echo[foundIndex+4])
+            logger.printmsg("debug",
+                    "Echo [foundIndex] = %r, echo[foundIndex + 4] = %r".format(
+                          str(echo[foundIndex]), str(echo[foundIndex+4])))
             # above to get rid of extra find when probe loop time is issue
             findSemicolon = echo.data().find(b'8')
             # logger.printmsg("debug", "r value data: %s, %s, %s",echo[findSemicolon],
             # echo[findSemicolon+1], echo[findSemicolon+6])
             datum = echo[findSemicolon+2: findSemicolon+8]
             # generally 4:10, ocasionally not. up to, not include last val
-            logger.printmsg("debug", datum)
+            logger.printmsg("debug", str(datum))
 
             # translate from hex:
             datum = '%06d' % int(datum.data().decode('ascii'), 16)
 
             # append to string:
             data = data + ' ' + datum
-            logger.printmsg("debug", data)
-        logger.printmsg("debug", data)
+            logger.printmsg("debug", str(data))
+        logger.printmsg("debug", str(data))
         return data
 
     def getIntegrateFromProbe(self):
@@ -514,22 +518,26 @@ class moveMTP():
             logger.printmsg("debug", "sent status request")
             echo, sFlag, foundIndex = self.readUntilFound(
                     b'S', 37, 55, isHome=False)
-            logger.printmsg("debug", "status: %s, received Status: %s, ", status, echo)
+            logger.printmsg("debug",
+                    "status: %s, received Status: %s, ".format(
+                        str(status), str(echo)))
             if echo != b'-1':
                 statusFound = echo.data().find(status)
                 if statusFound >= 0:
-                    logger.printmsg("debug", "status searched: %s , found: %s",
-                            int(status), int(echo[statusFound]))
+                    logger.printmsg("debug",
+                            "status searched: %s , found: %s".format(
+                            str(status), str(int(echo[statusFound]))))
                     return True
                 else:
-                    logger.printmsg("debug", "status searched for: %r , found: %r",
-                            status, echo)
+                    logger.printmsg("debug",
+                            "status searched for: %r , found: %r".format(
+                            str(status), str(echo)))
                 i = i + 1
             else:
                 logger.printmsg("debug", "waitForStatus' readUntilFound timeout")
                 i = i + 1
         # should log as warning
-        logger.printmsg("warning", " waitForStatus timed out: %s", int(status))
+        logger.printmsg("debug", " waitForStatus timed out: %s", str(int(status)))
         return False
     
     def tune(self, fghz, isFirst):
@@ -537,7 +545,7 @@ class moveMTP():
         # fghz is frequency in gigahertz
         fby4 = (1000 * fghz)/4  # MHz
         chan = fby4/0.5  # convert to SNP channel (integer) 0.5 MHz = step size
-        logger.printmsg("debug", "tune: chan = %s", chan)
+        logger.printmsg("debug", "tune: chan = %s", str(chan))
 
         # either 'C' or 'F' set in packetStore
         # F mode formatting #####.# instead of cmode formatting #####
@@ -585,8 +593,8 @@ class moveMTP():
             self.parent.controlWindow.iwgProcessEvents()
 
             echo = self.serialPort.canReadAllLines(canReadLineTimeout)  # msec
-            logger.printmsg("debug", "read until found: %r", binaryString)
-            logger.printmsg("debug", echo)
+            logger.printmsg("debug", "read until found: %r", str(binaryString))
+            logger.printmsg("debug", str(echo))
             foundIndex = -1
             # logger.printmsg("debug", echo)
             if echo is None or echo == b'':
@@ -595,9 +603,9 @@ class moveMTP():
             else:
                 saveIndex = echo.data().find(binaryString)
                 if saveIndex >= 0:
-                    logger.printmsg("debug", "received binary string match %r", echo)
+                    logger.printmsg("debug", "received binary string match %r", str(echo))
                     foundIndex = saveIndex
-                    logger.printmsg("debug", "foundIndex: %r", foundIndex)
+                    logger.printmsg("debug", "foundIndex: %r", str(foundIndex))
                     return echo, sFlag, foundIndex
                 elif echo.data().find(b'S') >= 0:
                     logger.printmsg("debug", "Found an S, setting sFlag to True")
@@ -665,9 +673,9 @@ class moveMTP():
         # status = 0-6, C, B, or @
         # otherwise error = -1
         # saveIndex = echo.data().find(binaryString)
-        logger.printmsg("debug", "findChar:array %r", array)
+        logger.printmsg("debug", "findChar:array %r", str(array))
         if array == b'':
-            logger.printmsg("debug", "findChar:array is none %r", array)
+            logger.printmsg("debug", "findChar:array is none %r", str(array))
             # if there is no data
             return -1
         else:
@@ -677,8 +685,8 @@ class moveMTP():
                 return array[index]
             else:
                 # should log as error
-                logger.printmsg("debug", "status unknown, unable to find %r: %r",
-                              binaryCharacter, array)
+                logger.printmsg("debug", "status unknown, unable to find %r: %r".format(
+                              str(binaryCharacter), str(array)))
                 return -1
 
 
