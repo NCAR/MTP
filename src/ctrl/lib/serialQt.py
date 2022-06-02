@@ -7,16 +7,11 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
-import logging
 import time
 from PyQt5.QtSerialPort import *
 from PyQt5.QtCore import *
 from PyQt5 import QtCore
-
-#logging.basicConfig(level=logging.DEBUG)
-logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
-    filename="MTPControl.log", level=logging.DEBUG)
-#logging = logging.getLogger(__name__)
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 class SerialInit(object):
 
@@ -49,52 +44,54 @@ class SerialInit(object):
 
         if self.serialPort.isOpen():
             self.serialPort.close()
-            logging.info("%s was open: now closed", device)
+            logger.printmsg("debug", "%s was open: now closed", device)
         while self.serialPort.isOpen() == False:
             if self.serialPort.open(QIODevice.ReadWrite):
-                logging.info("%s is open", device)
+                logger.printmsg("debug", "%s is open", device)
             else:
                 # Need to add popup here
-                logging.info ("%s failed to open; reset USB: %r", device, self.serialPort.close())
+                logger.printmsg("info",
+                        "%s failed to open; reset USB: %r",
+                        device, self.serialPort.close())
                 time.sleep(0.5)
-        logging.debug("End of init")
+        logger.printmsg("debug", "End of init")
         return
 
     def canReadLine(self, timeVal):
         # returns a signal when there is data to be read
-        logging.debug("can read line waiting ready read")
+        logger.printmsg("debug", "can read line waiting ready read")
         val = self.serialPort.waitForReadyRead(timeVal)
         i=0
         while i < timeVal:
             #self.parent.app.processEvents()
             if self.serialPort.canReadLine():
                 buf = self.serialPort.readLine()
-                logging.debug('canReadLine signal received')
+                logger.printmsg("debug", 'canReadLine signal received')
                 return buf
                 break
             else:
-                #logging.debug('canReadLine waiting for canreadline signal')
+                #logger.printmsg("debug", 'canReadLine waiting for canreadline signal')
                 i = i + 1
         #return b''
 
     def canReadAllLines(self, timeVal):
         # returns a signal when there is data to be read
-        logging.debug("can read line waiting ready read")
+        logger.printmsg("debug", "can read line waiting ready read")
         val = self.serialPort.waitForReadyRead(timeVal)
         i=0
         while i < timeVal:
             #self.parent.app.processEvents()
             if self.serialPort.canReadLine():
                 buf = self.serialPort.readLine()
-                logging.debug('canReadLine signal received')
+                logger.printmsg("debug", 'canReadLine signal received')
                 while self.serialPort.canReadLine():
-                    logging.debug('while can readline')
+                    logger.printmsg("debug", 'while can readline')
                     buf = buf + self.serialPort.readLine()
-                    #logging.debug(buf)
+                    #logger.printmsg("debug", buf)
                 return buf
                 break
             else:
-                #logging.debug('canReadLine waiting for canreadline signal')
+                #logger.printmsg("debug", 'canReadLine waiting for canreadline signal')
                 i = i + 1
         #return b''
 
@@ -106,27 +103,27 @@ class SerialInit(object):
         # run together e.g. b'03 \r\nM'
         # clear buffer
         #buf = b'' 
-        #logging.debug("serialqt readline")
+        #logger.printmsg("debug", "serialqt readline")
         i = 0 
         while i <  timeVal:
             #self.parent.app.processEvents()
-            #logging.debug("i: %d, timeVal: %d" , i, timeVal)
+            #logger.printmsg("debug", "i: %d, timeVal: %d" , i, timeVal)
             '''
             if self.serialPort.canReadLine():
-                logging.debug('canreadline')
+                logger.printmsg("debug", 'canreadline')
                 buf = self.serialPort.readLineData().data()
-                logging.debug(buf)
+                logger.printmsg("debug", buf)
                 break
             else:
                 i = i+1
-            logging.debug("look for newline char's")
+            logger.printmsg("debug", "look for newline char's")
             '''
             '''
             if buf.size()-1 <= 0:
                 # empty readline, exit?
-                logging.debug('empty readline')
+                logger.printmsg("debug", 'empty readline')
             else:
-                logging.debug(buf[buf.size()-1])
+                logger.printmsg("debug", buf[buf.size()-1])
             i= i+1
             '''
             i= i+1
@@ -134,15 +131,15 @@ class SerialInit(object):
     
     def getSerial(self):
         """ Return the pointer to the serial port """
-#        logging.debug("Connected to serial port " + self.serialPort.name)
+#        logger.printmsg("debug", "Connected to serial port " + self.serialPort.name)
         return self.serialPort
 
     def sendCommand(self, command):
         """ Send a command to the serial port """
-        logging.debug("Qt serial port sending command %s", command)
+        logger.printmsg("debug", "Qt serial port sending command %s", command)
         self.serialPort.write(command)
         self.sentCommand = str(command)
-        logging.info('Serialqt:sendCommand: Sending command - ' + str(command))
+        logger.printmsg("debug", 'Serialqt:sendCommand: Sending command - ' + str(command))
         return
 
     def readin(self):
@@ -158,7 +155,7 @@ class SerialInit(object):
             if byte.decode("utf-8") == "\n":
                 break
             message += byte.decode("utf-8")
-        logging.debug("read data: " + message.rstrip())
+        logger.printmsg("debug", "read data: " + message.rstrip())
         return(message.rstrip())
         ''' 
     def decodeLine(self):
@@ -166,7 +163,7 @@ class SerialInit(object):
         # translates from binary string into ascii
         # and loops over hex values recieved from probe 
         # changing them to decimal
-        logging.debug('decode')
+        logger.printmsg("debug", 'decode')
         data = self.buf.data().decode()
         data = data.split(' ')
         #data = data.split(' ')
@@ -175,7 +172,7 @@ class SerialInit(object):
             if i == data[0]:
                 # reset the dataArray with first equal
                 stringData = str(tmp[0]) + ": " + str(int(str(tmp[1]),16)) + " "
-                logging.debug("decodeLine, 0 case")
+                logger.printmsg("debug", "decodeLine, 0 case")
                 #dataArray.append(str(int(str(tmp[1]).decode('ascii'),16)))
                 #dataArray.append(str.encode(' '))
             else:
@@ -187,7 +184,7 @@ class SerialInit(object):
                     stringData
                 else:
                     stringData = stringData + str(int(i,16)) + ' '
-            logging.debug(" data i = %s ", i)
+            logger.printmsg("debug", " data i = %s ", i)
         return stringData
         '''
 
@@ -196,7 +193,7 @@ class SerialInit(object):
         if serialPort.isOpen():
             self.serialPort.close()
         else:
-            logging.debug("qtserial closed")
+            logger.printmsg("debug", "qtserial closed")
 
 
 if __name__ == "__main__":

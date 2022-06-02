@@ -1,8 +1,8 @@
-from lib.mtpcommand import MTPcommand
-from lib.udp import doUDP
-from moveMTP import moveMTP
-from formatMTP import formatMTP
-import logging
+from ctrl.lib.mtpcommand import MTPcommand
+from ctrl.lib.udp import doUDP
+from ctrl.moveMTP import moveMTP
+from ctrl.formatMTP import formatMTP
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 import time
 
 
@@ -50,14 +50,15 @@ class modelMTP():
             self.serialPort.readLine(readLineTime)
 
     def read(self, waitReadyReadTime, readLineTime):
-        logging.debug('waitreadyreadtime = %f', waitReadyReadTime)
+        logger.printmsg("debug",
+                'waitreadyreadtime = %f', waitReadyReadTime)
         return self.serialPort.canReadLine(readLineTime)
 
     # will need dataFile, configs and others passed in
     def mainloop(self, isScanning):
         # instantiate dict for commands
 
-        logging.debug("1 : main loop")
+        logger.printmsg("debug", "1: mainloop")
         self.controlWindow.iwgProcessEvents()
 
         self.mover.initProbe()
@@ -70,9 +71,9 @@ class modelMTP():
         # for integrate
         elAngles = self.configStore.getData("El. Angles", lab=False)
         nfreq = self.configStore.getData("Frequencies", lab=True)
-        # logging.debug("Frequencies from config: %r", nfreq)
+        # logger.printmsg("debug", "Frequencies from config: %r", nfreq)
         nfreq = nfreq[1: len(nfreq)]
-        # logging.debug("Frequencies without size: %r", nfreq)
+        # logger.printmsg("debug", "Frequencies without size: %r", nfreq)
 
         # loop over " scan commands"
         self.controlWindow.setLEDgreen(self.controlWindow.probeStatusLED)
@@ -80,35 +81,37 @@ class modelMTP():
 
         while self.continueCycling:
             self.controlWindow.iwgProcessEvents()
-            logging.info(
+            # printmsg of info stops cycling with a popup window
+            # that has to be clicked through
+            logger.printmsg("debug",
                 "mainloop--------------------------------------------mainloop")
             # check here to exit cycling
-            logging.info("mainloop1")
+            logger.printmsg("debug", "mainloop1")
             # use the MTPmove aline
             packetStartTime = time.gmtime()
             self.alineStore = self.formatMTP.Aline()
-            logging.info("mainloop2")
+            logger.printmsg("debug", "mainloop2")
 
             # Bline: long
             self.blineStore = 'B' + self.mover.Bline(elAngles, nfreq)
             self.controlWindow.iwgProcessEvents()
-            logging.info("mainloop3")
+            logger.printmsg("debug", "mainloop3")
 
             self.m01Store = self.mover.m01()
             self.m02Store = self.mover.m02()
             self.ptStore = self.mover.pt()
             self.controlWindow.iwgProcessEvents()
-            logging.info("mainloop4")
+            logger.printmsg("debug", "mainloop4")
             # Eline: long
             self.elineStore = 'E' + self.mover.Eline(nfreq)
             self.controlWindow.iwgProcessEvents()
-            logging.info("mainloop5")
+            logger.printmsg("debug","mainloop5")
             # save to file
             # assumes everything's been decoded from hex
             self.iwgStore = self.packetStore.getData('iwgStore')
             saveData = self.formatMTP.saveData(packetStartTime, self.dataFile)
             self.controlWindow.iwgProcessEvents()
-            logging.info("mainloop6")
+            logger.printmsg("debug", "mainloop6")
 
             # send packet over UDP
             # also replaces spaces with commas and removes start strings
@@ -116,35 +119,34 @@ class modelMTP():
             # self.udp.sendUDP(self.mover.formUDP())
             udpPacket = self.formatMTP.formUDP(packetStartTime)
             self.controlWindow.iwgProcessEvents()
-            logging.info("mainloop6")
-            print(udpPacket)
+            logger.printmsg("debug", "mainloop6")
+            #print(udpPacket)
             self.udp.sendUDP(udpPacket, saveData)
             self.controlWindow.iwgProcessEvents()
-            logging.info("mainloop8")
-            logging.debug("sent UDP packet")
+            logger.printmsg("debug", "sent UDP packet")
             # collect, update, display loop stats
             previousTime = self.cycleStats(previousTime)
 
             # time.sleep(1)
 
-        logging.debug("Main Loop Stopped")
+        logger.printmsg("debug", "Main Loop Stopped")
         self.controlWindow.setLEDred(self.controlWindow.scanStatusLED)
         if self.packetStore.getData("quitClicked"):
             controlWindow.exit(0)
 
     def cycleStats(self, previousTime):
-        logging.debug("cycleStats")
+        logger.printmsg("debug", "cycleStats")
 
         # loop timer
         nowTime = time.perf_counter()
         elapsedTime = nowTime - previousTime
-        logging.debug("elapsed Loop Time: %s", elapsedTime)
+        logger.printmsg("debug", "elapsed Loop Time: %s", elapsedTime)
         previousTime = nowTime
 
         # total frames(m01,m02,pt,Eline,aline,bline, IWG) taken since startup
         totalCycles = self.packetStore.getData("totalCycles") + 1
         self.packetStore.setData("totalCycles", totalCycles)
-        logging.info("cycleStats totalCycles/cycleNumber: %s", totalCycles)
+        logger.printmsg("debug", "cycleStats totalCycles/cycleNumber: %s", totalCycles)
 
         # frames taken since last "stop probe"
         self.cyclesSinceLastStop = self.cyclesSinceLastStop + 1

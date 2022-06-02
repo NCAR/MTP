@@ -1,7 +1,7 @@
 import os
 import sys
 import argparse
-#import time
+# import time
 from PyQt5.QtWidgets import (QWidget,
                              QPushButton, QButtonGroup,
                              QPlainTextEdit,
@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (QWidget,
                              QApplication, QErrorMessage)
 from PyQt5 import QtGui
 from PyQt5.QtWidgets import (QLineEdit, QDialog)
-import logging
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 from os import path, makedirs
 
 
@@ -32,13 +32,13 @@ class controlWindow(QWidget):
         self.initUI()
 
     def closeEvent(self, event):
-        logging.debug(
+        logger.printmsg("debug", 
             "User has clicked the red x on the main window, unsafe exit")
         # self.shutdownProbeClicked(self.serialPort)
         # self.event.accept()
         
     def iwgProcessEvents(self):
-        # logging.debug("Log Process Events Timestamp:" + str(time.gmtime()))
+        # logger.printmsg("debug", "Log Process Events Timestamp:" + str(time.gmtime()))
         self.IWG1Box.setPlainText(self.tempData.getData('iwgStore'))
         self.app.processEvents()
 
@@ -339,10 +339,10 @@ class controlWindow(QWidget):
         # 142, 82 ms can cause a pause at eline
 
         # sys.exit(app.exec_())
-        logging.debug("init ui done")
+        logger.printmsg("debug", "init ui done")
 
     def reInitProbeClicked(self):
-        logging.debug("reInitProbeClicked")
+        logger.printmsg("debug", "reInitProbeClicked")
         # need a read to clear echo here
         self.serialPort.sendCommand(str.encode(self.commandDict.getCommand(
             "ctrl-C")))
@@ -379,17 +379,17 @@ class controlWindow(QWidget):
         self.app.processEvents()
 
     def shutdownProbeClicked(self, serialPort):
-        logging.debug("shutdownProbe/quit clicked")
+        logger.printmsg("debug", "shutdownProbe/quit clicked")
         # self.closeComm(serialPort)
         self.continueCycling = False
         self.tempData.setData("quitClicked", True)
         self.app.processEvents()
-        logging.debug("Safe exit")
+        logger.printmsg("debug", "Safe exit")
         # need a timer in here to continue sending app.exits
         self.app.exit(0)
 
     def waitForRadiometerWindow(self, isVisible=True):
-        # error_dialog = app.QErrorMessage()
+        # error_dialog = app.Q ErrorMessage()
         # error_dialog.showMessage('Oh no!')
 
         # Pauses program execution until ok pressed
@@ -397,60 +397,60 @@ class controlWindow(QWidget):
         progress.setModal(False)
         if isVisible:
             progress.show()
-            logging.debug("Show waitForRadiometerWindow")
+            logger.printmsg("debug", "Show waitForRadiometerWindow")
         else:
             progress.hide()
-            logging.debug("hide waitForRadiometerWindow")
+            logger.printmsg("debug", "hide waitForRadiometerWindow")
 
         return False
 
     # @pyqtSlot() # called a decorator, to make call faster
     def safeSleep(self):
-        logging.debug('sleep')
+        logger.printmsg("debug", 'sleep')
         self.timer.start(5000)
-        logging.debug('after timer')
-        logging.debug("after process")
+        logger.printmsg("debug", 'after timer')
+        logger.printmsg("debug", "after process")
         return 0
 
     def scanStatusClicked(self):
 
-        logging.debug("scanStatusClicked")
+        logger.printmsg("debug", "scanStatusClicked")
         self.continueCycling = False
-        logging.debug("scanStatusClicked")
+        logger.printmsg("debug", "scanStatusClicked")
 
     def locationLocalClicked(self):
-        logging.debug("LocationLocalClicked")
+        logger.printmsg("debug", "LocationLocalClicked")
         return 0
 
     def locationRemoteClicked(self):
-        logging.debug("LocationRemoteClicked: Sorry not yet implemented")
+        logger.printmsg("debug", "LocationRemoteClicked: Sorry not yet implemented")
         return 0
 
     def paintCircle(self, color):
         painter = QtGui.QPainter(self)
         size = 10
         if color == 'red':
-            logging.debug('red')
+            logger.printmsg("debug", 'red')
             painter.setBrush(QtGui.QColor(0, 0, 255))
             # xoffset, yoffset, diameter, diameter
             painter.drawEllipse(12, 15, size, size)
-            logging.debug("printing red")
+            logger.printmsg("debug", "printing red")
 
         if color == 'yellow':
-            logging.debug('Yellow')
+            logger.printmsg("debug", 'Yellow')
             painter.setBrush(QtGui.QColor(0, 255, 0))
             # xoffset, yoffset, diameter, diameter
             painter.drawEllipse(12, 15, size, size)
-            logging.debug("printing yellow")
+            logger.printmsg("debug", "printing yellow")
 
         if color == 'green':
-            logging.debug("green")
+            logger.printmsg("debug", "green")
             painter.setBrush(QtGui.QColor(255, 0, 0))
             # xoffset, yoffset, diameter, diameter
             painter.drawEllipse(12, 15, size, size)
 
         else:
-            logging.debug("Color not defined")
+            logger.printmsg("debug", "Color not defined")
         painter.end()
 
     def setLEDred(self, led):
@@ -470,7 +470,7 @@ class controlWindow(QWidget):
 
         # if ok is clicked
         if ok:
-            logging.debug("flightnum %r", flightNum)
+            logger.printmsg("debug", "flightnum %r", flightNum)
             return flightNum
         else:
             handle_error("Enter flight number")

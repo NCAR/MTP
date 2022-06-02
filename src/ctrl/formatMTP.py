@@ -14,9 +14,9 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
-import logging
 from math import pow, log
 from PyQt5 import QtCore
+from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 class formatMTP():
     
@@ -61,37 +61,38 @@ class formatMTP():
         self.oat = self.oat + 273.15 # to kelvin
         '''
         try:
-            logging.debug("before pitch avg")
+            logger.printmsg("debug", "before pitch avg")
             pitchavg = self.parent.packetStore.getData("pitchavg")
-            logging.debug("after pitch avg")
+            logger.printmsg("debug", "after pitch avg")
             pitchrms = self.parent.packetStore.getData("pitchrms")
-            logging.debug("after pitch rms1")
+            logger.printmsg("debug", "after pitch rms1")
             rollavg = self.parent.packetStore.getData("rollavg")
-            logging.debug("after pitch rms2")
+            logger.printmsg("debug", "after pitch rms2")
             rollrms = self.parent.packetStore.getData("rollrms")
-            logging.debug("after pitch rms3")
+            logger.printmsg("debug", "after pitch rms3")
             Zpavg = self.parent.packetStore.getData("Zpavg")
-            logging.debug("after pitch rms4")
+            logger.printmsg("debug", "after pitch rms4")
             Zprms = self.parent.packetStore.getData("Zprms")
-            logging.debug("after pitch rms5")
+            logger.printmsg("debug", "after pitch rms5")
             oatavg = self.parent.packetStore.getData("oatavg")
-            logging.debug("after pitch rms6")
+            logger.printmsg("debug", "after pitch rms6")
             oatrms = self.parent.packetStore.getData("oatrms")
-            logging.debug("after pitch rms7")
+            logger.printmsg("debug", "after pitch rms7")
             latavg = self.parent.packetStore.getData("latavg")
-            logging.debug("after pitch rms8")
+            logger.printmsg("debug", "after pitch rms8")
             latrms = self.parent.packetStore.getData("latrms")
-            logging.debug("after pitch rms9")
+            logger.printmsg("debug", "after pitch rms9")
             lonavg = self.parent.packetStore.getData("lonavg")
-            logging.debug("after pitch rms10")
+            logger.printmsg("debug", "after pitch rms10")
             lonrms = self.parent.packetStore.getData("lonrms")
-            logging.debug("after pitch rms end")
+            logger.printmsg("debug", "after pitch rms end")
         except Exception as e:
-            logging.debug("after pitch rms, in exception")
-            logging.error(repr(e))
-            #logging.error(e.message)
-            #logging.error(sys.exe_info()[0])
-            logging.error("IWG not detected, using defaults")
+            logger.printmsg("debug", "after pitch rms, in exception")
+            # should be error or warning (next 4)
+            logger.printmsg("debug", repr(e))
+            #logger.printmsg("debug", e.message)
+            #logger.printmsg("debug", sys.exe_info()[0])
+            logger.printmsg("debug", "IWG not detected, using defaults")
             pitchavg = 3 
             pitchrms = 3 
             rollavg = 3 
@@ -108,8 +109,8 @@ class formatMTP():
             # other odd constant is in udp.py -
             # sets the recieved values in iwg line to 0
         else:
-            logging.debug("move:else got IWG")
-            logging.debug(self.parent.packetStore.getData("iwgStore"))
+            logger.printmsg("debug", "move:else got IWG")
+            logger.printmsg("debug", self.parent.packetStore.getData("iwgStore"))
 
 
         aline = " " + str(pitchavg)
@@ -138,12 +139,12 @@ class formatMTP():
         # need to implement the better logic counters in bline
         # for scanCount and encoderCount
         self.parent.packetStore.setData("scanCount", int(self.parent.packetStore.getData("scanCount")) + 1)
-        logging.debug("Aline")
+        logger.printmsg("debug", "Aline")
         return aline
 
     def saveData(self, gmtime, dataFile):
         # self.parent.app.processEvents()
-        logging.debug("saving Data to file")
+        logger.printmsg("debug", "saving Data to file")
 
         #t = time.gmtime();
         t = gmtime
@@ -161,7 +162,7 @@ class formatMTP():
         saveData = saveData + self.parent.m02Store + '\n'
         saveData = saveData + self.parent.ptStore + '\n'
         saveData = saveData + self.parent.elineStore + '\n'
-        logging.debug("saveData %r", saveData)
+        logger.printmsg("debug", "saveData %r", saveData)
         # this \n doesn't leave the ^M's
         iwg = self.parent.iwgStore
         #iwg = str(iwg.split(','))
@@ -210,18 +211,18 @@ class formatMTP():
         udpArray.append(self.udpFormat(self.parent.m02Store, 'm'))
         udpArray.append(self.udpFormat(self.parent.ptStore, 'p'))
         udpArray.append(self.udpFormat(self.parent.elineStore, 'e'))
-        logging.debug(udpArray)
+        logger.printmsg("debug", udpArray)
         return udpArray
 
     def udpFormat(self, arrayToFormat, identifier):
-        logging.debug("udpFormater")
-        logging.debug(arrayToFormat)
+        logger.printmsg("debug", "udpFormater")
+        logger.printmsg("debug", arrayToFormat)
         # remove spaces, add commas, remove a/b/m01:/m02:/pt:/e
         # commas always after, including end line comma
         arrayToFormat = str.replace(arrayToFormat, ' ', ',')
-        logging.debug(arrayToFormat)
+        logger.printmsg("debug", arrayToFormat)
         end = int(len(arrayToFormat))
-        logging.debug(end)
+        logger.printmsg("debug", end)
         if identifier == 'm':
             # remove "M0#:"
             arrayToFormat = arrayToFormat[4:end-1]
@@ -245,7 +246,8 @@ class formatMTP():
             return arrayToFormat
 
         else:
-            logging.error('udpFormat, foreign identifier: %f', identifier)
+            # should log as error
+            logger.printmsg("debug", 'udpFormat, foreign identifier: %f', identifier)
 
     def decode(self, line):
         # decode M01, m02, Pt
@@ -253,7 +255,7 @@ class formatMTP():
         # and loops over hex values recieved from probe 
         # changing them to decimal
         # This will definitely need revisiting with move replace.
-        logging.debug('decode')
+        logger.printmsg("debug", 'decode')
         data = line.data().decode()
         # Strips of \r\n from end, 
         tmp = data.split('\r\n')
@@ -277,7 +279,7 @@ class formatMTP():
                 nameOfLine = str(tmp[0])
                 stringData = nameOfLine + ": " + str(int(str(tmp[1]),16)) + " "
 
-                logging.debug("decode m01, m02, Pt")
+                logger.printmsg("debug", "decode m01, m02, Pt")
                 #dataArray.append(str(int(str(tmp[1]).decode('ascii'),16)))
                 #dataArray.append(str.encode(' '))
             else:
@@ -293,19 +295,19 @@ class formatMTP():
                         if i == ifM02tsynth:
                             self.checkOverheat(str(int(ifM02tsynth,16)))
 
-            logging.debug(" data i = %s ", i)
+            logger.printmsg("debug", " data i = %s ", i)
         return stringData
 
     def checkOverheat(self, value):
         # Check M02 last value = tsynth
         # Might be better to put this in formatMTP?
-        logging.debug("Checking overheat")
+        logger.printmsg("debug", "Checking overheat")
         A = 0.0009376
         B = 0.0002208
         C = 0.0000001276
-        logging.debug("Overheat value = " + str(value))
+        logger.printmsg("debug", "Overheat value = " + str(value))
         if value == 4096 or value == 0:
-            logging.debug("Check overheat, value = 4096 or 0")
+            logger.printmsg("debug", "Check overheat, value = 4096 or 0")
             # set overHeatLED to yellow
             self.parent.controlWindow.setLEDyellow(self.parent.controlWindow.overHeatLED)
         else:
@@ -318,12 +320,13 @@ class formatMTP():
             if TSynth >= 50:
                 # set overHeatLED to RED
                 self.parent.controlWindow.setLEDred(self.parent.controlWindow.overHeatLED)
-
-                logging.warning("TEMPERATURE OVER 50C")
+                # Stopping program if tsynth is to high is preferred?
+                # Otherwise make debug
+                logger.printmsg("warning", "TEMPERATURE OVER 50C")
             else:
                 # set overHeatLED to green
                 self.parent.controlWindow.setLEDgreen(self.parent.controlWindow.overHeatLED)
 
 
-            logging.debug("Check overheat, value =" + str(TSynth))
+            logger.printmsg("debug", "Check overheat, value =" + str(TSynth))
 
