@@ -177,7 +177,7 @@ class MTPEmulator():
 
         elif line[0] == 'S':  # Return firmware status
             self.status = self.conditionalStatus(chaos, state)
-            string = '\r\nST:' + self.status + '\r\n'
+            string = 'ST:' + self.status + '\r\n'
             self.sport.write(string.encode('utf-8'))
 
         elif line == 'M 1':  # Read M1
