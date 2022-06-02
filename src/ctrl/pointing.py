@@ -82,7 +82,7 @@ class pointMTP():
         # changed from goAngle because editor says that would be overriding something
         # though I can't find what or where that would be
         # logger.printmsg("debug", "moveMTP goAngle/getAngle called, targetEl: %s", targetEl)
-        logger.printmsg("debug", "Zel to be added to targetEl: %s", zel)
+        logger.printmsg("debug", "Zel to be added to targetEl: %s", str(zel))
         if self.parent.packetStore.getData("pitchCorrect"):
             # should log as info
             logger.printmsg("debug", "Correcting Pitch")
@@ -93,16 +93,16 @@ class pointMTP():
             targetClkAngle = zel + targetEl
 
         stepDeg = self.parent.packetStore.getData("stepsDegree") 
-        logger.printmsg("debug", "stepDeg: %s", stepDeg)
+        logger.printmsg("debug", "stepDeg: %s", str(stepDeg))
         targetClkStep = targetClkAngle * stepDeg
-        logger.printmsg("debug", "targetClkStep: %s", targetClkStep)
+        logger.printmsg("debug", "targetClkStep: %s", str(targetClkStep))
 
         currentClkStep = self.parent.packetStore.getData("currentClkStep")
-        logger.printmsg("debug", "currentClkStep: %s", currentClkStep)
+        logger.printmsg("debug", "currentClkStep: %s", str(currentClkStep))
         #self.parent.packetStore.setData("Nsteps", self.targetClkStep - self.parent.packetStore.getData("currentClkStep"))
         # nsteps check here
         nstep = targetClkStep - currentClkStep
-        logger.printmsg("debug", "calculated nstep: %r", nstep)
+        logger.printmsg("debug", "calculated nstep: %r", str(nstep))
         if nstep == 0:
             # should log as info or warning
             logger.printmsg("debug", "nstep is zero loop")
@@ -113,7 +113,7 @@ class pointMTP():
         # move to moveScan/ check logic against that
         # save current step so difference is actual step difference 
         self.parent.packetStore.setData("currentClkStep", currentClkStep + int(nstep))
-        logger.printmsg("debug", "currentClkStep + nstep: %s ", currentClkStep + int(nstep))
+        logger.printmsg("debug", "currentClkStep + nstep: %s ",str(currentClkStep + int(nstep)))
 
         # drop everything after the decimal point:
         nstepSplit = str(nstep).split('.')

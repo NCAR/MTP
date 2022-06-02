@@ -140,13 +140,15 @@ class modelMTP():
         # loop timer
         nowTime = time.perf_counter()
         elapsedTime = nowTime - previousTime
-        logger.printmsg("debug", "elapsed Loop Time: %s", elapsedTime)
+        logger.printmsg("debug", "elapsed Loop Time: %s", str(elapsedTime))
         previousTime = nowTime
 
         # total frames(m01,m02,pt,Eline,aline,bline, IWG) taken since startup
         totalCycles = self.packetStore.getData("totalCycles") + 1
         self.packetStore.setData("totalCycles", totalCycles)
-        logger.printmsg("debug", "cycleStats totalCycles/cycleNumber: %s", totalCycles)
+        logger.printmsg("debug", 
+                "cycleStats totalCycles/cycleNumber: %s",
+                str(totalCycles))
 
         # frames taken since last "stop probe"
         self.cyclesSinceLastStop = self.cyclesSinceLastStop + 1
