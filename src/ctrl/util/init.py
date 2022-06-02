@@ -46,7 +46,7 @@ class MTPProbeInit():
         '''
         cmd = self.commandDict.getCommand("status")
         self.serialPort.write(cmd)
-        answerFromProbe = self.readEchos(4)
+        answerFromProbe = self.readEchos(2)
         logger.printmsg('debug', "echos from status read: " +
                         str(answerFromProbe))
 
