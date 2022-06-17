@@ -18,7 +18,6 @@ class pointMTP():
     def __init__(self, parent, grandparent):
         self.MAM = [['nan', 'nan', 'nan', 'nan'], ['nan', 'nan', 'nan', 'nan'],
                     ['nan', 'nan', 'nan', 'nan'], ['nan', 'nan', 'nan', 'nan']]
-        self.MAM = self.configMAM(self.MAM)
 
         # Pitch, roll and yaw specific to NSF HAIPER GV
         # This will change if the way the canister is mounted on the GV
@@ -30,7 +29,13 @@ class pointMTP():
         # Radians per degree = arctan(1)/45
         self.rpd = atan(1) / 45
 
-    def configMAM(self, MAM):
+        # Calculate MTP Attitude Matrix
+        self.configMAM()
+
+    def getMAM(self):
+        return self.MAM
+
+    def configMAM(self):
         """
          Calculates and stores values in mam from yi,pi,ri
          Initialized MAM in Cycle
@@ -52,17 +57,15 @@ class pointMTP():
         sP = sin(self.pi * self.rpd)
         sR = sin(self.ri * self.rpd)
 
-        MAM[0][0] = cP * cY
-        MAM[0][2] = -cP * sY
-        MAM[0][2] = sP
-        MAM[1][0] = sR * sP * cY + cR * sY
-        MAM[1][1] = -sR * sP * sY + cR * cY
-        MAM[1][2] = -sR * cP
-        MAM[2][0] = -cR * sP * cY + sR * sY
-        MAM[2][1] = cR * sP * sY + sR * cY
-        MAM[2][2] = cR * cP
-        self.MAM = MAM
-        return MAM
+        self.MAM[0][0] = cP * cY
+        self.MAM[0][2] = -cP * sY
+        self.MAM[0][2] = sP
+        self.MAM[1][0] = sR * sP * cY + cR * sY
+        self.MAM[1][1] = -sR * sP * sY + cR * cY
+        self.MAM[1][2] = -sR * cP
+        self.MAM[2][0] = -cR * sP * cY + sR * sY
+        self.MAM[2][1] = cR * sP * sY + sR * cY
+        self.MAM[2][2] = cR * cP
 
     def fEc(self, pitch, roll, Elevation, EmaxFlag):
         """
@@ -82,8 +85,6 @@ class pointMTP():
         if Elevation == 180:
             return 180
 
-        MAM = self.MAM
-
         # convert
         P = pitch * self.rpd
         R = roll * self.rpd
@@ -94,9 +95,10 @@ class pointMTP():
         cR = cos(R)
         sR = sin(R)
         sE = sin(E)
-        alpha = -cR * sP * MAM[0][0] + sR * MAM[1][0] + cR * cP * MAM[2][0]
-        beta = -1 * (-cR * sP * MAM[0][2] + sR * MAM[1][2] +
-                     cR * cP * MAM[2][2])
+        alpha = -cR * sP * self.MAM[0][0] + sR * self.MAM[1][0] + \
+            cR * cP * self.MAM[2][0]
+        beta = -1 * (-cR * sP * self.MAM[0][2] + sR * self.MAM[1][2] +
+                     cR * cP * self.MAM[2][2])
 
         A = alpha * alpha + beta * beta
         B = 2 * sE * beta
