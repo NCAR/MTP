@@ -163,6 +163,9 @@ def main():
             fmt.readEline()
 
         elif cmdInput == '6':
+            # Make sure the buffer is clear before starting the scan.
+            init.clearBuffer()
+
             # Create B line
             fmt.readBline(move)
 
