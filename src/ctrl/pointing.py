@@ -116,10 +116,13 @@ class pointMTP():
         # VB6 has less accurate, but presumably faster ASN function for arcsin
         E_max = -asin(alpha * cos(Ec_at_Emax * self.rpd) +
                       beta * sin(Ec_at_Emax * self.rpd))
-        Emax = E_max / self.rpd  # Always + since it is maximum elevation angle
+
+        # Convert radians to degrees (will always be positive since it is a
+        # maximum elevation angle)
+        Emax = E_max / self.rpd
 
         Ep90 = abs(-asin(beta) / self.rpd)
-        # Em90 = -Ep90
+        Em90 = -Ep90
         E_Ec_0 = -asin(alpha) / self.rpd  # Elevation at which Ec=0
 
         if abs(Elevation) > abs(Emax):
@@ -137,36 +140,26 @@ class pointMTP():
         else:
             if Arg < 0:
                 Arg = 0
-                # next two lines ambiguously indented in vb6
-                fEc1 = asin((-B - sqrt(Arg)) / (2 * A)) / self.rpd
-                fEc2 = asin((-B + sqrt(Arg)) / (2 * A)) / self.rpd
-                if E_Ec_0 < 0:
-                    # logical equivalent of Vb6 that follows
-                    if Elevation >= E_Ec_0 and Elevation >= Ep90:
-                        fEc = 180 - fEc2
-
-                    else:
-                        fEc = fEc2
-
+            fEc1 = asin((-B - sqrt(Arg)) / (2 * A)) / self.rpd
+            fEc2 = asin((-B + sqrt(Arg)) / (2 * A)) / self.rpd
+            if E_Ec_0 < 0:
+                # logical equivalent of Vb6 follows
+                if Elevation >= E_Ec_0 and Elevation >= Ep90:
+                    fEc = 180 - fEc2
                 else:
-                    if Elevation >= E_Ec_0:
-                        # Vb6 - man pages suggest the last 4 lines won't be
-                        # executed
-                        '''
-                      Select Case Elevation
-                      Case Is >= Emax: fEc = fEc1
-                      Case Else:  fEc = fEc1
-                      End Select
-
-                      Case Is >= Em90: fEc = fEc1
-                      Case Is > -Emax: fEc = -180 - fEc1
-                      Case Else: fEc = Ec_at_Emax - 180
-                      End Select
-                        '''
-                        # if Elevation >= Emax:
+                    fEc = fEc2
+            else:
+                if Elevation >= E_Ec_0:
+                    fEc = fEc1
+                else:
+                    if Elevation >= Em90:
                         fEc = fEc1
-                logger.printmsg("debug", "in fEc, original value = " +
-                                str(Elevation) + " corrected el = " + str(fEc))
-                Elevation = fEc
+                    elif Elevation > -Emax:
+                        fEc = -180 - fEc1
+                    else:
+                        fEc = Ec_at_Emax - 180
 
-            return Elevation
+        logger.printmsg("debug", "in fEc, original value = " +
+                        str(Elevation) + " corrected el = " + str(fEc))
+
+        return fEc
