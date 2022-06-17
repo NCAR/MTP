@@ -15,7 +15,7 @@ from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 class pointMTP():
 
-    def __init__(self, parent, grandparent):
+    def __init__(self):
         self.MAM = [['nan', 'nan', 'nan', 'nan'], ['nan', 'nan', 'nan', 'nan'],
                     ['nan', 'nan', 'nan', 'nan'], ['nan', 'nan', 'nan', 'nan']]
 
@@ -67,7 +67,7 @@ class pointMTP():
         self.MAM[2][1] = cR * sP * sY + sR * cY
         self.MAM[2][2] = cR * cP
 
-    def fEc(self, pitch, roll, Elevation, EmaxFlag):
+    def fEc(self, pitch, roll, Elevation):
         """
         Calculate commanded elevation angle needed to be at a specified
         elevation angle (Elevation) with respect to the horizon
@@ -122,11 +122,8 @@ class pointMTP():
         # Em90 = -Ep90
         E_Ec_0 = -asin(alpha) / self.rpd  # Elevation at which Ec=0
 
-        EmaxFlag = False
-
         if abs(Elevation) > abs(Emax):
             # Go to highest or lowest elevation angle possible
-            EmaxFlag = True
             if E_Ec_0 >= 0:
                 if Elevation >= 0:
                     fEc = Ec_at_Emax
