@@ -53,12 +53,21 @@ class TESTpointing(unittest.TestCase):
                           -0.00040437901882164353, 0.9980506427110911, 'nan'],
                           ['nan', 'nan', 'nan', 'nan']])
 
-    def test_fEc(self):
-        # Test null case where pitch and roll are zero. The correction to
+    def test_nullfEc(self):
+        # Test case where pitch and roll are zero. The correction to
         # forward pointing scan angle (Elevation = 0) is just due to how
-        # canister is mounted on aircraft.
+        # canister is mounted on aircraft. Result should just cancel out pitch
+        # of canister = -3.576
         self.assertEqual(self.point.fEc(0, 0, 0), 3.578037064666239)
 
+        # Test sending negative of canister pitch and roll. Should get back
+        # angle provided, +- margin of error.
+        self.elAngles = [80, 55, 42, 25, 12, 0, -12, -25, -42, -80]
+        for angle in self.elAngles:
+            self.assertEqual(round(self.point.fEc(3.576, 0.123, angle), 2),
+                             round(angle, 2))
+
+    def test_targetfEc(self):
         # Test mirror pointed at target. In that case, there is no correction
         # since we are looking internal to the probe, so changing pitch and
         # roll won't change result
@@ -66,6 +75,7 @@ class TESTpointing(unittest.TestCase):
         self.assertEqual(self.point.fEc(-1.2710891, -0.47074246, 180), 180)
         self.assertEqual(self.point.fEc(-1.6022255, 0.200037, 180), 180)
 
+    def test_pitchRollfEc(self):
         # Test non-zero pitch
         self.assertEqual(self.point.fEc(-1.2710891, 0, 0), 4.8486324625155195)
         self.assertEqual(self.point.fEc(-1.6022255, 0, 0), 5.179640262097432)
@@ -80,6 +90,7 @@ class TESTpointing(unittest.TestCase):
         self.assertEqual(self.point.fEc(-1.6022255, 0.200037, 0),
                          5.174065663274387)
 
+    def test_fEc(self):
         # Test all cases in abs(Elevation) / abs(Emax) if tree
         self.assertEqual(self.point.fEc(1.6022255, 0.200037, -2),
                          -0.02914251628561277)
