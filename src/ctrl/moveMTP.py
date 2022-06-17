@@ -12,7 +12,7 @@ from ctrl.lib.mtpcommand import MTPcommand
 # can't figure out how to pass that instance of formatMTP
 # New instance here should store to the same packetStore
 from ctrl.formatMTP import formatMTP
-from ctrl.pointing import pointMTP
+from ctrl.util.pointing import pointMTP
 from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 class moveMTP():    
