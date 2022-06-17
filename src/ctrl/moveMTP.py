@@ -25,7 +25,7 @@ class moveMTP():
         self.parent = parent
         self.vars = varDict 
         # MAM, fEc, getAngle, checkOverheat
-        self.point = pointMTP(self, parent)
+        self.point = pointMTP(self)
         self.serialPort = serialPort
         self.packetStore = self.parent.packetStore
         self.controlWindow = self.parent.controlWindow
@@ -114,11 +114,10 @@ class moveMTP():
             pitchCorrect = True
             pitchFrame = self.packetStore.getData("pitchavg")
             rollFrame = self.packetStore.getData("rollavg")
-            EmaxFlag = False
             # if self.packetStore.getData("pitchCorrect"):
             if pitchCorrect:
                 angle = angle + self.point.fEc(pitchFrame, rollFrame,
-                                                angle, EmaxFlag)
+                                                angle)
             else:
                 # should also be an info or error
                 logger.printmsg("debug", "not correcting Pitch")
