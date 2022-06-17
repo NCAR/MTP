@@ -240,6 +240,13 @@ class MTPProbeInit():
             index = buf.find(statStr)
             i = i + 1
 
+        i=0
+        while index == -1 and i < len(ustat):
+            # Sometimes \xff is missing from status string
+            statStr = b'Step:/0' + ustat[i] + b'\r\n'
+            index = buf.find(statStr)
+            i = i + 1
+
         if index > -1:
             logger.printmsg("debug", "Found status " + chr(buf[index+8]) +
                             " in " + str(buf) + " at index " + str(i))
