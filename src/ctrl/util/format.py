@@ -53,7 +53,7 @@ class MTPDataFormat():
             # Correct angle based on aircraft pitch/roll
             pitch = 0  # Until get IWG, just corrects for canister mounting - JAA
             roll = 0
-            angle = angle + self.pointing.fEc(pitch, roll, angle)
+            angle = self.pointing.fEc(pitch, roll, angle)
 
             moveToCommand, currentClkStep = self.getAngle(angle,
                                                           currentClkStep)
