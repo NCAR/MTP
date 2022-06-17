@@ -20,6 +20,13 @@ class pointMTP():
                     ['nan', 'nan', 'nan', 'nan'], ['nan', 'nan', 'nan', 'nan']]
         self.MAM = self.configMAM(self.MAM)
 
+        # Pitch, roll and yaw specific to NSF HAIPER GV
+        # This will change if the way the canister is mounted on the GV
+        # changes.
+        self.yi = -1.600   # Read in from Config.mtph
+        self.pi = -3.576
+        self.ri = -0.123
+
     def configMAM(self, MAM):
         """
          Calculates and stores values in mam from yi,pi,ri
@@ -35,19 +42,14 @@ class pointMTP():
         Calculations developed by MJ Mahoney, June 17, 2002
         """
 
-        # specific to NSF HAIPER GV
-        # This will change if it changes planes
-        yi = -1.600
-        pi = -3.576
-        ri = -0.123
         rpd = 0.0174532925199433  # Radians per degree = arctan(1)/45
 
-        cY = cos(yi * rpd)
-        cP = cos(pi * rpd)
-        cR = cos(ri * rpd)
-        sY = sin(yi * rpd)
-        sP = sin(pi * rpd)
-        sR = sin(ri * rpd)
+        cY = cos(self.yi * rpd)
+        cP = cos(self.pi * rpd)
+        cR = cos(self.ri * rpd)
+        sY = sin(self.yi * rpd)
+        sP = sin(self.pi * rpd)
+        sR = sin(self.ri * rpd)
 
         MAM[0][0] = cP * cY
         MAM[0][2] = -cP * sY
