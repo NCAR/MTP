@@ -150,8 +150,8 @@ class MTPProbeInit():
                 if i > 20:  # No legit command should return 20 lines => error!
                     self.handleNonemptyBuffer()
 
-        # And one final check that you got it all
-        self.clearBuffer()
+            # And one final check that you got it all
+            self.clearBuffer()
 
         logger.printmsg('info', "read " + str(buf))
         return buf
