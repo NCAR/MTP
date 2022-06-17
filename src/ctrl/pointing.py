@@ -27,6 +27,9 @@ class pointMTP():
         self.pi = -3.576
         self.ri = -0.123
 
+        # Radians per degree = arctan(1)/45
+        self.rpd = atan(1) / 45
+
     def configMAM(self, MAM):
         """
          Calculates and stores values in mam from yi,pi,ri
@@ -42,14 +45,12 @@ class pointMTP():
         Calculations developed by MJ Mahoney, June 17, 2002
         """
 
-        rpd = 0.0174532925199433  # Radians per degree = arctan(1)/45
-
-        cY = cos(self.yi * rpd)
-        cP = cos(self.pi * rpd)
-        cR = cos(self.ri * rpd)
-        sY = sin(self.yi * rpd)
-        sP = sin(self.pi * rpd)
-        sR = sin(self.ri * rpd)
+        cY = cos(self.yi * self.rpd)
+        cP = cos(self.pi * self.rpd)
+        cR = cos(self.ri * self.rpd)
+        sY = sin(self.yi * self.rpd)
+        sP = sin(self.pi * self.rpd)
+        sR = sin(self.ri * self.rpd)
 
         MAM[0][0] = cP * cY
         MAM[0][2] = -cP * sY
@@ -83,12 +84,10 @@ class pointMTP():
 
         MAM = self.MAM
 
-        rpd = atan(1) / 45  # 'Radians per degree 3.14159265358979
-
         # convert
-        P = pitch * rpd
-        R = roll * rpd
-        E = Elevation * rpd
+        P = pitch * self.rpd
+        R = roll * self.rpd
+        E = Elevation * self.rpd
 
         cP = cos(P)
         sP = sin(P)
@@ -110,16 +109,16 @@ class pointMTP():
             else:
                 Ec_at_Emax = -90
         else:
-            Ec_at_Emax = atan(beta / alpha) / rpd
+            Ec_at_Emax = atan(beta / alpha) / self.rpd
 
         # VB6 has less accurate, but presumably faster ASN function for arcsin
-        E_max = -asin(alpha * cos(Ec_at_Emax * rpd) +
-                      beta * sin(Ec_at_Emax * rpd))
-        Emax = E_max / rpd  # Always + since it is maximum elevation angle
+        E_max = -asin(alpha * cos(Ec_at_Emax * self.rpd) +
+                      beta * sin(Ec_at_Emax * self.rpd))
+        Emax = E_max / self.rpd  # Always + since it is maximum elevation angle
 
-        Ep90 = abs(-asin(beta) / rpd)
+        Ep90 = abs(-asin(beta) / self.rpd)
         # Em90 = -Ep90
-        E_Ec_0 = -asin(alpha) / rpd  # Elevation at which Ec=0
+        E_Ec_0 = -asin(alpha) / self.rpd  # Elevation at which Ec=0
 
         EmaxFlag = False
 
@@ -140,8 +139,8 @@ class pointMTP():
             if Arg < 0:
                 Arg = 0
                 # next two lines ambiguously indented in vb6
-                fEc1 = asin((-B - sqrt(Arg)) / (2 * A)) / rpd
-                fEc2 = asin((-B + sqrt(Arg)) / (2 * A)) / rpd
+                fEc1 = asin((-B - sqrt(Arg)) / (2 * A)) / self.rpd
+                fEc2 = asin((-B + sqrt(Arg)) / (2 * A)) / self.rpd
                 if E_Ec_0 < 0:
                     # logical equivalent of Vb6 that follows
                     if Elevation >= E_Ec_0 and Elevation >= Ep90:
