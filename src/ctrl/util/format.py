@@ -6,6 +6,7 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2022
 ###############################################################################
 import datetime
+from ctrl.util.pointing import pointMTP
 from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
@@ -16,6 +17,7 @@ class MTPDataFormat():
         self.init = init
         self.commandDict = commandDict
         self.data = data
+        self.pointing = pointMTP()
 
         # Read elAngles from Config.mtph, for now... - JAA
         self.zel = -179.8
@@ -48,16 +50,10 @@ class MTPDataFormat():
         #               b'U/1J0D10810J3R']:
         for angle in self.elAngles:
 
-            pitchCorrect = False
-            if pitchCorrect:
-                # Need to add fEc correction -> JAA
-                # angle = angle + self.fEc(pitchFrame, rollFrame, angle, MAM)
-                # For now just ...
-                break
-            else:
-                logger.printmsg("info", "not correcting Pitch")
-                logger.printmsg("debug", "Zel to be added to targetEl: "
-                                + str(self.zel))
+            # Correct angle based on aircraft pitch/roll
+            pitch = 0  # Until get IWG, just corrects for canister mounting - JAA
+            roll = 0
+            angle = angle + self.pointing.fEc(pitch, roll, angle)
 
             moveToCommand, currentClkStep = self.getAngle(angle,
                                                           currentClkStep)
@@ -90,6 +86,8 @@ class MTPDataFormat():
 
         Return: move command
         """
+        logger.printmsg("debug", "Zel to be added to targetEl: "
+                        + str(self.zel))
         targetEl = targetEl + self.zel
 
         # 128 step resolution from init.py::moveHome
