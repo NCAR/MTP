@@ -20,7 +20,7 @@ from math import atan
 import logging
 import unittest
 from io import StringIO
-from ctrl.pointing import pointMTP
+from ctrl.util.pointing import pointMTP
 from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
