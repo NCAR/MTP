@@ -7,6 +7,7 @@
 ###############################################################################
 import re
 import numpy
+from util.readascii_parms import AsciiParms
 from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
@@ -19,6 +20,28 @@ class IWG:
         self.ERROR_FLAG = False
 
         self.index = 2  # index of each variable in IWG1line (after dateTtime)
+
+    def initIWGfromAsciiParms(self, asciiparms):
+        """
+        Initialize the IWG section of the MTP dictionary using the variable
+        list provided in the ascii_parms file.
+        """
+        # Init an ascii parms file reader
+        self.ascii_parms = AsciiParms(asciiparms)
+
+        # Attempt to open ascii_parms file. Exit on failure.
+        if self.ascii_parms.open() is False:
+            exit(1)
+
+        status = True
+        while status:
+            # Read var from ascii_parms file
+            newVar = self.ascii_parms.readVar()
+
+            # Save to IWG section of dictionary
+            status = self.createPacket(newVar)
+
+        self.ascii_parms.close()
 
     def createPacket(self, newVar):
         """ Create the IWG1line section of the MTP dictionary dynamically """

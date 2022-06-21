@@ -13,7 +13,6 @@ import logging
 import argparse
 from util.readmtp import readMTP
 from util.readiwg import IWG
-from util.readascii_parms import AsciiParms
 from util.decodePt import decodePt
 from util.decodeM01 import decodeM01
 from util.decodeM02 import decodeM02
@@ -93,21 +92,9 @@ class MTPclient():
         # Initialize the IWG reader
         self.iwg = IWG(self.reader.getRawscan())
 
-        # Init and open ascii parms file
-        status = True
-        self.ascii_parms = AsciiParms(self.getAsciiParms())
-        # Attempt to open ascii_parms file. Exit on failure.
-        if self.ascii_parms.open() is False:
-            exit(1)
-
-        while status:
-            # Read var from ascii_parms file
-            newVar = self.ascii_parms.readVar()
-
-            # Save to IWG section of dictionary
-            status = self.iwg.createPacket(newVar)
-
-        self.ascii_parms.close()
+        # Initialize the IWG section of the MTP dictionary using the variable
+        # list provided in the ascii_parms file.
+        self.iwg.initIWGfromAsciiParms(self.getAsciiParms())
 
         return(self.iwg)
 
