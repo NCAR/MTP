@@ -10,9 +10,9 @@ pipeline {
         git 'eolJenkins:NCAR/MTP.git'
       }
     }
-    wrap($class: 'Xvfb', additionalOptions: '', assignedLabels: '', autoDisplayName: true, debug: true, displayNameOffset: 0, installationName: 'XVFB', parallelBuild: true, screen: '1024x758x24', timeout: 25) {
-      stage('Shell script 0') {
-        steps {
+    stage('Shell script 0') {
+      steps {
+        wrap([$class: 'Xvfb', additionalOptions: '', assignedLabels: '', autoDisplayName: true, debug: true, displayNameOffset: 0, installationName: 'XVFB', parallelBuild: true, screen: '1024x758x24', timeout: '25']) {
           sh '''cd tests
 # This build depends on EOL-Python. Not sure if this is the *best* way to
 # do this, but it works, so for now...
