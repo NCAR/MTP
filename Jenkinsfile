@@ -29,7 +29,7 @@ conda activate mtp
   }
   post {
     failure {
-      mail(subject: 'MTP build', body: 'The body', to: 'janine@ucar.edu')
+      mail(subject: 'MTP Jenkinsfile build failed', body: 'See build console output within jenkins for details', to: 'janine@ucar.edu cdewerd@ucar.edu cjw@ucar.edu taylort@ucar.edu')
     }
 
   }
