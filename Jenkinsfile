@@ -10,7 +10,7 @@ pipeline {
         git 'eolJenkins:NCAR/MTP.git'
       }
     }
-    wrap([$class: 'Xvfb', additionalOptions: '', assignedLabels: '', autoDisplayName: true, debug: true, displayNameOffset: 0, installationName: 'XVFB', parallelBuild: true, screen: '1024x758x24', timeout: 25]) {
+    wrap($class: 'Xvfb', additionalOptions: '', assignedLabels: '', autoDisplayName: true, debug: true, displayNameOffset: 0, installationName: 'XVFB', parallelBuild: true, screen: '1024x758x24', timeout: 25) {
       stage('Shell script 0') {
         steps {
           sh '''cd tests
