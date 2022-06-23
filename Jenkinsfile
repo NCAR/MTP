@@ -28,7 +28,7 @@ conda activate mtp
     }
   }
   post {
-    always {
+    failure {
       mail(subject: 'MTP build', body: 'The body', to: 'janine@ucar.edu')
     }
 
