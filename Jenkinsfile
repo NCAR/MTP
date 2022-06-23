@@ -4,10 +4,20 @@ pipeline {
         label 'CentOS8'
         } 
   }
+  environment {
+    condaenv = fileExists '/var/lib/jenkins/.conda/envs/mtp'
+  }
   stages {
     stage('Checkout Scm') {
       steps {
         git 'eolJenkins:NCAR/MTP.git'
+      }
+    }
+    stage('Create Conda env') {
+      when { expression { condaenv == 'false' }}
+      steps {
+        sh ''' # Only create if condaenv dir doesn\'t exist
+        conda env create -f ../mtpenv.yml '''
       }
     }
     stage('Shell script 0') {
@@ -19,8 +29,6 @@ pipeline {
 export PYTHONPATH=\'/var/lib/jenkins/workspace/EOL-Python/src\'
 export PATH=/opt/local/anaconda3/bin:/opt/local/anaconda3/pkgs:$PATH
 eval "$(conda shell.bash hook)"
-# Only create if /var/lib/jenkins/.conda/envs/mtp doesn\'t exist. Add a check
-# conda env create -f ../mtpenv.yml
 conda activate mtp
 ./run_tests.sh'''
         }
