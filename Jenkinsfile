@@ -17,7 +17,7 @@ pipeline {
       when { expression { condaenv == 'false' }}
       steps {
         sh ''' # Only create if condaenv dir doesn\'t exist
-        conda env create -f ../mtpenv.yml '''
+        /opt/local/anaconda3/bin/conda env create -f ../mtpenv.yml '''
       }
     }
     stage('Shell script 0') {
