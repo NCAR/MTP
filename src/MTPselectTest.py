@@ -31,6 +31,7 @@ class IWG1():
         self.sockI = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sockI.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sockI.bind(("0.0.0.0", 7071))
+        self.sockI.setblocking(False)
 
     def socket(self):
         return(self.sockI)
