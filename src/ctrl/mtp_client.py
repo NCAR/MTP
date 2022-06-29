@@ -54,7 +54,6 @@ class MTPClient():
                 echo = move.moveTo(cmd)
                 s = init.moveComplete(echo)
                 logger.printmsg('info', "First angle reached = " + str(s))
-                import datetime
             else:
                 exit(1)
 
