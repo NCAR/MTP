@@ -8,8 +8,10 @@
 import sys
 import argparse
 import logging
+import select
 from lib.config import config
 from ctrl.mtp_client import MTPClient
+from ctrl.util.iwg import MTPiwg
 from ctrl.util.init import MTPProbeInit
 from ctrl.util.move import MTPProbeMove
 from ctrl.util.CIR import MTPProbeCIR
@@ -62,10 +64,19 @@ def main():
     # Menu of user commands
     client = MTPClient()
 
-    # Get port from config file
-    port = configfile.getInt('udp_send_port')
+    # Get ports from config file to send UDP packets to MTP
+    port = configfile.getInt('udp_send_port')  # port to send MTP UDP packets
+    iwgport = configfile.getInt('iwg1_port')   # port to listen for IWG packets
 
-    init = MTPProbeInit(args, port, commandDict, args.loglevel)
+    # connect to IWG port
+    iwg = MTPiwg()
+    iwg.connectIWG(iwgport)
+    # Instantiate an IWG reader and configure a dictionary to store the
+    # IWG data
+    asciiparms = configfile.getPath('ascii_parms')
+    iwg.initIWG(asciiparms)
+
+    init = MTPProbeInit(args, port, commandDict, args.loglevel, iwg)
     move = MTPProbeMove(init, commandDict)
     data = MTPProbeCIR(init, commandDict)
     fmt = MTPDataFormat(init, data, commandDict)
@@ -75,24 +86,38 @@ def main():
     client.printMenu()
     try:
         while True:
-            # Get user's menu selection
-            cmdInput = sys.stdin.readline()
-            cmdInput = str(cmdInput).strip('\n')
+            # Get user's menu selection. Read IWG while wait
+            ports = [iwg.socket(), sys.stdin]
+            read_ready, _, _ = select.select(ports, [], [], 0.15)
 
-            # Check if probe is on and responding
-            # Separate on and responding so can pop up waiting for radiometer
-            if probeResponding is False or cmdInput == '9':
-                probeResponding = init.bootCheck()
-                if cmdInput == '9':
-                    continue  # No need to continue; already executed command
+            if len(read_ready) == 0:
+                print('timed out')
 
-            # Make sure have read everything from the buffer for the previous
-            # command before continuing. If the buffer is not clear, this
-            # indicates a problem, so notify user.
-            init.clearBuffer()
+            if iwg.socket() in read_ready:
+                iwg.readIWG()
 
-            client.readInput(cmdInput, init, move, data, fmt)
-            client.printMenu()
+            if sys.stdin in read_ready:
+                cmdInput = sys.stdin.readline()
+                cmdInput = str(cmdInput).strip('\n')
+
+                # Check if probe is on and responding
+                # Separate on and responding so can pop up waiting for
+                # radiometer - JAA
+                if probeResponding is False or cmdInput == '9':
+                    probeResponding = init.bootCheck()
+                    if cmdInput == '9':
+                        # Command executed, so loop back and ask for next
+                        # command
+                        client.printMenu()
+                        continue
+
+                # Make sure have read everything from the buffer for the
+                # previous command before continuing. If the buffer is not
+                # clear, this indicates a problem, so notify user.
+                init.clearBuffer()
+
+                client.readInput(cmdInput, init, move, data, fmt)
+                client.printMenu()
 
     except KeyboardInterrupt:
         exit(1)
