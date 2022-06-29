@@ -10,14 +10,17 @@ import sys
 import time
 import serial
 import socket
+import select
 import logging
 from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
 class MTPProbeInit():
 
-    def __init__(self, args, port, commandDict, loglevel):
+    def __init__(self, args, port, commandDict, loglevel, iwg):
         ''' initial setup of serialPort, UDP socket '''
+        self.iwg = iwg
+
         try:
             self.serialPort = serial.Serial(args.device, 9600, timeout=0.15)
             self.udpSocket = socket.socket(socket.AF_INET,
@@ -125,44 +128,64 @@ class MTPProbeInit():
         '''
         buf = b''
 
-        for i in range(num):
-            buf = buf + self.serialPort.readline()
+        # First echo will be exact duplicate of command sent. Check for
+        # it immediately to ensure command wasn't corrupted on way to/from
+        # probe.  Echo ends with \r\n so only need to read 1 line to get
+        # first echo (lines 0)
+        buf = buf + self.serialPort.readline()
+        if len(cmd) != 0 and buf != cmd:
+            logger.printmsg("warning", "initial echo from probe did " +
+                            "NOT match command sent. Sent " + str(cmd))
 
-            # First echo will be exact duplicate of command sent. Check for
-            # it to ensure command wasn't corrupted on way to/from probe.
-            # Echo ends with \r\n so only need to read 1 line to get
-            # first echo (lines 0)
-            if i == 0 and len(cmd) != 0:
-                if buf != cmd:
-                    logger.printmsg("warning", "initial echo from probe did " +
-                                    "NOT match command sent. Sent " + str(cmd))
+        # Read remaining responses from probe, interleave with checking for
+        # IWG packets.
+        for i in range(num-1):
 
-        if self.loglevel == "DEBUG":
-            # Make sure you found ALL the data - only do this in debug mode
-            # because it adds too much time to scan cycle. When run with this
-            # enabled, CIRS scan takes 5 seconds, but when comment out this
-            # block, CIRS takes .03 seconds!!!
+            # read_ready with 3 second timeout
+            ports = [self.iwg.socket(), self.serialPort]
+            read_ready, _, _ = select.select(ports, [], [], 0.15)
 
-            i = 0
-            while True:
-                line = self.serialPort.readline()
-                i = i + 1
-                if len(line) == 0:  # Found a blank line
-                    break
-                else:
-                    buf = buf + line
-                    logger.printmsg('debug', 'Needed more readEchos!! ' +
-                                    str(buf) + '**** Need to update code.')
-                # Guard against the case where the probe is returning data
-                # forever (no idea if/when this would happen, but just in case)
-                if i > 20:  # No legit command should return 20 lines => error!
-                    self.handleNonemptyBuffer()
+            if len(read_ready) == 0:
+                print('timed out')
 
-            # And one final check that you got it all
-            self.clearBuffer()
+            if self.iwg.socket() in read_ready:
+                self.iwg.readIWG()
+
+            if self.serialPort in read_ready:
+                print(self.serialPort.readable())
+                buf = buf + self.serialPort.readline()
+
+                if self.loglevel == "DEBUG":
+                    buf = self.checkReadComplete(buf)
 
         logger.printmsg('info', "read " + str(buf))
         return buf
+
+    def checkReadComplete(self, buf):
+        # Make sure you found ALL the data - only do this in debug mode
+        # because it adds too much time to scan cycle. When run with this
+        # enabled, CIRS scan takes 5 seconds, but when comment out this
+        # block, CIRS takes .03 seconds!!!
+
+        i = 0
+        while True:
+            line = self.serialPort.readline()
+            i = i + 1
+            if len(line) == 0:  # Found a blank line
+                break
+            else:
+                buf = buf + line
+                logger.printmsg('debug', 'Needed more readEchos!! ' +
+                                str(buf) + '**** Need to update code.')
+            # Guard against the case where the probe is returning data
+            # forever (no idea if/when this would happen, but just in case)
+            if i > 20:  # No legit command should return 20 lines => error!
+                self.handleNonemptyBuffer()
+
+        # And one final check that you got it all
+        self.clearBuffer()
+
+        return(buf)
 
     def handleNonemptyBuffer(self):
         """
