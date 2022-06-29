@@ -6,6 +6,7 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2022
 ###############################################################################
 import re
+import sys
 import time
 import serial
 import socket
@@ -17,10 +18,17 @@ class MTPProbeInit():
 
     def __init__(self, args, port, commandDict, loglevel):
         ''' initial setup of serialPort, UDP socket '''
-        self.serialPort = serial.Serial(args.device, 9600, timeout=0.15)
-
-        self.udpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
-        self.udpSocket.connect(('127.0.0.1', port))  # ip, port number
+        try:
+            self.serialPort = serial.Serial(args.device, 9600, timeout=0.15)
+            self.udpSocket = socket.socket(socket.AF_INET,
+                                           socket.SOCK_DGRAM, 0)
+            self.udpSocket.connect(('127.0.0.1', port))  # ip, port number
+        except serial.SerialException:
+            print("Device " + args.device + " doesn't exist on this machine." +
+                  " Please specify a valid device using the --device command" +
+                  " line option. Type '" + sys.argv[0] + " --help' for the " +
+                  "help menu")
+            exit(1)
 
         # Dictionary of allowed commands to send to firmware
         self.commandDict = commandDict
@@ -240,7 +248,7 @@ class MTPProbeInit():
             index = buf.find(statStr)
             i = i + 1
 
-        i=0
+        i = 0
         while index == -1 and i < len(ustat):
             # Sometimes \xff is missing from status string
             statStr = b'Step:/0' + ustat[i] + b'\r\n'
