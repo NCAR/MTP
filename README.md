@@ -18,6 +18,24 @@ Make sure you have installed at least python 3.7
 Use miniconda to install all needed packages:
  * Download conda from https://conda.io/miniconda.html and install
    * Update conda if warned following instructions
+ * Install Git (if not already there) and download MTP:
+   * https://git-scm.com/ -> Download latest per automatic OS detection. Run .exe file to install. I used default settings as suggested by installer, except that I asked to install a desktop icon for “Git Bash”
+ * If installing on eol-ale or eol-atom, set up the EOL Jenkins user to download software from github
+   * Create C:\Users\lroot\.gitconfig containing
+```
+[user]
+        name = eolJenkins
+```
+   * Create C:\Users\lroot\.git-credentials containing the eoljenkins git credential - either login to github as user jenkins to get it, or copy it from the other MTP laptop.
+```
+https://eoljenkins:<long credential string here>@github.com
+```
+ * Launch “Git Bash”
+ * From /c/Users/lroot in git bash
+```
+    git clone http://github.com/NCAR/MTP
+```
+   The first time you may need to cancel out of a window asking for credentials before the download will start.
  * Create the MTP conda environment from the YAML env file
 ```
    > conda env create -f mtpenv.yml
@@ -41,21 +59,14 @@ Use miniconda to install all needed packages:
    * Click "New" and add the new paths, e.g.
      * C:\Users\lroot\Miniconda3
      * C:\Users\lroot\Miniconda3\condabin
-
+     * C:\Users\lroot\Miniconda3\Scripts
+     * C:\Users\lroot\Miniconda3\Library\bin
 
 If the packages are not available via the conda-forge channel, you can search for alternative channels at https://anaconda.org
 
 Change you environment variable and add a PYTHONPATH that points to the netCDF installation (You will also add the path to EOL-Python to this env var below.)
 
-
-### Download and configure the MTPviewer software
-Install Git (if not already there) and download MTP:
- * https://git-scm.com/ -> Download latest per automatic OS detection. Run .exe file to install. I used default settings as suggested by installer, except that I asked to install a desktop icon for “Git Bash”
- * Launch “Git Bash”
- * At the prompt
-```
-    git clone http://github.com/NCAR/MTP
-```
+### Configure the MTPviewer software
  * Copy the shortcut bat files (which have an icon and look cool) from windows10 dir to Desktop
  * Edit the bat file and put in path\to\python.exe
  * Add --config=path\to\config\file for project you are going to run.
