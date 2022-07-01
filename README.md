@@ -47,6 +47,7 @@ https://eoljenkins:<long credential string here>@github.com
    then activate and conda install each package individually. Note that metpy is only available from the conda-force channel.
  * Activate the mtp conda environment - see - https://conda.io/activation
 ```
+   > conda init bash
    > conda activate mtp
 ```
  * Install the EOL-Python packages per instructions in https://github.com/NCAR/EOL-Python
@@ -67,9 +68,13 @@ If the packages are not available via the conda-forge channel, you can search fo
 Change you environment variable and add a PYTHONPATH that points to the netCDF installation (You will also add the path to EOL-Python to this env var below.)
 
 ### Configure the MTPviewer software
- * Copy the shortcut bat files (which have an icon and look cool) from windows10 dir to Desktop
- * Edit the bat file and put in path\to\python.exe
+ * Create shortcuts to the bat files in the windows10 dir and put them on the Desktop
+ * Edit the bat file and correct the python path if needed
  * Add --config=path\to\config\file for project you are going to run.
+ * If you want to run the IWGemulator, install aircraft_nc_utils
+```
+    > git clone http://github.com/NCAR/aircraft_nc_utils
+```
 
 Install the EOL-Python packages per instructions in https://github.com/NCAR/EOL-Python
 
