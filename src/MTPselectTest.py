@@ -62,7 +62,6 @@ class MTP():
         # Print True if serialPort is readable
         # Documentation at
         # https://docs.python.org/3/library/io.html#io.IOBase.readline
-        print(self.serialPort.readable())
 
         return(self.serialPort.readline())
 
@@ -88,13 +87,13 @@ def main():
         mtp.write(b'S\r\n')
 
         # read_ready with 3 second timeout
-        ports = [iwg1.socket(), mtp.serial()]
+        ports = [iwg1.socket()]
         read_ready, _, _ = select.select(ports, [], [], 3)
 
         if len(read_ready) == 0:
             print('timed out')
 
-        if mtp.serial() in read_ready:
+        if mtp.serial().inWaiting():
             # Read in echo and response from status command
             line = b''
             line = line + mtp.read()
