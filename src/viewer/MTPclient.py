@@ -466,7 +466,7 @@ class MTPclient():
 
         # Store IWG record to values field in data dictionary
         status = self.iwg.parseIwgPacket(dataI, self.getAsciiParms())
-        if status is True:  # Successful parse if IWG packet
+        if status is True:  # Successful parse of IWG packet
             self.reader.parseLine(dataI)  # Store to date, data, & asciiPacket
 
     def readSocket(self):
