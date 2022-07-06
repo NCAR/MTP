@@ -5,6 +5,9 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2022
 ###############################################################################
+import os
+if os.name == 'nt':
+    import msvcrt
 import sys
 import argparse
 import logging
@@ -86,9 +89,15 @@ def main():
     client.printMenu()
     try:
         while True:
-            # Get user's menu selection. Read IWG while wait
-            ports = [iwg.socket(), sys.stdin]
-            read_ready, _, _ = select.select(ports, [], [], 0.15)
+            if os.name == 'nt':  # Windows
+                ports = [iwg.socket()]
+                read_ready, _, _ = select.select(ports, [], [], 0.15)
+                if msvcrt.kbhit():  # Catch if keyboard char hit
+                    read_ready.append(sys.stdin)
+            else:
+                # Get user's menu selection. Read IWG while wait
+                ports = [iwg.socket(), sys.stdin]
+                read_ready, _, _ = select.select(ports, [], [], 0.15)
 
             if len(read_ready) == 0:
                 print('timed out')

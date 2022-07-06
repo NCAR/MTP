@@ -141,8 +141,8 @@ class MTPProbeInit():
         # IWG packets.
         for i in range(num-1):
 
-            # read_ready with 3 second timeout
-            ports = [self.iwg.socket(), self.serialPort]
+            # read_ready with .15 second timeout
+            ports = [self.iwg.socket()]
             read_ready, _, _ = select.select(ports, [], [], 0.15)
 
             if len(read_ready) == 0:
@@ -151,8 +151,7 @@ class MTPProbeInit():
             if self.iwg.socket() in read_ready:
                 self.iwg.readIWG()
 
-            if self.serialPort in read_ready:
-                print(self.serialPort.readable())
+            if self.serialPort.inWaiting():
                 buf = buf + self.serialPort.readline()
 
                 if self.loglevel == "DEBUG":
