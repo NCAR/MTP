@@ -99,7 +99,7 @@ class MTPProbeMove():
 
     def moveTo(self, location):
         self.serialPort.write(location)
-        return self.init.readEchos(5, location)
+        return self.init.readEchos(3, location)
 
     def isMovePossibleFromHome(self, maxDebugAttempts=12):
         # returns 4 if move is possible otherwise does debugging
