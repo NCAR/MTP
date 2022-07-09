@@ -94,7 +94,7 @@ class MTPProbeCIR():
                                 " re-send Integrate")
                 cmd = self.commandDict.getCommand("count")
                 self.serialPort.write(cmd)
-                self.init.readEchos(4, cmd)
+                self.init.readEchos(2, cmd)
             i = i + 1
 
             if j == integratetimeout:
