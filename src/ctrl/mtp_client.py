@@ -39,7 +39,7 @@ class MTPClient():
 
         elif cmdInput == '2':
             # Move Home
-            move.moveHome()
+            move.moveHome()  # Returns true of moveHome successful
 
         elif cmdInput == '3':
             """ Attempt a single move """
@@ -47,7 +47,7 @@ class MTPClient():
             firstTime = datetime.datetime.now(datetime.timezone.utc)
 
             # isMovePossibleFromHome() returns 4 if able to move
-            if (move.isMovePossibleFromHome()):
+            if (move.isMovePossibleFromHome()):  # Check this LOGIC!!
 
                 # Move to first angle in readBline
                 cmd, currentClkStep = fmt.getAngle(80, 0)
