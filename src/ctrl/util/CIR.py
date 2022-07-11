@@ -6,6 +6,7 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2022
 ###############################################################################
 import sys
+import datetime
 from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
@@ -45,11 +46,44 @@ class MTPProbeCIR():
     def integrate(self):
         cmd = self.commandDict.getCommand("count")
         self.serialPort.write(cmd)
-        self.init.readEchos(2, cmd)
+        self.init.readEchos(2, cmd)  # b'I 40\r\nI28\r\n'
 
-        # Check that S turns to 5 (integrator starts)
-        # and that S turns back to 4 (integrator finished) to move on
-        self.getIntegrateFromProbe()
+        # Check that integrator starts
+        self.integratorWait("start")
+
+        # Check that integrator finished
+        self.integratorWait("done")
+
+        #self.getIntegrateFromProbe()
+
+    def integratorWait(self, state):
+        loopStartTime = datetime.datetime.now()
+        timeinloop = datetime.datetime.now() - loopStartTime
+        while timeinloop.total_seconds() < 3:  # 3 seconds (not in VB6)
+            stat = False
+            # Loop until get valid stat (0-7)
+            while not stat:  # While stat False
+                stat = self.init.getStatus()
+
+            # Got a valid stat (0-7). Depending on state check and see if
+            # integrator started or done
+            if state == "start":
+                if self.init.integratorBusy(int(stat)):
+                    return(True)  # Integrator busy
+
+            elif state == "done":
+                if not self.init.integratorBusy(int(stat)):
+                    return(True)  # Integrator finished
+
+            else:
+                logger.printmsg("error", "unknown state")
+
+            # Increment timeinloop
+            timeinloop = datetime.datetime.now() - loopStartTime
+
+        # If looped for 3 seconds and integrator never started, return False
+        logger.printmsg("error", "Integrator never started")
+        return(False)
 
     def getIntegrateFromProbe(self):
         """
