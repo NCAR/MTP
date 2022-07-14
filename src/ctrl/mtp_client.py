@@ -46,21 +46,19 @@ class MTPClient():
             # Determine how long it takes to read three frequencies
             firstTime = datetime.datetime.now(datetime.timezone.utc)
 
-            # isMovePossibleFromHome() returns 4 if able to move
-            if (move.isMovePossibleFromHome()):  # Check this LOGIC!!
+            # Confirm in home position and ready to move (not integrating or
+            # already moving)
+            if (move.isMovePossibleFromHome()):
 
                 # Move to first angle in readBline
                 cmd, currentClkStep = fmt.getAngle(80, 0)
-                echo = move.moveTo(cmd)
-                s = init.moveComplete(echo)
+                s = move.moveTo(cmd)
                 logger.printmsg('info', "First angle reached = " + str(s))
-            else:
-                exit(1)
 
-            # Command finished
-            nowTime = datetime.datetime.now(datetime.timezone.utc)
-            logger.printmsg("info", "single move took " +
-                            str(nowTime-firstTime))
+                # Command finished
+                nowTime = datetime.datetime.now(datetime.timezone.utc)
+                logger.printmsg("info", "single move took " +
+                                str(nowTime-firstTime))
 
         elif cmdInput == '4':
             # Determine how long it takes to read three frequencies

@@ -188,7 +188,7 @@ class MTPProbeInit():
                 # again to get this response
                 i = i - 1
                 # Pause for 2 milliseconds so don't hang up CPU
-                time.sleep(0.002)  
+                time.sleep(0.002)
             else:
                 # Got response - add to buffer
                 buf = buf + response
@@ -240,19 +240,6 @@ class MTPProbeInit():
             logger.printmsg("info", "Buffer empty. OK to continue")
         else:
             self.handleNonemptyBuffer()
-
-    def moveComplete(self, buf):
-        '''
-        Check if a command has been completed by the firmware.
-
-        Returns:
-         - true if '@' is found, indicating successful completion
-         - false if '@' not found
-        '''
-        # needs a timeout if command didn't send properly
-        if buf.find(b'@') >= 0:
-            return True
-        return False
 
     def sanitize(self, data):
         """
