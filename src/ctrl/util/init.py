@@ -307,6 +307,7 @@ class MTPProbeInit():
             # search for entire string.
             statStr = b'Step:\xff/0' + ustat[i] + b'\r\n'
             index = buf.find(statStr)
+            offset = 8  # Length of 'Step:\xff/0'
             i = i + 1
 
         i = 0
@@ -314,12 +315,13 @@ class MTPProbeInit():
             # Sometimes \xff is missing from status string
             statStr = b'Step:/0' + ustat[i] + b'\r\n'
             index = buf.find(statStr)
+            offset = 7  # Length of 'Step:/0'
             i = i + 1
 
         if index > -1:
-            logger.printmsg("debug", "Found status " + chr(buf[index+8]) +
+            logger.printmsg("debug", "Found status " + chr(buf[index+offset]) +
                             " in " + str(buf) + " at index " + str(i))
-            return chr(buf[index+8])
+            return chr(buf[index+offset])
         else:
             logger.printmsg('error', "status unknown, unable to find status " +
                             "in: " + str(buf))
