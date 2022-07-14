@@ -35,14 +35,18 @@ class MTPDataFormat():
         eg "B 019110 020510 019944 019133 020540 019973 019101 020507 ...
         """
         logger.printmsg("info", "sit tight - scan typically takes 6 seconds")
+
         # Determine how long it takes to create the B line
         firstTime = datetime.datetime.now()
 
         self.b = ''
         currentClkStep = 0
 
-        # Add status checks after each move and after each CIR,
-        # and warn if not '4'
+        # Confirm in home position and ready to move (not integrating or
+        # already moving)
+        if not move.isMovePossibleFromHome():
+            logger.printmsg("error", "B line not created")
+            return("")
 
         # GV angles are b'U/1J0D28226J3R', b'U/1J0D7110J3R', b'U/1J0D3698J3R',
         #               b'U/1J0D4835J3R', b'U/1J0D3698J3R', b'U/1J0D3413J3R',
@@ -51,14 +55,14 @@ class MTPDataFormat():
         for angle in self.elAngles:
 
             # Correct angle based on aircraft pitch/roll
-            pitch = 0  # Until get IWG, just corrects for canister mounting - JAA
+            pitch = 0  # Until get IWG, corrects for canister mounting - JAA
             roll = 0
             angle = self.pointing.fEc(pitch, roll, angle)
 
             moveToCommand, currentClkStep = self.getAngle(angle,
                                                           currentClkStep)
-            echo = move.moveTo(moveToCommand)
-            if self.init.moveComplete(echo):
+
+            if (move.moveTo(moveToCommand)):
                 # Collect counts for 3 channels
                 self.b += self.data.CIRS() + ' '
             else:

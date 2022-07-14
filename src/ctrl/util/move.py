@@ -74,26 +74,25 @@ class MTPProbeMove():
         cmd = self.commandDict.getCommand(home)
         self.serialPort.write(cmd)
         answerFromProbe = self.init.readEchos(4, cmd)
-        # See if got status @ = No error.
-        status = self.init.findStat(answerFromProbe)
-        if status == '@':
-            # success
-            logger.printmsg('info', home + " successful")
-            return(True)
+        # Return True of stepper done moving
+        return(self.moveWait(home, answerFromProbe))
 
-        # If readEchos called before probe finished moving, get "Step:"
-        # without \xff/0@ eg status has not yet been appended to response
-        # so go into moveWait loop until move has completed. This code assumes
-        # that when move is complete, UART has status @ = No error
-
-        # Make sure get Step: (with or without following status) before continue
-        return(self.moveWait)  # Returns true of stepper done moving
-
-    def moveWait(self):
+    def moveWait(self, cmdstr, answerFromProbe):
         """
         Wait for stepper to quit moving. Wait for a maximum of 3 seconds.
         Recheck every 0.07 seconds
         """
+        # See if got status @ = No error.
+        status = self.init.findStat(answerFromProbe)
+        if status == '@':
+            # success
+            logger.printmsg('info', cmdstr + " successful")
+            return(True)
+
+        # If readEchos called before probe finished moving, get "Step:"
+        # without \xff/0@ eg status has not yet been appended to response
+        # so go into loop until move has completed. This code assumes
+        # that when move is complete, UART has status @ = No error
         loopStartTime = datetime.datetime.now()
         timeinloop = datetime.datetime.now() - loopStartTime
         while timeinloop.total_seconds() < 3:  # 3 seconds
@@ -117,46 +116,41 @@ class MTPProbeMove():
 
     def moveTo(self, location):
         self.serialPort.write(location)
-        # If move is not complete, might return "Step:\xff/0`\r\n" instead
-        # of @. Either loop until get @ or accept `. What does MJ do?
-        # MJ waits for status to return stepper not moving (bit 1 = 0) before
-        # reading response, but times out after 3 seconds and just keeps going.
-
-        echo  = self.init.readEchos(4, location)
-        if self.moveWait():  # Returns true of stepper done moving
-            return(echo)
+        echo = self.init.readEchos(4, location)
+        # Return True if stepper done moving
+        return(self.moveWait("move", echo))
 
     def isMovePossibleFromHome(self, maxDebugAttempts=12):
-        # returns 4 if move is possible otherwise does debugging
-        # debugging needs to know if it's in the scan or starting
-        # and how many debug attempts have been made
-        # should also be a case statement, 6, 4, 7 being most common
+        """
+        Returns: True if move is possible otherwise does debugging
+        """
 
         counter = 0
         while counter < maxDebugAttempts:
-            s = self.init.getStatus()
             counter = counter + 1
-            # Check if integrator busy (status = 1,3,5,7)
-            # Integrate logic ensures integrate has completed, so here just
-            # send b'I/r/n' to clear integrator bit.
-            if int(s) % 2 != 0:  # s is odd
+            # How can we check that we are in the HOME position?
+
+            # Check that integrator has finished
+            s = self.init.getStatus()
+            if self.init.integratorBusy(int(s)):
+                # send integrate and read to clear integrator bit.
                 cmd = self.commandDict.getCommand("count")
                 self.serialPort.write(cmd)
-                self.init.readEchos(4, cmd)
+                self.init.readEchos(2, cmd)
                 cmd = self.commandDict.getCommand("count2")
                 self.serialPort.write(cmd)
-                self.init.readEchos(4, cmd)
-                s = self.init.getStatus()
-                # What does this return? How do we determine success? - JAA
+                self.init.readEchos(2, cmd)
 
-            # Check if stepper moving (status = 2, 3, 6, 7)
-            # but success clearing integrator means we only need to check 2, 6
-            if s == '3' or s == '7':
-                # Clear integrator failed
-                logger.printmsg("error", "Clear integrator failed. " +
-                                "#### Need to update code")
-                return False
-            elif s == '2' or s == '6':
+                s = self.init.getStatus()
+                if self.init.integratorBusy(int(s)):
+                    # Move not possible because couldn't clear integrator
+                    logger.printmsg('error', "Move not possible. Couldn't" +
+                                    " clear integrator")
+                    return(False)
+
+            # Check if stepper moving
+            s = self.init.getStatus()
+            if self.init.stepperBusy(int(s)):
                 # moveHome() should have cleared this. Warn user.
                 # If this occurs, can we send a 'z' to fix it? - JAA (try it)
                 #  - z = Set current position without moving motor.
@@ -166,8 +160,10 @@ class MTPProbeMove():
                                 "#### Need to update code")
                 return False
 
-            # OK to move if synthesizer out of lock (4) or if all clear (0)
-            if s == '0' or s == '4':
+            # Check if synthesizer out of lock.  OK to move if synthesizer
+            # out of lock
+            s = self.init.getStatus()
+            if self.init.synthesizerBusy(int(s)):
                 # synthesizer out of lock
                 logger.printmsg("debug", "isMovePossible is " + str(s) +
                                 " - yes, return")
