@@ -24,6 +24,7 @@ class MTPProbeMove():
 
         Return: True if successful or False if command failed
         """
+        success = True
         # home1 command components:
         # - turn off both drivers ('J0')
         # - b’U/1f0R’ -> set polarity of home sensor to 0
@@ -31,8 +32,10 @@ class MTPProbeMove():
         # - b’U/1Z1000000R’ -> Home and Initialize motor
         # - b’U/1J3R’ -> turn on both drivers
         if not self.sendHome("home1"):  # not success - warn user
-            logger.printmsg('warning', " **** Need to update code.")
-            return False
+            # VB6 code does NOT check for success - it just continues
+            logger.printmsg('warning', "Continuing on even though stepper" +
+                                       "still reports moving")
+            success = False
 
         # home2
         # After home1, probe returns success but any subsequent clockwise move
@@ -50,10 +53,16 @@ class MTPProbeMove():
         #        (No idea why this backup is needed.
         #         Need to double check the VB6. - JAA)
         if not self.sendHome("home2"):  # not success - warn user
-            logger.printmsg('warning', " **** Need to update code.")
-            return False
+            # VB6 code does NOT check for success - it just continues
+            logger.printmsg('warning', "Continuing on even though stepper" +
+                                       "still reports moving")
+            success = False
 
-        logger.printmsg('info', "home successful")
+        if success:
+            logger.printmsg('info', "home successful")
+        else:
+            logger.printmsg('info', "home nominally successful")
+
         return True
 
     def sendHome(self, home):
@@ -65,11 +74,19 @@ class MTPProbeMove():
         cmd = self.commandDict.getCommand(home)
         self.serialPort.write(cmd)
         answerFromProbe = self.init.readEchos(4, cmd)
+        # See if got status @ = No error.
+        status = self.init.findStat(answerFromProbe)
+        if status == '@':
+            # success
+            logger.printmsg('info', home + " successful")
+            return(True)
+
         # If readEchos called before probe finished moving, get "Step:"
         # without \xff/0@ eg status has not yet been appended to response
         # so go into moveWait loop until move has completed. This code assumes
         # that when move is complete, UART has status @ = No error
 
+        # Make sure get Step: (with or without following status) before continue
         return(self.moveWait)  # Returns true of stepper done moving
 
     def moveWait(self):
@@ -95,7 +112,7 @@ class MTPProbeMove():
             timeinloop = datetime.datetime.now() - loopStartTime
 
         # If looped for 3 seconds and stepper still moving, return False
-        logger.printmsg("error", "Stepper still moving")
+        logger.printmsg("warning", "MTP reports stepper still moving")
         return(False)
 
     def moveTo(self, location):
@@ -103,7 +120,7 @@ class MTPProbeMove():
         # If move is not complete, might return "Step:\xff/0`\r\n" instead
         # of @. Either loop until get @ or accept `. What does MJ do?
         # MJ waits for status to return stepper not moving (bit 1 = 0) before
-        # reading response.
+        # reading response, but times out after 3 seconds and just keeps going.
 
         echo  = self.init.readEchos(4, location)
         if self.moveWait():  # Returns true of stepper done moving
