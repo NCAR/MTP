@@ -99,7 +99,7 @@ class MTPProbeInit():
             return(False)
 
     def synthesizerBusy(self, status):
-        """ Return True if synthesizer out of lock, False if locked """
+        """ Return True if synthesizer locked, False if out of lock """
         state = status & 4  # Get Bit 2
         if state == 4:  # Synthesizer locked
             return(True)
