@@ -34,17 +34,21 @@ class MTPProbeCIR():
             logger.printmsg("debug", "tune: chan = " + chan)
             self.fcmd.append(str.encode(str(mode) + str(chan) + "\r\n"))
 
-    def changeFrequency(self, freq):
+    def changeFrequency(self, freq, wait):
+        """
+        Input:
+        freq - Command to send to UART to change freq
+        wait - boolean indicating whether or not to wait for synthesizer to
+               lock. 1 = wait, 0 = do not wait
+        """
         self.serialPort.write(freq)
-        # no official response, just echos
-        # and echos that are indistinguishable from each other
-        # eg: echo when buffer is sending to probe is same
-        # as echo from probe: both "C#####\r\n"
+
         # Catch tune echos
         self.init.readEchos(2, freq)
 
         # Wait for synthesizer to lock
-        self.synthesizerWait()
+        if wait:
+            self.synthesizerWait()
 
     def integrate(self):
         cmd = self.commandDict.getCommand("count")
@@ -256,7 +260,7 @@ class MTPProbeCIR():
         At each move angle, code needs to set the Channel frequency, Integrate,
         and Read (CIR)
         """
-        self.changeFrequency(freq)
+        self.changeFrequency(freq, 1)  # change freq and wait for lock
         self.integrate()
         return self.readDatumFromProbe()
 
