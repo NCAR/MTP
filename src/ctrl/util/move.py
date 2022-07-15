@@ -76,7 +76,7 @@ class MTPProbeMove():
         answerFromProbe = self.init.readEchos(4, cmd)
         # Wait up to 3 seconds for stepper to complete moving
         # Return True of stepper done moving
-        return(self.moveWait(home, answerFromProbe), 3)
+        return(self.moveWait(home, answerFromProbe, 3))
 
     def moveWait(self, cmdstr, answerFromProbe, delay):
         """
@@ -131,7 +131,17 @@ class MTPProbeMove():
         counter = 0
         while counter < maxDebugAttempts:
             counter = counter + 1
-            # How can we check that we are in the HOME position?
+            # Check that we are in the HOME position
+            cmd = self.commandDict.getCommand("read_scan")
+            self.serialPort.write(cmd)
+            answerFromProbe = self.init.readEchos(3, cmd)
+            self.init.findStat(answerFromProbe)
+            if answerFromProbe[self.init.getPos()+1] == 0:  # "Step:/0b0\r\n"
+                logger.printmsg("info", "MTP in home position")
+            else:
+                logger.printmsg('error', "Move not possible. Not in home " +
+                                "position")
+                return(False)
 
             # Check that integrator has finished
             s = self.init.getStatus()
