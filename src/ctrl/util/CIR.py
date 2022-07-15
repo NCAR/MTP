@@ -43,6 +43,9 @@ class MTPProbeCIR():
         # Catch tune echos
         self.init.readEchos(2, freq)
 
+        # Wait for synthesizer to lock
+        self.synthesizerWait()
+
     def integrate(self):
         cmd = self.commandDict.getCommand("count")
         self.serialPort.write(cmd)
@@ -54,7 +57,12 @@ class MTPProbeCIR():
         # Check that integrator finished
         self.integratorWait("done")
 
-        #self.getIntegrateFromProbe()
+        # self.getIntegrateFromProbe() - remove this logic JAA
+
+    def synthesizerWait(self):
+        stat = self.init.getStatus()
+        while self.init.synthesizerBusy(int(stat)):
+            stat = self.init.getStatus()
 
     def integratorWait(self, state):
         loopStartTime = datetime.datetime.now()
