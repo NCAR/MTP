@@ -101,10 +101,10 @@ class MTPProbeInit():
     def synthesizerBusy(self, status):
         """ Return True if synthesizer out of lock, False if locked """
         state = status & 4  # Get Bit 2
-        if state == 4:  # Synthesizer out of lock
+        if state == 4:  # Synthesizer locked
             return(True)
         else:
-            return(False)
+            return(False)  # Synthesizer out of lock
 
     def findChar(self, array, binaryString, offset=0):
         '''
