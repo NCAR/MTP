@@ -63,13 +63,21 @@ class MTPDataFormat():
                                                           currentClkStep)
 
             if (move.moveTo(moveToCommand)):
+
+                # init freq to 1 ghz, do not wait for synth to lock
+                chan = '{:.5}'.format(str(500))
+                init = str.encode('C' + str(chan) + "\r\n")
+                self.data.changeFrequency(init, 0)
+
                 # Collect counts for 3 channels
                 self.b += self.data.CIRS() + ' '
             else:
                 # Problem with move - command not completed.
                 logger.printmsg("warning", "Bline move not returning " +
-                                "completion. **** Need to update code.")
-                exit(1)
+                                "completion. Waited 3 secs, so continue " +
+                                "anyway")
+                # Collect counts for 3 channels
+                self.b += self.data.CIRS() + ' '
 
         data = "B " + str(self.b)
 
@@ -112,6 +120,9 @@ class MTPDataFormat():
         #     # suspect this occurs when pitch/roll/z are 0
         #     # need to have a catch case when above are nan's
         #     return
+
+        # VB6 has logic if abs(nsteps) < 20, then don't move. Fixes
+        # tiny reset when at home and send home. Need to implement - JAA
 
         # save current step so difference is actual step difference
         currentClkStep = currentClkStep + int(nstep)
