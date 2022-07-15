@@ -74,12 +74,13 @@ class MTPProbeMove():
         cmd = self.commandDict.getCommand(home)
         self.serialPort.write(cmd)
         answerFromProbe = self.init.readEchos(4, cmd)
+        # Wait up to 3 seconds for stepper to complete moving
         # Return True of stepper done moving
-        return(self.moveWait(home, answerFromProbe))
+        return(self.moveWait(home, answerFromProbe), 3)
 
-    def moveWait(self, cmdstr, answerFromProbe):
+    def moveWait(self, cmdstr, answerFromProbe, delay):
         """
-        Wait for stepper to quit moving. Wait for a maximum of 3 seconds.
+        Wait for stepper to quit moving. Wait for a maximum of delay seconds.
         Recheck every 0.07 seconds
         """
         # See if got status @ = No error.
@@ -95,7 +96,7 @@ class MTPProbeMove():
         # that when move is complete, UART has status @ = No error
         loopStartTime = datetime.datetime.now()
         timeinloop = datetime.datetime.now() - loopStartTime
-        while timeinloop.total_seconds() < 3:  # 3 seconds
+        while timeinloop.total_seconds() < delay:  # loop for delay seconds
             stat = False
             # Loop until get valid stat (0-7)
             while not stat:  # While stat False
@@ -110,15 +111,17 @@ class MTPProbeMove():
             # Increment timeinloop
             timeinloop = datetime.datetime.now() - loopStartTime
 
-        # If looped for 3 seconds and stepper still moving, return False
+        # If looped for delay seconds and stepper still moving, return
+        # False
         logger.printmsg("warning", "MTP reports stepper still moving")
         return(False)
 
     def moveTo(self, location):
         self.serialPort.write(location)
         echo = self.init.readEchos(4, location)
+        # Wait up to 3 seconds for stepper to complete moving
         # Return True if stepper done moving
-        return(self.moveWait("move", echo))
+        return(self.moveWait("move", echo, 3))
 
     def isMovePossibleFromHome(self, maxDebugAttempts=12):
         """
@@ -152,8 +155,6 @@ class MTPProbeMove():
             s = self.init.getStatus()
             if self.init.stepperBusy(int(s)):
                 # moveHome() should have cleared this. Warn user.
-                # If this occurs, can we send a 'z' to fix it? - JAA (try it)
-                #  - z = Set current position without moving motor.
                 logger.printmsg("error", "Clear stepper moving failed. This " +
                                 "check should only be called AFTER moveHome." +
                                 " Something is wrong. " +

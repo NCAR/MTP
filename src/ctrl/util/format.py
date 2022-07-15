@@ -74,8 +74,19 @@ class MTPDataFormat():
             else:
                 # Problem with move - command not completed.
                 logger.printmsg("warning", "Bline move not returning " +
-                                "completion. Waited 3 secs, so continue " +
-                                "anyway")
+                                "completion... terminate stepper motion " +
+                                "and continue anyway")
+
+                # init freq to 1 ghz, do not wait for synth to lock
+                chan = '{:.5}'.format(str(500))
+                init = str.encode('C' + str(chan) + "\r\n")
+                self.data.changeFrequency(init, 0)
+
+                # Termimnate stepper motion
+                cmd = self.commandDict.getCommand("terminate")
+                self.serialPort.write(cmd)
+                self.init.readEchos(4, cmd)
+
                 # Collect counts for 3 channels
                 self.b += self.data.CIRS() + ' '
 
