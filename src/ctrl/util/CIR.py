@@ -61,7 +61,7 @@ class MTPProbeCIR():
 
     def synthesizerWait(self):
         stat = self.init.getStatus()
-        while self.init.synthesizerBusy(int(stat)):
+        while not self.init.synthesizerBusy(int(stat)):
             stat = self.init.getStatus()
 
     def integratorWait(self, state):
@@ -185,7 +185,7 @@ class MTPProbeCIR():
         Check integrate status
          - Bit 0 = integrator busy
          - Bit 1 = Stepper moving
-         - Bit 2 = Synthesizer out of lock
+         - Bit 2 = Synthesizer locked
          - Bit 3 = spare
 
         Input: desired status: "started" or "finished"
