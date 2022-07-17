@@ -258,6 +258,14 @@ class MTPEmulator():
                 Ascii O/o =Hex 4F/6F - Already executing command
                                         when another received
         """
+        string = 'U:' + line + '\r\n'
+
+        # Handle read_scan and read_enc
+        if string.encode('utf-8').find(b'?') != -1:
+            self.sport.write(string.encode('utf-8'))
+            self.sport.write(b'Step:/0`1000010\r\n')  # Home position
+            return()
+
         # including D,d for 'unknown'
         # D is a UART command - move negative. Better to use value not used
         # otherwise. - JAA
@@ -268,7 +276,6 @@ class MTPEmulator():
         # motor is moving backward (negative direction). However, in actuality
         # negative steps cause the motor to rotate from top to bottom when
         # the mirror is facing forward.
-        string = 'U:' + line + '\r\n'
         if chaos == 'low':
             self.sport.write(string.encode('utf-8'))
             self.sport.write(b'Step:\xff/0@\r\n')  # No error

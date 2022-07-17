@@ -52,7 +52,7 @@ class MTPClient():
 
                 # Move to first angle in readBline
                 cmd, currentClkStep = fmt.getAngle(80, 0)
-                s = move.moveTo(cmd)
+                s = move.moveTo(cmd, data)
                 logger.printmsg('info', "First angle reached = " + str(s))
 
                 # Command finished
@@ -86,8 +86,19 @@ class MTPClient():
             # Make sure the buffer is clear before starting the scan.
             init.clearBuffer()
 
-            # Create B line
+            # move home
+            move.moveHome()  # After each B line, probe needs two move homes
+            move.moveHome()  # to clear move stat.
+
+            # Create B line - need to ensure in home position first
             fmt.readBline(move)
+
+            position = move.readScan()
+            if position:
+                ScanCount = 1000000 - position
+            EncoderCount = (1000000 - move.readEnc()) * 16
+            print("ScanCount = " + str(ScanCount) + "; " +
+                  "EncoderCount = " + str(EncoderCount))
 
         elif cmdInput == '7':
             # Create housekeeping lines
@@ -106,8 +117,24 @@ class MTPClient():
             # Determine how long it takes to create the B line
             firstTime = datetime.datetime.now(datetime.timezone.utc)
 
+            # Get the Bline data
+            raw = fmt.readBline(move) + '\n'  # Read B data from probe
+            udpLine = fmt.getBdata() + ' ' + udpLine
+
+            # Get the scan and encoder counts
+            ScanCount = 1000000 - move.readScan()
+            EncoderCount = (1000000 - move.readEnc()) * 16
+
+            # UTC timestamp of Raw record is right after B line is collected
+            nowTime = datetime.datetime.now(datetime.timezone.utc)
+
+            # Generate timestamp for Raw data record
+            RAWformattedTime = "%04d%02d%02d %02d:%02d:%02d " % (
+                               nowTime.year, nowTime.month, nowTime.day,
+                               nowTime.hour, nowTime.minute, nowTime.second)
+
             # Get all the housekeeping data
-            raw = fmt.readM1line() + '\n'  # Read M1 data from the probe
+            raw = raw + fmt.readM1line() + '\n'  # Read M1 data from the probe
             udpLine = udpLine + fmt.getM1data()
             raw = raw + fmt.readM2line() + '\n'  # Read M2 data from the probe
             udpLine = udpLine + fmt.getM2data()
@@ -116,13 +143,6 @@ class MTPClient():
             raw = raw + fmt.readEline() + '\n'  # Read E data from the probe
             udpLine = udpLine + fmt.getEdata()
 
-            # Get the Bline data
-            raw = fmt.readBline(move) + '\n' + raw  # Read B data from probe
-            udpLine = fmt.getBdata() + ' ' + udpLine
-
-            # UTC timestamp of Raw record is right after B line is collected
-            nowTime = datetime.datetime.now(datetime.timezone.utc)
-
             # Get IWG line - TBD For now just use a static line - JAA
             IWG = 'IWG1,20101002T194729,39.1324,-103.978,4566.43,,14127.9' + \
                   ',,180.827,190.364,293.383,0.571414,-8.02806,318.85,' + \
@@ -130,14 +150,11 @@ class MTPClient():
                   '93,-1.66016,-35.8046,16.3486,592.062,146.734,837.903,' + \
                   '9.55575,324.104,1.22603,45.2423,,-22    .1676, '
 
-            # Generate timestamp for Raw data record
-            RAWformattedTime = "%04d%02d%02d %02d:%02d:%02d " % (
-                               nowTime.year, nowTime.month, nowTime.day,
-                               nowTime.hour, nowTime.minute, nowTime.second)
-
             # Generate A line - TBD For now just use a static line - JAA
             aline = '+03.00 00.00 +00.00 00.00 +00.00 0.00 273.15 00.16 ' + \
                     '+39.913 +0.022 -105.118 +0.000 +073727 +072576 '
+            # Format ScanCount and EncoderCount and add to end of Aline
+            # '+%06d' % ScanCount  ??
 
             # Put it all together to create the RAW record
             raw = 'A ' + RAWformattedTime + aline + '\n' + IWG + '\n' + raw
