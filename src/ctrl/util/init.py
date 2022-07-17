@@ -176,8 +176,9 @@ class MTPProbeInit():
             ports = [self.iwg.socket()]
             read_ready, _, _ = select.select(ports, [], [], 0.01)
 
-            if len(read_ready) == 0:
-                print('timed out')
+            if self.loglevel == "DEBUG":
+                if len(read_ready) == 0:
+                    print('timed out')
 
             if self.iwg.socket() in read_ready:
                 self.iwg.readIWG()
@@ -305,9 +306,6 @@ class MTPProbeInit():
             offset = 7  # Length of 'Step:/0'
             i = i + 1
 
-        # Start of status, read_scan returns more than one char
-        self.pos = index + offset
-
         if index > -1:
             logger.printmsg("debug", "Found status " + chr(buf[index+offset]) +
                             " in " + str(buf) + " at index " + str(i))
@@ -316,10 +314,6 @@ class MTPProbeInit():
             logger.printmsg('error', "status unknown, unable to find status " +
                             "in: " + str(buf))
             return -1
-
-    def getPos(self):
-        """ Get position of chars we need from string """
-        return(self.pos)
 
     def probeResponseCheck(self):
         '''

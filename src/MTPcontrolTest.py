@@ -99,8 +99,9 @@ def main():
                 ports = [iwg.socket(), sys.stdin]
                 read_ready, _, _ = select.select(ports, [], [], 0.15)
 
-            if len(read_ready) == 0:
-                print('timed out')
+            if args.loglevel == "DEBUG":
+                if len(read_ready) == 0:
+                    print('timed out')
 
             if iwg.socket() in read_ready:
                 iwg.readIWG()
