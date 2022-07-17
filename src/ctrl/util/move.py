@@ -17,6 +17,38 @@ class MTPProbeMove():
         self.init = init
         self.commandDict = commandDict
 
+    def readScan(self):
+        """
+        Return current position of stepper motor. Gets output as ScanCount at
+        end of A line.
+        ScanCount = 1000000 - readScan
+        """
+        cmd = self.commandDict.getCommand("read_scan")
+        self.serialPort.write(cmd)
+        answerFromProbe = self.init.readEchos(3, cmd)
+        if answerFromProbe.find(b'`') != -1:
+            index = answerFromProbe.find(b'`') + 1  # Find backtick
+            # Saw "Step:/0b0\r\n", "Step:/0`1000010", "Step:/0`927130"
+            stlen = answerFromProbe.find(b'\r\n$')
+            print(answerFromProbe[index:stlen-1])
+            return(int(answerFromProbe[index:stlen-1]))
+        else:
+            logger.printmsg("warning", "Didn't find backtick in readScan")
+            return(False)
+
+    def readEnc(self):
+        """
+        Return the encoder position. Gets output as EncoderCount at
+        end of A line. Can be zeroed by "z" command
+        EncoderCount = (1000000 - readEnc) * 16
+        """
+        cmd = self.commandDict.getCommand("read_enc")
+        self.serialPort.write(cmd)
+        answerFromProbe = self.init.readEchos(3, cmd)
+        index = answerFromProbe.find(b'`') + 1  # Find backtick
+        stlen = answerFromProbe.find(b'>>')
+        return(int(answerFromProbe[index:stlen]))
+
     def moveHome(self):
         """
         Initiate movement home. Home is accomplished by sending two separate
@@ -25,6 +57,11 @@ class MTPProbeMove():
         Return: True if successful or False if command failed
         """
         success = True
+
+        # Start with read_scan. Seems like this would be more useful AFTER
+        # home command because it would report how accurately pointing home
+        # LastSky = self.readScan()
+
         # home1 command components:
         # - turn off both drivers ('J0')
         # - b’U/1f0R’ -> set polarity of home sensor to 0
@@ -116,9 +153,17 @@ class MTPProbeMove():
         logger.printmsg("warning", "MTP reports stepper still moving")
         return(False)
 
-    def moveTo(self, location):
+    def moveTo(self, location, data):
+        # VB6 has if nsteps < 20, don't move. Not sure this ever occurs since
+        # this fn is only called when cycling through angles, not on move home
         self.serialPort.write(location)
         echo = self.init.readEchos(4, location)
+
+        # After move and before wait, tune Freq to 1 GHz
+        chan = '{:.5}'.format(str(500))
+        init = str.encode('C' + str(chan) + "\r\n")
+        data.changeFrequency(init, 0)  # 0 = Do not wait for synth to lock
+
         # Wait up to 3 seconds for stepper to complete moving
         # Return True if stepper done moving
         return(self.moveWait("move", echo, 3))
@@ -131,12 +176,10 @@ class MTPProbeMove():
         counter = 0
         while counter < maxDebugAttempts:
             counter = counter + 1
+
             # Check that we are in the HOME position
-            cmd = self.commandDict.getCommand("read_scan")
-            self.serialPort.write(cmd)
-            answerFromProbe = self.init.readEchos(3, cmd)
-            self.init.findStat(answerFromProbe)
-            if answerFromProbe[self.init.getPos()+1] == 0:  # "Step:/0b0\r\n"
+            position = self.readScan()
+            if abs(1000000 - position) < 20:
                 logger.printmsg("info", "MTP in home position")
             else:
                 logger.printmsg('error', "Move not possible. Not in home " +

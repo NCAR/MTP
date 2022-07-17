@@ -62,12 +62,7 @@ class MTPDataFormat():
             moveToCommand, currentClkStep = self.getAngle(angle,
                                                           currentClkStep)
 
-            if (move.moveTo(moveToCommand)):
-
-                # init freq to 1 ghz, do not wait for synth to lock
-                chan = '{:.5}'.format(str(500))
-                init = str.encode('C' + str(chan) + "\r\n")
-                self.data.changeFrequency(init, 0)
+            if (move.moveTo(moveToCommand, self.data)):
 
                 # Collect counts for 3 channels
                 self.b += self.data.CIRS() + ' '
@@ -76,16 +71,6 @@ class MTPDataFormat():
                 logger.printmsg("warning", "Bline move not returning " +
                                 "completion... terminate stepper motion " +
                                 "and continue anyway")
-
-                # init freq to 1 ghz, do not wait for synth to lock
-                chan = '{:.5}'.format(str(500))
-                init = str.encode('C' + str(chan) + "\r\n")
-                self.data.changeFrequency(init, 0)
-
-                # Termimnate stepper motion
-                cmd = self.commandDict.getCommand("terminate")
-                self.serialPort.write(cmd)
-                self.init.readEchos(4, cmd)
 
                 # Collect counts for 3 channels
                 self.b += self.data.CIRS() + ' '
@@ -132,9 +117,6 @@ class MTPDataFormat():
         #     # need to have a catch case when above are nan's
         #     return
 
-        # VB6 has logic if abs(nsteps) < 20, then don't move. Fixes
-        # tiny reset when at home and send home. Need to implement - JAA
-
         # save current step so difference is actual step difference
         currentClkStep = currentClkStep + int(nstep)
         logger.printmsg("debug", "currentClkStep + nstep: " +
@@ -143,6 +125,12 @@ class MTPDataFormat():
         # drop everything after the decimal point:
         nstepSplit = str(nstep).split('.')
         nstep = nstepSplit[0]
+
+        # VB6 has logic if abs(nsteps) < 20, then don't move. Fixes
+        # tiny reset when at home and send home. Need to implement in
+        # move.moveTo() - JAA
+        # To start, print here, just to get a sense of when/if it occurs
+        print("nstep = " + nstep)
 
         if nstep[0] == '-':  # first char of nstep -> negative number
             nstepSplit = str(nstep).split('-')  # Split '-' off
