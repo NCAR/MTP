@@ -80,6 +80,7 @@ class MTPClient():
             # noise diode on then off
             # During scan looping, ensure send moveHome() before read Eline so
             # are pointing at target
+            move.moveHome()
             fmt.readEline()
 
         elif cmdInput == '6':
@@ -118,6 +119,7 @@ class MTPClient():
             firstTime = datetime.datetime.now(datetime.timezone.utc)
 
             # Get the Bline data
+            move.moveHome()
             raw = fmt.readBline(move) + '\n'  # Read B data from probe
             udpLine = fmt.getBdata() + ' ' + udpLine
 
@@ -134,6 +136,7 @@ class MTPClient():
                                nowTime.hour, nowTime.minute, nowTime.second)
 
             # Get all the housekeeping data
+            move.moveHome()
             raw = raw + fmt.readM1line() + '\n'  # Read M1 data from the probe
             udpLine = udpLine + fmt.getM1data()
             raw = raw + fmt.readM2line() + '\n'  # Read M2 data from the probe

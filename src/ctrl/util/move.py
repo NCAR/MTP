@@ -178,8 +178,10 @@ class MTPProbeMove():
             counter = counter + 1
 
             # Check that we are in the HOME position
+            # First time through, position reported as 10. Then for each
+            # subsequent scan, it is reported as 1000010.
             position = self.readScan()
-            if abs(1000000 - position) < 20:
+            if abs(1000000 - position) < 20 or abs(position) < 20:
                 logger.printmsg("info", "MTP in home position")
             else:
                 logger.printmsg('error', "Move not possible. Not in home " +
