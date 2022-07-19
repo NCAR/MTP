@@ -769,6 +769,10 @@ class MTPviewer(QMainWindow):
         # Leave remaining lines white background
         fmt = self.filedata.currentCharFormat()
         fmt.setBackground(Qt.white)
+        fmt.setToolTip("Most recent raw record. If Aline turns red, this " +
+                       "indicates that pitch, roll, pressure, temperature,\n" +
+                       " lat, and lon are not changing, which can be due to" +
+                       " missing IWG packet or due to plane not moving.")
         self.filedata.setCurrentCharFormat(fmt)
 
         self.filedata.appendPlainText(self.client.reader.getBline())
@@ -778,13 +782,15 @@ class MTPviewer(QMainWindow):
         self.filedata.appendPlainText(self.client.reader.getEline())
 
         # If static Aline and realtime mode, throw up warning box
-        if (lastAline == thisAline):
-            if self.args.realtime and not self.clicked['iwg']:
-                logger.printmsg("ERROR", "IWG packet no longer being " +
-                                "received. " +
-                                "Click OK to stop seeing this message " +
-                                "for future scans.")
-                self.clicked['iwg'] = True
+        # Discovered that this box PLUS turning the line red just confused
+        # the operator, so don't throw up the box. Red line is good enough.
+        # if (lastAline == thisAline):
+        #    if self.args.realtime and not self.clicked['iwg']:
+        #        logger.printmsg("ERROR", "IWG packet no longer being " +
+        #                        "received. " +
+        #                        "Click OK to stop seeing this message " +
+        #                        "for future scans.")
+        #        self.clicked['iwg'] = True
 
     def writeIWG(self):
         """
