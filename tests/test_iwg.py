@@ -65,6 +65,21 @@ class TESTreadiwg(unittest.TestCase):
         self.assertEqual(len(self.rawscan['IWG1line']['values']),
                          len(self.iwg.values))
 
+    def test_getVar(self):
+        """ Test that get expected var by index """
+        var = self.iwg.getVar(self.ascii_parms, 1)
+        self.assertEqual(var, "GGLAT")
+        var = self.iwg.getVar(self.ascii_parms, 2)
+        self.assertEqual(var, "GGLON")
+        var = self.iwg.getVar(self.ascii_parms, 5)
+        self.assertEqual(var, "PALTF")
+        var = self.iwg.getVar(self.ascii_parms, 15)
+        self.assertEqual(var, "PITCH")
+        var = self.iwg.getVar(self.ascii_parms, 16)
+        self.assertEqual(var, "ROLL")
+        var = self.iwg.getVar(self.ascii_parms, 19)
+        self.assertEqual(var, "ATX")
+
     def test_getIwgPacket(self):
         """ Test the IWG line parses as expected """
 

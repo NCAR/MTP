@@ -67,6 +67,13 @@ class TESTpointing(unittest.TestCase):
             self.assertEqual(round(self.point.fEc(3.576, 0.123, angle), 2),
                              round(angle, 2))
 
+        # Test sending values from IWG: -0.9383663 -0.1555458
+        self.elAngles = [80, 55, 42, 25, 12, 0, -12, -25, -42, -80]
+        for angle in self.elAngles:
+            self.assertEqual(round(self.point.fEc(-0.9383663, -0.1555458,
+                                                  angle), 2),
+                             round(angle + 4.52, 2))
+
     def test_targetfEc(self):
         # Test mirror pointed at target. In that case, there is no correction
         # since we are looking internal to the probe, so changing pitch and

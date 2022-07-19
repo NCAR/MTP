@@ -82,7 +82,7 @@ def main():
     init = MTPProbeInit(args, port, commandDict, args.loglevel, iwg)
     move = MTPProbeMove(init, commandDict)
     data = MTPProbeCIR(init, commandDict)
-    fmt = MTPDataFormat(init, data, commandDict)
+    fmt = MTPDataFormat(init, data, commandDict, iwg)
 
     probeResponding = False
 
