@@ -30,7 +30,6 @@ class MTPProbeMove():
             index = answerFromProbe.find(b'`') + 1  # Find backtick
             # Saw "Step:/0b0\r\n", "Step:/0`1000010", "Step:/0`927130"
             stlen = answerFromProbe.find(b'\r\n$')
-            print(answerFromProbe[index:stlen-1])
             return(int(answerFromProbe[index:stlen-1]))
         else:
             logger.printmsg("warning", "Didn't find backtick in readScan")

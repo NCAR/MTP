@@ -86,8 +86,8 @@ class pointMTP():
             return 180
 
         # convert
-        P = pitch * self.rpd
-        R = roll * self.rpd
+        P = float(pitch) * self.rpd
+        R = float(roll) * self.rpd
         E = Elevation * self.rpd
 
         cP = cos(P)
