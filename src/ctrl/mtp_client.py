@@ -5,6 +5,11 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2022
 ###############################################################################
+import os
+import sys
+if os.name == 'nt':
+    import msvcrt
+import select
 import socket
 import datetime
 from ctrl.test.manualProbeQuery import MTPQuery
@@ -25,6 +30,7 @@ class MTPClient():
         print("6 = B line")
         print("7 = Housekeeping(M1/M2/Pt)")
         print("8 = create Raw data and UDP")
+        print("l = loop scanning complete raw record")
         print("9 = Probe On Check")
         print("q = Manual Probe Query")
         print("x = Exit")
@@ -106,19 +112,27 @@ class MTPClient():
             fmt.readPTline()
 
         elif cmdInput == '8':
+            self.createRawRec(move, fmt)
 
-            logger.printmsg("info", "sit tight - complete scans typically " +
-                            "take 17s")
+        elif cmdInput == 'l':
+            while True:
+                if os.name == 'nt':  # Windows
+                    ports = []
+                    read_ready, _, _ = select.select(ports, [], [], 0.15)
+                    if msvcrt.kbhit():  # Catch if keyboard char hit
+                        read_ready.append(sys.stdin)
+                else:
+                    # Get user's menu selection. Read IWG while wait
+                    ports = [sys.stdin]
+                    read_ready, _, _ = select.select(ports, [], [], 0.15)
 
-            # Create a raw record
-            raw = fmt.createRawRecord(move)
-            logger.printmsg("info", "RAW\n" + raw)
+                if sys.stdin in read_ready:
+                    cmdInput = sys.stdin.readline()
+                    cmdInput = str(cmdInput).strip('\n')
+                    if cmdInput == 'x':
+                        exit(1)
 
-            # Write raw record to output file
-
-            # Create the UDP packet
-            udpLine = fmt.createUDPpacket()
-            self.sendUDP(udpLine)
+                self.createRawRec(move, fmt)
 
         elif cmdInput == 'q':
             # Go into binary command input mode
@@ -130,6 +144,20 @@ class MTPClient():
 
         else:
             logger.printmsg("info", "Unknown command. Please try again.")
+
+    def createRawRec(self, move, fmt):
+        logger.printmsg("info", "sit tight - complete scans " +
+                        "typically take 17s")
+
+        # Create a raw record
+        raw = fmt.createRawRecord(move)
+        logger.printmsg("info", "RAW\n" + raw)
+
+        # Write raw record to output file
+
+        # Create the UDP packet
+        udpLine = fmt.createUDPpacket()
+        self.sendUDP(udpLine)
 
     def sendUDP(self, udpLine):
         """ Send UDP packet to RIC and nidas """
