@@ -5,6 +5,7 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2022
 ###############################################################################
+import socket
 import datetime
 from ctrl.test.manualProbeQuery import MTPQuery
 from EOLpython.Qlogger.messageHandler import QLogger as logger
@@ -84,6 +85,10 @@ class MTPClient():
             fmt.readEline()
 
         elif cmdInput == '6':
+
+            logger.printmsg("info", "sit tight - Bline scan typically takes " +
+                            "6 seconds")
+
             # Make sure the buffer is clear before starting the scan.
             init.clearBuffer()
 
@@ -94,13 +99,6 @@ class MTPClient():
             # Create B line - need to ensure in home position first
             fmt.readBline(move)
 
-            position = move.readScan()
-            if position:
-                ScanCount = 1000000 - position
-            EncoderCount = (1000000 - move.readEnc()) * 16
-            print("ScanCount = " + str(ScanCount) + "; " +
-                  "EncoderCount = " + str(EncoderCount))
-
         elif cmdInput == '7':
             # Create housekeeping lines
             fmt.readM1line()
@@ -108,76 +106,19 @@ class MTPClient():
             fmt.readPTline()
 
         elif cmdInput == '8':
-            # Create UDP packet
-            # During scan looping, ensure send moveHome() before read house-
-            # keeping and Eline so pointing at target. Then get Bline.
-            # Is this order what we want? Does it matter? - JAA
-            logger.printmsg("info", "sit tight - scans typically take 17s")
-            udpLine = ''
 
-            # Determine how long it takes to create the B line
-            firstTime = datetime.datetime.now(datetime.timezone.utc)
+            logger.printmsg("info", "sit tight - complete scans typically " +
+                            "take 17s")
 
-            # Get the Bline data
-            move.moveHome()
-            raw = fmt.readBline(move) + '\n'  # Read B data from probe
-            udpLine = fmt.getBdata() + ' ' + udpLine
-
-            # Get the scan and encoder counts
-            ScanCount = 1000000 - move.readScan()
-            EncoderCount = (1000000 - move.readEnc()) * 16
-
-            # UTC timestamp of Raw record is right after B line is collected
-            nowTime = datetime.datetime.now(datetime.timezone.utc)
-
-            # Generate timestamp for Raw data record
-            RAWformattedTime = "%04d%02d%02d %02d:%02d:%02d " % (
-                               nowTime.year, nowTime.month, nowTime.day,
-                               nowTime.hour, nowTime.minute, nowTime.second)
-
-            # Get all the housekeeping data
-            move.moveHome()
-            raw = raw + fmt.readM1line() + '\n'  # Read M1 data from the probe
-            udpLine = udpLine + fmt.getM1data()
-            raw = raw + fmt.readM2line() + '\n'  # Read M2 data from the probe
-            udpLine = udpLine + fmt.getM2data()
-            raw = raw + fmt.readPTline() + '\n'  # Read PT data from the probe
-            udpLine = udpLine + fmt.getPTdata()
-            raw = raw + fmt.readEline() + '\n'  # Read E data from the probe
-            udpLine = udpLine + fmt.getEdata()
-
-            # Get IWG line - TBD For now just use a static line - JAA
-            IWG = 'IWG1,20101002T194729,39.1324,-103.978,4566.43,,14127.9' + \
-                  ',,180.827,190.364,293.383,0.571414,-8.02806,318.85,' + \
-                  '318.672,-0.181879,-0.417805,-0.432257,-0.0980951,2.367' + \
-                  '93,-1.66016,-35.8046,16.3486,592.062,146.734,837.903,' + \
-                  '9.55575,324.104,1.22603,45.2423,,-22    .1676, '
-
-            # Generate A line - TBD For now just use a static line - JAA
-            aline = '+03.00 00.00 +00.00 00.00 +00.00 0.00 273.15 00.16 ' + \
-                    '+39.913 +0.022 -105.118 +0.000 +073727 +072576 '
-            # Format ScanCount and EncoderCount and add to end of Aline
-            # '+%06d' % ScanCount  ??
-
-            # Put it all together to create the RAW record
-            raw = 'A ' + RAWformattedTime + aline + '\n' + IWG + '\n' + raw
-
+            # Create a raw record
+            raw = fmt.createRawRecord(move)
             logger.printmsg("info", "RAW\n" + raw)
 
-            # Generate timestamp used in UDP packet
-            UDPformattedTime = "%04d%02d%02dT%02d%02d%02d " % (
-                               nowTime.year, nowTime.month, nowTime.day,
-                               nowTime.hour, nowTime.minute, nowTime.second)
+            # Write raw record to output file
 
-            # Put it all together to create the UDP packet
-            udpLine = "MTP " + UDPformattedTime + aline + udpLine
-            udpLine = udpLine.replace(' ', ',')
-            logger.printmsg("info", "UDP packet: " + udpLine)
-
-            logger.printmsg("info", "Raw record creation took " +
-                            str(nowTime-firstTime))
-
-            # If need to test UDP send, use lib/udp.py
+            # Create the UDP packet
+            udpLine = fmt.createUDPpacket()
+            self.sendUDP(udpLine)
 
         elif cmdInput == 'q':
             # Go into binary command input mode
@@ -189,3 +130,17 @@ class MTPClient():
 
         else:
             logger.printmsg("info", "Unknown command. Please try again.")
+
+    def sendUDP(self, udpLine):
+        """ Send UDP packet to RIC and nidas """
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+
+        udp_ip = socket.gethostname()
+        ric_send_port = 32107  # 7 on the ground, 6 on the GV
+        nidas_send_port = 30101
+        if sock:  # Sent to RIC
+            sock.sendto(udpLine.encode('utf-8'), (udp_ip, ric_send_port))
+        if sock:  # Send to nidas ip needs to be 192.168.84.255
+            sock.sendto(udpLine.encode(), (udp_ip, nidas_send_port))
