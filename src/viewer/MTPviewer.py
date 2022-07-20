@@ -428,7 +428,7 @@ class MTPviewer(QMainWindow):
         # Create a File data display window
         self.filedata = QPlainTextEdit()
         self.filedata.setReadOnly(True)
-        self.filedata.setFixedHeight(140)
+        self.filedata.setFixedHeight(160)
         self.layout.addWidget(self.filedata, 4, 0, 4, 10)
         self.filedata.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.filedata.appendPlainText("MTP data block display")
@@ -450,7 +450,7 @@ class MTPviewer(QMainWindow):
         # IWG record display window
         self.iwg = QPlainTextEdit()
         self.iwg.setReadOnly(True)
-        self.iwg.setFixedHeight(60)
+        self.iwg.setFixedHeight(40)
         self.layout.addWidget(self.iwg, 8, 0, 1, 10)
         self.iwg.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         # Temporarily insert some sample data to get an idea how it will
