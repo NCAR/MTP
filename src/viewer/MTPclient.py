@@ -450,7 +450,12 @@ class MTPclient():
         self.sockI = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         # Share the IWG packet port
         self.sockI.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.sockI.bind(("0.0.0.0", self.iwg1_port))
+        # When running MTP control program and this viewer on the same
+        # computer, they both can't bind to the same port, even with
+        # REUSEADDR above. This program doesn't need IWG, so comment out bind
+        # here for now to stop from receiving it and leave port available to
+        # control program. Look into sharing port later... - JAA
+        # self.sockI.bind(("0.0.0.0", self.iwg1_port))
 
     def getSocketFileDescriptor(self):
         """ Return the MTP socket file descriptor """
