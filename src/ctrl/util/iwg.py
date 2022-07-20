@@ -96,7 +96,7 @@ class MTPiwg():
         # variable in the standard ascii packet.
         pitch = self.iwg.getVar(self.asciiparms, 15)
         if self.rawscan['IWG1line']['values'][pitch]['val'] == '':
-            self.rawscan['IWG1line']['values'][pitch]['val'] == \
+            self.rawscan['IWG1line']['values'][pitch]['val'] = \
                 self.defaultPitch
         return(self.rawscan['IWG1line']['values'][pitch]['val'])
 
@@ -106,7 +106,7 @@ class MTPiwg():
         # in the standard ascii packet.
         roll = self.iwg.getVar(self.asciiparms, 16)
         if self.rawscan['IWG1line']['values'][roll]['val'] == '':
-            self.rawscan['IWG1line']['values'][roll]['val'] == self.defaultRoll
+            self.rawscan['IWG1line']['values'][roll]['val'] = self.defaultRoll
         return(self.rawscan['IWG1line']['values'][roll]['val'])
 
     def palt(self):
