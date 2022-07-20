@@ -105,13 +105,13 @@ class MTPDataFormat():
         aline = aline + "%+06.2f " % float(self.iwg.roll())   # SAROLL
         aline = aline + "00.00 "  # SRROLL
         aline = aline + "%+06.2f " % float(self.iwg.palt())   # SAPALT
-        aline = aline + "00.00 "  # SRPALT
+        aline = aline + "0.00 "  # SRPALT
         aline = aline + "%+06.2f " % float(self.iwg.atx())    # SAAT
         aline = aline + "00.00 "  # SRAT
         aline = aline + "%+07.3f " % float(self.iwg.lat())    # SALAT
-        aline = aline + "00.00 "  # SRLAT
+        aline = aline + "+0.000 "  # SRLAT
         aline = aline + "%+07.3f " % float(self.iwg.lon())    # SALON
-        aline = aline + "00.00 "  # SRLON
+        aline = aline + "+0.000 "  # SRLON
 
         # Format ScanCount and EncoderCount and add to end of aline
         aline = aline + "%+07d %+07d " % (ScanCount, EncoderCount)
@@ -166,6 +166,9 @@ class MTPDataFormat():
 
                 # Collect counts for 3 channels
                 self.b += self.data.CIRS() + ' '
+
+        # remove trailing white space
+        self.b = self.b.strip()
 
         data = "B " + str(self.b)
 
