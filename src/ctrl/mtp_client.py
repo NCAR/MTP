@@ -117,8 +117,8 @@ class MTPClient():
         elif cmdInput == 'l':
             while True:
                 if os.name == 'nt':  # Windows
-                    ports = []
-                    read_ready, _, _ = select.select(ports, [], [], 0.15)
+                    read_ready = []
+                    # Click x to exit loop
                     if msvcrt.kbhit():  # Catch if keyboard char hit
                         read_ready.append(sys.stdin)
                 else:
