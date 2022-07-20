@@ -119,7 +119,8 @@ class MTPiwg():
         # Get air temperature variable name from ascii_parms file. It is the
         # 19th variable in the standard ascii packet.
         atx = self.iwg.getVar(self.asciiparms, 19)
-        return(self.rawscan['IWG1line']['values'][atx]['val'])
+        # Return air temperature in Kelvin (convert C to K)
+        return(float(self.rawscan['IWG1line']['values'][atx]['val']) + 273.15)
 
     def lat(self):
         """ Return scan average aircraft latitude """
