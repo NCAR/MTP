@@ -26,6 +26,10 @@ class MTPiwg():
         # n IWG packets. (not sure what N is yet..)
         self.rawscan = copy.deepcopy(MTPrecord)
 
+        # Average in-flight pitch/roll is about 2/0
+        self.defaultPitch = 2.0
+        self.defaultRoll = 0.0
+
     def connectIWG(self, iwgport):
         # Connect to IWG UDP data stream
         self.sockI = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -52,10 +56,10 @@ class MTPiwg():
         # list provided in the ascii_parms file.
         self.iwg.initIWGfromAsciiParms(self.asciiparms)
 
-        # Average in-flight pitch/roll is about 2/0. Set them here so that if
-        # not receiving IWG, we have something
-        self.rawscan['IWG1line']['values']['PITCH']['val'] = 2.0
-        self.rawscan['IWG1line']['values']['ROLL']['val'] = 0.0
+        # Set average in-flight pitch/roll so that if not receiving IWG,
+        # we have something
+        self.rawscan['IWG1line']['values']['PITCH']['val'] = self.defaultPitch
+        self.rawscan['IWG1line']['values']['ROLL']['val'] = self.defaultRoll
 
     def readIWG(self):
         """ Tell client to read latest IWG record and save to dictionary """
@@ -91,6 +95,9 @@ class MTPiwg():
         # Get pitch variable name from ascii_parms file. It is the 15th
         # variable in the standard ascii packet.
         pitch = self.iwg.getVar(self.asciiparms, 15)
+        if self.rawscan['IWG1line']['values'][pitch]['val'] == '':
+            self.rawscan['IWG1line']['values'][pitch]['val'] == \
+                self.defaultPitch
         return(self.rawscan['IWG1line']['values'][pitch]['val'])
 
     def roll(self):
@@ -98,6 +105,8 @@ class MTPiwg():
         # Get roll variable name from ascii_parms file. It is the 16th variable
         # in the standard ascii packet.
         roll = self.iwg.getVar(self.asciiparms, 16)
+        if self.rawscan['IWG1line']['values'][roll]['val'] == '':
+            self.rawscan['IWG1line']['values'][roll]['val'] == self.defaultRoll
         return(self.rawscan['IWG1line']['values'][roll]['val'])
 
     def palt(self):
