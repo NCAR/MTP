@@ -165,8 +165,8 @@ class MTPClient():
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
-        udp_ip = socket.gethostname()
-        ric_send_port = 32107  # 7 on the ground, 6 on the GV
+        udp_ip = "192.168.84.255"
+        ric_send_port = 32106  # 7 on the ground, 6 on the GV
         nidas_send_port = 30101
         if sock:  # Sent to RIC
             sock.sendto(udpLine.encode('utf-8'), (udp_ip, ric_send_port))
