@@ -11,6 +11,7 @@ if os.name == 'nt':
     import msvcrt
 import select
 import socket
+import time
 import datetime
 from ctrl.test.manualProbeQuery import MTPQuery
 from EOLpython.Qlogger.messageHandler import QLogger as logger
@@ -18,22 +19,41 @@ from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 class MTPClient():
 
+    def __init__(self, rawfilename):
+        self.rawfilename = rawfilename
+
+        # Open output file for raw data
+        try:
+            self.rawfile = open(rawfilename, "a")
+        except Exception:
+            raise  # Unable to open file. Pass err back up to calling function
+
+    def close(self):
+        # Close output file for raw data
+        try:
+            self.rawfile.close()
+        except Exception as err:
+            logger.printmsg("ERROR", err + " Unable to close file " +
+                            self.rawfilename)
+
     def printMenu(self):
         """ List user options """
-        print("Please issue a command:")
-        print("0 = Status")
-        print("1 = Init")
-        print("2 = Move Home")
-        print("3 = Step")
-        print("4 = generic CIRS")
-        print("5 = E line")
-        print("6 = B line")
-        print("7 = Housekeeping(M1/M2/Pt)")
-        print("8 = create Raw data and UDP")
-        print("l = loop scanning complete raw record")
-        print("9 = Probe On Check")
-        print("q = Manual Probe Query")
-        print("x = Exit")
+        print("=========================================")
+        print("TYPE 'c' to begin cycling and 'x' to stop")
+        print("=========================================")
+        # print("If testing, please issue a command:")
+        # print("0 = Status")
+        # print("1 = Init")
+        # print("2 = Move Home")
+        # print("3 = Step")
+        # print("4 = generic CIRS")
+        # print("5 = E line")
+        # print("6 = B line")
+        # print("7 = Housekeeping(M1/M2/Pt)")
+        # print("8 = create Raw data and UDP")
+        # print("9 = Probe On Check")
+        # print("q = Manual Probe Query")
+        # print("x = Exit")
 
     def readInput(self, cmdInput, init, move, data, fmt):
         if cmdInput == '0':
@@ -114,8 +134,22 @@ class MTPClient():
         elif cmdInput == '8':
             self.createRawRec(move, fmt)
 
-        elif cmdInput == 'l':
-            while True:
+        elif cmdInput == 'c':
+            success = init.init()  # Initialize probe. Return true if success
+            if not success:  # Keep trying
+                logger.printmsg("info", "Init failed. Trying again")
+                time.sleep(1)  # Emulate manual response time. Prob not needed
+                # Move home, then init again, because this is what I do
+                move.moveHome()
+                success = init.init()
+
+            success = move.moveHome()  # Move home. Returns true if successful
+            if not success:  # Keep trying
+                logger.printmsg("info", "Move home failed. Trying again")
+                time.sleep(1)  # Emulate manual response time. Prob not needed
+                success = move.moveHome()
+
+            while True:  # Cycle probe until user types 'x'
                 if os.name == 'nt':  # Windows
                     read_ready = []
                     # Click x to exit loop
@@ -130,6 +164,7 @@ class MTPClient():
                     cmdInput = sys.stdin.readline()
                     cmdInput = str(cmdInput).strip('\n')
                     if cmdInput == 'x':
+                        self.close()
                         exit(1)
 
                 self.createRawRec(move, fmt)
@@ -140,6 +175,7 @@ class MTPClient():
             query.query()
 
         elif cmdInput == 'x':
+            self.close()
             exit(1)
 
         else:
@@ -154,10 +190,15 @@ class MTPClient():
         logger.printmsg("info", "RAW\n" + raw)
 
         # Write raw record to output file
+        self.writeRaw(raw + "\n")
 
         # Create the UDP packet
         udpLine = fmt.createUDPpacket()
         self.sendUDP(udpLine)
+
+    def writeRaw(self, raw):
+        self.rawfile.write(raw)
+        self.rawfile.flush()
 
     def sendUDP(self, udpLine):
         """ Send UDP packet to RIC and nidas """
