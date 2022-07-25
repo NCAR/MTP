@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import QMainWindow, QGridLayout, QWidget, \
         QPlainTextEdit, QFrame, QAction, QLabel, QPushButton, QGroupBox, \
         QMessageBox, QLineEdit, QInputDialog
 from PyQt5.QtCore import QSocketNotifier, Qt
-from PyQt5.QtGui import QFontMetrics, QFont, QColor
+from PyQt5.QtGui import QFontMetrics, QFont
 from util.profile_structs import TropopauseRecord
 from viewer.plotScanTemp import ScanTemp
 from viewer.plotProfile import Profile
@@ -764,14 +764,14 @@ class MTPviewer(QMainWindow):
 
             if (lastAline == thisAline):
                 fmt = self.filedata.currentCharFormat()
-                fmt.setBackground(QColor(255, 0, 0, 180))  # light red
+                fmt.setForeground(Qt.red)
                 self.filedata.setCurrentCharFormat(fmt)
 
         self.filedata.appendPlainText(self.client.reader.getAline())
 
-        # Leave remaining lines white background
+        # Leave remaining lines black
         fmt = self.filedata.currentCharFormat()
-        fmt.setBackground(Qt.white)
+        fmt.setForeground(Qt.black)
         fmt.setToolTip("Most recent raw record. If Aline turns red, this " +
                        "indicates that pitch, roll, pressure, temperature,\n" +
                        " lat, and lon are not changing, which can be due to" +
@@ -883,7 +883,7 @@ class MTPviewer(QMainWindow):
                 # If Tsynth goes over 50, warn user by changing bkgnd to red
                 if (var == 'TSYNCNTE' and deg > 50.0):
                     fmt = self.eng3.currentCharFormat()
-                    fmt.setBackground(QColor(255, 0, 0, 180))  # light red
+                    fmt.setForeground(Qt.red)  # red
                     self.eng3.setCurrentCharFormat(fmt)
                 if var == 'ACCPCNTE':  # Set units of Acceler to g
                     degstr = "%+06.2f g" % deg
@@ -891,10 +891,10 @@ class MTPviewer(QMainWindow):
                     degstr = "%+06.2f C" % deg
 
             self.eng3.appendPlainText(name + "\t" + val + "  " + degstr)
-            # Only change the Tsynth line, rest should remain on white
+            # Only change the Tsynth line, rest should remain black
             if (var == 'TSYNCNTE' and deg > 50.0):
                 fmt = self.eng3.currentCharFormat()
-                fmt.setBackground(Qt.white)
+                fmt.setForeground(Qt.black)  # back to normal
                 self.eng3.setCurrentCharFormat(fmt)
 
     def clickBack(self):
