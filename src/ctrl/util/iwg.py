@@ -67,7 +67,7 @@ class MTPiwg():
         self.dataI = self.sockI.recv(2048).decode()
 
         # Display the latest IWG packet.
-        print(self.dataI)
+        logger.printmsg("info", self.dataI)
 
         self.saveIWG()
 

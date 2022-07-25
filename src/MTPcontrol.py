@@ -55,8 +55,14 @@ def main():
     # Process command line arguments.
     args = parse_args()
 
+    # Get current time - used in raw and log filenames
+    nowTime = datetime.datetime.now(datetime.timezone.utc)
+
     # Configure logging
-    stream = sys.stdout
+    logfile = nowTime.strftime("log.N%Y%m%d%H%M")
+    fh = open(logfile, "a")
+    stream = fh  # send logging to logfile
+    # stream = sys.stdout  # send logging to terminal window
     logger.initLogger(stream, args.loglevel, args.logmod)
 
     # Initialize a config file (includes reading it into a dictionary)
@@ -66,7 +72,6 @@ def main():
     commandDict = MTPcommand()
 
     # Create the raw data filename from the current UTC time
-    nowTime = datetime.datetime.now(datetime.timezone.utc)
     rawfile = nowTime.strftime("N%Y%m%d%H.%M")
     rawdir = configfile.getPath('rawdir')
     rawfilename = os.path.join(rawdir, rawfile)
