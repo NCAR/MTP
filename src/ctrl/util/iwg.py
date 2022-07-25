@@ -57,9 +57,20 @@ class MTPiwg():
         self.iwg.initIWGfromAsciiParms(self.asciiparms)
 
         # Set average in-flight pitch/roll so that if not receiving IWG,
-        # we have something
-        self.rawscan['IWG1line']['values']['PITCH']['val'] = self.defaultPitch
-        self.rawscan['IWG1line']['values']['ROLL']['val'] = self.defaultRoll
+        # we have something. Also set remaining IWG values to zero so they
+        # aren't nan. But keep them non-physical so they are obvious
+        pitch = self.iwg.getVar(self.asciiparms, 15)
+        self.rawscan['IWG1line']['values'][pitch]['val'] = self.defaultPitch
+        roll = self.iwg.getVar(self.asciiparms, 16)
+        self.rawscan['IWG1line']['values'][roll]['val'] = self.defaultRoll
+        paltf = self.iwg.getVar(self.asciiparms, 5)
+        self.rawscan['IWG1line']['values'][paltf]['val'] = 0
+        atx = self.iwg.getVar(self.asciiparms, 19)
+        self.rawscan['IWG1line']['values'][atx]['val'] = 0
+        lat = self.iwg.getVar(self.asciiparms, 1)
+        self.rawscan['IWG1line']['values'][lat]['val'] = 0
+        lon = self.iwg.getVar(self.asciiparms, 2)
+        self.rawscan['IWG1line']['values'][lon]['val'] = 0
 
     def readIWG(self):
         """ Tell client to read latest IWG record and save to dictionary """
