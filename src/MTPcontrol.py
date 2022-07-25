@@ -9,6 +9,7 @@ import os
 if os.name == 'nt':
     import msvcrt
 import sys
+import datetime
 import argparse
 import logging
 import select
@@ -64,8 +65,19 @@ def main():
     # Dictionary of allowed commands to send to firmware
     commandDict = MTPcommand()
 
-    # Menu of user commands
-    client = MTPClient()
+    # Create the raw data filename from the current UTC time
+    nowTime = datetime.datetime.now(datetime.timezone.utc)
+    rawfile = nowTime.strftime("N%Y%m%d%H.%M")
+    rawdir = configfile.getPath('rawdir')
+    rawfilename = os.path.join(rawdir, rawfile)
+
+    # Instantiate client which handles user commands
+    try:
+        client = MTPClient(rawfilename)
+    except Exception as e:
+        logger.printmsg("error", "Unable to open Raw file: " + e)
+        print("ERROR: Unable to open Raw data output file: " + e)
+        exit(1)
 
     # Get ports from config file to send UDP packets to MTP
     port = configfile.getInt('udp_send_port')  # port to send MTP UDP packets
