@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import QMainWindow, QGridLayout, QWidget, \
         QPlainTextEdit, QFrame, QAction, QLabel, QPushButton, QGroupBox, \
         QMessageBox, QLineEdit, QInputDialog
 from PyQt5.QtCore import QSocketNotifier, Qt
-from PyQt5.QtGui import QFontMetrics, QFont, QColor
+from PyQt5.QtGui import QFontMetrics, QFont
 from util.profile_structs import TropopauseRecord
 from viewer.plotScanTemp import ScanTemp
 from viewer.plotProfile import Profile
@@ -428,7 +428,7 @@ class MTPviewer(QMainWindow):
         # Create a File data display window
         self.filedata = QPlainTextEdit()
         self.filedata.setReadOnly(True)
-        self.filedata.setFixedHeight(140)
+        self.filedata.setFixedHeight(160)
         self.layout.addWidget(self.filedata, 4, 0, 4, 10)
         self.filedata.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.filedata.appendPlainText("MTP data block display")
@@ -450,7 +450,7 @@ class MTPviewer(QMainWindow):
         # IWG record display window
         self.iwg = QPlainTextEdit()
         self.iwg.setReadOnly(True)
-        self.iwg.setFixedHeight(60)
+        self.iwg.setFixedHeight(40)
         self.layout.addWidget(self.iwg, 8, 0, 1, 10)
         self.iwg.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         # Temporarily insert some sample data to get an idea how it will
@@ -755,20 +755,27 @@ class MTPviewer(QMainWindow):
         self.filedata.appendPlainText("")  # Space between records
 
         # If A line is not changing (other than date), set background to red.
-        self.client.reader.setRawscan(self.viewScanIndex-1)  # previous line
-        lastAline = self.client.reader.getAline()[20:100]  # IWG section
-        self.client.reader.setRawscan(self.viewScanIndex)  # current line
-        thisAline = self.client.reader.getAline()[20:100]  # IWG section
-        if (lastAline == thisAline):
-            fmt = self.filedata.currentCharFormat()
-            fmt.setBackground(QColor(255, 0, 0, 180))  # light red
-            self.filedata.setCurrentCharFormat(fmt)
+        if self.viewScanIndex > 0:  # First record
+            self.client.reader.setRawscan(self.viewScanIndex-1)  # prev line
+            lastAline = self.client.reader.getAline()[20:100]  # IWG section
+
+            self.client.reader.resetRawscan()                  # current line
+            thisAline = self.client.reader.getAline()[20:100]  # IWG section
+
+            if (lastAline == thisAline):
+                fmt = self.filedata.currentCharFormat()
+                fmt.setForeground(Qt.red)
+                self.filedata.setCurrentCharFormat(fmt)
 
         self.filedata.appendPlainText(self.client.reader.getAline())
 
-        # Leave remaining lines white background
+        # Leave remaining lines black
         fmt = self.filedata.currentCharFormat()
-        fmt.setBackground(Qt.white)
+        fmt.setForeground(Qt.black)
+        fmt.setToolTip("Most recent raw record. If Aline turns red, this " +
+                       "indicates that pitch, roll, pressure, temperature,\n" +
+                       " lat, and lon are not changing, which can be due to" +
+                       " missing IWG packet or due to plane not moving.")
         self.filedata.setCurrentCharFormat(fmt)
 
         self.filedata.appendPlainText(self.client.reader.getBline())
@@ -778,13 +785,15 @@ class MTPviewer(QMainWindow):
         self.filedata.appendPlainText(self.client.reader.getEline())
 
         # If static Aline and realtime mode, throw up warning box
-        if (lastAline == thisAline):
-            if self.args.realtime and not self.clicked['iwg']:
-                logger.printmsg("ERROR", "IWG packet no longer being " +
-                                "received. " +
-                                "Click OK to stop seeing this message " +
-                                "for future scans.")
-                self.clicked['iwg'] = True
+        # Discovered that this box PLUS turning the line red just confused
+        # the operator, so don't throw up the box. Red line is good enough.
+        # if (lastAline == thisAline):
+        #    if self.args.realtime and not self.clicked['iwg']:
+        #        logger.printmsg("ERROR", "IWG packet no longer being " +
+        #                        "received. " +
+        #                        "Click OK to stop seeing this message " +
+        #                        "for future scans.")
+        #        self.clicked['iwg'] = True
 
     def writeIWG(self):
         """
@@ -874,7 +883,7 @@ class MTPviewer(QMainWindow):
                 # If Tsynth goes over 50, warn user by changing bkgnd to red
                 if (var == 'TSYNCNTE' and deg > 50.0):
                     fmt = self.eng3.currentCharFormat()
-                    fmt.setBackground(QColor(255, 0, 0, 180))  # light red
+                    fmt.setForeground(Qt.red)  # red
                     self.eng3.setCurrentCharFormat(fmt)
                 if var == 'ACCPCNTE':  # Set units of Acceler to g
                     degstr = "%+06.2f g" % deg
@@ -882,10 +891,10 @@ class MTPviewer(QMainWindow):
                     degstr = "%+06.2f C" % deg
 
             self.eng3.appendPlainText(name + "\t" + val + "  " + degstr)
-            # Only change the Tsynth line, rest should remain on white
+            # Only change the Tsynth line, rest should remain black
             if (var == 'TSYNCNTE' and deg > 50.0):
                 fmt = self.eng3.currentCharFormat()
-                fmt.setBackground(Qt.white)
+                fmt.setForeground(Qt.black)  # back to normal
                 self.eng3.setCurrentCharFormat(fmt)
 
     def clickBack(self):
