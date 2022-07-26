@@ -18,7 +18,7 @@ class MTPProbeCIR():
 
         self.fcmd = []
         # Update to read from Config.mtph - JAA
-        fghz = [55.51, 56.65, 58.8]  # freq in gigahertz
+        fghz = [56.363, 57.612, 58.363]  # freq in gigahertz
 
         # either 'C' or 'F' (set in lib/storePacket.py)
         # F mode formatting #####.# instead of cmode formatting #####
