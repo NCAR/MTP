@@ -44,9 +44,13 @@ class MTPProbeMove():
         cmd = self.commandDict.getCommand("read_enc")
         self.serialPort.write(cmd)
         answerFromProbe = self.init.readEchos(3, cmd)
-        index = answerFromProbe.find(b'`') + 1  # Find backtick
-        stlen = answerFromProbe.find(b'>>')
-        return(int(answerFromProbe[index:stlen]))
+        if answerFromProbe.find(b'`') != -1:
+            index = answerFromProbe.find(b'`') + 1  # Find backtick
+            stlen = answerFromProbe.find(b'>>')
+            return(int(answerFromProbe[index:stlen]))
+        else:
+            logger.printmsg("warning", "Didn't find backtick in readEnc")
+            return(False)
 
     def moveHome(self):
         """
@@ -142,6 +146,8 @@ class MTPProbeMove():
             # Got a valid stat (0-7), so check and see if stepper is busy
             # If it is not busy, return
             if not self.init.stepperBusy(int(stat)):
+                # success
+                logger.printmsg('info', cmdstr + " successful")
                 return(True)
 
             # Increment timeinloop
@@ -180,12 +186,15 @@ class MTPProbeMove():
             # First time through, position reported as 10. Then for each
             # subsequent scan, it is reported as 1000010.
             position = self.readScan()
-            if abs(1000000 - position) < 20 or abs(position) < 20:
-                logger.printmsg("info", "MTP in home position")
+            if position:
+                if abs(1000000 - position) < 20 or abs(position) < 20:
+                    logger.printmsg("info", "MTP in home position")
+                else:
+                    logger.printmsg('error', "Move not possible. Not in home" +
+                                    " position")
+                    return(False)
             else:
-                logger.printmsg('error', "Move not possible. Not in home " +
-                                "position")
-                return(False)
+                logger.printmsg('error', "readScan() failed")
 
             # Check that integrator has finished
             s = self.init.getStatus()
@@ -204,6 +213,10 @@ class MTPProbeMove():
                     logger.printmsg('error', "Move not possible. Couldn't" +
                                     " clear integrator")
                     return(False)
+                else:
+                    logger.printmsg('info', "Integrator finished - OK to move")
+            else:
+                logger.printmsg('info', "Integrator finished - OK to move")
 
             # Check if stepper moving
             s = self.init.getStatus()
@@ -214,12 +227,17 @@ class MTPProbeMove():
                                 " Something is wrong. " +
                                 "#### Need to update code")
                 return False
+            else:
+                logger.printmsg("info", "Stepper stable - OK to move")
 
-            # Check if synthesizer out of lock.  OK to move if synthesizer
-            # out of lock
+            # Check if synthesizer out of lock.
             s = self.init.getStatus()
-            if self.init.synthesizerBusy(int(s)):
+            if not self.init.synthesizerBusy(int(s)):
                 # synthesizer out of lock
-                logger.printmsg("debug", "isMovePossible is " + str(s) +
-                                " - yes, return")
-                return True
+                logger.printmsg("warning", "synthesizer out of lock")
+                return False
+            else:
+                logger.printmsg("info", "Synthesizer locked - OK to move")
+
+            # Passed all tests
+            return True

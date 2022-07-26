@@ -59,10 +59,10 @@ def main():
     nowTime = datetime.datetime.now(datetime.timezone.utc)
 
     # Configure logging
-    logfile = nowTime.strftime("log.N%Y%m%d%H%M")
-    fh = open(logfile, "a")
-    stream = fh  # send logging to logfile
-    # stream = sys.stdout  # send logging to terminal window
+    # logfile = nowTime.strftime("log.N%Y%m%d%H%M")
+    # fh = open(logfile, "a")
+    # stream = fh  # send logging to logfile
+    stream = sys.stdout  # send logging to terminal window
     logger.initLogger(stream, args.loglevel, args.logmod)
 
     # Initialize a config file (includes reading it into a dictionary)
