@@ -125,7 +125,7 @@ class MTPProbeMove():
         answerFromProbe = self.init.readEchos(4, cmd)
         # Wait up to 3 seconds for stepper to complete moving
         # Return True of stepper done moving
-        return(self.moveWait(home, answerFromProbe, .5))
+        return(self.moveWait(home, answerFromProbe, .1))
 
     def moveWait(self, cmdstr, answerFromProbe, delay):
         """
@@ -180,7 +180,7 @@ class MTPProbeMove():
 
         # Wait up to 3 seconds for stepper to complete moving
         # Return True if stepper done moving
-        return(self.moveWait("move", echo, 3))
+        return(self.moveWait("move", echo, .5))
 
     def isMovePossibleFromHome(self, maxDebugAttempts=12):
         """
