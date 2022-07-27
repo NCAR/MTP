@@ -24,6 +24,9 @@ class MTPProbeMove():
         ScanCount = 1000000 - readScan
         """
         cmd = self.commandDict.getCommand("read_scan")
+        # Emperically, ead scan needs about .3 seconds delay before
+        # command is sent or don't get response
+        time.sleep(0.3)
         self.serialPort.write(cmd)
         answerFromProbe = self.init.readEchos(3, cmd)
         if answerFromProbe.find(b'`') != -1:
@@ -33,7 +36,7 @@ class MTPProbeMove():
             return(int(answerFromProbe[index:stlen-1]))
         else:
             logger.printmsg("warning", "Didn't find backtick in readScan")
-            return(False)
+            return(int("-99999"))
 
     def readEnc(self):
         """
@@ -178,66 +181,63 @@ class MTPProbeMove():
         Returns: True if move is possible otherwise does debugging
         """
 
-        counter = 0
-        while counter < maxDebugAttempts:
-            counter = counter + 1
-
-            # Check that we are in the HOME position
-            # First time through, position reported as 10. Then for each
-            # subsequent scan, it is reported as 1000010.
-            position = self.readScan()
-            if position:
-                if abs(1000000 - position) < 20 or abs(position) < 20:
-                    logger.printmsg("info", "MTP in home position")
-                else:
-                    logger.printmsg('error', "Move not possible. Not in home" +
-                                    " position")
-                    return(False)
+        # Check that we are in the HOME position
+        # First time through, position reported as 10. Then for each
+        # subsequent scan, it is reported as 1000010.
+        position = self.readScan()
+        if position:
+            if abs(1000000 - position) < 20 or abs(position) < 20:
+                logger.printmsg("info", "MTP in home position")
             else:
-                logger.printmsg('error', "readScan() failed")
+                logger.printmsg('error', "Move not possible. Not in home" +
+                                " position")
+                return(False)
+        else:
+            logger.printmsg('error', "readScan() failed")
+            return(False)
 
-            # Check that integrator has finished
+        # Check that integrator has finished
+        s = self.init.getStatus()
+        if self.init.integratorBusy(int(s)):
+            # send integrate and read to clear integrator bit.
+            cmd = self.commandDict.getCommand("count")
+            self.serialPort.write(cmd)
+            self.init.readEchos(2, cmd)
+            cmd = self.commandDict.getCommand("count2")
+            self.serialPort.write(cmd)
+            self.init.readEchos(2, cmd)
+
             s = self.init.getStatus()
             if self.init.integratorBusy(int(s)):
-                # send integrate and read to clear integrator bit.
-                cmd = self.commandDict.getCommand("count")
-                self.serialPort.write(cmd)
-                self.init.readEchos(2, cmd)
-                cmd = self.commandDict.getCommand("count2")
-                self.serialPort.write(cmd)
-                self.init.readEchos(2, cmd)
-
-                s = self.init.getStatus()
-                if self.init.integratorBusy(int(s)):
-                    # Move not possible because couldn't clear integrator
-                    logger.printmsg('error', "Move not possible. Couldn't" +
-                                    " clear integrator")
-                    return(False)
-                else:
-                    logger.printmsg('info', "Integrator finished - OK to move")
+                # Move not possible because couldn't clear integrator
+                logger.printmsg('error', "Move not possible. Couldn't" +
+                                " clear integrator")
+                return(False)
             else:
                 logger.printmsg('info', "Integrator finished - OK to move")
+        else:
+            logger.printmsg('info', "Integrator finished - OK to move")
 
-            # Check if stepper moving
-            s = self.init.getStatus()
-            if self.init.stepperBusy(int(s)):
-                # moveHome() should have cleared this. Warn user.
-                logger.printmsg("error", "Clear stepper moving failed. This " +
-                                "check should only be called AFTER moveHome." +
-                                " Something is wrong. " +
-                                "#### Need to update code")
-                return False
-            else:
-                logger.printmsg("info", "Stepper stable - OK to move")
+        # Check if stepper moving
+        s = self.init.getStatus()
+        if self.init.stepperBusy(int(s)):
+            # moveHome() should have cleared this. Warn user.
+            logger.printmsg("error", "Clear stepper moving failed. This " +
+                            "check should only be called AFTER moveHome." +
+                            " Something is wrong. " +
+                            "#### Need to update code")
+            return False
+        else:
+            logger.printmsg("info", "Stepper stable - OK to move")
 
-            # Check if synthesizer out of lock.
-            s = self.init.getStatus()
-            if not self.init.synthesizerBusy(int(s)):
-                # synthesizer out of lock
-                logger.printmsg("warning", "synthesizer out of lock")
-                return False
-            else:
-                logger.printmsg("info", "Synthesizer locked - OK to move")
+        # Check if synthesizer out of lock.
+        s = self.init.getStatus()
+        if not self.init.synthesizerBusy(int(s)):
+            # synthesizer out of lock
+            logger.printmsg("warning", "synthesizer out of lock")
+            return False
+        else:
+            logger.printmsg("info", "Synthesizer locked - OK to move")
 
-            # Passed all tests
-            return True
+        # Passed all tests
+        return True
