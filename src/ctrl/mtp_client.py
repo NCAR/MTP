@@ -185,16 +185,31 @@ class MTPClient():
         logger.printmsg("info", "sit tight - complete scans " +
                         "typically take 17s")
 
+        firstTime = datetime.datetime.now(datetime.timezone.utc)
         # Create a raw record
         raw = fmt.createRawRecord(move)
         logger.printmsg("info", "RAW\n" + raw)
 
+        # Command finished
+        nowTime = datetime.datetime.now(datetime.timezone.utc)
+        logger.printmsg("info", "record creation took " +
+                        str(nowTime-firstTime))
+
         # Write raw record to output file
         self.writeRaw(raw + "\n")
+
+        writeTime = datetime.datetime.now(datetime.timezone.utc)
+        logger.printmsg("info", "record write took " +
+                        str(writeTime-nowTime))
 
         # Create the UDP packet
         udpLine = fmt.createUDPpacket()
         self.sendUDP(udpLine)
+
+        udpTime = datetime.datetime.now(datetime.timezone.utc)
+        logger.printmsg("info", "udp creation took " +
+                        str(udpTime-writeTime))
+
 
     def writeRaw(self, raw):
         self.rawfile.write(raw)
