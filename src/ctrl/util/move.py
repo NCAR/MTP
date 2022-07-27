@@ -25,7 +25,8 @@ class MTPProbeMove():
         """
         cmd = self.commandDict.getCommand("read_scan")
         # Emperically, ead scan needs about .3 seconds delay before
-        # command is sent or don't get response
+        # command is sent or don't get response when called after home
+        # command. When called after B line, works without delay.
         time.sleep(0.3)
         self.serialPort.write(cmd)
         answerFromProbe = self.init.readEchos(3, cmd)
@@ -49,11 +50,11 @@ class MTPProbeMove():
         answerFromProbe = self.init.readEchos(3, cmd)
         if answerFromProbe.find(b'`') != -1:
             index = answerFromProbe.find(b'`') + 1  # Find backtick
-            stlen = answerFromProbe.find(b'>>')
+            stlen = answerFromProbe.find(b'\r\n$')
             return(int(answerFromProbe[index:stlen]))
         else:
             logger.printmsg("warning", "Didn't find backtick in readEnc")
-            return(False)
+            return(int("-99999"))
 
     def moveHome(self):
         """
@@ -76,7 +77,7 @@ class MTPProbeMove():
         # - b’U/1J3R’ -> turn on both drivers
         if not self.sendHome("home1"):  # not success - warn user
             # VB6 code does NOT check for success - it just continues
-            logger.printmsg('warning', "Continuing on even though stepper" +
+            logger.printmsg('warning', "Continuing on even though stepper " +
                                        "still reports moving")
             success = False
 
@@ -96,10 +97,13 @@ class MTPProbeMove():
         #        (No idea why this backup is needed.
         #         Need to double check the VB6. - JAA)
         if not self.sendHome("home2"):  # not success - warn user
-            # VB6 code does NOT check for success - it just continues
-            logger.printmsg('warning', "Continuing on even though stepper" +
-                                       "still reports moving")
-            success = False
+            # After a Bline, home2 needs more time to complete so sleep
+            # and try again
+            time.sleep(0.3)
+            if not self.sendHome("home2"):  # not success - warn user
+                logger.printmsg('warning', "Continuing on even though " +
+                                           "stepper still reports moving")
+                success = False
 
         if success:
             logger.printmsg('info', "home successful")
