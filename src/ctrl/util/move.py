@@ -34,6 +34,8 @@ class MTPProbeMove():
             index = answerFromProbe.find(b'`') + 1  # Find backtick
             # Saw "Step:/0b0\r\n", "Step:/0`1000010", "Step:/0`927130"
             stlen = answerFromProbe.find(b'\r\n$')
+            logger.printmsg("info", "readScan success with value " + 
+                            str(answerFromProbe[index:stlen-1]))
             return(int(answerFromProbe[index:stlen-1]))
         else:
             logger.printmsg("warning", "Didn't find backtick in readScan")
@@ -99,7 +101,7 @@ class MTPProbeMove():
         if not self.sendHome("home2"):  # not success - warn user
             # After a Bline, home2 needs more time to complete so sleep
             # and try again
-            time.sleep(0.3)
+            time.sleep(0.1)
             if not self.sendHome("home2"):  # not success - warn user
                 logger.printmsg('warning', "Continuing on even though " +
                                            "stepper still reports moving")
@@ -123,7 +125,7 @@ class MTPProbeMove():
         answerFromProbe = self.init.readEchos(4, cmd)
         # Wait up to 3 seconds for stepper to complete moving
         # Return True of stepper done moving
-        return(self.moveWait(home, answerFromProbe, 3))
+        return(self.moveWait(home, answerFromProbe, 2))
 
     def moveWait(self, cmdstr, answerFromProbe, delay):
         """
@@ -197,7 +199,8 @@ class MTPProbeMove():
                                 " position")
                 return(False)
         else:
-            logger.printmsg('error', "readScan() failed")
+            logger.printmsg('error', "readScan() failed with value " +
+                            str(position))
             return(False)
 
         # Check that integrator has finished
