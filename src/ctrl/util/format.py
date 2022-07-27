@@ -46,7 +46,7 @@ class MTPDataFormat():
                            self.nowTime.minute, self.nowTime.second)
 
         # Get the scan and encoder counts
-        position = move.readScan()
+        position = move.readScan(0)
         if position:
             ScanCount = 1000000 - position
 
