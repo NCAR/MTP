@@ -120,7 +120,7 @@ class MTPProbeInit():
                             chr(array[index+offset]))
             return chr(array[index+offset])
         else:
-            logger.printmsg('error', "status unknown, unable to " +
+            logger.printmsg('warning', "status unknown, unable to " +
                             "find " + str(binaryString) + " in " + str(array))
             return False
 
@@ -311,8 +311,8 @@ class MTPProbeInit():
                             " in " + str(buf) + " at index " + str(i))
             return chr(buf[index+offset])
         else:
-            logger.printmsg('error', "status unknown, unable to find status " +
-                            "in: " + str(buf))
+            logger.printmsg('warning', "status unknown, unable to find " +
+                            "status in: " + str(buf))
             return -1
 
     def probeResponseCheck(self):
