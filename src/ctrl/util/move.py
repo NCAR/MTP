@@ -34,7 +34,7 @@ class MTPProbeMove():
             index = answerFromProbe.find(b'`') + 1  # Find backtick
             # Saw "Step:/0b0\r\n", "Step:/0`1000010", "Step:/0`927130"
             stlen = answerFromProbe.find(b'\r\n$')
-            logger.printmsg("info", "readScan success with value " + 
+            logger.printmsg("info", "readScan success with value " +
                             str(answerFromProbe[index:stlen-1]))
             return(int(answerFromProbe[index:stlen-1]))
         else:
@@ -125,7 +125,7 @@ class MTPProbeMove():
         answerFromProbe = self.init.readEchos(4, cmd)
         # Wait up to 3 seconds for stepper to complete moving
         # Return True of stepper done moving
-        return(self.moveWait(home, answerFromProbe, .1))
+        return(self.moveWait(home, answerFromProbe, .5))
 
     def moveWait(self, cmdstr, answerFromProbe, delay):
         """
@@ -180,7 +180,7 @@ class MTPProbeMove():
 
         # Wait up to 3 seconds for stepper to complete moving
         # Return True if stepper done moving
-        return(self.moveWait("move", echo, .5))
+        return(self.moveWait("move", echo, 3))
 
     def isMovePossibleFromHome(self, maxDebugAttempts=12):
         """
