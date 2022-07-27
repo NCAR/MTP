@@ -17,7 +17,7 @@ class MTPProbeMove():
         self.init = init
         self.commandDict = commandDict
 
-    def readScan(self):
+    def readScan(self, delay):
         """
         Return current position of stepper motor. Gets output as ScanCount at
         end of A line.
@@ -27,7 +27,7 @@ class MTPProbeMove():
         # Emperically, ead scan needs about .3 seconds delay before
         # command is sent or don't get response when called after home
         # command. When called after B line, works without delay.
-        time.sleep(0.3)
+        time.sleep(delay)
         self.serialPort.write(cmd)
         answerFromProbe = self.init.readEchos(3, cmd)
         if answerFromProbe.find(b'`') != -1:
@@ -101,7 +101,7 @@ class MTPProbeMove():
         if not self.sendHome("home2"):  # not success - warn user
             # After a Bline, home2 needs more time to complete so sleep
             # and try again
-            time.sleep(0.1)
+            time.sleep(0.03)
             if not self.sendHome("home2"):  # not success - warn user
                 logger.printmsg('warning', "Continuing on even though " +
                                            "stepper still reports moving")
@@ -125,7 +125,7 @@ class MTPProbeMove():
         answerFromProbe = self.init.readEchos(4, cmd)
         # Wait up to 3 seconds for stepper to complete moving
         # Return True of stepper done moving
-        return(self.moveWait(home, answerFromProbe, 2))
+        return(self.moveWait(home, answerFromProbe, .5))
 
     def moveWait(self, cmdstr, answerFromProbe, delay):
         """
@@ -190,7 +190,7 @@ class MTPProbeMove():
         # Check that we are in the HOME position
         # First time through, position reported as 10. Then for each
         # subsequent scan, it is reported as 1000010.
-        position = self.readScan()
+        position = self.readScan(.3)
         if position:
             if abs(1000000 - position) < 20 or abs(position) < 20:
                 logger.printmsg("info", "MTP in home position")
