@@ -230,6 +230,10 @@ class readMTP:
         """ Return the date of the current A line record """
         return(self.rawscan['Aline']['values']['DATE']['val'])
 
+    def getTime(self):
+        """ Return the date and time of the current A line record """
+        return(self.rawscan['Aline']['values']['timestr']['val'])
+
     def getAline(self):
         """ Return the A line to the caller """
         # Create the Aline
