@@ -755,14 +755,15 @@ class MTPviewer(QMainWindow):
         self.filedata.appendPlainText("")  # Space between records
 
         # If A line is not changing (other than date), set background to red.
+
         if self.viewScanIndex == 0:  # First record
             self.client.reader.setRawscan(self.viewScanIndex)  # current line
         else:
-            self.client.reader.setRawscan(self.viewScanIndex-1)  # prev line
-            lastAline = self.client.reader.getAline()[20:100]  # IWG section
-
             self.client.reader.setRawscan(self.viewScanIndex)  # current line
             thisAline = self.client.reader.getAline()[20:100]  # IWG section
+
+            self.client.reader.setRawscan(self.viewScanIndex-1)  # prev line
+            lastAline = self.client.reader.getAline()[20:100]  # IWG section
 
             if (lastAline == thisAline):
                 fmt = self.filedata.currentCharFormat()
