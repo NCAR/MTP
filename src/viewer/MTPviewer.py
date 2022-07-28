@@ -11,7 +11,7 @@ import numpy
 import datetime
 from PyQt5.QtWidgets import QMainWindow, QGridLayout, QWidget, \
         QPlainTextEdit, QFrame, QAction, QLabel, QPushButton, QGroupBox, \
-        QMessageBox, QLineEdit, QInputDialog
+        QLineEdit, QInputDialog
 from PyQt5.QtCore import QSocketNotifier, Qt
 from PyQt5.QtGui import QFontMetrics, QFont
 from util.profile_structs import TropopauseRecord
@@ -523,9 +523,8 @@ class MTPviewer(QMainWindow):
             msg = "Could not perform retrieval"
             if index is not None:
                 msg = msg + " on scan " + str(index+1)
-            QMessageBox.warning(self, '', msg + " -- " +
-                                str(err) + "\nClick OK to stop " +
-                                "seeing this message ", QMessageBox.Ok)
+            logger.printmsg("info", msg + " -- " + str(err) +
+                            "\nClick OK to stop seeing this message ")
             # Do not get to this point until user clicks OK
             self.clicked['retrieval'] = True  # Only show error once
 
@@ -699,7 +698,7 @@ class MTPviewer(QMainWindow):
             except Exception:
                 # profile was not generated - only warn user once
                 if not self.clicked['curtain']:
-                    logger.printmsg("ERROR", "While generating curtain plot," +
+                    logger.printmsg("info", "While generating curtain plot," +
                                     " found that temperature profile doesn't" +
                                     " exist for scan " + str(index+1),
                                     "Click OK to stop seeing this message " +
