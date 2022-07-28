@@ -304,7 +304,7 @@ class MTPviewer(QMainWindow):
         self.date.setReadOnly(True)
         self.layout.addWidget(self.date, 0, 5, 1, 2)
 
-        self.scanlen = QLabel("Time since last scan")
+        self.scanlen = QLabel("Time since last scan (s)")
         self.layout.addWidget(self.scanlen, 0, 8, 1, 1,
                               alignment=Qt.AlignRight)
         self.scanlen = QLabel("(TBD)")
@@ -768,7 +768,7 @@ class MTPviewer(QMainWindow):
             timestr = self.client.reader.getTime()
             prevtime = datetime.datetime.strptime(timestr, "%H:%M:%S")
 
-            timedelta = (curtime - prevtime).total_seconds()
+            timedelta = abs((curtime - prevtime).total_seconds())
             # Typical scan length is 17-19 seconds
             if timedelta > 20 and timedelta < 60:  # Long scan so warn yellow
                 self.scanlen.setStyleSheet("""QLabel { color: black;
@@ -781,7 +781,7 @@ class MTPviewer(QMainWindow):
                 self.scanlen.setStyleSheet("""QLabel { color: black;
                                        background-color: lightgreen” }""")
 
-            self.scanlen.setText(str(abs(timedelta)))
+            self.scanlen.setText(str(timedelta))
 
     def writeData(self):
         """ Write the latest data record to the data display box """
@@ -789,9 +789,7 @@ class MTPviewer(QMainWindow):
 
         # If A line is not changing (other than date), set text color to red.
 
-        if self.viewScanIndex == 0:  # First record
-            self.client.reader.setRawscan(self.viewScanIndex)  # current line
-        else:
+        if self.viewScanIndex != 0:  # First record
             self.client.reader.setRawscan(self.viewScanIndex)  # current line
             thisAline = self.client.reader.getAline()[20:100]  # IWG section
 
@@ -803,6 +801,7 @@ class MTPviewer(QMainWindow):
                 fmt.setForeground(Qt.red)
                 self.filedata.setCurrentCharFormat(fmt)
 
+        self.client.reader.setRawscan(self.viewScanIndex)  # current line
         self.filedata.appendPlainText(self.client.reader.getAline())
 
         # Leave remaining lines black
