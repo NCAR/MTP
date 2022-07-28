@@ -15,7 +15,7 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
 import numpy
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+# from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
 class decodePt():
@@ -59,12 +59,13 @@ class decodePt():
             # Visual Basic code for decodePt has a check for counts == 16383
             # that sets calculated values to N/A in display.
             # I have no idea why. So just check for it here and warn user.
-            if int(self.getCount(var)) == 16383:
-                varname = self.reader.rawscan['Ptline']['values'][var]['name']
-                logger.printmsg("WARNING", "count for var " + varname + " =" +
-                                " 16383. VB6 code would display this as N/A." +
-                                " Not sure why so this code doesn't do that." +
-                                " Dismiss this warning to display this scan.")
+            # Commented out because it just confused users.
+            # if int(self.getCount(var)) == 16383:
+            #   varname = self.reader.rawscan['Ptline']['values'][var]['name']
+            #   logger.printmsg("WARNING", "count for var " + varname + " =" +
+            #                   " 16383. VB6 code would display this as N/A." +
+            #                   " Not sure why so this code doesn't do that." +
+            #                   " Dismiss this warning to display this scan.")
 
             # Resistance from counts (R)
             # R[i] = 350 + (Ct[i] - Ct[0]) / rslop
