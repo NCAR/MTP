@@ -76,7 +76,7 @@ class MTPcommand():
 
         'home2': 'U/1j128z1000000P10R\r':
         j128     - Adjust the resolution in micro-steps per step.
-        Z1000000 - Home & Initialize the motor.
+        z1000000 - Zero Position - set current position without moving motor
         P10      - Move Motor relative number of steps in positive direction. A
                    'P0' command rotates the motor indefinitely, which enters
                    into Velocity mode. Any other finite number sets the mode to
@@ -84,7 +84,7 @@ class MTPcommand():
 
         'home3': 'U/1j64z1000000P10R\r':
         j64      - Adjust the resolution in micro-steps per step.
-        z1000000 - Home & Initialize the motor.
+        z1000000 - Zero Position
         P10      - Move Motor relative number of steps in positive direction.
 
         'move_fwd': 'U/1J0P' + Nsteps + 'J3R\r:

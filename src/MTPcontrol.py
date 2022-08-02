@@ -9,6 +9,7 @@ import os
 if os.name == 'nt':
     import msvcrt
 import sys
+import datetime
 import argparse
 import logging
 import select
@@ -54,8 +55,14 @@ def main():
     # Process command line arguments.
     args = parse_args()
 
+    # Get current time - used in raw and log filenames
+    nowTime = datetime.datetime.now(datetime.timezone.utc)
+
     # Configure logging
-    stream = sys.stdout
+    # logfile = nowTime.strftime("log.N%Y%m%d%H%M")
+    # fh = open(logfile, "a")
+    # stream = fh  # send logging to logfile
+    stream = sys.stdout  # send logging to terminal window
     logger.initLogger(stream, args.loglevel, args.logmod)
 
     # Initialize a config file (includes reading it into a dictionary)
@@ -64,8 +71,18 @@ def main():
     # Dictionary of allowed commands to send to firmware
     commandDict = MTPcommand()
 
-    # Menu of user commands
-    client = MTPClient()
+    # Create the raw data filename from the current UTC time
+    rawfile = nowTime.strftime("N%Y%m%d%H.%M")
+    rawdir = configfile.getPath('rawdir')
+    rawfilename = os.path.join(rawdir, rawfile)
+
+    # Instantiate client which handles user commands
+    try:
+        client = MTPClient(rawfilename)
+    except Exception as e:
+        logger.printmsg("error", "Unable to open Raw file: " + e)
+        print("ERROR: Unable to open Raw data output file: " + e)
+        exit(1)
 
     # Get ports from config file to send UDP packets to MTP
     port = configfile.getInt('udp_send_port')  # port to send MTP UDP packets
@@ -82,7 +99,7 @@ def main():
     init = MTPProbeInit(args, port, commandDict, args.loglevel, iwg)
     move = MTPProbeMove(init, commandDict)
     data = MTPProbeCIR(init, commandDict)
-    fmt = MTPDataFormat(init, data, commandDict)
+    fmt = MTPDataFormat(init, data, commandDict, iwg)
 
     probeResponding = False
 
@@ -99,8 +116,9 @@ def main():
                 ports = [iwg.socket(), sys.stdin]
                 read_ready, _, _ = select.select(ports, [], [], 0.15)
 
-            if len(read_ready) == 0:
-                print('timed out')
+            if args.loglevel == "DEBUG":
+                if len(read_ready) == 0:
+                    print('timed out')
 
             if iwg.socket() in read_ready:
                 iwg.readIWG()

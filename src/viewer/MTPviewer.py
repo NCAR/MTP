@@ -8,9 +8,10 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
 import numpy
+import datetime
 from PyQt5.QtWidgets import QMainWindow, QGridLayout, QWidget, \
         QPlainTextEdit, QFrame, QAction, QLabel, QPushButton, QGroupBox, \
-        QMessageBox, QLineEdit, QInputDialog
+        QLineEdit, QInputDialog
 from PyQt5.QtCore import QSocketNotifier, Qt
 from PyQt5.QtGui import QFontMetrics, QFont
 from util.profile_structs import TropopauseRecord
@@ -303,12 +304,14 @@ class MTPviewer(QMainWindow):
         self.date.setReadOnly(True)
         self.layout.addWidget(self.date, 0, 5, 1, 2)
 
-        metadata = QLabel("Connected")
-        self.layout.addWidget(metadata, 0, 8, 1, 1, alignment=Qt.AlignRight)
-        metadata = QLabel("(TBD)")
-        metadata.setStyleSheet("QLabel { color: green }")
-        metadata.setFixedHeight(25)
-        self.layout.addWidget(metadata, 0, 9, 1, 1)
+        self.scanlen = QLabel("Time since last scan (s)")
+        self.layout.addWidget(self.scanlen, 0, 8, 1, 1,
+                              alignment=Qt.AlignRight)
+        self.scanlen = QLabel("(TBD)")
+        self.scanlen.setStyleSheet("""QLabel { color: black;
+                                   background-color: lightgreen” }""")
+        self.scanlen.setFixedHeight(25)
+        self.layout.addWidget(self.scanlen, 0, 9, 1, 1)
 
         # Create a box to hold the list of brightness temps
         box = QGroupBox()
@@ -520,9 +523,8 @@ class MTPviewer(QMainWindow):
             msg = "Could not perform retrieval"
             if index is not None:
                 msg = msg + " on scan " + str(index+1)
-            QMessageBox.warning(self, '', msg + " -- " +
-                                str(err) + "\nClick OK to stop " +
-                                "seeing this message ", QMessageBox.Ok)
+            logger.printmsg("info", msg + " -- " + str(err) +
+                            "\nClick OK to stop seeing this message ")
             # Do not get to this point until user clicks OK
             self.clicked['retrieval'] = True  # Only show error once
 
@@ -564,6 +566,9 @@ class MTPviewer(QMainWindow):
 
         # Display the brightness temperatures in text format
         self.writeTB(self.cell)
+
+        # Display the time since the last scan
+        self.writeScantime()
 
         # ---------- Populate scan and template plot ----------
         # Do this before begin retrieval so that if retrieval fails, use can
@@ -693,7 +698,7 @@ class MTPviewer(QMainWindow):
             except Exception:
                 # profile was not generated - only warn user once
                 if not self.clicked['curtain']:
-                    logger.printmsg("ERROR", "While generating curtain plot," +
+                    logger.printmsg("info", "While generating curtain plot," +
                                     " found that temperature profile doesn't" +
                                     " exist for scan " + str(index+1),
                                     "Click OK to stop seeing this message " +
@@ -750,25 +755,52 @@ class MTPviewer(QMainWindow):
         """ Display the record date in the Date box at the top of the GUI """
         self.date.setPlainText(self.client.reader.getDate())
 
+    def writeScantime(self):
+        if self.viewScanIndex != 0:  # Have two records
+            # Time of current scan
+            self.client.reader.setRawscan(self.viewScanIndex)  # current line
+            timestr = self.client.reader.getTime()
+            curtime = datetime.datetime.strptime(timestr, "%H:%M:%S")
+
+            # Time of previous scan
+            self.client.reader.setRawscan(self.viewScanIndex-1)  # prev line
+            timestr = self.client.reader.getTime()
+            prevtime = datetime.datetime.strptime(timestr, "%H:%M:%S")
+
+            timedelta = abs((curtime - prevtime).total_seconds())
+            # Typical scan length is 17-19 seconds
+            if timedelta > 20 and timedelta < 60:  # Long scan so warn yellow
+                self.scanlen.setStyleSheet("""QLabel { color: black;
+                                       background-color: yellow” }""")
+            elif timedelta > 60:  # If no data for 60 seconds, warn red
+                self.scanlen.setStyleSheet("""QLabel { color: black;
+                                       font-weight: bold;
+                                       background-color: red” }""")
+            else:
+                self.scanlen.setStyleSheet("""QLabel { color: black;
+                                       background-color: lightgreen” }""")
+
+            self.scanlen.setText(str(timedelta))
+
     def writeData(self):
         """ Write the latest data record to the data display box """
         self.filedata.appendPlainText("")  # Space between records
 
-        # If A line is not changing (other than date), set background to red.
-        if self.viewScanIndex == 0:  # First record
-            self.client.reader.setRawscan(self.viewScanIndex)  # current line
-        else:
-            self.client.reader.setRawscan(self.viewScanIndex-1)  # prev line
-            lastAline = self.client.reader.getAline()[20:100]  # IWG section
+        # If A line is not changing (other than date), set text color to red.
 
+        if self.viewScanIndex != 0:  # First record
             self.client.reader.setRawscan(self.viewScanIndex)  # current line
             thisAline = self.client.reader.getAline()[20:100]  # IWG section
+
+            self.client.reader.setRawscan(self.viewScanIndex-1)  # prev line
+            lastAline = self.client.reader.getAline()[20:100]  # IWG section
 
             if (lastAline == thisAline):
                 fmt = self.filedata.currentCharFormat()
                 fmt.setForeground(Qt.red)
                 self.filedata.setCurrentCharFormat(fmt)
 
+        self.client.reader.setRawscan(self.viewScanIndex)  # current line
         self.filedata.appendPlainText(self.client.reader.getAline())
 
         # Leave remaining lines black
