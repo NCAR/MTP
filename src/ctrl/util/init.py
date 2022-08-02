@@ -62,6 +62,7 @@ class MTPProbeInit():
                         str(answerFromProbe))
 
         # Offset assumes probe responds "...T:0X" where X is desired char
+        # Returns false if T not found
         status = self.findChar(answerFromProbe, b'T', offset=3)
 
         # Status command report status of init, move, and sythesizer
@@ -74,6 +75,36 @@ class MTPProbeInit():
             exit(1)
 
         return status
+
+    def integratorBusy(self, status):
+        """
+        Determine integrator status
+
+        Return:
+            True - integrator busy
+            False - integrator not busy
+        """
+        state = status & 1  # Get Bit 0
+        if state == 1:  # Integrator busy
+            return(True)
+        else:
+            return(False)
+
+    def stepperBusy(self, status):
+        """ Return True if stepper moving, False if not moving """
+        state = status & 2  # Get Bit 1
+        if state == 2:  # Stepper moving
+            return(True)
+        else:
+            return(False)
+
+    def synthesizerBusy(self, status):
+        """ Return True if synthesizer locked, False if out of lock """
+        state = status & 4  # Get Bit 2
+        if state == 4:  # Synthesizer locked
+            return(True)
+        else:
+            return(False)  # Synthesizer out of lock
 
     def findChar(self, array, binaryString, offset=0):
         '''
@@ -89,7 +120,7 @@ class MTPProbeInit():
                             chr(array[index+offset]))
             return chr(array[index+offset])
         else:
-            logger.printmsg('error', "status unknown, unable to " +
+            logger.printmsg('warning', "status unknown, unable to " +
                             "find " + str(binaryString) + " in " + str(array))
             return False
 
@@ -139,23 +170,32 @@ class MTPProbeInit():
 
         # Read remaining responses from probe, interleave with checking for
         # IWG packets.
-        for i in range(num-1):
+        for i in range(num-1):  # Loop until get num-1 non-empty responses
 
-            # read_ready with .15 second timeout
+            # read_ready with .01 second timeout
             ports = [self.iwg.socket()]
-            read_ready, _, _ = select.select(ports, [], [], 0.15)
+            read_ready, _, _ = select.select(ports, [], [], 0.01)
 
-            if len(read_ready) == 0:
-                print('timed out')
+            if self.loglevel == "DEBUG":
+                if len(read_ready) == 0:
+                    print('timed out')
 
             if self.iwg.socket() in read_ready:
                 self.iwg.readIWG()
 
-            if self.serialPort.inWaiting():
-                buf = buf + self.serialPort.readline()
+            response = self.serialPort.readline()
+            if len(response) == 0:
+                # Read returned empty response so need to loop back and try
+                # again to get this response
+                i = i - 1
+                # Pause for 2 milliseconds so don't hang up CPU
+                time.sleep(0.002)
+            else:
+                # Got response - add to buffer
+                buf = buf + response
 
-                if self.loglevel == "DEBUG":
-                    buf = self.checkReadComplete(buf)
+        if self.loglevel == "DEBUG":
+            buf = self.checkReadComplete(buf)  # Confirm got all responses
 
         logger.printmsg('info', "read " + str(buf))
         return buf
@@ -201,19 +241,6 @@ class MTPProbeInit():
             logger.printmsg("info", "Buffer empty. OK to continue")
         else:
             self.handleNonemptyBuffer()
-
-    def moveComplete(self, buf):
-        '''
-        Check if a command has been completed by the firmware.
-
-        Returns:
-         - true if '@' is found, indicating successful completion
-         - false if '@' not found
-        '''
-        # needs a timeout if command didn't send properly
-        if buf.find(b'@') >= 0:
-            return True
-        return False
 
     def sanitize(self, data):
         """
@@ -268,6 +295,7 @@ class MTPProbeInit():
             # search for entire string.
             statStr = b'Step:\xff/0' + ustat[i] + b'\r\n'
             index = buf.find(statStr)
+            offset = 8  # Length of 'Step:\xff/0'
             i = i + 1
 
         i = 0
@@ -275,15 +303,16 @@ class MTPProbeInit():
             # Sometimes \xff is missing from status string
             statStr = b'Step:/0' + ustat[i] + b'\r\n'
             index = buf.find(statStr)
+            offset = 7  # Length of 'Step:/0'
             i = i + 1
 
         if index > -1:
-            logger.printmsg("debug", "Found status " + chr(buf[index+8]) +
+            logger.printmsg("debug", "Found status " + chr(buf[index+offset]) +
                             " in " + str(buf) + " at index " + str(i))
-            return chr(buf[index+8])
+            return chr(buf[index+offset])
         else:
-            logger.printmsg('error', "status unknown, unable to find status " +
-                            "in: " + str(buf))
+            logger.printmsg('warning', "status unknown, unable to find " +
+                            "status in: " + str(buf))
             return -1
 
     def probeResponseCheck(self):
@@ -395,12 +424,14 @@ class MTPProbeInit():
         # if already set to this last line replaced by
         #   Step:\xff/0B\r\n - indicating Illegal command sent
         if self.sendInit("init1"):
-            self.getStatus()
+            self.getStatus()  # If getStatus returns -1, status not found
             # Status can be any of 0-7, so don't check getStatus return
             logger.printmsg('info', "init1 succeeded")
         else:
             logger.printmsg('warning', "init1 failed #### Need to update code")
             return(False)
+
+        time.sleep(0.2)  # From VB6 code
 
         # Init2
         #  - Set acceleration factor to 4000 micro-steps per second^2 ('L4000')

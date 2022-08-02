@@ -7,3 +7,4 @@
 ###############################################################################
 cd ../src
 python3 -m unittest discover -s ../tests -v -p "test_pointing.py"
+python3 -m unittest discover -s ../tests -v -p "test_init.py"
