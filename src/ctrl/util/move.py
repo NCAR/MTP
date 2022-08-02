@@ -132,12 +132,12 @@ class MTPProbeMove():
         Wait for stepper to quit moving. Wait for a maximum of delay seconds.
         Recheck every 0.07 seconds
         """
-        # See if got status @ = No error.
+        # See if got status @ = No error. Step @ does NOT mean move is
+        # completed. Still need to check status. Just note received @ and
+        # continue
         status = self.init.findStat(answerFromProbe)
         if status == '@':
-            # success
-            logger.printmsg('info', cmdstr + " successful")
-            return(True)
+            logger.printmsg('info', cmdstr + " sent successfully (@)")
 
         # If readEchos called before probe finished moving, get "Step:"
         # without \xff/0@ eg status has not yet been appended to response
