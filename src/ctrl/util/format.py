@@ -47,12 +47,16 @@ class MTPDataFormat():
 
         # Get the scan and encoder counts
         position = move.readScan(0)
-        if position:
-            ScanCount = 1000000 - position
+        if position != "-99999":
+            ScanCount = 1000000 - int(position)
+        else:
+            ScanCount = 1000000  # Emulate value reported by VB6
 
         position = move.readEnc()
         if position:
-            EncoderCount = (1000000 - position) * 16
+            EncoderCount = (1000000 - int(position)) * 16
+        else:
+            EncoderCount = 16000000  # Emulate value reported by VB6
 
         # Get all the housekeeping data
         move.moveHome()
