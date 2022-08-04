@@ -53,10 +53,10 @@ class MTPProbeMove():
         if answerFromProbe.find(b'`') != -1:
             index = answerFromProbe.find(b'`') + 1  # Find backtick
             stlen = answerFromProbe.find(b'\r\n$')
-            return(int(answerFromProbe[index:stlen]))
+            return(answerFromProbe[index:stlen])
         else:
             logger.printmsg("warning", "Didn't find backtick in readEnc")
-            return(int("-99999"))
+            return("-99999")
 
     def moveHome(self):
         """
