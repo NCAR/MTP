@@ -143,8 +143,9 @@ class MTPDataFormat():
         # Confirm in home position and ready to move (not integrating or
         # already moving)
         if not move.isMovePossibleFromHome():
-            logger.printmsg("error", "B line not created")
-            return("")
+            # VB6 doesn't do this check so still does scan here. We will add
+            # something to the log and go ahead and scan.
+            logger.printmsg("error", "B line created anyway")
 
         # GV angles are b'U/1J0D28226J3R', b'U/1J0D7110J3R', b'U/1J0D3698J3R',
         #               b'U/1J0D4835J3R', b'U/1J0D3698J3R', b'U/1J0D3413J3R',
