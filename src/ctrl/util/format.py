@@ -53,7 +53,7 @@ class MTPDataFormat():
             ScanCount = 1000000  # Emulate value reported by VB6
 
         position = move.readEnc()
-        if position:
+        if position != "-99999":
             EncoderCount = (1000000 - int(position)) * 16
         else:
             EncoderCount = 16000000  # Emulate value reported by VB6
