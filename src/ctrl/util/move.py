@@ -24,7 +24,7 @@ class MTPProbeMove():
         ScanCount = 1000000 - readScan
         """
         cmd = self.commandDict.getCommand("read_scan")
-        # Emperically, ead scan needs about .3 seconds delay before
+        # Emperically, read scan needs about .3 seconds delay before
         # command is sent or don't get response when called after home
         # command. When called after B line, works without delay.
         time.sleep(delay)
@@ -36,10 +36,10 @@ class MTPProbeMove():
             stlen = answerFromProbe.find(b'\r\n$')
             logger.printmsg("info", "readScan success with value " +
                             str(answerFromProbe[index:stlen-1]))
-            return(int(answerFromProbe[index:stlen-1]))
+            return(answerFromProbe[index:stlen-1])
         else:
             logger.printmsg("warning", "Didn't find backtick in readScan")
-            return(int("-99999"))
+            return("-99999")
 
     def readEnc(self):
         """
@@ -67,10 +67,6 @@ class MTPProbeMove():
         """
         success = True
 
-        # Start with read_scan. Seems like this would be more useful AFTER
-        # home command because it would report how accurately pointing home
-        # LastSky = self.readScan()
-
         # home1 command components:
         # - turn off both drivers ('J0')
         # - b’U/1f0R’ -> set polarity of home sensor to 0
@@ -81,7 +77,6 @@ class MTPProbeMove():
             # VB6 code does NOT check for success - it just continues
             logger.printmsg('warning', "Continuing on even though stepper " +
                                        "still reports moving")
-            success = False
 
         # home2
         # After home1, probe returns success but any subsequent clockwise move
@@ -100,7 +95,7 @@ class MTPProbeMove():
         #         Need to double check the VB6. - JAA)
         if not self.sendHome("home2"):  # not success - warn user
             # After a Bline, home2 needs more time to complete so sleep
-            # and try again
+            # and try again.
             time.sleep(0.03)
             if not self.sendHome("home2"):  # not success - warn user
                 logger.printmsg('warning', "Continuing on even though " +
@@ -191,16 +186,16 @@ class MTPProbeMove():
         # First time through, position reported as 10. Then for each
         # subsequent scan, it is reported as 1000010.
         position = self.readScan(.3)
-        if position:
-            if abs(1000000 - position) < 20 or abs(position) < 20:
+        # position is a number, not a boolean, so this check is bad.
+        if position != "-99999":
+            if abs(1000000 - int(position)) < 20 or abs(int(position)) < 20:
                 logger.printmsg("info", "MTP in home position")
             else:
                 logger.printmsg('error', "Move not possible. Not in home" +
                                 " position")
                 return(False)
         else:
-            logger.printmsg('error', "readScan() failed with value " +
-                            str(position))
+            logger.printmsg('error', "readScan() failed. Unknown position")
             return(False)
 
         # Check that integrator has finished
