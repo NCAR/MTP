@@ -480,7 +480,10 @@ class MTPclient():
         data = self.sock.recv(1024).decode()
 
         # Store data to data dictionary
-        self.reader.parseAsciiPacket(data)  # Store to values
+        try:
+            self.reader.parseAsciiPacket(data)  # Store to values
+        except Exception:
+            raise
 
     def close(self):
         """ Close UDP socket connections """

@@ -286,7 +286,10 @@ class MTPprocessor(QMainWindow):
                 packet = self.client.reader.getAsciiPacket()
 
                 # Parse the packet and store values in data dictionary
-                self.client.reader.parseAsciiPacket(packet)
+                try:
+                    self.client.reader.parseAsciiPacket(packet)
+                except Exception:
+                    continue
 
                 # Perform calcs on the raw MTP data
                 self.client.processScan()

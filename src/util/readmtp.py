@@ -403,6 +403,14 @@ class readMTP:
         separator = ','
         values = UDPpacket.split(separator)
 
+        # If UDP packet is short, or for some other reason we ended out with
+        # less than 75 values, warn user and do not attempt to parse packet.
+        if len(values) < 75:
+            logger.printmsg("WARNING", "UDP packet received is short. " +
+                            "Skipping packet. Click 'OK' to dismiss this" +
+                            " message")
+            raise Exception("UDP packet received is short. Skipping packet")
+
         # values[0] contains the packet identifier, in this case 'MTP' so skip
         # values[1] contains the datetime, i.e. yyyymmddThhMMss
         m = re.match("(........)T(..)(..)(..)", values[1])
