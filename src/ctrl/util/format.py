@@ -104,17 +104,17 @@ class MTPDataFormat():
 
     def readAline(self, ScanCount, EncoderCount):
         """ Create Aline from the IWG packet """
-        aline = "%+06.2f " % float(self.iwg.pitch())  # SAPITCH
+        aline = "%+06.2f " % float(self.iwg.getPitch())  # SAPITCH
         aline = aline + "00.00 "  # SRPITCH
-        aline = aline + "%+06.2f " % float(self.iwg.roll())   # SAROLL
+        aline = aline + "%+06.2f " % float(self.iwg.getRoll())   # SAROLL
         aline = aline + "00.00 "  # SRROLL
-        aline = aline + "%+06.2f " % float(self.iwg.palt())   # SAPALT
+        aline = aline + "%+06.2f " % float(self.iwg.getPalt())   # SAPALT
         aline = aline + "0.00 "  # SRPALT
-        aline = aline + "%+06.2f " % float(self.iwg.atx())    # SAAT
+        aline = aline + "%+06.2f " % float(self.iwg.getAtx())    # SAAT
         aline = aline + "00.00 "  # SRAT
-        aline = aline + "%+07.3f " % float(self.iwg.lat())    # SALAT
+        aline = aline + "%+07.3f " % float(self.iwg.getLat())    # SALAT
         aline = aline + "+0.000 "  # SRLAT
-        aline = aline + "%+07.3f " % float(self.iwg.lon())    # SALON
+        aline = aline + "%+07.3f " % float(self.iwg.getLon())    # SALON
         aline = aline + "+0.000 "  # SRLON
 
         # Format ScanCount and EncoderCount and add to end of aline
@@ -154,7 +154,8 @@ class MTPDataFormat():
         for angle in self.elAngles:
 
             # Correct angle based on aircraft pitch/roll from latest IWG packet
-            angle = self.pointing.fEc(self.iwg.pitch(), self.iwg.roll(), angle)
+            angle = self.pointing.fEc(self.iwg.getPitch(), self.iwg.getRoll(),
+                                      angle)
 
             moveToCommand, currentClkStep = self.getAngle(angle,
                                                           currentClkStep)

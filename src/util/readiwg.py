@@ -45,18 +45,13 @@ class IWG:
 
     def getVar(self, asciiparms, index):
         """ Get the index'th var from ascii parms file. """
-        # Init an ascii parms file reader
-        self.ascii_parms = AsciiParms(asciiparms)
 
-        # Attempt to open ascii_parms file. Exit on failure.
-        if self.ascii_parms.open() is False:
-            exit(1)
+        for var in self.rawscan['IWG1line']['values']:
+            if var != 'DATE' and var != 'TIME':
+                if self.rawscan['IWG1line']['values'][var]['idx'] == index + 1:
+                    newVar = var
+                    break
 
-        for i in range(0, index):
-            # Read var from ascii_parms file
-            newVar = self.ascii_parms.readVar()
-
-        self.ascii_parms.close()
         return(newVar)
 
     def createPacket(self, newVar):
