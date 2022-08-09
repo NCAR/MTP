@@ -499,7 +499,11 @@ class MTPviewer(QMainWindow):
         """
         # Ask client to read MTP data from the UDP feed and save it to the data
         # dictionaries - one for current scan and one for all scans in flight
-        self.client.readSocket()  # Read data from socket
+        try:
+            self.client.readSocket()  # Read data from socket
+        except Exception:
+            return()
+
         try:
             # Perform calcs on raw MTP data - converts counts to brightness
             # temperatures and stores everything in a rawscan dictionary
