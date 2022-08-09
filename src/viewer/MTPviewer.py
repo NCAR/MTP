@@ -759,13 +759,15 @@ class MTPviewer(QMainWindow):
         if self.viewScanIndex != 0:  # Have two records
             # Time of current scan
             self.client.reader.setRawscan(self.viewScanIndex)  # current line
-            timestr = self.client.reader.getTime()
-            curtime = datetime.datetime.strptime(timestr, "%H:%M:%S")
+            timestr = self.client.reader.getDate() + " " + \
+                self.client.reader.getTime()
+            curtime = datetime.datetime.strptime(timestr, "%Y%m%d %H:%M:%S")
 
             # Time of previous scan
             self.client.reader.setRawscan(self.viewScanIndex-1)  # prev line
-            timestr = self.client.reader.getTime()
-            prevtime = datetime.datetime.strptime(timestr, "%H:%M:%S")
+            timestr = self.client.reader.getDate() + " " + \
+                self.client.reader.getTime()
+            prevtime = datetime.datetime.strptime(timestr, "%Y%m%d %H:%M:%S")
 
             timedelta = abs((curtime - prevtime).total_seconds())
             # Typical scan length is 17-19 seconds
