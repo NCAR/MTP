@@ -124,7 +124,7 @@ class MTPDataFormat():
 
     def setNoise(self, cmd):
         self.serialPort.write(cmd)
-        self.init.readEchos(4, cmd)
+        self.init.readEchos(2, cmd)
 
     def readBline(self, move):
         """
