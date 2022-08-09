@@ -26,8 +26,8 @@ class MTPiwg():
         # n IWG packets. (not sure what N is yet..)
         self.rawscan = copy.deepcopy(MTPrecord)
 
-        # Average in-flight pitch/roll is about 2/0
-        self.defaultPitch = 2.0
+        # Average in-flight pitch/roll is about 2.7/0
+        self.defaultPitch = 2.7
         self.defaultRoll = 0.0
 
     def connectIWG(self, iwgport):
@@ -95,7 +95,7 @@ class MTPiwg():
                 self.rawscan['IWG1line']['date'] = m.group(1)  # packet time
                 self.rawscan['IWG1line']['data'] = m.group(2).rstrip('\n')
                 self.rawscan['IWG1line']['asciiPacket'] = \
-                    self.dataI.rstrip('\n')
+                    self.dataI.rstrip('\r')
 
     def getIWG(self):
         """ Return the complete IWG line as received """
