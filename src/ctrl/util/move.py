@@ -188,7 +188,6 @@ class MTPProbeMove():
         # First time through, position reported as 10. Then for each
         # subsequent scan, it is reported as 1000010.
         position = self.readScan(.3)
-        # position is a number, not a boolean, so this check is bad.
         if position != "-99999":
             if abs(1000000 - int(position)) < 20 or abs(int(position)) < 20:
                 logger.printmsg("info", "MTP in home position")
