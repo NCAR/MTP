@@ -28,6 +28,14 @@ class MTPClient():
         except Exception:
             raise  # Unable to open file. Pass err back up to calling function
 
+        # Configure UDP socket
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        self.udp_ip = "192.168.84.255"
+        self.ric_send_port = 32106  # 7 on the ground, 6 on the GV
+        self.nidas_send_port = 30101
+
     def close(self):
         # Close output file for raw data
         try:
@@ -210,21 +218,15 @@ class MTPClient():
         logger.printmsg("info", "udp creation took " +
                         str(udpTime-writeTime))
 
-
     def writeRaw(self, raw):
         self.rawfile.write(raw)
         self.rawfile.flush()
 
     def sendUDP(self, udpLine):
         """ Send UDP packet to RIC and nidas """
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-
-        udp_ip = "192.168.84.255"
-        ric_send_port = 32106  # 7 on the ground, 6 on the GV
-        nidas_send_port = 30101
-        if sock:  # Sent to RIC
-            sock.sendto(udpLine.encode('utf-8'), (udp_ip, ric_send_port))
-        if sock:  # Send to nidas ip needs to be 192.168.84.255
-            sock.sendto(udpLine.encode(), (udp_ip, nidas_send_port))
+        if self.sock:  # Sent to RIC
+            self.sock.sendto(udpLine.encode('utf-8'),
+                             (self.udp_ip, self.ric_send_port))
+        if self.sock:  # Send to nidas ip needs to be 192.168.84.255
+            self.sock.sendto(udpLine.encode(),
+                             (self.udp_ip, self.nidas_send_port))
