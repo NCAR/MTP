@@ -147,7 +147,8 @@ class MTPProbeMove():
             # Loop until get valid stat (0-7)
             while not stat:  # While stat False
                 stat = self.init.getStatus()
-                time.sleep(0.07)
+                time.sleep(0.00)  # VB6 has a placeholder here with no wait
+                # and 0.07 commented out with lots of exclamation points.
 
             # Got a valid stat (0-7), so check and see if stepper is busy
             # If it is not busy, return
@@ -168,7 +169,7 @@ class MTPProbeMove():
         # VB6 has if nsteps < 20, don't move. Not sure this ever occurs since
         # this fn is only called when cycling through angles, not on move home
         self.serialPort.write(location)
-        echo = self.init.readEchos(4, location)
+        echo = self.init.readEchos(3, location)
 
         # After move and before wait, tune Freq to 1 GHz
         chan = '{:.5}'.format(str(500))
