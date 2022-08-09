@@ -56,21 +56,25 @@ class MTPiwg():
         # list provided in the ascii_parms file.
         self.iwg.initIWGfromAsciiParms(self.asciiparms)
 
+        # Get the names of the variables from the asciiparms file that we
+        # need for the A line
+        self.pitch = self.iwg.getVar(self.asciiparms, 15)
+        self.roll = self.iwg.getVar(self.asciiparms, 16)
+        self.paltf = self.iwg.getVar(self.asciiparms, 5)
+        self.atx = self.iwg.getVar(self.asciiparms, 19)
+        self.lat = self.iwg.getVar(self.asciiparms, 1)
+        self.lon = self.iwg.getVar(self.asciiparms, 2)
+
         # Set average in-flight pitch/roll so that if not receiving IWG,
         # we have something. Also set remaining IWG values to zero so they
         # aren't nan. But keep them non-physical so they are obvious
-        pitch = self.iwg.getVar(self.asciiparms, 15)
-        self.rawscan['IWG1line']['values'][pitch]['val'] = self.defaultPitch
-        roll = self.iwg.getVar(self.asciiparms, 16)
-        self.rawscan['IWG1line']['values'][roll]['val'] = self.defaultRoll
-        paltf = self.iwg.getVar(self.asciiparms, 5)
-        self.rawscan['IWG1line']['values'][paltf]['val'] = 0
-        atx = self.iwg.getVar(self.asciiparms, 19)
-        self.rawscan['IWG1line']['values'][atx]['val'] = 0
-        lat = self.iwg.getVar(self.asciiparms, 1)
-        self.rawscan['IWG1line']['values'][lat]['val'] = 0
-        lon = self.iwg.getVar(self.asciiparms, 2)
-        self.rawscan['IWG1line']['values'][lon]['val'] = 0
+        self.rawscan['IWG1line']['values'][self.pitch]['val'] = \
+            self.defaultPitch
+        self.rawscan['IWG1line']['values'][self.roll]['val'] = self.defaultRoll
+        self.rawscan['IWG1line']['values'][self.paltf]['val'] = 0
+        self.rawscan['IWG1line']['values'][self.atx]['val'] = 0
+        self.rawscan['IWG1line']['values'][self.lat]['val'] = 0
+        self.rawscan['IWG1line']['values'][self.lon]['val'] = 0
 
     def readIWG(self):
         """ Tell client to read latest IWG record and save to dictionary """
@@ -93,7 +97,7 @@ class MTPiwg():
                 m = re.match(re.compile(self.rawscan['IWG1line']['re']),
                              self.dataI)
                 self.rawscan['IWG1line']['date'] = m.group(1)  # packet time
-                self.rawscan['IWG1line']['data'] = m.group(2).rstrip('\n')
+                self.rawscan['IWG1line']['data'] = m.group(2).rstrip('\r')
                 self.rawscan['IWG1line']['asciiPacket'] = \
                     self.dataI.rstrip('\r')
 
@@ -101,57 +105,41 @@ class MTPiwg():
         """ Return the complete IWG line as received """
         return(self.rawscan['IWG1line']['asciiPacket'])
 
-    def pitch(self):
+    def getPitch(self):
         """ Return scan average aircraft pitch """
-        # Get pitch variable name from ascii_parms file. It is the 15th
-        # variable in the standard ascii packet.
-        pitch = self.iwg.getVar(self.asciiparms, 15)
-        if self.rawscan['IWG1line']['values'][pitch]['val'] == '':
-            self.rawscan['IWG1line']['values'][pitch]['val'] = \
+        if self.rawscan['IWG1line']['values'][self.pitch]['val'] == '':
+            self.rawscan['IWG1line']['values'][self.pitch]['val'] = \
                 self.defaultPitch
-        return(self.rawscan['IWG1line']['values'][pitch]['val'])
+        return(self.rawscan['IWG1line']['values'][self.pitch]['val'])
 
-    def roll(self):
+    def getRoll(self):
         """ Return scan average aircraft roll """
-        # Get roll variable name from ascii_parms file. It is the 16th variable
-        # in the standard ascii packet.
-        roll = self.iwg.getVar(self.asciiparms, 16)
-        if self.rawscan['IWG1line']['values'][roll]['val'] == '':
-            self.rawscan['IWG1line']['values'][roll]['val'] = self.defaultRoll
-        return(self.rawscan['IWG1line']['values'][roll]['val'])
+        if self.rawscan['IWG1line']['values'][self.roll]['val'] == '':
+            self.rawscan['IWG1line']['values'][self.roll]['val'] = \
+                self.defaultRoll
+        return(self.rawscan['IWG1line']['values'][self.roll]['val'])
 
-    def palt(self):
+    def getPalt(self):
         """ Return scan average pressure altitude in km """
-        # Get pressure altitude variable name from ascii_parms file. It is the
-        # 5th variable in the standard ascii packet.
-        paltf = self.iwg.getVar(self.asciiparms, 5)
         # Check if var name has an 'F' in it. PALTF is the standard, but
         # just in case...
-        if 'F' not in paltf:
+        if 'F' not in self.paltf:
             logger.printmsg("warning", "Cannot confirm that IWG packet " +
                             "contains pressure altitude in feet. Units " +
                             "may be wrong in A line")
-        var = self.rawscan['IWG1line']['values'][paltf]['val']
+        var = self.rawscan['IWG1line']['values'][self.paltf]['val']
         return(float(var) * 0.0003048)  # Feet to km
 
-    def atx(self):
+    def getAtx(self):
         """ Return scan average air temperature """
-        # Get air temperature variable name from ascii_parms file. It is the
-        # 19th variable in the standard ascii packet.
-        atx = self.iwg.getVar(self.asciiparms, 19)
         # Return air temperature in Kelvin (convert C to K)
-        return(float(self.rawscan['IWG1line']['values'][atx]['val']) + 273.15)
+        return(float(self.rawscan['IWG1line']['values'][self.atx]['val']) +
+               273.15)
 
-    def lat(self):
+    def getLat(self):
         """ Return scan average aircraft latitude """
-        # Get latitude variable name from ascii_parms file. It is the
-        # 1st variable in the standard ascii packet.
-        lat = self.iwg.getVar(self.asciiparms, 1)
-        return(self.rawscan['IWG1line']['values'][lat]['val'])
+        return(self.rawscan['IWG1line']['values'][self.lat]['val'])
 
-    def lon(self):
+    def getLon(self):
         """ Return scan average aircraft longitude """
-        # Get longitude variable name from ascii_parms file. It is the
-        # 2nd variable in the standard ascii packet.
-        lon = self.iwg.getVar(self.asciiparms, 2)
-        return(self.rawscan['IWG1line']['values'][lon]['val'])
+        return(self.rawscan['IWG1line']['values'][self.lon]['val'])
