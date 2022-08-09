@@ -91,21 +91,23 @@ class MTPProbeMove():
         #        (sets the current position; suspect this is the magic that
         #         lets the 'D' command work.)
         # - b'U/1P10' -> Move motor 10 steps in positive direction.
-        #        (No idea why this backup is needed.
-        #         Need to double check the VB6. - JAA)
-        if not self.sendHome("home2"):  # not success - warn user
+        success = self.sendHome("home2")
+        i = 0
+        while not success and i < 2:  # not success - try twice more
             # After a Bline, home2 needs more time to complete so sleep
             # and try again.
             time.sleep(0.03)
-            if not self.sendHome("home2"):  # not success - warn user
-                logger.printmsg('warning', "Continuing on even though " +
-                                           "stepper still reports moving")
-                success = False
+            success = self.sendHome("home2")  # not success - warn user
+            if not success:
+                logger.printmsg('warning', "Stepper still reports moving,"
+                                " keep trying.")
+            i = i + 1
 
         if success:
             logger.printmsg('info', "home successful")
         else:
-            logger.printmsg('info', "home nominally successful")
+            logger.printmsg('warning', "Continuing on even though stepper " +
+                                       "still reports moving")
 
         return True
 
@@ -177,7 +179,7 @@ class MTPProbeMove():
         # Return True if stepper done moving
         return(self.moveWait("move", echo, 3))
 
-    def isMovePossibleFromHome(self, maxDebugAttempts=12):
+    def isMovePossibleFromHome(self):
         """
         Returns: True if move is possible otherwise does debugging
         """
@@ -200,7 +202,9 @@ class MTPProbeMove():
 
         # Check that integrator has finished
         s = self.init.getStatus()
-        if self.init.integratorBusy(int(s)):
+        success = self.init.integratorBusy(int(s))
+        i = 0
+        while not success and i < 2:  # not success - try twice more
             # send integrate and read to clear integrator bit.
             cmd = self.commandDict.getCommand("count")
             self.serialPort.write(cmd)
@@ -210,13 +214,17 @@ class MTPProbeMove():
             self.init.readEchos(2, cmd)
 
             s = self.init.getStatus()
-            if self.init.integratorBusy(int(s)):
-                # Move not possible because couldn't clear integrator
-                logger.printmsg('error', "Move not possible. Couldn't" +
-                                " clear integrator")
-                return(False)
-            else:
-                logger.printmsg('info', "Integrator finished - OK to move")
+            success = self.init.integratorBusy(int(s))
+            if not success:  # Couldn't clear integrator
+                logger.printmsg('warning', "Integrator not clearing,"
+                                " keep trying.")
+            i = i + 1
+
+        if not success:
+            # Move not possible because couldn't clear integrator
+            logger.printmsg('warning', "Continuing on even though could not" +
+                                       " clear integrator")
+            return(False)
         else:
             logger.printmsg('info', "Integrator finished - OK to move")
 
