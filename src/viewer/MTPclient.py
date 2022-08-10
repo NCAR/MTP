@@ -90,7 +90,8 @@ class MTPclient():
         file.
         """
         # Initialize the IWG reader
-        self.iwg = IWG(self.reader.getRawscan())
+        rawscan = self.reader.getRawscan()
+        self.iwg = IWG(rawscan['IWG1line'])
 
         # Initialize the IWG section of the MTP dictionary using the variable
         # list provided in the ascii_parms file.
