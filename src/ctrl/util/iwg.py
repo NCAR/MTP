@@ -1,7 +1,6 @@
 ###############################################################################
 # MTP-specific functions for storing and manipulating IWG packets. Uses
-# util/readiwg which assumes an MTPrecord exists, so create one here specific
-# to control program needs.
+# util/readiwg.
 #
 # Written in Python 3
 #
@@ -11,20 +10,15 @@ import re
 import copy
 import socket
 from util.readiwg import IWG
-from util.MTP import MTPrecord
+from util.IWG import IWGrecord
 from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
 class MTPiwg():
 
     def __init__(self):
-        # Dictionary to hold IWG data. This is a complete MTP record dictionary
-        # which is overkill at this point, but I am not sure if being able to
-        # hold the entire MTP record will be useful later, so for now
-        # instantiate the entire thing. To work with IWG data, a single record
-        # holds a pointer to the current data as well as a history of the last
-        # n IWG packets. (not sure what N is yet..)
-        self.rawscan = copy.deepcopy(MTPrecord)
+        # Dictionary to hold IWG data.
+        self.iwgrecord = copy.deepcopy(IWGrecord)
 
         # Average in-flight pitch/roll is about 2.7/0
         self.defaultPitch = 2.7
@@ -50,7 +44,7 @@ class MTPiwg():
         self.asciiparms = asciiparms
 
         # Initialize the IWG reader
-        self.iwg = IWG(self.rawscan['IWG1line'])
+        self.iwg = IWG(self.iwgrecord)
 
         # Initialize the IWG section of the MTP dictionary using the variable
         # list provided in the ascii_parms file.
@@ -68,13 +62,12 @@ class MTPiwg():
         # Set average in-flight pitch/roll so that if not receiving IWG,
         # we have something. Also set remaining IWG values to zero so they
         # aren't nan. But keep them non-physical so they are obvious
-        self.rawscan['IWG1line']['values'][self.pitch]['val'] = \
-            self.defaultPitch
-        self.rawscan['IWG1line']['values'][self.roll]['val'] = self.defaultRoll
-        self.rawscan['IWG1line']['values'][self.paltf]['val'] = 0
-        self.rawscan['IWG1line']['values'][self.atx]['val'] = 0
-        self.rawscan['IWG1line']['values'][self.lat]['val'] = 0
-        self.rawscan['IWG1line']['values'][self.lon]['val'] = 0
+        self.iwgrecord['values'][self.pitch]['val'] = self.defaultPitch
+        self.iwgrecord['values'][self.roll]['val'] = self.defaultRoll
+        self.iwgrecord['values'][self.paltf]['val'] = 0
+        self.iwgrecord['values'][self.atx]['val'] = 0
+        self.iwgrecord['values'][self.lat]['val'] = 0
+        self.iwgrecord['values'][self.lon]['val'] = 0
 
     def readIWG(self):
         """ Tell client to read latest IWG record and save to dictionary """
@@ -93,31 +86,29 @@ class MTPiwg():
         status = self.iwg.parseIwgPacket(self.dataI, self.asciiparms)
         if status is True:  # Successful parse of IWG packet
             # Store to date, data, & asciiPacket
-            if 're' in self.rawscan['IWG1line']:
-                m = re.match(re.compile(self.rawscan['IWG1line']['re']),
+            if 're' in self.iwgrecord:
+                m = re.match(re.compile(self.iwgrecord['re']),
                              self.dataI)
-                self.rawscan['IWG1line']['date'] = m.group(1)  # packet time
-                self.rawscan['IWG1line']['data'] = m.group(2).rstrip('\r')
-                self.rawscan['IWG1line']['asciiPacket'] = \
+                self.iwgrecord['date'] = m.group(1)  # packet time
+                self.iwgrecord['data'] = m.group(2).rstrip('\r')
+                self.iwgrecord['asciiPacket'] = \
                     self.dataI.rstrip('\r')
 
     def getIWG(self):
         """ Return the complete IWG line as received """
-        return(self.rawscan['IWG1line']['asciiPacket'])
+        return(self.iwgrecord['asciiPacket'])
 
     def getPitch(self):
         """ Return scan average aircraft pitch """
-        if self.rawscan['IWG1line']['values'][self.pitch]['val'] == '':
-            self.rawscan['IWG1line']['values'][self.pitch]['val'] = \
-                self.defaultPitch
-        return(self.rawscan['IWG1line']['values'][self.pitch]['val'])
+        if self.iwgrecord['values'][self.pitch]['val'] == '':
+            self.iwgrecord['values'][self.pitch]['val'] = self.defaultPitch
+        return(self.iwgrecord['values'][self.pitch]['val'])
 
     def getRoll(self):
         """ Return scan average aircraft roll """
-        if self.rawscan['IWG1line']['values'][self.roll]['val'] == '':
-            self.rawscan['IWG1line']['values'][self.roll]['val'] = \
-                self.defaultRoll
-        return(self.rawscan['IWG1line']['values'][self.roll]['val'])
+        if self.iwgrecord['values'][self.roll]['val'] == '':
+            self.iwgrecord['values'][self.roll]['val'] = self.defaultRoll
+        return(self.iwgrecord['values'][self.roll]['val'])
 
     def getPalt(self):
         """ Return scan average pressure altitude in km """
@@ -127,19 +118,18 @@ class MTPiwg():
             logger.printmsg("warning", "Cannot confirm that IWG packet " +
                             "contains pressure altitude in feet. Units " +
                             "may be wrong in A line")
-        var = self.rawscan['IWG1line']['values'][self.paltf]['val']
+        var = self.iwgrecord['values'][self.paltf]['val']
         return(float(var) * 0.0003048)  # Feet to km
 
     def getAtx(self):
         """ Return scan average air temperature """
         # Return air temperature in Kelvin (convert C to K)
-        return(float(self.rawscan['IWG1line']['values'][self.atx]['val']) +
-               273.15)
+        return(float(self.iwgrecord['values'][self.atx]['val']) + 273.15)
 
     def getLat(self):
         """ Return scan average aircraft latitude """
-        return(self.rawscan['IWG1line']['values'][self.lat]['val'])
+        return(self.iwgrecord['values'][self.lat]['val'])
 
     def getLon(self):
         """ Return scan average aircraft longitude """
-        return(self.rawscan['IWG1line']['values'][self.lon]['val'])
+        return(self.iwgrecord['values'][self.lon]['val'])
