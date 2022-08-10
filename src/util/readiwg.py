@@ -13,9 +13,10 @@ from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 class IWG:
 
-    def __init__(self, rawscan):
+    def __init__(self, iwgrecord):
+        """ This class takes as input an IWGrecord dictionary """
 
-        self.rawscan = rawscan
+        self.iwg = iwgrecord
         # Flag to indicate when parseIwgPacket has thrown an error.
         self.ERROR_FLAG = False
 
@@ -46,9 +47,9 @@ class IWG:
     def getVar(self, asciiparms, index):
         """ Get the index'th var from ascii parms file. """
 
-        for var in self.rawscan['IWG1line']['values']:
+        for var in self.iwg['values']:
             if var != 'DATE' and var != 'TIME':
-                if self.rawscan['IWG1line']['values'][var]['idx'] == index + 1:
+                if self.iwg['values'][var]['idx'] == index + 1:
                     newVar = var
                     break
 
@@ -57,7 +58,7 @@ class IWG:
     def createPacket(self, newVar):
         """ Create the IWG1line section of the MTP dictionary dynamically """
 
-        self.rawscan['IWG1line']['values'][newVar] = \
+        self.iwg['values'][newVar] = \
             {'val': numpy.nan, 'idx': self.index}
         self.index = self.index + 1
         if self.index > 32:  # Only keep first 31 values; rest are user vals
@@ -67,7 +68,7 @@ class IWG:
 
     def getIwgPacket(self):
         """  Return the IWG packet to the caller """
-        return(self.rawscan['IWG1line']['asciiPacket'])
+        return(self.iwg['asciiPacket'])
 
     def parseIwgPacket(self, IWGpacket, ascii_parms_file):
         """
@@ -89,31 +90,30 @@ class IWG:
         m = re.match("(........)T(..)(..)(..)", self.values[1])
         if (m):
             # Save YYYYMMDD to variable DATE
-            self.rawscan['IWG1line']['values']['DATE']['val'] = m.group(1)
+            self.iwg['values']['DATE']['val'] = m.group(1)
             # Save seconds since midnight to variable TIME
-            self.rawscan['IWG1line']['values']['TIME']['val'] = \
+            self.iwg['values']['TIME']['val'] = \
                 int(m.group(2))*3600+int(m.group(3))*60+int(m.group(4))
 
         # If length of values read in from ascii_parms file doesn't match
         # length of IWG1 packet received, warn user. len below includes date
         # and time.
-        if len(self.rawscan['IWG1line']['values']) != len(self.values):
+        if len(self.iwg['values']) != len(self.values):
             self.ERROR_FLAG = True
             logger.printmsg("ERROR", "IWG packet being received on UDP feed " +
                             "has a different number of values (" +
                             str(len(self.values)) + ") than listed in " +
                             "ascii_parms file (" +
-                            str(len(self.rawscan['IWG1line']['values'])) +
+                            str(len(self.iwg['values'])) +
                             ") in config dir " + ascii_parms_file +
                             ". Should be 33.")
             exit(1)
 
         # Parse the rest of the line and assign variables to the data
         # dictionary
-        for key in self.rawscan['IWG1line']['values']:
+        for key in self.iwg['values']:
             if (key != 'DATE' and key != 'TIME'):
-                self.rawscan['IWG1line']['values'][key]['val'] = \
-                    self.values[int(self.rawscan['IWG1line']['values']
-                                                [key]['idx'])]
+                self.iwg['values'][key]['val'] = \
+                    self.values[int(self.iwg['values'][key]['idx'])]
 
         return(True)  # Successful parse of IWG packet

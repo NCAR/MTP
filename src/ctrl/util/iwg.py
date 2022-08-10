@@ -50,7 +50,7 @@ class MTPiwg():
         self.asciiparms = asciiparms
 
         # Initialize the IWG reader
-        self.iwg = IWG(self.rawscan)
+        self.iwg = IWG(self.rawscan['IWG1line'])
 
         # Initialize the IWG section of the MTP dictionary using the variable
         # list provided in the ascii_parms file.
