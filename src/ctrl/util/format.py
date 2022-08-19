@@ -32,6 +32,10 @@ class MTPDataFormat():
         # Determine how long it takes to create a raw record
         firstTime = datetime.datetime.now(datetime.timezone.utc)
 
+        # Clear the list of IWG records so can collect records during the
+        # current scan
+        self.iwg.clearIWG()
+
         # Get the Bline data
         move.moveHome()
         raw = self.readBline(move) + '\n'  # Read B data from probe
@@ -65,7 +69,14 @@ class MTPDataFormat():
         raw = raw + self.readPTline() + '\n'  # Read PT data from the probe
         raw = raw + self.readEline() + '\n'  # Read E data from the probe
 
+        # Average the IWG over the scan and reset the dictionary in prep for
+        # next scan averaging
+        self.iwg.averageIWG()
+
         # Get the IWG line
+        # This will be the most recent instantaneous IWG line receive from the
+        # GV and so might be a second more recent than the lines used in the
+        # scan average above
         IWG = self.iwg.getIWG()
 
         # Generate A line
@@ -103,19 +114,22 @@ class MTPDataFormat():
         return(udpLine)
 
     def readAline(self, ScanCount, EncoderCount):
-        """ Create Aline from the IWG packet """
-        aline = "%+06.2f " % float(self.iwg.getPitch())  # SAPITCH
-        aline = aline + "00.00 "  # SRPITCH
-        aline = aline + "%+06.2f " % float(self.iwg.getRoll())   # SAROLL
-        aline = aline + "00.00 "  # SRROLL
-        aline = aline + "%+06.2f " % float(self.iwg.getPalt())   # SAPALT
-        aline = aline + "0.00 "  # SRPALT
-        aline = aline + "%+06.2f " % float(self.iwg.getAtx())    # SAAT
-        aline = aline + "00.00 "  # SRAT
-        aline = aline + "%+07.3f " % float(self.iwg.getLat())    # SALAT
-        aline = aline + "+0.000 "  # SRLAT
-        aline = aline + "%+07.3f " % float(self.iwg.getLon())    # SALON
-        aline = aline + "+0.000 "  # SRLON
+        """
+        Create Aline from the average over IWG packets received during the scan
+        interval
+        """
+        aline = "%+06.2f " % float(self.iwg.getSAPitch())  # SAPITCH
+        aline = aline + "%05.2f " % float(self.iwg.getSRPitch())  # SRPITCH
+        aline = aline + "%+06.2f " % float(self.iwg.getSARoll())  # SAROLL
+        aline = aline + "%05.2f " % float(self.iwg.getSRRoll())   # SRROLL
+        aline = aline + "%+06.2f " % float(self.iwg.getSAPalt())  # SAPALT
+        aline = aline + "%04.2f " % float(self.iwg.getSRPalt())   # SRPALT
+        aline = aline + "%+06.2f " % float(self.iwg.getSAAtx())   # SAAT
+        aline = aline + "%05.2f " % float(self.iwg.getSRAtx())    # SRAT
+        aline = aline + "%+07.3f " % float(self.iwg.getSALat())   # SALAT
+        aline = aline + "%+06.3f " % float(self.iwg.getSRLat())   # SRLAT
+        aline = aline + "%+07.3f " % float(self.iwg.getSALon())   # SALON
+        aline = aline + "%+06.3f " % float(self.iwg.getSRLon())   # SRLON
 
         # Format ScanCount and EncoderCount and add to end of aline
         aline = aline + "%+07d %+07d " % (ScanCount, EncoderCount)
