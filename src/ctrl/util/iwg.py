@@ -239,11 +239,17 @@ class MTPiwg():
 
     def getSAPalt(self):
         """ Return scan average pressure altitude in km """
-        return(self.sapalt * 0.0003048)  # Feet to km
+        if self.sapalt == self.missing:
+            return(self.missing)  # Don't apply unit conversion
+        else:
+            return(self.sapalt * 0.0003048)  # Feet to km
 
     def getSRPalt(self):
         """ Return scan RMSE pressure altitude in km """
-        return(self.srpalt * 0.0003048)  # Feet to km
+        if self.srpalt == self.missing:
+            return(self.missing)  # Don't apply unit conversion
+        else:
+            return(self.srpalt * 0.0003048)  # Feet to km
 
     def getAtx(self):
         """ Return instantaneous air temperature """
@@ -252,7 +258,10 @@ class MTPiwg():
 
     def getSAAtx(self):
         """ Return scan average air temperature """
-        return(self.saatx + 273.15)  # C to K
+        if self.saatx == self.missing:
+            return(self.missing)  # Don't apply unit conversion
+        else:
+            return(self.saatx + 273.15)  # C to K
 
     def getSRAtx(self):
         """ Return scan RMSE air temperature """

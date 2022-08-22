@@ -209,3 +209,11 @@ class TESTMTPiwg(unittest.TestCase):
         self.assertEqual("%+06.3f " % float(self.MTPiwg.srlat), "+0.001 ")
         self.assertEqual("%+07.3f " % float(self.MTPiwg.salon), "+172.539 ")
         self.assertEqual("%+06.3f " % float(self.MTPiwg.srlon), "+0.001 ")
+
+    def test_missingPaltAtx(self):
+        # Confirm return missing without unit conversion applied
+        self.MTPiwg.sapalt = self.MTPiwg.missing
+        self.MTPiwg.srpalt = self.MTPiwg.missing
+        self.MTPiwg.saatx = self.MTPiwg.missing
+        self.assertEqual(self.MTPiwg.getSAAtx(), self.MTPiwg.missing)
+        self.assertEqual(self.MTPiwg.getSRPalt(), self.MTPiwg.missing)
