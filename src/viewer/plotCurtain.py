@@ -75,17 +75,12 @@ class Curtain(QMainWindow):
 
         self.layout.addWidget(self.canvas, 0, 0)
 
-        # Configure axis label and limits so looks like what expect even if
-        # data not flowing. When data is plotting, this is cleared and
-        # re-configured. See plotCurtain()
-        self.configureAxis()
-
     def getWindow(self):
 
         # Return pointer to the graphics window
         return(self.canvas)
 
-    def configureAxis(self):
+    def configureAxis(self, realtime):
         """ Configure axis labels and limits """
 
         # set limits and label for left Y axis (km)
@@ -109,12 +104,19 @@ class Curtain(QMainWindow):
         levels = MaxNLocator(nbins=33).tick_values(self.minCmap, self.maxCmap)
         self.norm = BoundaryNorm(levels, ncolors=self.cmap.N, clip=True)
 
-    def clear(self):
+        # Add watermark for preliminary data if in realtime mode
+        if realtime:
+            self.ax.text(0.5, 0.5, 'preliminary data',
+                         transform=self.ax.transAxes, fontsize=40,
+                         color='gray', alpha=0.5, ha='center', va='center',
+                         rotation='30')
+
+    def clear(self, realtime):
         # Clear the plot of data, labels and formatting.
         self.ax.clear()
         self.axR.clear()
         # Add back the labels and formatting
-        self.configureAxis()
+        self.configureAxis(realtime)
 
     def addAltTemp(self, temperature, altitude, ACAlt):
         """ Build 2-D arrays: altitudes and temperatures
