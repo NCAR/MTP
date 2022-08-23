@@ -5,6 +5,7 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2022
 ###############################################################################
+from numpy import isnan
 import datetime
 from ctrl.util.pointing import pointMTP
 from EOLpython.Qlogger.messageHandler import QLogger as logger
@@ -136,18 +137,36 @@ class MTPDataFormat():
         Create Aline from the average over IWG packets received during the scan
         interval
         """
-        aline = "%+06.2f " % float(self.iwg.getSAPitch())  # SAPITCH
-        aline = aline + "%05.2f " % float(self.iwg.getSRPitch())  # SRPITCH
-        aline = aline + "%+06.2f " % float(self.iwg.getSARoll())  # SAROLL
-        aline = aline + "%05.2f " % float(self.iwg.getSRRoll())   # SRROLL
-        aline = aline + "%+06.2f " % float(self.iwg.getSAPalt())  # SAPALT
-        aline = aline + "%04.2f " % float(self.iwg.getSRPalt())   # SRPALT
-        aline = aline + "%+06.2f " % float(self.iwg.getSAAtx())   # SAAT
-        aline = aline + "%05.2f " % float(self.iwg.getSRAtx())    # SRAT
-        aline = aline + "%+07.3f " % float(self.iwg.getSALat())   # SALAT
-        aline = aline + "%+06.3f " % float(self.iwg.getSRLat())   # SRLAT
-        aline = aline + "%+07.3f " % float(self.iwg.getSALon())   # SALON
-        aline = aline + "%+06.3f " % float(self.iwg.getSRLon())   # SRLON
+        # Since I am not sure if the VB6 code can handle nan values, replace
+        # them with -99 values. This should go away if/when the post-processing
+        # software is written in Python.
+        aline = "%+06.2f " % self.iwg.getSAPitch()  # SAPITCH
+        srpitch = self.iwg.getSRPitch()  # SRPITCH
+        aline = aline + "%05.2f " % (-9.99 if isnan(srpitch) else srpitch)
+
+        aline = aline + "%+06.2f " % self.iwg.getSARoll()  # SAROLL
+        srroll = self.iwg.getSRRoll()  # SRROLL
+        aline = aline + "%05.2f " % (-9.99 if isnan(srroll) else srroll)
+
+        sapalt = self.iwg.getSAPalt()  # SAPALT
+        aline = aline + "%+06.2f " % (-99.99 if isnan(sapalt) else sapalt)
+        srpalt = self.iwg.getSRPalt()  # SRPALT
+        aline = aline + "%4.2f " % (-.99 if isnan(srpalt) else srpalt)
+
+        saatx = self.iwg.getSAAtx()  # SAAT
+        aline = aline + "%6.2f " % (-99.99 if isnan(saatx) else saatx)
+        sratx = self.iwg.getSRAtx()  # SRAT
+        aline = aline + "%05.2f " % (-9.99 if isnan(sratx) else sratx)
+
+        salat = self.iwg.getSALat()  # SALAT
+        aline = aline + "%+07.3f " % (-99.999 if isnan(salat) else salat)
+        srlat = self.iwg.getSRLat()  # SRLAT
+        aline = aline + "%+06.3f " % (-9.999 if isnan(srlat) else srlat)
+
+        salon = self.iwg.getSALon()  # SALON
+        aline = aline + "%+08.3f " % (-999.999 if isnan(salon) else salon)
+        srlon = self.iwg.getSRLon()  # SRLON
+        aline = aline + "%+06.3f " % (-9.999 if isnan(srlon) else srlon)
 
         return(aline)
 
