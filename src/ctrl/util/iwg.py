@@ -126,7 +126,7 @@ class MTPiwg():
         self.srlon = self.missing
 
         if len(self.scanIWGlist) == 0:
-            return()  # Nothing to average so bail
+            return(False)  # Nothing to average so bail
 
         # calculate avg and rmse pitch
         valueList = self.getVals(self.pitch)
@@ -193,6 +193,27 @@ class MTPiwg():
     def getIWG(self):
         """ Return the complete IWG line as received """
         return(self.iwgrecord['asciiPacket'])
+
+    def saveAvg(self, date, aline):
+        """
+        Save the time and values from the last average so that if IWG drops
+        out, the most recent average can be recovered
+        """
+        self.iwgrecord['date'] = date
+        self.iwgrecord['data'] = aline
+
+    def getLastAvgTime(self):
+        """ Get the time of the last successful average """
+        if self.iwgrecord['date'] != "":
+            return(self.iwgrecord['date'])
+        else:
+            return("")  # Never had IWG
+
+    def getAvgAline(self):
+        """
+        Get the IWG average portion of the A line from last successful average
+        """
+        return(self.iwgrecord['data'])
 
     def getPitch(self):
         """ Return instantaneous aircraft pitch """
