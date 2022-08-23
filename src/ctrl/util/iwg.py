@@ -28,9 +28,6 @@ class MTPiwg():
         self.defaultPitch = 2.7
         self.defaultRoll = 0.0
 
-        # Define missing value
-        self.missing = -99.99
-
     def connectIWG(self, iwgport):
         # Connect to IWG UDP data stream
         self.sockI = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -71,10 +68,10 @@ class MTPiwg():
         # aren't nan. But keep them non-physical so they are obvious
         self.iwgrecord['values'][self.pitch]['val'] = self.defaultPitch
         self.iwgrecord['values'][self.roll]['val'] = self.defaultRoll
-        self.iwgrecord['values'][self.paltf]['val'] = self.missing
-        self.iwgrecord['values'][self.atx]['val'] = self.missing
-        self.iwgrecord['values'][self.lat]['val'] = self.missing
-        self.iwgrecord['values'][self.lon]['val'] = self.missing
+        self.iwgrecord['values'][self.paltf]['val'] = numpy.nan
+        self.iwgrecord['values'][self.atx]['val'] = numpy.nan
+        self.iwgrecord['values'][self.lat]['val'] = numpy.nan
+        self.iwgrecord['values'][self.lon]['val'] = numpy.nan
 
     def readIWG(self):
         """ Tell client to read latest IWG record and save to dictionary """
@@ -112,18 +109,18 @@ class MTPiwg():
         Calculate the average pitch, roll, palt, atx, lat, and lon from the
         values collected during the current scan
         """
-        self.sapitch = self.missing
-        self.srpitch = self.missing
-        self.saroll = self.missing
-        self.srroll = self.missing
-        self.sapalt = self.missing
-        self.srpalt = self.missing
-        self.saatx = self.missing
-        self.sratx = self.missing
-        self.salat = self.missing
-        self.srlat = self.missing
-        self.salon = self.missing
-        self.srlon = self.missing
+        self.sapitch = numpy.nan
+        self.srpitch = numpy.nan
+        self.saroll = numpy.nan
+        self.srroll = numpy.nan
+        self.sapalt = numpy.nan
+        self.srpalt = numpy.nan
+        self.saatx = numpy.nan
+        self.sratx = numpy.nan
+        self.salat = numpy.nan
+        self.srlat = numpy.nan
+        self.salon = numpy.nan
+        self.srlon = numpy.nan
 
         if len(self.scanIWGlist) == 0:
             return(False)  # Nothing to average so bail
@@ -175,7 +172,7 @@ class MTPiwg():
         """ Calculate RMSE from a list of values and their average """
         rmse = 0
         if len(valueList) == 0:
-            return(self.missing)  # Nothing to find RMSE so return missing
+            return(numpy.nan)  # Nothing to find RMSE so return missing
         else:
             for val in valueList:
                 rmse = rmse + (float(val) - avg)**2
@@ -186,7 +183,7 @@ class MTPiwg():
     def avg(self, valueList):
         """ Calculate the average of a list of values """
         if len(valueList) == 0:
-            return(self.missing)  # Nothing to average so return missing
+            return(numpy.nan)  # Nothing to average so return missing
         else:
             return(sum(valueList)/len(valueList))
 
@@ -223,7 +220,7 @@ class MTPiwg():
 
     def getSAPitch(self):
         """ Return scan average aircraft pitch """
-        if self.sapitch == self.missing:
+        if numpy.isnan(self.sapitch):
             self.sapitch = self.defaultPitch
         return(self.sapitch)
 
@@ -239,7 +236,7 @@ class MTPiwg():
 
     def getSARoll(self):
         """ Return scan average aircraft roll """
-        if self.saroll == self.missing:
+        if numpy.isnan(self.saroll):
             self.saroll = self.defaultRoll
         return(self.saroll)
 
@@ -260,17 +257,11 @@ class MTPiwg():
 
     def getSAPalt(self):
         """ Return scan average pressure altitude in km """
-        if self.sapalt == self.missing:
-            return(self.missing)  # Don't apply unit conversion
-        else:
-            return(self.sapalt * 0.0003048)  # Feet to km
+        return(self.sapalt * 0.0003048)  # Feet to km
 
     def getSRPalt(self):
         """ Return scan RMSE pressure altitude in km """
-        if self.srpalt == self.missing:
-            return(self.missing)  # Don't apply unit conversion
-        else:
-            return(self.srpalt * 0.0003048)  # Feet to km
+        return(self.srpalt * 0.0003048)  # Feet to km
 
     def getAtx(self):
         """ Return instantaneous air temperature """
@@ -279,10 +270,7 @@ class MTPiwg():
 
     def getSAAtx(self):
         """ Return scan average air temperature """
-        if self.saatx == self.missing:
-            return(self.missing)  # Don't apply unit conversion
-        else:
-            return(self.saatx + 273.15)  # C to K
+        return(self.saatx + 273.15)  # C to K
 
     def getSRAtx(self):
         """ Return scan RMSE air temperature """
