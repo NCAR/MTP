@@ -1,6 +1,7 @@
 ###############################################################################
 #
-# This python dictionary stores the content of a single IWG record
+# This python dictionary stores the content of a single IWG record, or of an
+# average over a set of IWG records
 #
 # Written in Python 3
 #

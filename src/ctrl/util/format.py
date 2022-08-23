@@ -71,16 +71,34 @@ class MTPDataFormat():
 
         # Average the IWG over the scan and reset the dictionary in prep for
         # next scan averaging
-        self.iwg.averageIWG()
+        if self.iwg.averageIWG():
+            # Generate A line
+            self.aline = self.readAline()
+
+            # Save average, including time, so that if IWG drops out we can use
+            # previous values for up to 10 minutes.
+            self.iwg.saveAvg(self.nowTime, self.aline)
+
+        else:
+            # No new IWG data, so use previous average for up to 10 minutes,
+            # else report missing.
+            lastTime = self.iwg.getLastAvgTime()
+            if lastTime != "" \
+               and self.nowTime-lastTime < datetime.timedelta(minutes=10):
+                self.aline = self.iwg.getAvgAline()
+            else:
+                self.aline = self.readAline()  # Create missing A line
 
         # Get the IWG line
         # This will be the most recent instantaneous IWG line receive from the
         # GV and so might be a second more recent than the lines used in the
         # scan average above
         IWG = self.iwg.getIWG()
+        if IWG == "":  # Have not received any IWG data at all yet.
+            IWG = 'IWG1,99999999T999999'
 
-        # Generate A line
-        self.aline = self.readAline(ScanCount, EncoderCount)
+        # Format ScanCount and EncoderCount and add to end of aline
+        self.aline = self.aline + "%+07d %+07d " % (ScanCount, EncoderCount)
 
         # Put it all together to create the RAW record
         rawRecord = 'A ' + RAWformattedTime + self.aline + '\n' + IWG + \
@@ -113,7 +131,7 @@ class MTPDataFormat():
 
         return(udpLine)
 
-    def readAline(self, ScanCount, EncoderCount):
+    def readAline(self):
         """
         Create Aline from the average over IWG packets received during the scan
         interval
@@ -130,9 +148,6 @@ class MTPDataFormat():
         aline = aline + "%+06.3f " % float(self.iwg.getSRLat())   # SRLAT
         aline = aline + "%+07.3f " % float(self.iwg.getSALon())   # SALON
         aline = aline + "%+06.3f " % float(self.iwg.getSRLon())   # SRLON
-
-        # Format ScanCount and EncoderCount and add to end of aline
-        aline = aline + "%+07d %+07d " % (ScanCount, EncoderCount)
 
         return(aline)
 
