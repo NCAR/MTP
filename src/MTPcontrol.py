@@ -79,6 +79,7 @@ def main():
     # Instantiate client which handles user commands
     try:
         client = MTPClient(rawfilename)
+        client.writeFileTime(nowTime.strftime("%H:%M:%S %m-%d-%Y"))
     except Exception as e:
         logger.printmsg("error", "Unable to open Raw file: " + e)
         print("ERROR: Unable to open Raw data output file: " + e)

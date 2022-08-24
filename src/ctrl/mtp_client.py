@@ -218,6 +218,14 @@ class MTPClient():
         logger.printmsg("info", "udp creation took " +
                         str(udpTime-writeTime))
 
+    def writeFileTime(self, time):
+        """
+        Write a line giving the file open time as the first line of the raw
+        data file.
+        """
+        self.rawfile.write("Instrument on " + time)
+        self.rawfile.flush()
+
     def writeRaw(self, raw):
         self.rawfile.write(raw)
         self.rawfile.flush()
