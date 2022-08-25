@@ -156,7 +156,7 @@ class MTPClient():
             logger.printmsg("info", "Unknown command. Please try again.")
 
     def cycle(self, app=None):
-        self.cycle = True
+        self.cycleMode = True
         success = self.initProbe()  # Initialize probe. Return true if success
         if not success:  # Keep trying
             logger.printmsg("info", "Init failed. Trying again")
@@ -171,7 +171,7 @@ class MTPClient():
             time.sleep(1)  # Emulate manual response time. Prob not needed
             success = self.move.moveHome()
 
-        while self.cycle is True:  # Cycle probe until user requests exit
+        while self.cycleMode is True:  # Cycle probe until user requests exit
             # In command line mode, capture keyboard strokes
             if self.gui is False:  # In command line mode
                 self.captureExit()
@@ -181,7 +181,7 @@ class MTPClient():
             self.createRawRec()
 
     def stopCycle(self):
-        self.cycle = False
+        self.cycleMode = False
 
     def captureExit(self):
         """
