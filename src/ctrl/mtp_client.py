@@ -13,14 +13,20 @@ import select
 import socket
 import time
 import datetime
+from ctrl.util.init import MTPProbeInit
+from ctrl.util.move import MTPProbeMove
+from ctrl.util.CIR import MTPProbeCIR
+from ctrl.util.format import MTPDataFormat
+from ctrl.lib.mtpcommand import MTPcommand
 from ctrl.test.manualProbeQuery import MTPQuery
 from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 
 class MTPClient():
 
-    def __init__(self, rawfilename):
+    def __init__(self, rawfilename, configfile, args, iwg):
         self.rawfilename = rawfilename
+        self.gui = args.gui
 
         # Open output file for raw data
         try:
@@ -35,6 +41,23 @@ class MTPClient():
         self.udp_ip = "192.168.84.255"
         self.ric_send_port = 32106  # 7 on the ground, 6 on the GV
         self.nidas_send_port = 30101
+
+        # Get ports from config file
+        port = configfile.getInt('udp_send_port')  # to send MTP UDP packets
+
+        # Dictionary of allowed commands to send to firmware
+        commandDict = MTPcommand()
+
+        self.init = MTPProbeInit(args, port, commandDict, args.loglevel, iwg)
+        self.move = MTPProbeMove(self.init, commandDict)
+        self.data = MTPProbeCIR(self.init, commandDict)
+        self.fmt = MTPDataFormat(self.init, self.data, commandDict, iwg)
+
+    def bootCheck(self):
+        return(self.init.bootCheck())
+
+    def clearBuffer(self):
+        self.init.clearBuffer()
 
     def close(self):
         # Close output file for raw data
@@ -63,60 +86,35 @@ class MTPClient():
         print("q = Manual Probe Query")
         print("x = Exit")
 
-    def readInput(self, cmdInput, init, move, data, fmt):
+    def initProbe(self):
+        # Initialize probe
+        status = self.init.init()
+        return(status)  # True if success, False if init failed
+
+    def readInput(self, cmdInput):
         if cmdInput == '0':
             # Print status
-            init.getStatus()
+            self.init.getStatus()
 
         elif cmdInput == '1':
             # Initialize probe
-            init.init()
+            self.initProbe()
 
         elif cmdInput == '2':
             # Move Home
-            move.moveHome()  # Returns true of moveHome successful
+            self.move.moveHome()  # Returns true of moveHome successful
 
         elif cmdInput == '3':
             """ Attempt a single move """
-            # Determine how long it takes to read three frequencies
-            firstTime = datetime.datetime.now(datetime.timezone.utc)
-
-            # Confirm in home position and ready to move (not integrating or
-            # already moving)
-            if (move.isMovePossibleFromHome()):
-
-                # Move to first angle in readBline
-                cmd, currentClkStep = fmt.getAngle(80, 0)
-                s = move.moveTo(cmd, data)
-                logger.printmsg('info', "First angle reached = " + str(s))
-
-                # Command finished
-                nowTime = datetime.datetime.now(datetime.timezone.utc)
-                logger.printmsg("info", "single move took " +
-                                str(nowTime-firstTime))
+            self.singleMoveTest()
 
         elif cmdInput == '4':
-            # Determine how long it takes to read three frequencies
-            firstTime = datetime.datetime.now(datetime.timezone.utc)
-
-            # Read data at current position for three frequencies
-            countStr = data.CIRS()
-
-            # Command finished
-            nowTime = datetime.datetime.now(datetime.timezone.utc)
-
-            logger.printmsg("info", "data from one position:" + str(countStr))
-            logger.printmsg("info", "freq triplet creation took " +
-                            str(nowTime-firstTime))
+            """ Attempt to read freq for all channels - no move """
+            self.readFreqTest()
 
         elif cmdInput == '5':
-            # Create E line
-            # Read data at current position for three frequencies and for
-            # noise diode on then off
-            # During scan looping, ensure send moveHome() before read Eline so
-            # are pointing at target
-            move.moveHome()
-            fmt.readEline()
+            """ Create an E line """
+            self.createElineTest()
 
         elif cmdInput == '6':
 
@@ -124,62 +122,30 @@ class MTPClient():
                             "6 seconds")
 
             # Make sure the buffer is clear before starting the scan.
-            init.clearBuffer()
+            self.clearBuffer()
 
             # move home
-            move.moveHome()  # After each B line, probe needs two move homes
-            move.moveHome()  # to clear move stat.
+            self.move.moveHome()  # After each B line, probe needs move home
+            self.move.moveHome()  # twice to clear move stat.
 
             # Create B line - need to ensure in home position first
-            fmt.readBline(move)
+            self.fmt.readBline(self.move)
 
         elif cmdInput == '7':
             # Create housekeeping lines
-            fmt.readM1line()
-            fmt.readM2line()
-            fmt.readPTline()
+            self.fmt.readM1line()
+            self.fmt.readM2line()
+            self.fmt.readPTline()
 
         elif cmdInput == '8':
-            self.createRawRec(move, fmt)
+            self.createRawRec()
 
         elif cmdInput == 'c':
-            success = init.init()  # Initialize probe. Return true if success
-            if not success:  # Keep trying
-                logger.printmsg("info", "Init failed. Trying again")
-                time.sleep(1)  # Emulate manual response time. Prob not needed
-                # Move home, then init again, because this is what I do
-                move.moveHome()
-                success = init.init()
-
-            success = move.moveHome()  # Move home. Returns true if successful
-            if not success:  # Keep trying
-                logger.printmsg("info", "Move home failed. Trying again")
-                time.sleep(1)  # Emulate manual response time. Prob not needed
-                success = move.moveHome()
-
-            while True:  # Cycle probe until user types 'x'
-                if os.name == 'nt':  # Windows
-                    read_ready = []
-                    # Click x to exit loop
-                    if msvcrt.kbhit():  # Catch if keyboard char hit
-                        read_ready.append(sys.stdin)
-                else:
-                    # Get user's menu selection. Read IWG while wait
-                    ports = [sys.stdin]
-                    read_ready, _, _ = select.select(ports, [], [], 0.15)
-
-                if sys.stdin in read_ready:
-                    cmdInput = sys.stdin.readline()
-                    cmdInput = str(cmdInput).strip('\n')
-                    if cmdInput == 'x':
-                        self.close()
-                        exit(1)
-
-                self.createRawRec(move, fmt)
+            self.cycle()
 
         elif cmdInput == 'q':
             # Go into binary command input mode
-            query = MTPQuery(init.getSerialPort())
+            query = MTPQuery(self.init.getSerialPort())
             query.query()
 
         elif cmdInput == 'x':
@@ -189,13 +155,62 @@ class MTPClient():
         else:
             logger.printmsg("info", "Unknown command. Please try again.")
 
-    def createRawRec(self, move, fmt):
+    def cycle(self, app=None):
+        self.cycle = True
+        success = self.initProbe()  # Initialize probe. Return true if success
+        if not success:  # Keep trying
+            logger.printmsg("info", "Init failed. Trying again")
+            time.sleep(1)  # Emulate manual response time. Prob not needed
+            # Move home, then init again, because this is what I do
+            self.move.moveHome()
+            success = self.initProbe()
+
+        success = self.move.moveHome()  # Move home. Returns true if successful
+        if not success:  # Keep trying
+            logger.printmsg("info", "Move home failed. Trying again")
+            time.sleep(1)  # Emulate manual response time. Prob not needed
+            success = self.move.moveHome()
+
+        while self.cycle is True:  # Cycle probe until user requests exit
+            # In command line mode, capture keyboard strokes
+            if self.gui is False:  # In command line mode
+                self.captureExit()
+            else:  # In GUI mode
+                app.processEvents()
+
+            self.createRawRec()
+
+    def stopCycle(self):
+        self.cycle = False
+
+    def captureExit(self):
+        """
+        Capture user keystroke and if 'x' exit program. Ignore all other input
+        """
+        if os.name == 'nt':  # Windows
+            read_ready = []
+            # Click x to exit loop
+            if msvcrt.kbhit():  # Catch if keyboard char hit
+                read_ready.append(sys.stdin)
+        else:
+            # Get user's menu selection.
+            ports = [sys.stdin]
+            read_ready, _, _ = select.select(ports, [], [], 0.15)
+
+        if sys.stdin in read_ready:
+            cmdInput = sys.stdin.readline()
+            cmdInput = str(cmdInput).strip('\n')
+            if cmdInput == 'x':
+                self.close()
+                exit(1)
+
+    def createRawRec(self):
         logger.printmsg("info", "sit tight - complete scans " +
                         "typically take 17s")
-
         firstTime = datetime.datetime.now(datetime.timezone.utc)
+
         # Create a raw record
-        raw = fmt.createRawRecord(move)
+        raw = self.fmt.createRawRecord(self.move)
         logger.printmsg("info", "RAW\n" + raw)
 
         # Command finished
@@ -211,7 +226,7 @@ class MTPClient():
                         str(writeTime-nowTime))
 
         # Create the UDP packet
-        udpLine = fmt.createUDPpacket()
+        udpLine = self.fmt.createUDPpacket()
         self.sendUDP(udpLine)
 
         udpTime = datetime.datetime.now(datetime.timezone.utc)
@@ -238,3 +253,46 @@ class MTPClient():
         if self.sock:  # Send to nidas ip needs to be 192.168.84.255
             self.sock.sendto(udpLine.encode(),
                              (self.udp_ip, self.nidas_send_port))
+
+    def singleMoveTest(self):
+        """ Test (and time) moving to first angle from home """
+        # Determine how long it takes to move to first angle
+        firstTime = datetime.datetime.now(datetime.timezone.utc)
+
+        # Confirm in home position and ready to move (not integrating or
+        # already moving)
+        if (self.move.isMovePossibleFromHome()):
+
+            # Move to first angle in readBline
+            cmd, currentClkStep = self.fmt.getAngle(80, 0)
+            s = self.move.moveTo(cmd, self.data)
+            logger.printmsg('info', "First angle reached = " + str(s))
+
+            # Command finished
+            nowTime = datetime.datetime.now(datetime.timezone.utc)
+            logger.printmsg("info", "single move took " +
+                            str(nowTime-firstTime))
+
+    def readFreqTest(self):
+        """ Test (and time) read freq for all channels - no move """
+        # Determine how long it takes to read three frequencies
+        firstTime = datetime.datetime.now(datetime.timezone.utc)
+
+        # Read data at current position for three frequencies
+        countStr = self.data.CIRS()
+
+        # Command finished
+        nowTime = datetime.datetime.now(datetime.timezone.utc)
+
+        logger.printmsg("info", "data from one position:" + str(countStr))
+        logger.printmsg("info", "freq triplet creation took " +
+                        str(nowTime-firstTime))
+
+    def createElineTest(self):
+        """ Create E line """
+        # Read data at current position for three frequencies and for
+        # noise diode on then off
+        # During scan looping, ensure send moveHome() before read Eline so
+        # are pointing at target
+        self.move.moveHome()
+        self.fmt.readEline()
