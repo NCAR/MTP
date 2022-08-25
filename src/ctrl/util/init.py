@@ -197,7 +197,7 @@ class MTPProbeInit():
         if self.loglevel == "DEBUG":
             buf = self.checkReadComplete(buf)  # Confirm got all responses
 
-        logger.printmsg('info', "read " + str(buf))
+        logger.printmsg('debug', "read " + str(buf))
         return buf
 
     def checkReadComplete(self, buf):
@@ -384,26 +384,10 @@ class MTPProbeInit():
 
         Returns: True on success, False on failure
         """
-        # Comments from Catherine
-        # if on first move status 6 for longer than expected
-        # aka command sent properly, but actual movement
-        # not initiated, need a Ctrl-c then re-init, re-home
-        # Since this is not implemented, if get status=6 in status window,
-        # must power cycle probe to clear and get code working
-
-        # overall error conditions
-        # 1) no command gets any response
-        # - gets one echo, but not second echo
-        # - because command collision in init commands
-        # Probe needs power cycle
-        # 2) stuck at Status 5 wih init/home
-        # - unable to find commands to recover
-        # Probe needs power cycle
-
         # The first time the probe is initialized, this returns b''.
-        # If we want to re-initialise probe, there may be content in the
-        # buffer. In that case, something should be done with the returned
-        # values.
+        # If we want to re-initialize probe because something has gone wrong,
+        # there may be content in the buffer. In that case, something should be
+        # done with the returned values. - JAA
         answerFromProbe = self.readEchos(3)
         emptyAnswer = re.compile(b'')
         if not emptyAnswer.match(answerFromProbe):
@@ -426,7 +410,7 @@ class MTPProbeInit():
         if self.sendInit("init1"):
             self.getStatus()  # If getStatus returns -1, status not found
             # Status can be any of 0-7, so don't check getStatus return
-            logger.printmsg('info', "init1 succeeded")
+            logger.printmsg('debug', "init1 succeeded")
         else:
             logger.printmsg('warning', "init1 failed #### Need to update code")
             return(False)
@@ -445,7 +429,7 @@ class MTPProbeInit():
         if self.sendInit("init2"):
             self.getStatus()
             # Status can be any of 0-7, so don't check getStatus return
-            logger.printmsg('info', "init2 succeeded")
+            logger.printmsg('debug', "init2 succeeded")
         else:
             logger.printmsg('warning', "init2 failed #### Need to update code")
             return(False)
@@ -456,7 +440,7 @@ class MTPProbeInit():
         #              clear
         # status = 4 is preferred status
 
-        logger.printmsg('info', "init successful")
+        logger.printmsg('debug', "init successful")
         return(True)
 
     def sendInit(self, init, maxAttempts=6):
