@@ -238,7 +238,7 @@ class MTPClient():
         Write a line giving the file open time as the first line of the raw
         data file.
         """
-        self.rawfile.write("Instrument on " + time)
+        self.rawfile.write("Instrument on " + time + "\n")
         self.rawfile.flush()
 
     def writeRaw(self, raw):
