@@ -73,13 +73,16 @@ class MTPiwg():
         self.iwgrecord['values'][self.lat]['val'] = numpy.nan
         self.iwgrecord['values'][self.lon]['val'] = numpy.nan
 
-    def readIWG(self):
+    def readIWG(self, iwgWindow=None):
         """ Tell client to read latest IWG record and save to dictionary """
         # Listen for IWG packets
         self.dataI = self.sockI.recv(2048).decode()
 
         # Display the latest IWG packet.
-        logger.printmsg("info", self.dataI)
+        if iwgWindow:
+            iwgWindow.setPlainText(self.dataI)
+        else:  # No GUI so print to screen
+            logger.printmsg("info", self.dataI)
 
         self.saveIWG()
 

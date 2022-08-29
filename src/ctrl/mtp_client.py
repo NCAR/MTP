@@ -38,7 +38,7 @@ class MTPClient():
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        self.udp_ip = "192.168.84.255"
+        self.udp_ip = "192.168.84.255"  # These should NOT be hardcoded - JAA
         self.ric_send_port = 32106  # 7 on the ground, 6 on the GV
         self.nidas_send_port = 30101
 
@@ -155,9 +155,11 @@ class MTPClient():
         else:
             logger.printmsg("info", "Unknown command. Please try again.")
 
-    def cycle(self, app=None):
+    def cycle(self):
         self.cycleMode = True
-        success = self.initProbe()  # Initialize probe. Return true if success
+
+        # Initialize probe. Return true if success
+        success = self.initProbe()
         if not success:  # Keep trying
             logger.printmsg("info", "Init failed. Trying again")
             time.sleep(1)  # Emulate manual response time. Prob not needed
@@ -165,7 +167,8 @@ class MTPClient():
             self.move.moveHome()
             success = self.initProbe()
 
-        success = self.move.moveHome()  # Move home. Returns true if successful
+        # Move home. Returns true if successful
+        success = self.move.moveHome()
         if not success:  # Keep trying
             logger.printmsg("info", "Move home failed. Trying again")
             time.sleep(1)  # Emulate manual response time. Prob not needed
@@ -175,8 +178,6 @@ class MTPClient():
             # In command line mode, capture keyboard strokes
             if self.gui is False:  # In command line mode
                 self.captureExit()
-            else:  # In GUI mode
-                app.processEvents()
 
             self.createRawRec()
 
