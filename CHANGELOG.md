@@ -88,6 +88,6 @@ programmatically.
 
 <!-- Versions -->
 [unreleased]: https://github.com/NCAR/MTP/compare/V0.2-ACCLIPff03...HEAD
-[0.2]: https://github.com/NCAR/MTP/compare/V0.1-ACCLIPff02-V0.2-ACCLIPff03
+[0.2]: https://github.com/NCAR/MTP/compare/V0.1-ACCLIPff02...V0.2-ACCLIPff03
 [0.1]: https://github.com/NCAR/MTP/compare/pre-tig3er...V0.1-ACCLIPff02
 [1ba299d]: https://github.com/NCAR/MTP/releases/tag/pre-tig3er
