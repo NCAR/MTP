@@ -159,6 +159,10 @@ class MTPviewer(QMainWindow):
         self.curtainButton.triggered.connect(self.curtainWindow)
         menubar.addAction(self.curtainButton)
         self.curtain = Curtain(self)
+        # Configure axis label and limits so looks like what expect even if
+        # data not flowing. When data is plotting, this is cleared and
+        # re-configured. See self.curtain.plotCurtain()
+        self.curtain.clear(self.args.realtime)
 
         # Add a menu option to process final data if NOT in real-time mode
         if not self.args.realtime:  # GUI started in post-processing mode
@@ -217,7 +221,7 @@ class MTPviewer(QMainWindow):
         self.scantemp.draw()
         self.profile.clear()
         self.profile.draw()
-        self.curtain.clear()
+        self.curtain.clear(self.args.realtime)
         self.curtain.draw()
         self.RCF1.setPlainText('')
         self.RCF2.setPlainText('')
@@ -499,7 +503,11 @@ class MTPviewer(QMainWindow):
         """
         # Ask client to read MTP data from the UDP feed and save it to the data
         # dictionaries - one for current scan and one for all scans in flight
-        self.client.readSocket()  # Read data from socket
+        try:
+            self.client.readSocket()  # Read data from socket
+        except Exception:
+            return()
+
         try:
             # Perform calcs on raw MTP data - converts counts to brightness
             # temperatures and stores everything in a rawscan dictionary
@@ -731,7 +739,7 @@ class MTPviewer(QMainWindow):
     def updateCurtainPlot(self):
         # ------- Append to the curtain plot ------ #
 
-        self.curtain.clear()
+        self.curtain.clear(self.args.realtime)
 
         # Add latest data to 2-D arrays used by curtain plot
         self.ACAlt = self.client.reader.getACAlt()
@@ -759,13 +767,15 @@ class MTPviewer(QMainWindow):
         if self.viewScanIndex != 0:  # Have two records
             # Time of current scan
             self.client.reader.setRawscan(self.viewScanIndex)  # current line
-            timestr = self.client.reader.getTime()
-            curtime = datetime.datetime.strptime(timestr, "%H:%M:%S")
+            timestr = self.client.reader.getDate() + " " + \
+                self.client.reader.getTime()
+            curtime = datetime.datetime.strptime(timestr, "%Y%m%d %H:%M:%S")
 
             # Time of previous scan
             self.client.reader.setRawscan(self.viewScanIndex-1)  # prev line
-            timestr = self.client.reader.getTime()
-            prevtime = datetime.datetime.strptime(timestr, "%H:%M:%S")
+            timestr = self.client.reader.getDate() + " " + \
+                self.client.reader.getTime()
+            prevtime = datetime.datetime.strptime(timestr, "%Y%m%d %H:%M:%S")
 
             timedelta = abs((curtime - prevtime).total_seconds())
             # Typical scan length is 17-19 seconds

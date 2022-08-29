@@ -90,7 +90,8 @@ class MTPclient():
         file.
         """
         # Initialize the IWG reader
-        self.iwg = IWG(self.reader.getRawscan())
+        rawscan = self.reader.getRawscan()
+        self.iwg = IWG(rawscan['IWG1line'])
 
         # Initialize the IWG section of the MTP dictionary using the variable
         # list provided in the ascii_parms file.
@@ -480,7 +481,10 @@ class MTPclient():
         data = self.sock.recv(1024).decode()
 
         # Store data to data dictionary
-        self.reader.parseAsciiPacket(data)  # Store to values
+        try:
+            self.reader.parseAsciiPacket(data)  # Store to values
+        except Exception:
+            raise
 
     def close(self):
         """ Close UDP socket connections """

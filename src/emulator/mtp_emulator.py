@@ -144,7 +144,7 @@ class MTPEmulator():
             logger.printmsg("DEBUG", "process string starting with U: " + line)
             # all commands echo exact command, then other responses
             if chaos == 'low':
-                duration = 0.03
+                duration = 0.001
             else:
                 # emulate that long first and last step
                 # random between 0 and 10 seconds
@@ -165,14 +165,16 @@ class MTPEmulator():
             # sending the commmand, it takes longer, so set the expected
             # command duration to a second or two. Then a call to status will
             # return 05 during the command duration and 04 after that.
-            duration = random.randrange(1, 2, 3)*0.01
+            duration = 0.03
             self.setcommandstatus('I', duration)
             self.sport.write(string.encode('utf-8'))
 
         elif line[0] == 'R':  # Return counts from last integration
             logger.printmsg("DEBUG", "process string starting with R: " + line)
-            # Sending back 19000 counts for all channels/angles
-            string = 'R' + self.hex + ':4A38\r\n'
+            # Sending back random counts in the range 19500 +- 700 counts
+            i = random.randrange(-700, 700)
+            counts = str(hex(19500+i))[2:6].upper()
+            string = 'R' + self.hex + ':' + counts + '\r\n'
             self.sport.write(string.encode('utf-8'))
 
         elif line[0] == 'S':  # Return firmware status
@@ -184,7 +186,7 @@ class MTPEmulator():
             # Line being sent (in hex) is:
             # M01:2928 2300 2898 3083 1920 2920 2431 2946
             self.sport.write(
-                b'\r\nM01:B70 8FC B52 C0B 780 B68 97F B82 \r\n')
+                b'M01:B70 8FC B52 C0B 780 B68 97F B82 \r\n')
 
         elif line == 'M 2':  # Read M2
             # Line being sent (in hex) is:
@@ -195,25 +197,25 @@ class MTPEmulator():
                 a = random.randrange(10)
                 if a % 2 == 0:
                     self.sport.write(
-                        b'\r\nM02:7DF 494 539 5FF 614 436 FFF 3E0 \r\n')
+                        b'M02:7DF 494 539 5FF 614 436 FFF 3E0 \r\n')
                 else:
                     self.sport.write(
-                        b'\r\nM02:7DF 494 539 5FF 614 436 FFF 3D0 \r\n')
+                        b'M02:7DF 494 539 5FF 614 436 FFF 3D0 \r\n')
             else:
                 self.sport.write(
-                    b'\r\nM02:7DF 494 539 5FF 614 436 FFF 3F0 \r\n')
+                    b'M02:7DF 494 539 5FF 614 436 FFF 3F0 \r\n')
 
         elif line[0] == 'P':  # Read P
             # Line being sent (in hex) is:
             # Pt:2159 13808 13809 4370 13414 13404 13284 14439
             self.sport.write(
-                b'\r\nPt:86F 35F0 35F1 1112 3466 345C 33E4 3867 \r\n')
+                b'Pt:86F 35F0 35F1 1112 3466 345C 33E4 3867 \r\n')
 
         elif line == 'N 1':  # Set Noise Diode On
-            self.sport.write(b'\r\nND:01\r\n')
+            self.sport.write(b'ND:01\r\n')
 
         elif line == 'N 0':  # Set Noise Diode Off
-            self.sport.write(b'\r\nND:00\r\n')
+            self.sport.write(b'ND:00\r\n')
 
     def ntox(self, nx):
         """ Convert nibble to asc hex 0-f """
@@ -472,7 +474,7 @@ def parse_args():
         '--logmod', type=str, default=None, help="Limit logging to " +
         "given module")
     parser.add_argument(
-        '--chaos', dest='chaos', default='medium', help=" [low, medium, " +
+        '--chaos', dest='chaos', default='low', help=" [low, medium, " +
         "high, extreme] where low is ideal probe operation where all " +
         "commands are sent immediately, medium approximates nominal probe " +
         "operation, high includes variable times for commands and high " +

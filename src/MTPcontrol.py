@@ -14,14 +14,11 @@ import argparse
 import logging
 import select
 from lib.config import config
-from ctrl.mtp_client import MTPClient
 from ctrl.util.iwg import MTPiwg
-from ctrl.util.init import MTPProbeInit
-from ctrl.util.move import MTPProbeMove
-from ctrl.util.CIR import MTPProbeCIR
-from ctrl.util.format import MTPDataFormat
-from ctrl.lib.mtpcommand import MTPcommand
+from ctrl.mtp_client import MTPClient
+from ctrl.view import MTPControlView
 from EOLpython.Qlogger.messageHandler import QLogger as logger
+from PyQt5.QtWidgets import QApplication
 
 
 def parse_args():
@@ -43,6 +40,8 @@ def parse_args():
     parser.add_argument(
         '--logmod', type=str, default=None, help="Limit logging to " +
         "given module")
+    parser.add_argument(
+        '--gui', action='store_true', help="Run in GUI mode")
 
     # Parse the command line arguments
     args = parser.parse_args()
@@ -59,36 +58,19 @@ def main():
     nowTime = datetime.datetime.now(datetime.timezone.utc)
 
     # Configure logging
-    # logfile = nowTime.strftime("log.N%Y%m%d%H%M")
-    # fh = open(logfile, "a")
-    # stream = fh  # send logging to logfile
     stream = sys.stdout  # send logging to terminal window
     logger.initLogger(stream, args.loglevel, args.logmod)
 
     # Initialize a config file (includes reading it into a dictionary)
     configfile = config(args.config)
 
-    # Dictionary of allowed commands to send to firmware
-    commandDict = MTPcommand()
-
     # Create the raw data filename from the current UTC time
     rawfile = nowTime.strftime("N%Y%m%d%H.%M")
     rawdir = configfile.getPath('rawdir')
     rawfilename = os.path.join(rawdir, rawfile)
 
-    # Instantiate client which handles user commands
-    try:
-        client = MTPClient(rawfilename)
-    except Exception as e:
-        logger.printmsg("error", "Unable to open Raw file: " + e)
-        print("ERROR: Unable to open Raw data output file: " + e)
-        exit(1)
-
-    # Get ports from config file to send UDP packets to MTP
-    port = configfile.getInt('udp_send_port')  # port to send MTP UDP packets
-    iwgport = configfile.getInt('iwg1_port')   # port to listen for IWG packets
-
     # connect to IWG port
+    iwgport = configfile.getInt('iwg1_port')   # to listen for IWG packets
     iwg = MTPiwg()
     iwg.connectIWG(iwgport)
     # Instantiate an IWG reader and configure a dictionary to store the
@@ -96,58 +78,74 @@ def main():
     asciiparms = configfile.getPath('ascii_parms')
     iwg.initIWG(asciiparms)
 
-    init = MTPProbeInit(args, port, commandDict, args.loglevel, iwg)
-    move = MTPProbeMove(init, commandDict)
-    data = MTPProbeCIR(init, commandDict)
-    fmt = MTPDataFormat(init, data, commandDict, iwg)
+    # Instantiate client which handles user commands
+    try:
+        client = MTPClient(rawfilename, configfile, args, iwg)
+        client.writeFileTime(nowTime.strftime("%H:%M:%S %m-%d-%Y"))
+    except Exception as e:
+        logger.printmsg("error", "Unable to open Raw file: " + e)
+        print("ERROR: Unable to open Raw data output file: " + e)
+        exit(1)
 
     probeResponding = False
 
-    client.printMenu()
-    try:
-        while True:
-            if os.name == 'nt':  # Windows
-                ports = [iwg.socket()]
-                read_ready, _, _ = select.select(ports, [], [], 0.15)
-                if msvcrt.kbhit():  # Catch if keyboard char hit
-                    read_ready.append(sys.stdin)
-            else:
-                # Get user's menu selection. Read IWG while wait
-                ports = [iwg.socket(), sys.stdin]
-                read_ready, _, _ = select.select(ports, [], [], 0.15)
+    if args.gui is True:  # Run in GUI mode
 
-            if args.loglevel == "DEBUG":
-                if len(read_ready) == 0:
-                    print('timed out')
+        app = QApplication([])
 
-            if iwg.socket() in read_ready:
-                iwg.readIWG()
+        # Instantiate the GUI
+        ctrlview = MTPControlView(app, client, iwg)
 
-            if sys.stdin in read_ready:
-                cmdInput = sys.stdin.readline()
-                cmdInput = str(cmdInput).strip('\n')
+        # Run the application until the user closes it.
+        sys.exit(app.exec_())
 
-                # Check if probe is on and responding
-                # Separate on and responding so can pop up waiting for
-                # radiometer - JAA
-                if probeResponding is False or cmdInput == '9':
-                    probeResponding = init.bootCheck()
-                    if cmdInput == '9':
-                        # Command executed, so loop back and ask for next
-                        # command
-                        client.printMenu()
-                        continue
+    else:
+        client.printMenu()
 
-                # Make sure have read everything from the buffer for the
-                # previous command before continuing. If the buffer is not
-                # clear, this indicates a problem, so notify user.
-                init.clearBuffer()
+        try:
+            while True:
+                if os.name == 'nt':  # Windows
+                    ports = [iwg.socket()]
+                    read_ready, _, _ = select.select(ports, [], [], 0.15)
+                    if msvcrt.kbhit():  # Catch if keyboard char hit
+                        read_ready.append(sys.stdin)
+                else:
+                    # Get user's menu selection. Read IWG while wait
+                    ports = [iwg.socket(), sys.stdin]
+                    read_ready, _, _ = select.select(ports, [], [], 0.15)
 
-                client.readInput(cmdInput, init, move, data, fmt)
-                client.printMenu()
+                if args.loglevel == "DEBUG":
+                    if len(read_ready) == 0:
+                        print('timed out')
 
-    except KeyboardInterrupt:
-        exit(1)
+                if iwg.socket() in read_ready:
+                    iwg.readIWG()
+
+                if sys.stdin in read_ready:
+                    cmdInput = sys.stdin.readline()
+                    cmdInput = str(cmdInput).strip('\n')
+
+                    # Check if probe is on and responding
+                    # Separate on and responding so can pop up waiting for
+                    # radiometer - JAA
+                    if probeResponding is False or cmdInput == '9':
+                        probeResponding = client.bootCheck()
+                        if cmdInput == '9':
+                            # Command executed, so loop back and ask for next
+                            # command
+                            client.printMenu()
+                            continue
+
+                    # Make sure have read everything from the buffer for the
+                    # previous command before continuing. If the buffer is not
+                    # clear, this indicates a problem, so notify user.
+                    client.clearBuffer()
+
+                    client.readInput(cmdInput)
+                    client.printMenu()
+
+        except KeyboardInterrupt:
+            exit(1)
 
 
 if __name__ == "__main__":

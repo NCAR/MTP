@@ -5,6 +5,7 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2022
 ###############################################################################
+from numpy import isnan
 import datetime
 from ctrl.util.pointing import pointMTP
 from EOLpython.Qlogger.messageHandler import QLogger as logger
@@ -32,6 +33,10 @@ class MTPDataFormat():
         # Determine how long it takes to create a raw record
         firstTime = datetime.datetime.now(datetime.timezone.utc)
 
+        # Clear the list of IWG records so can collect records during the
+        # current scan
+        self.iwg.clearIWG()
+
         # Get the Bline data
         move.moveHome()
         raw = self.readBline(move) + '\n'  # Read B data from probe
@@ -47,12 +52,16 @@ class MTPDataFormat():
 
         # Get the scan and encoder counts
         position = move.readScan(0)
-        if position:
-            ScanCount = 1000000 - position
+        if position != "-99999":
+            ScanCount = 1000000 - int(position)
+        else:
+            ScanCount = 1000000  # Emulate value reported by VB6
 
         position = move.readEnc()
-        if position:
-            EncoderCount = (1000000 - position) * 16
+        if position != "-99999":
+            EncoderCount = (1000000 - int(position)) * 16
+        else:
+            EncoderCount = 16000000  # Emulate value reported by VB6
 
         # Get all the housekeeping data
         move.moveHome()
@@ -61,11 +70,36 @@ class MTPDataFormat():
         raw = raw + self.readPTline() + '\n'  # Read PT data from the probe
         raw = raw + self.readEline() + '\n'  # Read E data from the probe
 
-        # Get the IWG line
-        IWG = self.iwg.getIWG()
+        # Average the IWG over the scan and reset the dictionary in prep for
+        # next scan averaging
+        if self.iwg.averageIWG():
+            # Generate A line
+            self.aline = self.readAline()
 
-        # Generate A line
-        self.aline = self.readAline(ScanCount, EncoderCount)
+            # Save average, including time, so that if IWG drops out we can use
+            # previous values for up to 10 minutes.
+            self.iwg.saveAvg(self.nowTime, self.aline)
+
+        else:
+            # No new IWG data, so use previous average for up to 10 minutes,
+            # else report missing.
+            lastTime = self.iwg.getLastAvgTime()
+            if lastTime != "" \
+               and self.nowTime-lastTime < datetime.timedelta(minutes=10):
+                self.aline = self.iwg.getAvgAline()
+            else:
+                self.aline = self.readAline()  # Create missing A line
+
+        # Get the IWG line
+        # This will be the most recent instantaneous IWG line receive from the
+        # GV and so might be a second more recent than the lines used in the
+        # scan average above
+        IWG = self.iwg.getIWG()
+        if IWG == "":  # Have not received any IWG data at all yet.
+            IWG = 'IWG1,99999999T999999'
+
+        # Format ScanCount and EncoderCount and add to end of aline
+        self.aline = self.aline + "%+07d %+07d " % (ScanCount, EncoderCount)
 
         # Put it all together to create the RAW record
         rawRecord = 'A ' + RAWformattedTime + self.aline + '\n' + IWG + \
@@ -98,29 +132,47 @@ class MTPDataFormat():
 
         return(udpLine)
 
-    def readAline(self, ScanCount, EncoderCount):
-        """ Create Aline from the IWG packet """
-        aline = "%+06.2f " % float(self.iwg.pitch())  # SAPITCH
-        aline = aline + "00.00 "  # SRPITCH
-        aline = aline + "%+06.2f " % float(self.iwg.roll())   # SAROLL
-        aline = aline + "00.00 "  # SRROLL
-        aline = aline + "%+06.2f " % float(self.iwg.palt())   # SAPALT
-        aline = aline + "0.00 "  # SRPALT
-        aline = aline + "%+06.2f " % float(self.iwg.atx())    # SAAT
-        aline = aline + "00.00 "  # SRAT
-        aline = aline + "%+07.3f " % float(self.iwg.lat())    # SALAT
-        aline = aline + "+0.000 "  # SRLAT
-        aline = aline + "%+07.3f " % float(self.iwg.lon())    # SALON
-        aline = aline + "+0.000 "  # SRLON
+    def readAline(self):
+        """
+        Create Aline from the average over IWG packets received during the scan
+        interval
+        """
+        # Since I am not sure if the VB6 code can handle nan values, replace
+        # them with -99 values. This should go away if/when the post-processing
+        # software is written in Python.
+        aline = "%+06.2f " % self.iwg.getSAPitch()  # SAPITCH
+        srpitch = self.iwg.getSRPitch()  # SRPITCH
+        aline = aline + "%05.2f " % (-9.99 if isnan(srpitch) else srpitch)
 
-        # Format ScanCount and EncoderCount and add to end of aline
-        aline = aline + "%+07d %+07d " % (ScanCount, EncoderCount)
+        aline = aline + "%+06.2f " % self.iwg.getSARoll()  # SAROLL
+        srroll = self.iwg.getSRRoll()  # SRROLL
+        aline = aline + "%05.2f " % (-9.99 if isnan(srroll) else srroll)
+
+        sapalt = self.iwg.getSAPalt()  # SAPALT
+        aline = aline + "%+06.2f " % (-99.99 if isnan(sapalt) else sapalt)
+        srpalt = self.iwg.getSRPalt()  # SRPALT
+        aline = aline + "%4.2f " % (-.99 if isnan(srpalt) else srpalt)
+
+        saatx = self.iwg.getSAAtx()  # SAAT
+        aline = aline + "%6.2f " % (-99.99 if isnan(saatx) else saatx)
+        sratx = self.iwg.getSRAtx()  # SRAT
+        aline = aline + "%05.2f " % (-9.99 if isnan(sratx) else sratx)
+
+        salat = self.iwg.getSALat()  # SALAT
+        aline = aline + "%+07.3f " % (-99.999 if isnan(salat) else salat)
+        srlat = self.iwg.getSRLat()  # SRLAT
+        aline = aline + "%+06.3f " % (-9.999 if isnan(srlat) else srlat)
+
+        salon = self.iwg.getSALon()  # SALON
+        aline = aline + "%+08.3f " % (-999.999 if isnan(salon) else salon)
+        srlon = self.iwg.getSRLon()  # SRLON
+        aline = aline + "%+06.3f " % (-9.999 if isnan(srlon) else srlon)
 
         return(aline)
 
     def setNoise(self, cmd):
         self.serialPort.write(cmd)
-        self.init.readEchos(4, cmd)
+        self.init.readEchos(2, cmd)
 
     def readBline(self, move):
         """
@@ -139,8 +191,9 @@ class MTPDataFormat():
         # Confirm in home position and ready to move (not integrating or
         # already moving)
         if not move.isMovePossibleFromHome():
-            logger.printmsg("error", "B line not created")
-            return("")
+            # VB6 doesn't do this check so still does scan here. We will add
+            # something to the log and go ahead and scan.
+            logger.printmsg("error", "B line created anyway")
 
         # GV angles are b'U/1J0D28226J3R', b'U/1J0D7110J3R', b'U/1J0D3698J3R',
         #               b'U/1J0D4835J3R', b'U/1J0D3698J3R', b'U/1J0D3413J3R',
@@ -149,7 +202,8 @@ class MTPDataFormat():
         for angle in self.elAngles:
 
             # Correct angle based on aircraft pitch/roll from latest IWG packet
-            angle = self.pointing.fEc(self.iwg.pitch(), self.iwg.roll(), angle)
+            angle = self.pointing.fEc(self.iwg.getPitch(), self.iwg.getRoll(),
+                                      angle)
 
             moveToCommand, currentClkStep = self.getAngle(angle,
                                                           currentClkStep)

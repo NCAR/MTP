@@ -24,7 +24,7 @@ class MTPProbeMove():
         ScanCount = 1000000 - readScan
         """
         cmd = self.commandDict.getCommand("read_scan")
-        # Emperically, ead scan needs about .3 seconds delay before
+        # Emperically, read scan needs about .3 seconds delay before
         # command is sent or don't get response when called after home
         # command. When called after B line, works without delay.
         time.sleep(delay)
@@ -36,10 +36,10 @@ class MTPProbeMove():
             stlen = answerFromProbe.find(b'\r\n$')
             logger.printmsg("info", "readScan success with value " +
                             str(answerFromProbe[index:stlen-1]))
-            return(int(answerFromProbe[index:stlen-1]))
+            return(answerFromProbe[index:stlen-1])
         else:
             logger.printmsg("warning", "Didn't find backtick in readScan")
-            return(int("-99999"))
+            return("-99999")
 
     def readEnc(self):
         """
@@ -53,10 +53,10 @@ class MTPProbeMove():
         if answerFromProbe.find(b'`') != -1:
             index = answerFromProbe.find(b'`') + 1  # Find backtick
             stlen = answerFromProbe.find(b'\r\n$')
-            return(int(answerFromProbe[index:stlen]))
+            return(answerFromProbe[index:stlen])
         else:
             logger.printmsg("warning", "Didn't find backtick in readEnc")
-            return(int("-99999"))
+            return("-99999")
 
     def moveHome(self):
         """
@@ -66,10 +66,6 @@ class MTPProbeMove():
         Return: True if successful or False if command failed
         """
         success = True
-
-        # Start with read_scan. Seems like this would be more useful AFTER
-        # home command because it would report how accurately pointing home
-        # LastSky = self.readScan()
 
         # home1 command components:
         # - turn off both drivers ('J0')
@@ -81,7 +77,6 @@ class MTPProbeMove():
             # VB6 code does NOT check for success - it just continues
             logger.printmsg('warning', "Continuing on even though stepper " +
                                        "still reports moving")
-            success = False
 
         # home2
         # After home1, probe returns success but any subsequent clockwise move
@@ -96,21 +91,23 @@ class MTPProbeMove():
         #        (sets the current position; suspect this is the magic that
         #         lets the 'D' command work.)
         # - b'U/1P10' -> Move motor 10 steps in positive direction.
-        #        (No idea why this backup is needed.
-        #         Need to double check the VB6. - JAA)
-        if not self.sendHome("home2"):  # not success - warn user
+        success = self.sendHome("home2")
+        i = 0
+        while not success and i < 2:  # not success - try twice more
             # After a Bline, home2 needs more time to complete so sleep
-            # and try again
+            # and try again.
             time.sleep(0.03)
-            if not self.sendHome("home2"):  # not success - warn user
-                logger.printmsg('warning', "Continuing on even though " +
-                                           "stepper still reports moving")
-                success = False
+            success = self.sendHome("home2")  # not success - warn user
+            if not success:
+                logger.printmsg('warning', "Stepper still reports moving,"
+                                " keep trying.")
+            i = i + 1
 
         if success:
             logger.printmsg('info', "home successful")
         else:
-            logger.printmsg('info', "home nominally successful")
+            logger.printmsg('warning', "Continuing on even though stepper " +
+                                       "still reports moving")
 
         return True
 
@@ -132,12 +129,12 @@ class MTPProbeMove():
         Wait for stepper to quit moving. Wait for a maximum of delay seconds.
         Recheck every 0.07 seconds
         """
-        # See if got status @ = No error.
+        # See if got status @ = No error. Step @ does NOT mean move is
+        # completed. Still need to check status. Just note received @ and
+        # continue
         status = self.init.findStat(answerFromProbe)
         if status == '@':
-            # success
-            logger.printmsg('info', cmdstr + " successful")
-            return(True)
+            logger.printmsg('info', cmdstr + " sent successfully (@)")
 
         # If readEchos called before probe finished moving, get "Step:"
         # without \xff/0@ eg status has not yet been appended to response
@@ -150,7 +147,8 @@ class MTPProbeMove():
             # Loop until get valid stat (0-7)
             while not stat:  # While stat False
                 stat = self.init.getStatus()
-                time.sleep(0.07)
+                time.sleep(0.00)  # VB6 has a placeholder here with no wait
+                # and 0.07 commented out with lots of exclamation points.
 
             # Got a valid stat (0-7), so check and see if stepper is busy
             # If it is not busy, return
@@ -171,7 +169,7 @@ class MTPProbeMove():
         # VB6 has if nsteps < 20, don't move. Not sure this ever occurs since
         # this fn is only called when cycling through angles, not on move home
         self.serialPort.write(location)
-        echo = self.init.readEchos(4, location)
+        echo = self.init.readEchos(3, location)
 
         # After move and before wait, tune Freq to 1 GHz
         chan = '{:.5}'.format(str(500))
@@ -182,7 +180,7 @@ class MTPProbeMove():
         # Return True if stepper done moving
         return(self.moveWait("move", echo, 3))
 
-    def isMovePossibleFromHome(self, maxDebugAttempts=12):
+    def isMovePossibleFromHome(self):
         """
         Returns: True if move is possible otherwise does debugging
         """
@@ -191,21 +189,22 @@ class MTPProbeMove():
         # First time through, position reported as 10. Then for each
         # subsequent scan, it is reported as 1000010.
         position = self.readScan(.3)
-        if position:
-            if abs(1000000 - position) < 20 or abs(position) < 20:
+        if position != "-99999":
+            if abs(1000000 - int(position)) < 20 or abs(int(position)) < 20:
                 logger.printmsg("info", "MTP in home position")
             else:
                 logger.printmsg('error', "Move not possible. Not in home" +
                                 " position")
                 return(False)
         else:
-            logger.printmsg('error', "readScan() failed with value " +
-                            str(position))
+            logger.printmsg('error', "readScan() failed. Unknown position")
             return(False)
 
         # Check that integrator has finished
         s = self.init.getStatus()
-        if self.init.integratorBusy(int(s)):
+        success = self.init.integratorBusy(int(s))
+        i = 0
+        while not success and i < 2:  # not success - try twice more
             # send integrate and read to clear integrator bit.
             cmd = self.commandDict.getCommand("count")
             self.serialPort.write(cmd)
@@ -215,13 +214,17 @@ class MTPProbeMove():
             self.init.readEchos(2, cmd)
 
             s = self.init.getStatus()
-            if self.init.integratorBusy(int(s)):
-                # Move not possible because couldn't clear integrator
-                logger.printmsg('error', "Move not possible. Couldn't" +
-                                " clear integrator")
-                return(False)
-            else:
-                logger.printmsg('info', "Integrator finished - OK to move")
+            success = self.init.integratorBusy(int(s))
+            if not success:  # Couldn't clear integrator
+                logger.printmsg('warning', "Integrator not clearing,"
+                                " keep trying.")
+            i = i + 1
+
+        if not success:
+            # Move not possible because couldn't clear integrator
+            logger.printmsg('warning', "Continuing on even though could not" +
+                                       " clear integrator")
+            return(False)
         else:
             logger.printmsg('info', "Integrator finished - OK to move")
 
