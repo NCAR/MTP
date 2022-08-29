@@ -58,9 +58,6 @@ def main():
     nowTime = datetime.datetime.now(datetime.timezone.utc)
 
     # Configure logging
-    # logfile = nowTime.strftime("log.N%Y%m%d%H%M")
-    # fh = open(logfile, "a")
-    # stream = fh  # send logging to logfile
     stream = sys.stdout  # send logging to terminal window
     logger.initLogger(stream, args.loglevel, args.logmod)
 
@@ -97,7 +94,7 @@ def main():
         app = QApplication([])
 
         # Instantiate the GUI
-        MTPControlView(app, client)
+        ctrlview = MTPControlView(app, client, iwg)
 
         # Run the application until the user closes it.
         sys.exit(app.exec_())
