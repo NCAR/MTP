@@ -197,7 +197,7 @@ class MTPProbeInit():
         if self.loglevel == "DEBUG":
             buf = self.checkReadComplete(buf)  # Confirm got all responses
 
-        logger.printmsg('debug', "read " + str(buf))
+        logger.printmsg('info', "read " + str(buf))
         return buf
 
     def checkReadComplete(self, buf):
