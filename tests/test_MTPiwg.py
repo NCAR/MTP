@@ -17,6 +17,7 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2022
 ###############################################################################
 import os
+import numpy
 import unittest
 from lib.rootdir import getrootdir
 from ctrl.util.iwg import MTPiwg
@@ -49,30 +50,30 @@ class TESTMTPiwg(unittest.TestCase):
         self.assertEqual(
             self.MTPiwg.iwgrecord['values'][self.MTPiwg.roll]['val'],
             self.MTPiwg.defaultRoll)
-        self.assertEqual(
-            self.MTPiwg.iwgrecord['values'][self.MTPiwg.paltf]['val'], -99.99)
-        self.assertEqual(
-            self.MTPiwg.iwgrecord['values'][self.MTPiwg.atx]['val'], -99.99)
-        self.assertEqual(
-            self.MTPiwg.iwgrecord['values'][self.MTPiwg.lat]['val'], -99.99)
-        self.assertEqual(
-            self.MTPiwg.iwgrecord['values'][self.MTPiwg.lon]['val'], -99.99)
+        self.assertTrue(numpy.isnan(
+            self.MTPiwg.iwgrecord['values'][self.MTPiwg.paltf]['val']))
+        self.assertTrue(numpy.isnan(
+           self.MTPiwg.iwgrecord['values'][self.MTPiwg.atx]['val']))
+        self.assertTrue(numpy.isnan(
+            self.MTPiwg.iwgrecord['values'][self.MTPiwg.lat]['val']))
+        self.assertTrue(numpy.isnan(
+            self.MTPiwg.iwgrecord['values'][self.MTPiwg.lon]['val']))
 
     def test_averageIWG_nodata(self):
         # Test no data
-        self.assertEqual(self.MTPiwg.averageIWG(), ())
-        self.assertEqual(self.MTPiwg.sapitch, self.MTPiwg.missing)
-        self.assertEqual(self.MTPiwg.srpitch, self.MTPiwg.missing)
-        self.assertEqual(self.MTPiwg.saroll, self.MTPiwg.missing)
-        self.assertEqual(self.MTPiwg.srroll, self.MTPiwg.missing)
-        self.assertEqual(self.MTPiwg.sapalt, self.MTPiwg.missing)
-        self.assertEqual(self.MTPiwg.srpalt, self.MTPiwg.missing)
-        self.assertEqual(self.MTPiwg.saatx, self.MTPiwg.missing)
-        self.assertEqual(self.MTPiwg.sratx, self.MTPiwg.missing)
-        self.assertEqual(self.MTPiwg.salat, self.MTPiwg.missing)
-        self.assertEqual(self.MTPiwg.srlat, self.MTPiwg.missing)
-        self.assertEqual(self.MTPiwg.salon, self.MTPiwg.missing)
-        self.assertEqual(self.MTPiwg.srlon, self.MTPiwg.missing)
+        self.assertEqual(self.MTPiwg.averageIWG(), False)
+        self.assertTrue(numpy.isnan(self.MTPiwg.sapitch))
+        self.assertTrue(numpy.isnan(self.MTPiwg.srpitch))
+        self.assertTrue(numpy.isnan(self.MTPiwg.saroll))
+        self.assertTrue(numpy.isnan(self.MTPiwg.srroll))
+        self.assertTrue(numpy.isnan(self.MTPiwg.sapalt))
+        self.assertTrue(numpy.isnan(self.MTPiwg.srpalt))
+        self.assertTrue(numpy.isnan(self.MTPiwg.saatx))
+        self.assertTrue(numpy.isnan(self.MTPiwg.sratx))
+        self.assertTrue(numpy.isnan(self.MTPiwg.salat))
+        self.assertTrue(numpy.isnan(self.MTPiwg.srlat))
+        self.assertTrue(numpy.isnan(self.MTPiwg.salon))
+        self.assertTrue(numpy.isnan(self.MTPiwg.srlon))
 
         # Test default pitch/roll
         self.assertEqual(self.MTPiwg.getSAPitch(), self.MTPiwg.defaultPitch)
@@ -212,8 +213,8 @@ class TESTMTPiwg(unittest.TestCase):
 
     def test_missingPaltAtx(self):
         # Confirm return missing without unit conversion applied
-        self.MTPiwg.sapalt = self.MTPiwg.missing
-        self.MTPiwg.srpalt = self.MTPiwg.missing
-        self.MTPiwg.saatx = self.MTPiwg.missing
-        self.assertEqual(self.MTPiwg.getSAAtx(), self.MTPiwg.missing)
-        self.assertEqual(self.MTPiwg.getSRPalt(), self.MTPiwg.missing)
+        self.MTPiwg.sapalt = numpy.nan
+        self.MTPiwg.srpalt = numpy.nan
+        self.MTPiwg.saatx = numpy.nan
+        self.assertTrue(numpy.isnan(self.MTPiwg.getSAAtx()))
+        self.assertTrue(numpy.isnan(self.MTPiwg.getSRPalt()))
