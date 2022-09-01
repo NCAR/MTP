@@ -21,7 +21,9 @@ import numpy
 import logging
 from io import StringIO
 from util.tropopause import Tropopause
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class TESTtropopause(unittest.TestCase):
@@ -79,7 +81,7 @@ class TESTtropopause(unittest.TestCase):
         self.stream = StringIO()  # Set output stream to buffer
 
         # Instantiate a logger
-        self.log = logger.initLogger(self.stream, logging.INFO)
+        self.log = logger.initStream(self.stream, logging.INFO)
 
     def test_findStart(self):
         """ Find index of first retrieval above starting altitude """

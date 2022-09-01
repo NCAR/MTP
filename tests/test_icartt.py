@@ -27,7 +27,9 @@ from viewer.MTPclient import MTPclient
 
 import sys
 import logging
-from EOLpython.logger.messageHandler import Logger as logger
+from EOLpython.logger.messageHandler import Logger
+
+logger = Logger("EOLlogger")
 
 
 class TESTicartt(unittest.TestCase):
@@ -36,7 +38,7 @@ class TESTicartt(unittest.TestCase):
         # Instantiate a logger so can call just this test
         self.stream = sys.stdout  # Send log messages to stdout
         loglevel = logging.INFO
-        logger.initLogger(self.stream, loglevel)
+        logger.initStream(self.stream, loglevel)
 
         # Instantiate and MTP controller
         self.client = MTPclient()

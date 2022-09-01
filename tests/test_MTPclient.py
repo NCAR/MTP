@@ -23,7 +23,9 @@ from lib.rootdir import getrootdir
 
 import logging
 from io import StringIO
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class TESTMTPclient(unittest.TestCase):
@@ -39,7 +41,7 @@ class TESTMTPclient(unittest.TestCase):
         self.stream = StringIO()  # Set output stream to buffer
 
         # Instantiate a logger
-        self.log = logger.initLogger(self.stream, logging.INFO)
+        self.log = logger.initStream(self.stream, logging.INFO)
 
         # Instantiate an MTP controller
         self.client = MTPclient()

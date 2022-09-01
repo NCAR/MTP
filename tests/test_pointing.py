@@ -21,7 +21,9 @@ import logging
 import unittest
 from io import StringIO
 from ctrl.util.pointing import pointMTP
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class TESTpointing(unittest.TestCase):
@@ -33,7 +35,7 @@ class TESTpointing(unittest.TestCase):
         self.stream = StringIO()  # Set output stream to buffer
 
         # Instantiate a logger
-        self.log = logger.initLogger(self.stream, logging.INFO)
+        self.log = logger.initStream(self.stream, logging.INFO)
 
         self.point = pointMTP()
 

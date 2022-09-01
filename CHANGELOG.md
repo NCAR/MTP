@@ -1,8 +1,11 @@
 # Changelog
 
-Changelog for eol_scons
+Changelog for MTP software
 
 ## [Unreleased]
+
+- Update `tests` to work with new refactored EOLpython logger. Change calls to
+logger to new format and check for new format of output messages.
 
 Nothing.
 

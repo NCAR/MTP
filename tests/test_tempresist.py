@@ -22,7 +22,9 @@ from util.readmtp import readMTP
 
 import sys
 import logging
-from EOLpython.logger.messageHandler import Logger as logger
+from EOLpython.logger.messageHandler import Logger
+
+logger = Logger("EOLlogger")
 
 
 class TESTgui(unittest.TestCase):
@@ -30,7 +32,7 @@ class TESTgui(unittest.TestCase):
     def setUp(self):
         self.stream = sys.stdout  # Send log messages to stdout
         loglevel = logging.INFO
-        logger.initLogger(self.stream, loglevel)
+        logger.initStream(self.stream, loglevel)
 
         # Set environment var to indicate we are in testing mode
         os.environ["TEST_FLAG"] = "true"

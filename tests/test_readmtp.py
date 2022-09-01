@@ -27,7 +27,9 @@ from unittest.mock import mock_open, patch
 from util.readmtp import readMTP
 from lib.rootdir import getrootdir
 from pathlib import Path
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class TESTreadmtp(unittest.TestCase):
@@ -61,7 +63,7 @@ class TESTreadmtp(unittest.TestCase):
         self.stream = StringIO()  # Set output stream to buffer
 
         # Instantiate a logger
-        self.log = logger.initLogger(self.stream, logging.INFO)
+        self.log = logger.initStream(self.stream, logging.INFO)
 
     def test_parseLine_Aline(self):
         """ Test correct parsing of A line """

@@ -24,7 +24,9 @@ import logging
 from io import StringIO
 from unittest.mock import patch
 from PyQt5.QtWidgets import QApplication
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class TESTprintmsg(unittest.TestCase):
@@ -40,14 +42,14 @@ class TESTprintmsg(unittest.TestCase):
         self.stream = StringIO()  # Set output stream to buffer
 
         # Instantiate a logger
-        self.log = logger.initLogger(self.stream, logging.INFO)
+        self.log = logger.initStream(self.stream, logging.INFO)
 
     def test_loggerConfig(self):
         # Test the logging level and stream are as expected for testing.
         # This has caused me lots of pain - looking for output that was at a
         # different level or stream than exepected
         self.assertEqual(logging.getLevelName(self.log.getEffectiveLevel()),
-                         "INFO")
+                         "DEBUG")
         for handler in self.log.handlers:
             self.assertTrue('_io.StringIO' in str(handler.stream))
 
@@ -57,31 +59,31 @@ class TESTprintmsg(unittest.TestCase):
         # to stderr and logging level is prepended
 
         # Test info message
-        logger.printmsg("INFO", "test no app")
+        logger.info("test no app")
         logger.flushHandler()
         self.assertRegex(self.stream.getvalue(),
-                         r'INFO:.*test_1messageHandler.py: test no app\n')
+                         r'.*INFO | .*test_1messageHandler.py | test no app\n')
 
     def test_noappWarning(self):
         """ Test that when an app isn't running, messages go to stderr """
         # Test warning message
-        logger.printmsg("WARNING", "test no app")
+        logger.warning("test no app")
         logger.flushHandler()
-        self.assertRegex(self.stream.getvalue(),
-                         r'WARNING:.*test_1messageHandler.py: test no app\n')
+        self.assertRegex(self.stream.getvalue(), r'.*WARNING | ' +
+                         '.*test_1messageHandler.py | test no app\n')
 
     def test_noappError(self):
         """ Test that when an app isn't running, messages go to stderr """
         # Test error message
-        logger.printmsg("ERROR", "test no app")
+        logger.error("test no app")
         logger.flushHandler()
-        self.assertRegex(self.stream.getvalue(),
-                         r'ERROR:.*test_1messageHandler.py: test no app\n')
+        self.assertRegex(self.stream.getvalue(), r'.*ERROR | ' +
+                         '.*test_1messageHandler.py | test no app\n')
 
     def test_1noapp_2(self):
         """ Test when app isn't running, msgbox isn't called """
         with patch.object(logger, 'msgbox') as mock_method:
-            logger.printmsg("INFO", "test no app")
+            logger.info("test no app")
             mock_method.assert_not_called()
 
     def test_app(self):
@@ -90,13 +92,13 @@ class TESTprintmsg(unittest.TestCase):
         os.environ["TEST_FLAG"] = "false"  # test instantiating boxes
 
         with patch.object(logger, 'msgbox') as mock_method:
-            logger.printmsg("info", "test app")
+            logger.info("test app")
             mock_method.assert_called()
 
-            logger.printmsg("WARNING", "test app")
+            logger.warning("test app")
             mock_method.assert_called()
 
-            logger.printmsg("ERROR", "test app")
+            logger.error("test app")
             mock_method.assert_called()
 
         # test that call return appropriate icon for level
@@ -105,7 +107,7 @@ class TESTprintmsg(unittest.TestCase):
         # programmatically.
 
         box = logger.msgbox("INFO", "test app", None)
-        self.assertEqual(box.icon(), 1)  # 1 = info
+        self.assertEqual(box.icon(), 4)  # using question for info
 
         box = logger.msgbox("WARNING", "test app", None)
         self.assertEqual(box.icon(), 2)  # 2 = critical
