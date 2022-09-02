@@ -82,7 +82,7 @@ def main():
     # In addition, send all messages to logfile
     logdir = configfile.getPath('logdir')
     log_filepath = os.path.join(logdir, "log." + rawfile)
-    logger.initLogfile(log_filepath, logging.DEBUG)
+    logger.initLogfile(log_filepath, logging.INFO)
 
     # connect to IWG port
     iwgport = configfile.getInt('iwg1_port')   # to listen for IWG packets

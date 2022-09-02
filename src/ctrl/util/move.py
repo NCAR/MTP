@@ -203,9 +203,9 @@ class MTPProbeMove():
 
         # Check that integrator has finished
         s = self.init.getStatus()
-        success = self.init.integratorBusy(int(s))
+        status = self.init.integratorBusy(int(s))  # True is integrator busy
         i = 0
-        while not success and i < 2:  # not success - try twice more
+        while status and i < 2:  # while intergrator busy - try twice more
             # send integrate and read to clear integrator bit.
             cmd = self.commandDict.getCommand("count")
             self.serialPort.write(cmd)
@@ -215,17 +215,15 @@ class MTPProbeMove():
             self.init.readEchos(2, cmd)
 
             s = self.init.getStatus()
-            success = self.init.integratorBusy(int(s))
-            if not success:  # Couldn't clear integrator
-                logger.warning("Integrator not clearing,"
-                               " keep trying.")
+            status = self.init.integratorBusy(int(s))
+            if status:  # Couldn't clear integrator
+                logger.warning("Integrator not clearing, keep trying.")
             i = i + 1
 
-        if not success:
+        if status:
             # Move not possible because couldn't clear integrator
             logger.warning("Continuing on even though could not" +
                            " clear integrator")
-            return(False)
         else:
             logger.info("Integrator finished - OK to move")
 
