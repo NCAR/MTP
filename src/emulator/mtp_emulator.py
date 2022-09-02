@@ -47,7 +47,9 @@ import logging
 import subprocess as sp
 import shutil
 import tempfile
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class MTPEmulator():
@@ -98,7 +100,7 @@ class MTPEmulator():
                 lines = lines[:-1]
             self.cdata = remainder
             for line in lines:
-                logger.printmsg("DEBUG", "Found: " + line)
+                logger.debug("Found: " + line)
 
                 # Parse command and send appropriate response back over port
                 self.interpretCommand(line, chaos, state)
@@ -117,7 +119,7 @@ class MTPEmulator():
             self.sport.write(b'Version:MTPH_Control.c-101103>101208\r\n')
 
         elif line[0] == '0X03':  # Restart firmware
-            logger.printmsg("DEBUG", "hex Control-C char")
+            logger.debug("hex Control-C char")
             # Only thing visible from firmware restart is another V command.
             time.sleep(20)  # sleep for 20 seconds
             if chaos == 'low':
@@ -134,14 +136,14 @@ class MTPEmulator():
             self.sport.write(b'Version:MTPH_Control.c-101103>101208\r\n')
 
         elif line[0] == 'C':  # Change SPI sequence
-            logger.printmsg("DEBUG", "process string starting with C: " + line)
+            logger.debug("process string starting with C: " + line)
             # there are two echos for C's, both are identical
             # neither seems to have any status info about if it
             # actually set correctly
             self.sport.write(string.encode('utf-8'))
 
         elif line[0] == 'U':  # Parse UART commands
-            logger.printmsg("DEBUG", "process string starting with U: " + line)
+            logger.debug("process string starting with U: " + line)
             # all commands echo exact command, then other responses
             if chaos == 'low':
                 duration = 0.001
@@ -154,7 +156,7 @@ class MTPEmulator():
             self.UART(line, chaos, state)
 
         elif line[0] == 'I':  # Integrate channel counts array "I 40"
-            logger.printmsg("DEBUG", "process string starting with I: " + line)
+            logger.debug("process string starting with I: " + line)
             # Parse number out of line
             (cmd, value) = line.split()
             # Convert byte to two ascii digits in hex
@@ -170,7 +172,7 @@ class MTPEmulator():
             self.sport.write(string.encode('utf-8'))
 
         elif line[0] == 'R':  # Return counts from last integration
-            logger.printmsg("DEBUG", "process string starting with R: " + line)
+            logger.debug("process string starting with R: " + line)
             # Sending back random counts in the range 19500 +- 700 counts
             i = random.randrange(-700, 700)
             counts = str(hex(19500+i))[2:6].upper()
@@ -311,7 +313,7 @@ class MTPEmulator():
         dur = self.commandstatus['expectedduration']
 
         if lastcommand == "I":
-            logger.printmsg("debug", "conditional status I detected")
+            logger.debug("conditional status I detected")
             # integrator has to start (05)
             # and after 40 us integrator has to finish (04)
             # even/odd checking will get data in more cases
@@ -342,7 +344,7 @@ class MTPEmulator():
         elif lastcommand == "U":
             # most of this is done, tested with probe so implementation
             # here will be minimal.
-            logger.printmsg("debug", "conditional status U detected")
+            logger.debug("conditional status U detected")
 
             # By setting status True here, only low chaos gets a return value.
             # self.statusset = True
@@ -426,7 +428,7 @@ class MTPVirtualPorts():
 
         cmd.extend(["PTY,echo=0,link=%s" % (self.mtpport),
                     "PTY,echo=0,link=%s" % (self.userport)])
-        logger.printmsg("DEBUG", " ".join(cmd))
+        logger.debug(" ".join(cmd))
 
         # Open ports
         self.socat = sp.Popen(cmd, close_fds=True, shell=False)
@@ -445,14 +447,14 @@ class MTPVirtualPorts():
         return self.mtpport
 
     def stop(self):
-        logger.printmsg("INFO", "Stopping...")
+        logger.info("Stopping...")
         if self.socat:
-            logger.printmsg("DEBUG", "killing socat...")
+            logger.debug("killing socat...")
             self.socat.kill()
             self.socat.wait()
             self.socat = None
         if self.tmpdir:
-            logger.printmsg("DEBUG", "removing %s" % (self.tmpdir))
+            logger.debug("removing %s" % (self.tmpdir))
             shutil.rmtree(self.tmpdir)
             self.tmpdir = None
 
@@ -501,7 +503,7 @@ def main():
 
     # Configure logging
     stream = sys.stdout
-    logger.initLogger(stream, args.loglevel, args.logmod)
+    logger.initStream(stream, args.loglevel, args.logmod)
 
     # Instantiate a set of virtual ports for MTP emulator and control code
     # to communicate over. When the control program is manually started, it

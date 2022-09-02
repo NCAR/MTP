@@ -19,7 +19,9 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMainWindow, QGridLayout, QWidget, QAction, \
                             QListWidget, QLabel
 from PyQt5.QtGui import QFont
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class MTPprocessor(QMainWindow):
@@ -242,7 +244,7 @@ class MTPprocessor(QMainWindow):
         # The user should only be able to select one file at a time, but out
         # of an abundance of caution, check and warn user if not true.
         if len(self.textbox.selectedItems()) != 1:
-            logger.printmsg("ERROR", "Please select a single flight")
+            logger.error("Please select a single flight")
             return()
 
         # Get file user selected
@@ -349,9 +351,8 @@ class MTPprocessor(QMainWindow):
             if self.icartt.saveHeader(filename):  # Write header to output file
                 self.icartt.saveData(filename)    # Write data to output file
 
-                logger.printmsg("info", "File " + filename + " successfully " +
-                                "written", "If file already existed, it was " +
-                                "overwritten")
+                logger.info("File " + filename + " successfully written",
+                            "If file already existed, it was overwritten")
 
     def process(self):
         """ Action to take when Process button is clicked """

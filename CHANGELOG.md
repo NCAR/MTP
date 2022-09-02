@@ -5,9 +5,12 @@ Changelog for MTP software
 ## [Unreleased]
 
 - Update `tests` to work with new refactored EOLpython logger. Change calls to
-logger to new format and check for new format of output messages.
+logger to new format and check for new format of output messages. Combine all
+tests calls under one run_tests script.
 
-Nothing.
+- Update code to use new logger: new call format, implement writing to logfile
+by default. Set default loglevel to warning and add --v option to get info
+level messages.
 
 ## [0.2] - 2022-08-29 - ACCLIP FF03 TEST
 

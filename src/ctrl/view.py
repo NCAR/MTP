@@ -12,7 +12,9 @@ from PyQt5.QtWidgets import QWidget, QPushButton, QPlainTextEdit, \
 from PyQt5 import QtGui
 from PyQt5.QtCore import QSize, QThread, QObject, pyqtSignal
 from PyQt5.QtWidgets import (QLineEdit, QDialog)
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class Worker(QObject):
@@ -180,9 +182,9 @@ class MTPControlView(QWidget):
         self.IWG1Box.setFrameStyle(QFrame.Panel | QFrame.Sunken)
 
         # Push Buttons
-        self.reInitProbe = QPushButton("(Re)init Probe")
-        self.reInitProbe.clicked.connect(self.reInitProbeClicked)
-        self.reInitProbe.setEnabled(False)  # Leave disabled for now
+        self.initProbe = QPushButton("(Re)init Probe")
+        self.initProbe.clicked.connect(self.initProbeClicked)
+        self.initProbe.setEnabled(False)  # Leave disabled for now
         self.scanStatusButton = QPushButton("Start Scanning")
         self.scanStatusButton.clicked.connect(self.scanStatusClicked)
         self.scanStatusButton.setEnabled(True)
@@ -208,7 +210,7 @@ class MTPControlView(QWidget):
         LineProbeStatus.addWidget(self.planeName)
         LineProbeStatus.addWidget(self.planeNameBox)
         LineProbeStatus.addStretch()
-        LineProbeStatus.addWidget(self.reInitProbe)
+        LineProbeStatus.addWidget(self.initProbe)
         LineProbeStatus.addStretch()
         LineProbeStatus.addWidget(self.scanStatusButton)
 
@@ -328,29 +330,29 @@ class MTPControlView(QWidget):
         # Set window title
         self.setWindowTitle('MTPControl')
 
-    def reInitProbeClicked(self):
+    def initProbeClicked(self):
         """ Reinitialize probe. Used if the probe gets in an error state """
-        logger.printmsg("debug", "reInitProbeClicked")
+        logger.debug("initProbeClicked")
         # set init led to yellow
         self.setLEDyellow(self.probeStatusLED)
-        self.reInitProbe.setText("Initializing ...")
-        self.reInitProbe.repaint()  # Need this to show change immediately
+        self.initProbe.setText("Initializing ...")
+        self.initProbe.repaint()  # Need this to show change immediately
         self.app.processEvents()
         status = self.client.initProbe()  # Initialize probe
-        if status is True:  # reInit succeeded
+        if status is True:  # init succeeded
             self.setLEDgreen(self.probeStatusLED)
-            self.reInitProbe.setText("(Re)init Probe")
-        else:  # reInit failed
+            self.initProbe.setText("(Re)init Probe")
+        else:  # init failed
             self.setLEDred(self.probeStatusLED)
-            self.reInitProbe.setText("Init Failed - (Re)init Probe")
+            self.initProbe.setText("Init Failed - (Re)init Probe")
 
     def shutdownProbeClicked(self):
-        logger.printmsg("debug", "shutdownProbe/quit clicked")
+        logger.debug("shutdownProbe/quit clicked")
         self.worker.stop()
         self.thread.quit()
         self.thread.wait()
         self.client.close()
-        logger.printmsg("debug", "Safe exit")
+        logger.debug("Safe exit")
         self.app.exit(0)
 
     def waitForRadiometerWindow(self, isVisible=True):
@@ -359,16 +361,16 @@ class MTPControlView(QWidget):
         progress.setModal(False)
         if isVisible:
             progress.show()
-            logger.printmsg("debug", "Show waitForRadiometerWindow")
+            logger.debug("Show waitForRadiometerWindow")
         else:
             progress.hide()
-            logger.printmsg("debug", "hide waitForRadiometerWindow")
+            logger.debug("hide waitForRadiometerWindow")
 
         return False
 
     def scanStatusClicked(self):
         """ Start/Stop probe from scanning """
-        logger.printmsg("debug", "scanStatusClicked")
+        logger.debug("scanStatusClicked")
         # Read current text to find out if we are cycling or not
         label = self.scanStatusButton.text()
         # set status led to yellow

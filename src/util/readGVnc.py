@@ -10,7 +10,9 @@
 ###############################################################################
 import netCDF4
 import pandas as pd
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class readGVnc:
@@ -55,7 +57,7 @@ class readGVnc:
         # If user requested a list via the optional varlist in the call
         # to this fn, overwrite varlist with it.
         self.varlist = varlist
-        logger.printmsg("DEBUG", "reading " + str(varlist))
+        logger.debug("reading " + str(varlist))
 
         # Now loop through varlist and add variable data to DataFrame
         if varlist is not None:
@@ -69,10 +71,9 @@ class readGVnc:
                                   axis=1, ignore_index=True)
                 else:
                     # print(nc.variables.keys())
-                    logger.printmsg("ERROR", "Error extracting variable " +
-                                    var + " from " + ncfile + ". Variable " +
-                                    "not found. Click OK to continue or " +
-                                    "Quit to exit.")
+                    logger.error("Error extracting variable " + var +
+                                 " from " + ncfile + ". Variable not found. " +
+                                 "Click OK to continue or Quit to exit.")
 
         return(self.ncdata)
 

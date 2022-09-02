@@ -8,7 +8,9 @@
 from numpy import isnan
 import datetime
 from ctrl.util.pointing import pointMTP
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class MTPDataFormat():
@@ -105,8 +107,7 @@ class MTPDataFormat():
         rawRecord = 'A ' + RAWformattedTime + self.aline + '\n' + IWG + \
                     '\n' + raw
 
-        logger.printmsg("info", "Raw record creation took " +
-                        str(self.nowTime-firstTime))
+        logger.info("Raw record creation took " + str(self.nowTime-firstTime))
 
         return(rawRecord)
 
@@ -128,7 +129,7 @@ class MTPDataFormat():
         # Put it all together to create the UDP packet
         udpLine = "MTP " + UDPformattedTime + self.aline + udpLine
         udpLine = udpLine.replace(' ', ',')
-        logger.printmsg("info", "UDP packet: " + udpLine)
+        logger.info("UDP packet: " + udpLine)
 
         return(udpLine)
 
@@ -193,7 +194,7 @@ class MTPDataFormat():
         if not move.isMovePossibleFromHome():
             # VB6 doesn't do this check so still does scan here. We will add
             # something to the log and go ahead and scan.
-            logger.printmsg("error", "B line created anyway")
+            logger.error("B line created anyway")
 
         # GV angles are b'U/1J0D28226J3R', b'U/1J0D7110J3R', b'U/1J0D3698J3R',
         #               b'U/1J0D4835J3R', b'U/1J0D3698J3R', b'U/1J0D3413J3R',
@@ -214,9 +215,9 @@ class MTPDataFormat():
                 self.b += self.data.CIRS() + ' '
             else:
                 # Problem with move - command not completed.
-                logger.printmsg("warning", "Bline move not returning " +
-                                "completion... terminate stepper motion " +
-                                "and continue anyway")
+                logger.warning("Bline move not returning " +
+                               "completion... terminate stepper motion " +
+                               "and continue anyway")
 
                 # Collect counts for 3 channels
                 self.b += self.data.CIRS() + ' '
@@ -226,11 +227,10 @@ class MTPDataFormat():
 
         data = "B " + str(self.b)
 
-        logger.printmsg("info", "data from B line:" + data)
+        logger.info("data from B line:" + data)
 
         nextTime = datetime.datetime.now()
-        logger.printmsg("info", "B line creation took " +
-                        str(nextTime-firstTime))
+        logger.info("B line creation took " + str(nextTime-firstTime))
 
         return data
 
@@ -243,33 +243,31 @@ class MTPDataFormat():
 
         Return: move command
         """
-        logger.printmsg("debug", "Zel to be added to targetEl: "
-                        + str(self.zel))
+        logger.debug("Zel to be added to targetEl: " + str(self.zel))
         targetEl = targetEl + self.zel
 
         # 128 step resolution from init.py::moveHome
         stepDeg = 80/20 * (128 * (200/360))
-        logger.printmsg("debug", "stepDeg: " + str(stepDeg))
+        logger.debug("stepDeg: " + str(stepDeg))
 
         targetClkStep = targetEl * stepDeg
-        logger.printmsg("debug", "targetClkStep: " + str(targetClkStep))
+        logger.debug("targetClkStep: " + str(targetClkStep))
 
-        logger.printmsg("debug", "currentClkStep: " + str(currentClkStep))
+        logger.debug("currentClkStep: " + str(currentClkStep))
 
         # nsteps check here
         nstep = targetClkStep - currentClkStep
-        logger.printmsg("debug", "calculated nstep: " + str(nstep))
+        logger.debug("calculated nstep: " + str(nstep))
         # Figure out if need this when implement MAM correction - JAA
         # if nstep == 0:
-        #     logger.printmsg("info", "nstep is zero loop")
+        #     logger.info("nstep is zero loop")
         #     # suspect this occurs when pitch/roll/z are 0
         #     # need to have a catch case when above are nan's
         #     return
 
         # save current step so difference is actual step difference
         currentClkStep = currentClkStep + int(nstep)
-        logger.printmsg("debug", "currentClkStep + nstep: " +
-                        str(currentClkStep))
+        logger.debug("currentClkStep + nstep: " + str(currentClkStep))
 
         # drop everything after the decimal point:
         nstepSplit = str(nstep).split('.')
@@ -283,14 +281,14 @@ class MTPDataFormat():
         else:
             # Should never get here
             # frontCommand = 'U/1J0P'  # + Nsteps + 'J3R\r', # If Nsteps >= 0
-            logger.printmsg("debug", "positive step found" +
-                            "*** SOMETHING IS WRONG *** Need to update code")
+            logger.debug("positive step found" +
+                         "*** SOMETHING IS WRONG *** Need to update code")
             exit(1)
 
         backCommand = nstep + 'J3R\r\n'
 
-        logger.printmsg("DEBUG", "Command to move to " + str(targetEl) +
-                        " is " + frontCommand + backCommand)
+        logger.debug("Command to move to %.2f" % targetEl + " is " +
+                     frontCommand + backCommand)
         return (frontCommand + backCommand).encode('ascii'), currentClkStep
 
     def getBdata(self):
@@ -317,11 +315,10 @@ class MTPDataFormat():
         self.e = self.e + self.data.CIRS()  # Collect counts for three channels
         data = "E " + str(self.e)
 
-        logger.printmsg("info", "data from E line:" + data)
+        logger.info("data from E line:" + data)
 
         nextTime = datetime.datetime.now()
-        logger.printmsg("info", "E line creation took " +
-                        str(nextTime-firstTime))
+        logger.info("E line creation took " + str(nextTime-firstTime))
 
         return data
 
@@ -342,7 +339,7 @@ class MTPDataFormat():
         self.m1 = self.init.sanitize(self.m1)  # clean up buffer & return data
         data = "M01: " + str(self.m1)
 
-        logger.printmsg("info", "data from M01 line - " + data)
+        logger.info("data from M01 line - " + data)
 
         return(data)
 
@@ -363,7 +360,7 @@ class MTPDataFormat():
         self.m2 = self.init.sanitize(self.m2)  # clean up buffer & return data
         data = "M02: " + str(self.m2)
 
-        logger.printmsg("info", "data from M02 line - " + data)
+        logger.info("data from M02 line - " + data)
 
         return(data)
 
@@ -384,7 +381,7 @@ class MTPDataFormat():
         self.pt = self.init.sanitize(self.pt)  # clean up buffer & return data
         data = "Pt: " + str(self.pt)
 
-        logger.printmsg("info", "data from Pt line - " + data)
+        logger.info("data from Pt line - " + data)
 
         return(data)
 

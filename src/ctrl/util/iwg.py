@@ -12,7 +12,9 @@ import copy
 import socket
 from util.readiwg import IWG
 from util.IWG import IWGrecord
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class MTPiwg():
@@ -82,7 +84,7 @@ class MTPiwg():
         if iwgWindow:
             iwgWindow.setPlainText(self.dataI)
         else:  # No GUI so print to screen
-            logger.printmsg("info", self.dataI)
+            logger.info(self.dataI)
 
         self.saveIWG()
 
@@ -252,9 +254,9 @@ class MTPiwg():
         # Check if var name has an 'F' in it. PALTF is the standard, but
         # just in case...
         if 'F' not in self.paltf:
-            logger.printmsg("warning", "Cannot confirm that IWG packet " +
-                            "contains pressure altitude in feet. Units " +
-                            "may be wrong in A line")
+            logger.warning("Cannot confirm that IWG packet " +
+                           "contains pressure altitude in feet. Units " +
+                           "may be wrong in A line")
         var = self.iwgrecord['values'][self.paltf]['val']
         return(float(var) * 0.0003048)  # Feet to km
 

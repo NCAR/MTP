@@ -6,7 +6,9 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2022
 ###############################################################################
 import datetime
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class MTPProbeCIR():
@@ -30,7 +32,7 @@ class MTPProbeCIR():
             fby4 = (1000 * f)/4  # MHz
             # convert to SNP channel (integer) 0.5 MHz = step size
             chan = '{:.5}'.format(str(fby4/0.5))
-            logger.printmsg("debug", "tune: chan = " + chan)
+            logger.debug("tune: chan = " + chan)
             self.fcmd.append(str.encode(str(mode) + str(chan) + "\r\n"))
 
     def changeFrequency(self, freq, wait):
@@ -85,13 +87,13 @@ class MTPProbeCIR():
                     return(True)  # Integrator finished
 
             else:
-                logger.printmsg("error", "unknown state")
+                logger.error("unknown state")
 
             # Increment timeinloop
             timeinloop = datetime.datetime.now() - loopStartTime
 
         # If looped for 3 seconds and integrator never started, return False
-        logger.printmsg("error", "Integrator never started")
+        logger.error("Integrator never started")
         return(False)
 
     def readDatumFromProbe(self):
@@ -102,14 +104,14 @@ class MTPProbeCIR():
         # Find counts in string. Expected string is R28:xxxx where xxxx is
         # 4-digit hex value.
         # Need to beef up checking return value - JAA
-        logger.printmsg("debug", "Return value is " + str(data))
+        logger.debug("Return value is " + str(data))
         findColon = data.find(b':')
         hexcounts = data[findColon+1:findColon+7]
-        logger.printmsg("debug", "Return hex counts is " + str(hexcounts))
+        logger.debug("Return hex counts is " + str(hexcounts))
 
         # translate from hex and format as 6-digit integer
         datum = '%06d' % int(hexcounts.decode('ascii'), 16)
-        logger.printmsg("debug", "Counts are " + str(datum))
+        logger.debug("Counts are " + str(datum))
         return datum
 
     def CIR(self, freq):
@@ -132,5 +134,5 @@ class MTPProbeCIR():
 
         for cmd in self.fcmd:
             data = data + self.CIR(cmd) + " "
-            logger.printmsg("debug", "freq set to " + str(cmd))
+            logger.debug("freq set to " + str(cmd))
         return data.strip()  # remove trailing space

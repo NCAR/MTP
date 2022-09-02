@@ -22,7 +22,9 @@ from util.tropopause import Tropopause
 from lib.rootdir import getrootdir
 from lib.config import config
 from EOLpython.util.fileselector import FileSelector
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class MTPclient():
@@ -127,10 +129,10 @@ class MTPclient():
         Check if RCFdir exists. If not, prompt user to select correct RCFdir
         """
         if not os.path.isdir(self.RCFdir):
-            logger.printmsg("ERROR", "RCF dir " + self.RCFdir + " doesn't " +
-                            "exist.", "Click OK to select correct dir. Don't" +
-                            " forget to update config file with correct dir " +
-                            "path")
+            logger.error("RCF dir " + self.RCFdir + " doesn't " +
+                         "exist.", "Click OK to select correct dir. Don't" +
+                         " forget to update config file with correct dir " +
+                         "path")
             # Launch a file selector for user to select correct RCFdir
             # This should really be done in MTPviewer, with a non-GUI option
             # for command-line mode.

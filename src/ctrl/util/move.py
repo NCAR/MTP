@@ -7,7 +7,9 @@
 ###############################################################################
 import time
 import datetime
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class MTPProbeMove():
@@ -34,11 +36,11 @@ class MTPProbeMove():
             index = answerFromProbe.find(b'`') + 1  # Find backtick
             # Saw "Step:/0b0\r\n", "Step:/0`1000010", "Step:/0`927130"
             stlen = answerFromProbe.find(b'\r\n$')
-            logger.printmsg("info", "readScan success with value " +
-                            str(answerFromProbe[index:stlen-1]))
+            logger.info("readScan success with value " +
+                        str(answerFromProbe[index:stlen-1]))
             return(answerFromProbe[index:stlen-1])
         else:
-            logger.printmsg("warning", "Didn't find backtick in readScan")
+            logger.warning("Didn't find backtick in readScan")
             return("-99999")
 
     def readEnc(self):
@@ -55,7 +57,7 @@ class MTPProbeMove():
             stlen = answerFromProbe.find(b'\r\n$')
             return(answerFromProbe[index:stlen])
         else:
-            logger.printmsg("warning", "Didn't find backtick in readEnc")
+            logger.warning("Didn't find backtick in readEnc")
             return("-99999")
 
     def moveHome(self):
@@ -75,8 +77,8 @@ class MTPProbeMove():
         # - b’U/1J3R’ -> turn on both drivers
         if not self.sendHome("home1"):  # not success - warn user
             # VB6 code does NOT check for success - it just continues
-            logger.printmsg('warning', "Continuing on even though stepper " +
-                                       "still reports moving")
+            logger.warning("Continuing on even though stepper " +
+                           "still reports moving")
 
         # home2
         # After home1, probe returns success but any subsequent clockwise move
@@ -99,15 +101,14 @@ class MTPProbeMove():
             time.sleep(0.03)
             success = self.sendHome("home2")  # not success - warn user
             if not success:
-                logger.printmsg('warning', "Stepper still reports moving,"
-                                " keep trying.")
+                logger.warning("Stepper still reports moving, keep trying.")
             i = i + 1
 
         if success:
-            logger.printmsg('info', "home successful")
+            logger.info("home successful")
         else:
-            logger.printmsg('warning', "Continuing on even though stepper " +
-                                       "still reports moving")
+            logger.warning("Continuing on even though stepper " +
+                           "still reports moving")
 
         return True
 
@@ -134,7 +135,7 @@ class MTPProbeMove():
         # continue
         status = self.init.findStat(answerFromProbe)
         if status == '@':
-            logger.printmsg('info', cmdstr + " sent successfully (@)")
+            logger.info(cmdstr + " sent successfully (@)")
 
         # If readEchos called before probe finished moving, get "Step:"
         # without \xff/0@ eg status has not yet been appended to response
@@ -154,7 +155,7 @@ class MTPProbeMove():
             # If it is not busy, return
             if not self.init.stepperBusy(int(stat)):
                 # success
-                logger.printmsg('info', cmdstr + " successful")
+                logger.info(cmdstr + " successful")
                 return(True)
 
             # Increment timeinloop
@@ -162,7 +163,7 @@ class MTPProbeMove():
 
         # If looped for delay seconds and stepper still moving, return
         # False
-        logger.printmsg("warning", "MTP reports stepper still moving")
+        logger.warning("MTP reports stepper still moving")
         return(False)
 
     def moveTo(self, location, data):
@@ -191,13 +192,13 @@ class MTPProbeMove():
         position = self.readScan(.3)
         if position != "-99999":
             if abs(1000000 - int(position)) < 20 or abs(int(position)) < 20:
-                logger.printmsg("info", "MTP in home position")
+                logger.info("MTP in home position")
             else:
-                logger.printmsg('error', "Move not possible. Not in home" +
-                                " position")
+                logger.error("Move not possible. Not in home" +
+                             " position")
                 return(False)
         else:
-            logger.printmsg('error', "readScan() failed. Unknown position")
+            logger.error("readScan() failed. Unknown position")
             return(False)
 
         # Check that integrator has finished
@@ -216,38 +217,38 @@ class MTPProbeMove():
             s = self.init.getStatus()
             success = self.init.integratorBusy(int(s))
             if not success:  # Couldn't clear integrator
-                logger.printmsg('warning', "Integrator not clearing,"
-                                " keep trying.")
+                logger.warning("Integrator not clearing,"
+                               " keep trying.")
             i = i + 1
 
         if not success:
             # Move not possible because couldn't clear integrator
-            logger.printmsg('warning', "Continuing on even though could not" +
-                                       " clear integrator")
+            logger.warning("Continuing on even though could not" +
+                           " clear integrator")
             return(False)
         else:
-            logger.printmsg('info', "Integrator finished - OK to move")
+            logger.info("Integrator finished - OK to move")
 
         # Check if stepper moving
         s = self.init.getStatus()
         if self.init.stepperBusy(int(s)):
             # moveHome() should have cleared this. Warn user.
-            logger.printmsg("error", "Clear stepper moving failed. This " +
-                            "check should only be called AFTER moveHome." +
-                            " Something is wrong. " +
-                            "#### Need to update code")
+            logger.error("Clear stepper moving failed. This " +
+                         "check should only be called AFTER moveHome." +
+                         " Something is wrong. " +
+                         "#### Need to update code")
             return False
         else:
-            logger.printmsg("info", "Stepper stable - OK to move")
+            logger.info("Stepper stable - OK to move")
 
         # Check if synthesizer out of lock.
         s = self.init.getStatus()
         if not self.init.synthesizerBusy(int(s)):
             # synthesizer out of lock
-            logger.printmsg("warning", "synthesizer out of lock")
+            logger.warning("synthesizer out of lock")
             return False
         else:
-            logger.printmsg("info", "Synthesizer locked - OK to move")
+            logger.info("Synthesizer locked - OK to move")
 
         # Passed all tests
         return True

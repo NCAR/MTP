@@ -17,8 +17,10 @@ from lib.config import config
 from ctrl.util.iwg import MTPiwg
 from ctrl.mtp_client import MTPClient
 from ctrl.view import MTPControlView
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
 from PyQt5.QtWidgets import QApplication
+
+logger = QLogger("EOLlogger")
 
 
 def parse_args():
@@ -35,8 +37,16 @@ def parse_args():
         help="Device on which to receive messages from MTP instrument")
     parser.add_argument(
         '--debug', dest='loglevel', action='store_const',
-        const=logging.DEBUG, default=logging.INFO,
-        help="Show debug log messages")
+        const=logging.DEBUG, default=logging.WARNING,
+        help="Show debug log messages. If --v also set, the level that" +
+        "appears later in the command will prevail, eg --debug --v displays" +
+        "info level messages and higher")
+    parser.add_argument(
+        '--v', dest='loglevel', action='store_const',
+        const=logging.INFO, default=logging.WARNING,
+        help="Verbose mode - show informational log messages. If --debug " +
+        "also set, the level that appears later in the command will prevail," +
+        " eg --v --debug displays debug level messages and higher")
     parser.add_argument(
         '--logmod', type=str, default=None, help="Limit logging to " +
         "given module")
@@ -58,8 +68,8 @@ def main():
     nowTime = datetime.datetime.now(datetime.timezone.utc)
 
     # Configure logging
-    stream = sys.stdout  # send logging to terminal window
-    logger.initLogger(stream, args.loglevel, args.logmod)
+    stream = sys.stdout  # send WARNING|ERROR to terminal window
+    logger.initStream(stream, args.loglevel, args.logmod)
 
     # Initialize a config file (includes reading it into a dictionary)
     configfile = config(args.config)
@@ -68,6 +78,11 @@ def main():
     rawfile = nowTime.strftime("N%Y%m%d%H.%M")
     rawdir = configfile.getPath('rawdir')
     rawfilename = os.path.join(rawdir, rawfile)
+
+    # In addition, send all messages to logfile
+    logdir = configfile.getPath('logdir')
+    log_filepath = os.path.join(logdir, "log." + rawfile)
+    logger.initLogfile(log_filepath, logging.DEBUG)
 
     # connect to IWG port
     iwgport = configfile.getInt('iwg1_port')   # to listen for IWG packets
@@ -83,7 +98,7 @@ def main():
         client = MTPClient(rawfilename, configfile, args, iwg)
         client.writeFileTime(nowTime.strftime("%H:%M:%S %m-%d-%Y"))
     except Exception as e:
-        logger.printmsg("error", "Unable to open Raw file: " + e)
+        logger.error("Unable to open Raw file: " + e)
         print("ERROR: Unable to open Raw data output file: " + e)
         exit(1)
 
