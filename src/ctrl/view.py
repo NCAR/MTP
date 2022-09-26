@@ -65,7 +65,7 @@ class MTPControlView(QWidget):
 
     def connectIWG(self):
         """
-        Connect to IWG daata stream and see if there is a packet available to
+        Connect to IWG data stream and see if there is a packet available to
         read
         """
         ports = [self.iwg.socket()]
