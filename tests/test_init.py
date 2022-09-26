@@ -36,7 +36,7 @@ class TESTinit(unittest.TestCase):
         # Instantiate a logger
         self.log = logger.initStream(self.stream, logging.INFO)
 
-        # Mock an MTPProbeInit class so don't have to hand;e dependencies
+        # Mock an MTPProbeInit class so don't have to handle dependencies
         # in __init__ function
         Mock(MTPProbeInit)
 

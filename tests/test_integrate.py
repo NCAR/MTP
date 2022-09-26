@@ -16,14 +16,14 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
-import os
 import logging
 import unittest
-import argparse
+from unittest.mock import Mock
+# import argparse
 from io import StringIO
 from ctrl.util.init import MTPProbeInit
-from ctrl.util.move import MTPProbeMove
-from ctrl.util.CIR import MTPProbeCIR
+# from ctrl.util.move import MTPProbeMove
+# from ctrl.util.CIR import MTPProbeCIR
 from EOLpython.Qlogger.messageHandler import QLogger
 
 logger = QLogger("EOLlogger")
@@ -40,10 +40,14 @@ class TESTcir(unittest.TestCase):
         # Instantiate a logger
         self.log = logger.initStream(self.stream, logging.INFO)
 
-        args = argparse.Namespace(device='COM6', port=32107)
+        # args = argparse.Namespace(device='COM6', port=32107)
 
-        init = MTPProbeInit(args, args.port)
-        data = MTPProbeCIR(init)
+        # Mock an MTPProbeInit class
+        Mock(MTPProbeInit)
+        # init = Mock(MTPProbeInit)
+
+        # data = MTPProbeCIR(init)
 
     def test_integrate(self):
+        # These tests need to be written
         self.assertTrue(True)

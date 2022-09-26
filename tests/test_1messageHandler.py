@@ -18,7 +18,6 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
-import os
 import unittest
 import logging
 from io import StringIO
@@ -27,15 +26,15 @@ from PyQt5.QtWidgets import QApplication
 from EOLpython.Qlogger.messageHandler import QLogger
 
 logger = QLogger("EOLlogger")
+# Set environment var to indicate we are in testing mode
+# Need this to logger won't try to open message boxes
+logger.setDisableMessageBox(True)
 
 
 class TESTprintmsg(unittest.TestCase):
 
     def setUp(self):
         self.maxDiff = None  # See entire diff when asserts fail
-
-        # Set environment var to indicate we are in testing mode
-        os.environ["TEST_FLAG"] = "true"
 
         # For testing, we want to capture the log messages in a buffer so we
         # can compare the log output to what we expect.
@@ -89,7 +88,7 @@ class TESTprintmsg(unittest.TestCase):
     def test_app(self):
         """ Test that when there is an app, messages go to QMessageBox """
         self.app = QApplication([])  # Instantiates a QApplication
-        os.environ["TEST_FLAG"] = "false"  # test instantiating boxes
+        logger.setDisableMessageBox(False)  # test instantiating boxes
 
         with patch.object(logger, 'msgbox') as mock_method:
             logger.info("test app")
@@ -106,18 +105,16 @@ class TESTprintmsg(unittest.TestCase):
         # tests to proceed. Have not figure out how to close them
         # programmatically.
 
-        box = logger.msgbox("INFO", "test app", None)
+        box = logger.msgbox(logging.INFO, "test app", None)
         self.assertEqual(box.icon(), 4)  # using question for info
 
-        box = logger.msgbox("WARNING", "test app", None)
+        box = logger.msgbox(logging.WARNING, "test app", None)
         self.assertEqual(box.icon(), 2)  # 2 = critical
 
-        box = logger.msgbox("ERROR", "test app", None)
+        box = logger.msgbox(logging.ERROR, "test app", None)
         self.assertEqual(box.icon(), 3)  # 3 = error
 
         self.app.quit()
 
     def tearDown(self):
         logger.delHandler()
-        if "TEST_FLAG" in os.environ:
-            del os.environ['TEST_FLAG']

@@ -16,6 +16,8 @@ get info level messages.
 (Angle 1, Channel 1) being zero during ACCLIP FF03. Still need to test with
 probe.
 
+- Update tests to use class variable instead of env var to indicate testing mode.
+
 ## [0.2] - 2022-08-29 - ACCLIP FF03 TEST
 
 This version of the software will be flown on ACCLIP FF03 from Anchorage to RMMA

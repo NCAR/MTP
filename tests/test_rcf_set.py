@@ -20,7 +20,6 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
-import os
 import unittest
 from util.rcf_set import RetrievalCoefficientFileSet
 
@@ -34,10 +33,6 @@ logger = Logger("EOLlogger")
 class TESTrcfSet(unittest.TestCase):
 
     def setUp(self):
-
-        # Set environment var to indicate we are in testing mode
-        # Need this to logger won't try to open message boxes
-        os.environ["TEST_FLAG"] = "true"
 
         # Set up logging
         self.stream = StringIO()  # Set output stream to buffer
@@ -219,5 +214,3 @@ class TESTrcfSet(unittest.TestCase):
 
     def tearDown(self):
         logger.delHandler()
-        if "TEST_FLAG" in os.environ:
-            del os.environ['TEST_FLAG']

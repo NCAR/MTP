@@ -15,7 +15,6 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
-import os
 import unittest
 import numpy
 from util.readmtp import readMTP
@@ -33,9 +32,6 @@ class TESTgui(unittest.TestCase):
         self.stream = sys.stdout  # Send log messages to stdout
         loglevel = logging.INFO
         logger.initStream(self.stream, loglevel)
-
-        # Set environment var to indicate we are in testing mode
-        os.environ["TEST_FLAG"] = "true"
 
         self.mtp = readMTP()
 
@@ -67,5 +63,4 @@ class TESTgui(unittest.TestCase):
         self.assertTrue(check)
 
     def tearDown(self):
-        if "TEST_FLAG" in os.environ:
-            del os.environ['TEST_FLAG']
+        pass
