@@ -19,7 +19,9 @@ from viewer.plotScanTemp import ScanTemp
 from viewer.plotProfile import Profile
 from viewer.plotCurtain import Curtain
 from proc.MTPprocessor import MTPprocessor
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class MTPviewer(QMainWindow):
@@ -531,8 +533,8 @@ class MTPviewer(QMainWindow):
             msg = "Could not perform retrieval"
             if index is not None:
                 msg = msg + " on scan " + str(index+1)
-            logger.printmsg("info", msg + " -- " + str(err) +
-                            "\nClick OK to stop seeing this message ")
+            logger.info(msg + " -- " + str(err) +
+                        "\nClick OK to stop seeing this message ")
             # Do not get to this point until user clicks OK
             self.clicked['retrieval'] = True  # Only show error once
 
@@ -706,11 +708,10 @@ class MTPviewer(QMainWindow):
             except Exception:
                 # profile was not generated - only warn user once
                 if not self.clicked['curtain']:
-                    logger.printmsg("info", "While generating curtain plot," +
-                                    " found that temperature profile doesn't" +
-                                    " exist for scan " + str(index+1),
-                                    "Click OK to stop seeing this message " +
-                                    "for future scans.")
+                    logger.info("While generating curtain plot, found that " +
+                                "temperature profile doesn't exist for scan " +
+                                str(index+1), "Click OK to stop seeing this " +
+                                "message for future scans.")
                     self.clicked['curtain'] = True
 
                 # Add missing vals for this scan
@@ -833,10 +834,9 @@ class MTPviewer(QMainWindow):
         # the operator, so don't throw up the box. Red line is good enough.
         # if (lastAline == thisAline):
         #    if self.args.realtime and not self.clicked['iwg']:
-        #        logger.printmsg("ERROR", "IWG packet no longer being " +
-        #                        "received. " +
-        #                        "Click OK to stop seeing this message " +
-        #                        "for future scans.")
+        #        logger.error("IWG packet no longer being received. " +
+        #                     "Click OK to stop seeing this message " +
+        #                     "for future scans.")
         #        self.clicked['iwg'] = True
 
     def writeIWG(self):
@@ -947,14 +947,14 @@ class MTPviewer(QMainWindow):
         # in, or stay where we are and user has to go forward to see current
         # scan?
 
-        logger.printmsg("DEBUG", "Go back to scan " + str(self.viewScanIndex))
+        logger.debug("Go back to scan " + str(self.viewScanIndex))
 
         if self.viewScanIndex < 0:  # MTP has not collected a scan yet
             # disallow click, notify user via QMessage box
-            logger.printmsg("ERROR", "No scans yet. Can't go backward")
+            logger.error("No scans yet. Can't go backward")
         elif self.viewScanIndex == 0:  # Only one scan, can't go backward
             # disallow click, notify user via QMessage box
-            logger.printmsg("ERROR", "On first scan. Can't go backward")
+            logger.error("On first scan. Can't go backward")
         else:  # Go back one scan
             self.viewScanIndex = self.viewScanIndex - 1
             self.updateDisplay()
@@ -981,12 +981,11 @@ class MTPviewer(QMainWindow):
         data
         """
 
-        logger.printmsg("DEBUG", "Go fwd to scan " +
-                        str(self.viewScanIndex + 2))
+        logger.debug("Go fwd to scan " + str(self.viewScanIndex + 2))
 
         if self.viewScanIndex == self.currentScanIndex:
             # On current scan, can't go forward.
-            logger.printmsg("ERROR", "On latest scan. Can't go forward")
+            logger.error("On latest scan. Can't go forward")
         else:
             self.viewScanIndex = self.viewScanIndex + 1
             self.updateDisplay()
@@ -1005,12 +1004,12 @@ class MTPviewer(QMainWindow):
 
         # Convert from display index to zero-based index needed by this code
         self.viewScanIndex = int(self.index.text()) - 1
-        logger.printmsg("DEBUG", "Go to scan " + str(self.viewScanIndex))
+        logger.debug("Go to scan " + str(self.viewScanIndex))
 
         if self.viewScanIndex >= self.currentScanIndex+1 or \
            self.viewScanIndex < 0:
             # prompt user to select valid scan index
-            logger.printmsg("ERROR", "Select scan in range 1 - " +
-                            str(self.currentScanIndex+1))
+            logger.error("Select scan in range 1 - " +
+                         str(self.currentScanIndex+1))
         else:
             self.updateDisplay()

@@ -25,7 +25,9 @@ import logging
 from io import StringIO
 from util.readmtp import readMTP
 from lib.rootdir import getrootdir
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class TESTparseAsciiPacket(unittest.TestCase):
@@ -52,7 +54,7 @@ class TESTparseAsciiPacket(unittest.TestCase):
         self.stream = StringIO()  # Set output stream to buffer
 
         # Instantiate a logger
-        self.log = logger.initLogger(self.stream, logging.INFO)
+        self.log = logger.initStream(self.stream, logging.INFO)
 
     def testAline(self):
         """ Test Aline saved to MTP dictionary correctly """

@@ -31,7 +31,9 @@ import math
 import inspect
 from util.rcf_structs import RC_Set_4Retrieval
 from util.rcf import RetrievalCoefficientFile
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class RetrievalCoefficientFileSet():
@@ -61,8 +63,8 @@ class RetrievalCoefficientFileSet():
                 try:
                     rcf = RetrievalCoefficientFile(Directory + "/" + filename)
                 except Exception as err:
-                    logger.printmsg("ERROR", "Error opening RCF file. " +
-                                    "Failure to make fileset", str(err))
+                    logger.error("Error opening RCF file. " +
+                                 "Failure to make fileset", str(err))
                     raise
 
                 # If success making fileset, append to list of RCFs
@@ -73,17 +75,16 @@ class RetrievalCoefficientFileSet():
                 if filelist is None:
                     # If in debug mode, print out names of RCF files that
                     # will be loaded.
-                    logger.printmsg("DEBUG", "Found RCF file:" + filename +
-                                    "  with ID:" + self._RCFs[i].getId())
+                    logger.debug("Found RCF file:" + filename +
+                                 "  with ID:" + self._RCFs[i].getId())
                     i += 1
                 else:
                     for j in range(len(filelist)):
                         if (filelist[j] == self._RCFs[i].getId()):
                             # If in debug mode, print out names of RCF files
                             # that will be loaded.
-                            logger.printmsg("DEBUG", "Found RCF file:" +
-                                            filename + "  with ID:" +
-                                            self._RCFs[i].getId())
+                            logger.debug("Found RCF file:" + filename +
+                                         " with ID:" + self._RCFs[i].getId())
                             found = 1
                     if found:
                         i += 1
@@ -106,20 +107,19 @@ class RetrievalCoefficientFileSet():
                     if re.match(re.compile(filelist[j]), filename):
                         found = True
                 if not found:
-                    logger.printmsg("ERROR", "Failed to make fileset. " +
-                                    "Requested RCF file " +
-                                    str(filelist[j]) + " does not " +
-                                    "exist in RCFdir " + Directory)
+                    logger.error("Failed to make fileset. Requested RCF " +
+                                 "file " + str(filelist[j]) + " does not " +
+                                 "exist in RCFdir " + Directory)
                     errmsg = True
             if errmsg:  # User got some useful info, so return
                 raise Exception()
 
             # If get here, user still doesn't have a useful msg. Default to..
-            logger.printmsg("ERROR", "Failed to make fileset. " +
-                            "Number of requested RCF files, " +
-                            str(len(filelist)) +
-                            ", does not match number loaded, " +
-                            str(len(self._RCFs)))
+            logger.error("Failed to make fileset. " +
+                         "Number of requested RCF files, " +
+                         str(len(filelist)) +
+                         ", does not match number loaded, " +
+                         str(len(self._RCFs)))
             raise Exception()
 
     def getRCFVector(self):
@@ -132,8 +132,8 @@ class RetrievalCoefficientFileSet():
             if (rcf.getId() == RCFId):
                 return(rcf)
 
-        logger.printmsg("ERROR", "In " + inspect.stack()[0][3] + ":" +
-                        "  Could not find RCF with ID: " + str(RCFId))
+        logger.error("In " + inspect.stack()[0][3] + ":" +
+                     "  Could not find RCF with ID: " + str(RCFId))
         return(False)
 
     def setFlightLevelsKm(self, FlightLevels, NumFlightLevels):
@@ -152,16 +152,16 @@ class RetrievalCoefficientFileSet():
 
         """
         if (len(self._RCFs) == 0):
-            logger.printmsg("ERROR", "In " + inspect.stack()[0][3] + " call " +
-                            "failed: There are currently no RCFs in the set")
+            logger.error("In " + inspect.stack()[0][3] + " call " +
+                         "failed: There are currently no RCFs in the set")
             return(False)
 
         for rcf in self._RCFs:
             if not (rcf.testFlightLevelsKm(FlightLevels, NumFlightLevels)):
-                logger.printmsg("ERROR", "In " + inspect.stack()[0][3] +
-                                " call failed: ERROR: Failed test of flight " +
-                                "levels for RCFID:" + rcf.getId() + ". " +
-                                "Number of flight levels varies between RCs.")
+                logger.error("In " + inspect.stack()[0][3] +
+                             " call failed: ERROR: Failed test of flight " +
+                             "levels for RCFID:" + rcf.getId() + ". " +
+                             "Number of flight levels varies between RCs.")
                 return(False)
 
         return(True)

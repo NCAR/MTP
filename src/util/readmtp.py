@@ -52,7 +52,9 @@ import numpy
 import json
 import copy
 from util.MTP import MTPrecord
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class readMTP:
@@ -84,8 +86,8 @@ class readMTP:
         try:
             self.rawscan = self.flightData[index]
         except Exception as err:
-            logger.printmsg("ERROR", "No data available: " + str(err),
-                            "Try loading some raw data")
+            logger.error("No data available: " + str(err),
+                         "Try loading some raw data")
             self.rawscan = None
             raise
 
@@ -147,8 +149,7 @@ class readMTP:
                 status += linetype + ": " + \
                           str(self.rawscan[linetype]['found']) + "\n"
 
-        logger.printmsg('ERROR', "No complete scans found in" +
-                        selectedRawFile, status)
+        logger.error("No complete scans found in" + selectedRawFile, status)
 
     def clearFlightData(self):
         """ clear the flightData list of dictionaries """
@@ -164,7 +165,7 @@ class readMTP:
             if os.path.exists(filename):
                 os.remove(filename)
         except Exception as e:
-            logger.printmsg('ERROR', "Failed to remove JSON file " + e)
+            logger.error("Failed to remove JSON file " + e)
 
     def save(self, filename):
         """ Append the current record to a JSON file on disk """
@@ -406,9 +407,8 @@ class readMTP:
         # If UDP packet is short, or for some other reason we ended out with
         # less than 75 values, warn user and do not attempt to parse packet.
         if len(values) < 75:
-            logger.printmsg("WARNING", "UDP packet received is short. " +
-                            "Skipping packet. Click 'OK' to dismiss this" +
-                            " message")
+            logger.warning("UDP packet received is short. Skipping packet. " +
+                           "Click 'OK' to dismiss this message")
             raise Exception("UDP packet received is short. Skipping packet")
 
         # values[0] contains the packet identifier, in this case 'MTP' so skip
@@ -574,9 +574,8 @@ class readMTP:
            (calctype == 'volts' and linetype == 'M01line')):
             self.rawscan[linetype]['values'][var][calctype] = value
         else:
-            logger.printmsg("WARNING", " linetype " + linetype + " doesn't " +
-                            "have a " + calctype + " entry in the MTP " +
-                            "dictionary. Ignored.")
+            logger.warning(" linetype " + linetype + " doesn't have a " +
+                           calctype + " entry in the MTP dictionary. Ignored.")
 
     def getCalcVal(self, linetype, var, calctype):
         """

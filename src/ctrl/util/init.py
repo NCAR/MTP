@@ -12,7 +12,9 @@ import serial
 import socket
 import select
 import logging
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class MTPProbeInit():
@@ -58,8 +60,7 @@ class MTPProbeInit():
         cmd = self.commandDict.getCommand("status")
         self.serialPort.write(cmd)
         answerFromProbe = self.readEchos(2)
-        logger.printmsg('debug', "echos from status read: " +
-                        str(answerFromProbe))
+        logger.debug("echos from status read: " + str(answerFromProbe))
 
         # Offset assumes probe responds "...T:0X" where X is desired char
         # Returns false if T not found
@@ -69,8 +70,8 @@ class MTPProbeInit():
         # At this point, any status 0-7 is fine. Just make sure we
         # get a valid status.
         if int(status) not in range(0, 8):
-            logger.printmsg("error", "Unexpected status value " + str(status) +
-                            " should be integer in range 0-7")
+            logger.error("Unexpected status value " + str(status) +
+                         " should be integer in range 0-7")
             # Shouldn't ever get here, so...
             exit(1)
 
@@ -116,12 +117,11 @@ class MTPProbeInit():
         '''
         index = array.find(binaryString)
         if index > -1:
-            logger.printmsg('debug', "status: " +
-                            chr(array[index+offset]))
+            logger.debug("status: " + chr(array[index+offset]))
             return chr(array[index+offset])
         else:
-            logger.printmsg('warning', "status unknown, unable to " +
-                            "find " + str(binaryString) + " in " + str(array))
+            logger.info("status unknown, unable to " +
+                        "find " + str(binaryString) + " in " + str(array))
             return False
 
     def bootCheck(self):
@@ -137,9 +137,9 @@ class MTPProbeInit():
         '''
         while self.probeOnCheck() is False:
             time.sleep(10)
-            logger.printmsg('info', "probe off or not responding." +
-                            "Will retry in 10 seconds")
-        logger.printmsg('info', "Probe on check returns true")
+            logger.info("probe off or not responding." +
+                        "Will retry in 10 seconds")
+        logger.info("Probe on check returns true")
 
         return True
 
@@ -165,8 +165,8 @@ class MTPProbeInit():
         # first echo (lines 0)
         buf = buf + self.serialPort.readline()
         if len(cmd) != 0 and buf != cmd:
-            logger.printmsg("warning", "initial echo from probe did " +
-                            "NOT match command sent. Sent " + str(cmd))
+            logger.warning("initial echo from probe did " +
+                           "NOT match command sent. Sent " + str(cmd))
 
         # Read remaining responses from probe, interleave with checking for
         # IWG packets.
@@ -197,7 +197,7 @@ class MTPProbeInit():
         if self.loglevel == "DEBUG":
             buf = self.checkReadComplete(buf)  # Confirm got all responses
 
-        logger.printmsg('info', "read " + str(buf))
+        logger.info("read " + str(buf))
         return buf
 
     def checkReadComplete(self, buf):
@@ -214,8 +214,8 @@ class MTPProbeInit():
                 break
             else:
                 buf = buf + line
-                logger.printmsg('debug', 'Needed more readEchos!! ' +
-                                str(buf) + '**** Need to update code.')
+                logger.debug('Needed more readEchos!! ' +
+                             str(buf) + '**** Need to update code.')
             # Guard against the case where the probe is returning data
             # forever (no idea if/when this would happen, but just in case)
             if i > 20:  # No legit command should return 20 lines => error!
@@ -230,15 +230,15 @@ class MTPProbeInit():
         """
         Warn user when buffer expected to be empty, but it isn't
         """
-        logger.printmsg("warning", "Buffer not empty but it should be. " +
-                        "BUG IN CODE #### Needs to update code.")
+        logger.warning("Buffer not empty but it should be. " +
+                       "BUG IN CODE #### Needs to update code.")
 
     def clearBuffer(self):
         ''' Confirm that buffer is clear before send next command '''
         buf = self.serialPort.readline()
-        logger.printmsg('debug', "clearBuffer read " + str(buf))
+        logger.debug("clearBuffer read " + str(buf))
         if len(buf) == 0:
-            logger.printmsg("info", "Buffer empty. OK to continue")
+            logger.info("Buffer empty. OK to continue")
         else:
             self.handleNonemptyBuffer()
 
@@ -307,12 +307,12 @@ class MTPProbeInit():
             i = i + 1
 
         if index > -1:
-            logger.printmsg("debug", "Found status " + chr(buf[index+offset]) +
-                            " in " + str(buf) + " at index " + str(i))
+            logger.debug("Found status " + chr(buf[index+offset]) +
+                         " in " + str(buf) + " at index " + str(i))
             return chr(buf[index+offset])
         else:
-            logger.printmsg('warning', "status unknown, unable to find " +
-                            "status in: " + str(buf))
+            logger.warning("status unknown, unable to find " +
+                           "status in: " + str(buf))
             return -1
 
     def probeResponseCheck(self):
@@ -324,12 +324,10 @@ class MTPProbeInit():
         self.serialPort.write(cmd)
         if self.findChar(self.readEchos(3),
                          b"MTPH_Control.c-101103>101208"):
-            logger.printmsg('info',
-                            "Probe on, responding to version string prompt")
+            logger.info("Probe on, responding to version string prompt")
             return True
         else:
-            logger.printmsg('info',
-                            "Probe not responding to version string prompt")
+            logger.info("Probe not responding to version string prompt")
             return False
 
     def truncateBotchedMoveCommand(self):
@@ -340,12 +338,10 @@ class MTPProbeInit():
         cmd = self.commandDict.getCommand("ctrl-C")
         self.serialPort.write(cmd)
         if self.findChar(self.readEchos(3), cmd):
-            logger.printmsg('info',
-                            "Probe on, responding to Ctrl-C prompt")
+            logger.info("Probe on, responding to Ctrl-C prompt")
             return True
         else:
-            logger.printmsg('info',
-                            "Probe not responding to Ctrl-C prompt")
+            logger.info("Probe not responding to Ctrl-C prompt")
             return False
 
     def probeOnCheck(self):
@@ -354,28 +350,27 @@ class MTPProbeInit():
         '''
         if self.findChar(self.readEchos(3),
                          b"MTPH_Control.c-101103>101208"):
-            logger.printmsg('info', "Probe on, Version string detected")
+            logger.info("Probe on, Version string detected")
             return True
         else:
-            logger.printmsg('debug', "No version startup string from " +
-                            "probe found, sending V prompt")
+            logger.debug("No version startup string from " +
+                         "probe found, sending V prompt")
             if self.probeResponseCheck():
                 return True
             else:
                 # Probe not responding. Attempt firmware reboot.
                 if self.truncateBotchedMoveCommand():
-                    logger.printmsg('warning',
-                                    "truncateBotchedMoveCommand called, " +
-                                    "ctrl-c success")
+                    logger.warning("truncateBotchedMoveCommand called, " +
+                                   "ctrl-c success")
                     return True
                 else:
-                    logger.printmsg('error', "probe not responding to " +
-                                    "truncateBotchedMoveCommand ctrl-c, " +
-                                    "power cycle necessary")
+                    logger.error("probe not responding to " +
+                                 "truncateBotchedMoveCommand ctrl-c, " +
+                                 "power cycle necessary")
                     return False
 
-        logger.printmsg('error', "probeOnCheck all previous logic tried, " +
-                        "something's wrong")
+        logger.error("probeOnCheck all previous logic tried, " +
+                     "something's wrong")
         return False
 
     def init(self):
@@ -391,8 +386,8 @@ class MTPProbeInit():
         answerFromProbe = self.readEchos(3)
         emptyAnswer = re.compile(b'')
         if not emptyAnswer.match(answerFromProbe):
-            logger.printmsg('error', " Need to handle probe response " +
-                            str(answerFromProbe) + "#### Need to update code")
+            logger.error(" Need to handle probe response " +
+                         str(answerFromProbe) + "#### Need to update code")
             return(False)
 
         # Init1
@@ -410,9 +405,9 @@ class MTPProbeInit():
         if self.sendInit("init1"):
             self.getStatus()  # If getStatus returns -1, status not found
             # Status can be any of 0-7, so don't check getStatus return
-            logger.printmsg('debug', "init1 succeeded")
+            logger.info("init1 succeeded")
         else:
-            logger.printmsg('warning', "init1 failed #### Need to update code")
+            logger.warning("init1 failed #### Need to update code")
             return(False)
 
         time.sleep(0.2)  # From VB6 code
@@ -429,9 +424,9 @@ class MTPProbeInit():
         if self.sendInit("init2"):
             self.getStatus()
             # Status can be any of 0-7, so don't check getStatus return
-            logger.printmsg('debug', "init2 succeeded")
+            logger.info("init2 succeeded")
         else:
-            logger.printmsg('warning', "init2 failed #### Need to update code")
+            logger.warning("init2 failed #### Need to update code")
             return(False)
 
         # After both init commands,
@@ -440,7 +435,7 @@ class MTPProbeInit():
         #              clear
         # status = 4 is preferred status
 
-        logger.printmsg('debug', "init successful")
+        logger.info("init successful")
         return(True)
 
     def sendInit(self, init, maxAttempts=6):
@@ -459,8 +454,8 @@ class MTPProbeInit():
                 # success - no error. Break out of loop
                 return(True)
             else:
-                logger.printmsg('warning', init + " status " + str(status) +
-                                ", resending " + init + " command.")
+                logger.warning(init + " status " + str(status) +
+                               ", resending " + init + " command.")
                 errorStatus = errorStatus + 1
 
         return(False)

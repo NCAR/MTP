@@ -9,7 +9,9 @@ import os
 import yaml
 from lib.rootdir import getrootdir
 from EOLpython.util.fileselector import FileSelector
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class config():
@@ -27,13 +29,12 @@ class config():
             try:
                 self.readConfig(yamlfile)
             except Exception as err:
-                logger.printmsg("ERROR", str(err), "Click OK to select" +
-                                " correct file.")
+                logger.error(str(err), "Click OK to select correct file.")
                 self.selectConfig()
 
             # If in debug mode, print contents of config file
             for key, value in self.projConfig.items():
-                logger.printmsg("DEBUG", key + ": " + str(value))
+                logger.debug(key + ": " + str(value))
         else:
             self.selectConfig()
 
@@ -43,10 +44,10 @@ class config():
         line doesn't exist (or if user used default and that doesn't exist)
 
         Will loop until correct file is selected or user clicks "Quit" in
-        printmsg dialog
+        dialog box
         """
-        logger.printmsg("ERROR", "config file" + self.yamlfile + " doesn't " +
-                        "exist.", "Click OK to select correct file.")
+        logger.error("config file" + self.yamlfile + " doesn't " +
+                     "exist.", "Click OK to select correct file.")
 
         # Launch a file selector for user to select correct config file
         self.loader = FileSelector()
@@ -73,8 +74,7 @@ class config():
             yaml.dump(self.projConfig, outfile, default_flow_style=False)
             outfile.close()
         except Exception:
-            logger.printmsg("ERROR",
-                            "Could not update config file with new fltno")
+            logger.error("Could not update config file with new fltno")
             raise Exception()
 
     def setVal(self, key, value):
@@ -89,8 +89,8 @@ class config():
             # if no json_file defined, then write json_file to projdir
             # If no filelist, all RCF files are used
             if key != 'json_file' and key != 'filelist':
-                logger.printmsg("ERROR", key + " not defined in configfile " +
-                                self.yamlfile)
+                logger.error(key + " not defined in configfile " +
+                             self.yamlfile)
                 raise Exception()
 
             if key == 'json_file':
@@ -104,10 +104,10 @@ class config():
         if val.isdigit():
             return(int(val))
         else:
-            logger.printmsg("ERROR", "Error in config file - " + key +
-                            " should be an integer. Edit config file " +
-                            self.yamlfile + " then" +
-                            " click OK to be prompted to reload it")
+            logger.error("Error in config file - " + key +
+                         " should be an integer. Edit config file " +
+                         self.yamlfile + " then" +
+                         " click OK to be prompted to reload it")
             self.readConfig(self.yamlfile)
             self.getInt(key)  # Try again. Will loop until user fixes issue.
 
@@ -129,9 +129,9 @@ class config():
 
         # Check that new path exists. If not, warn user
         if not os.path.exists(newpath):
-            logger.printmsg('ERROR', 'Invalid path given in config file: ' +
-                            newpath, "Edit config file " + self.yamlfile +
-                            " then click OK to reload it")
+            logger.error('Invalid path given in config file: ' +
+                         newpath, "Edit config file " + self.yamlfile +
+                         " then click OK to reload it")
             self.readConfig(self.yamlfile)
             self.prependDir(key, projdir)  # Loop until user fixes issue
 

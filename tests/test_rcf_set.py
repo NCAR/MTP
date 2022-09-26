@@ -20,27 +20,24 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
-import os
 import unittest
 from util.rcf_set import RetrievalCoefficientFileSet
 
 import logging
 from io import StringIO
-from EOLpython.logger.messageHandler import Logger as logger
+from EOLpython.logger.messageHandler import Logger
+
+logger = Logger("EOLlogger")
 
 
 class TESTrcfSet(unittest.TestCase):
 
     def setUp(self):
 
-        # Set environment var to indicate we are in testing mode
-        # Need this to logger won't try to open message boxes
-        os.environ["TEST_FLAG"] = "true"
-
         # Set up logging
         self.stream = StringIO()  # Set output stream to buffer
         loglevel = logging.INFO
-        logger.initLogger(self.stream, loglevel)
+        logger.initStream(self.stream, loglevel)
 
         self.Directory = "../tests/test_data"
         # Constants the apply specifically to the CSET RCF file in the dir
@@ -134,7 +131,7 @@ class TESTrcfSet(unittest.TestCase):
             # Test that user was shown appropriate error message
             logger.flushHandler()
             self.assertRegex(self.stream.getvalue(),
-                             "ERROR:.*Failed to make fileset. Requested " +
+                             ".*ERROR | .*Failed to make fileset. Requested " +
                              "RCF file NRCDA067 does not exist in RCFdir" +
                              " ../tests/test_data/RC")
 
@@ -217,5 +214,3 @@ class TESTrcfSet(unittest.TestCase):
 
     def tearDown(self):
         logger.delHandler()
-        if "TEST_FLAG" in os.environ:
-            del os.environ['TEST_FLAG']

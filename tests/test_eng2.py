@@ -26,7 +26,9 @@ from lib.rootdir import getrootdir
 
 import sys
 import logging
-from EOLpython.logger.messageHandler import Logger as logger
+from EOLpython.logger.messageHandler import Logger
+
+logger = Logger("EOLlogger")
 
 
 class TESTeng2(unittest.TestCase):
@@ -39,7 +41,7 @@ class TESTeng2(unittest.TestCase):
                                        'DEEPWAVE', 'config', 'proj.yml')
         self.stream = sys.stdout  # Send log messages to stdout
         loglevel = logging.INFO
-        logger.initLogger(self.stream, loglevel)
+        logger.initStream(self.stream, loglevel)
 
         self.app = QApplication([])
         self.client = MTPclient()

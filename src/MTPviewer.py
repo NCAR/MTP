@@ -9,7 +9,9 @@ import sys
 from viewer.MTPviewer import MTPviewer
 from PyQt5.QtWidgets import QApplication
 from viewer.MTPclient import MTPclient
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 def main():
@@ -22,7 +24,7 @@ def main():
 
     # Configure logging
     stream = sys.stdout
-    logger.initLogger(stream, args.loglevel, args.logmod)
+    logger.initStream(stream, args.loglevel, args.logmod)
 
     # Every GUI app must have exactly one instance of QApplication. The
     # QApplication class manages the GUI application's control flow and

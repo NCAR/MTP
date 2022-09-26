@@ -21,7 +21,9 @@ import unittest
 from unittest.mock import Mock
 from io import StringIO
 from ctrl.util.init import MTPProbeInit
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class TESTinit(unittest.TestCase):
@@ -32,9 +34,9 @@ class TESTinit(unittest.TestCase):
         self.stream = StringIO()  # Set output stream to buffer
 
         # Instantiate a logger
-        self.log = logger.initLogger(self.stream, logging.INFO)
+        self.log = logger.initStream(self.stream, logging.INFO)
 
-        # Mock an MTPProbeInit class so don't have to hand;e dependencies
+        # Mock an MTPProbeInit class so don't have to handle dependencies
         # in __init__ function
         Mock(MTPProbeInit)
 

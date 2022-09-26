@@ -8,7 +8,9 @@
 import re
 import numpy
 from util.readascii_parms import AsciiParms
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class IWG:
@@ -100,13 +102,12 @@ class IWG:
         # and time.
         if len(self.iwg['values']) != len(self.values):
             self.ERROR_FLAG = True
-            logger.printmsg("ERROR", "IWG packet being received on UDP feed " +
-                            "has a different number of values (" +
-                            str(len(self.values)) + ") than listed in " +
-                            "ascii_parms file (" +
-                            str(len(self.iwg['values'])) +
-                            ") in config dir " + ascii_parms_file +
-                            ". Should be 33.")
+            logger.error("IWG packet being received on UDP feed has a " +
+                         "different number of values (" +
+                         str(len(self.values)) + ") than listed in " +
+                         "ascii_parms file (" + str(len(self.iwg['values'])) +
+                         ") in config dir " + ascii_parms_file +
+                         ". Should be 33.")
             exit(1)
 
         # Parse the rest of the line and assign variables to the data

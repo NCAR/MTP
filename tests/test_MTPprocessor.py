@@ -30,7 +30,9 @@ from util.MTP import MTPrecord
 
 import sys
 import logging
-from EOLpython.logger.messageHandler import Logger as logger
+from EOLpython.logger.messageHandler import Logger
+
+logger = Logger("EOLlogger")
 
 
 class TESTMTPprocessor(unittest.TestCase):
@@ -48,7 +50,7 @@ class TESTMTPprocessor(unittest.TestCase):
         # Setup logging
         self.stream = sys.stdout  # Send log messages to stdout
         loglevel = logging.INFO
-        logger.initLogger(self.stream, loglevel)
+        logger.initStream(self.stream, loglevel)
 
         self.app = QApplication([])
         self.client = MTPclient()

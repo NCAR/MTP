@@ -16,13 +16,14 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2020
 ##############################################################################
-import os
 import unittest
 from util.readascii_parms import AsciiParms
 
 import sys
 import logging
-from EOLpython.logger.messageHandler import Logger as logger
+from EOLpython.logger.messageHandler import Logger
+
+logger = Logger("EOLlogger")
 
 
 class TESTreadascii_parms(unittest.TestCase):
@@ -31,10 +32,7 @@ class TESTreadascii_parms(unittest.TestCase):
         # Setup logging
         self.stream = sys.stdout  # Send log messages to stdout
         loglevel = logging.INFO
-        logger.initLogger(self.stream, loglevel)
-
-        # Set environment var to indicate we are in testing mode
-        os.environ["TEST_FLAG"] = "true"
+        logger.initStream(self.stream, loglevel)
 
     def test_open(self):
         # Test that code finds ascii_parms file or exits with useful error
@@ -42,5 +40,4 @@ class TESTreadascii_parms(unittest.TestCase):
         self.assertFalse(self.ascii_parms.open())
 
     def tearDown(self):
-        if "TEST_FLAG" in os.environ:
-            del os.environ['TEST_FLAG']
+        pass

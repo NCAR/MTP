@@ -26,23 +26,24 @@ from viewer.MTPclient import MTPclient
 from viewer.MTPviewer import MTPviewer
 from PyQt5.QtWidgets import QApplication
 from lib.rootdir import getrootdir
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
+# Set environment var to indicate we are in testing mode
+# Need this to logger won't try to open message boxes
+logger.setDisableMessageBox(True)
 
 
 class TESTMTPviewer(unittest.TestCase):
 
     def setUp(self):
 
-        # Set environment var to indicate we are in testing mode
-        # Need this to logger won't try to open message boxes
-        os.environ["TEST_FLAG"] = "true"
-
         # For testing, we want to capture the log messages in a buffer so we
         # can compare the log output to what we expect.
         self.stream = StringIO()  # Set output stream to buffer
 
         # Instantiate a logger
-        self.log = logger.initLogger(self.stream, logging.INFO)
+        self.log = logger.initStream(self.stream, logging.INFO)
 
         # Location of default config file
         self.configfile = os.path.join(getrootdir(), 'Data', 'NGV',
@@ -65,7 +66,7 @@ class TESTMTPviewer(unittest.TestCase):
         self.viewer.clickBack()
         logger.flushHandler()
         self.assertRegex(self.stream.getvalue(),
-                         r"ERROR:.*No scans yet. Can't go backward\n")
+                         r".*ERROR | .*No scans yet. Can't go backward\n")
 
         # Test with JSON file
         filename = "../tests/test_data/DEEPWAVErf01.mtpRealTime.json"
@@ -76,7 +77,7 @@ class TESTMTPviewer(unittest.TestCase):
         self.viewer.clickBack()
         logger.flushHandler()
         self.assertRegex(self.stream.getvalue(),
-                         r"ERROR:.*On first scan. Can't go backward\n")
+                         r".*ERROR | .*On first scan. Can't go backward\n")
 
         # If not on last scan, should decrement viewScanIndex by one
         self.viewer.viewScanIndex = 3
@@ -90,7 +91,7 @@ class TESTMTPviewer(unittest.TestCase):
         self.viewer.clickFwd()
         logger.flushHandler()
         self.assertRegex(self.stream.getvalue(),
-                         r"ERROR:.*On latest scan. Can't go forward\n")
+                         r".*ERROR | .*On latest scan. Can't go forward\n")
 
         # Test with JSON file
         filename = "../tests/test_data/DEEPWAVErf01.mtpRealTime.json"
@@ -101,7 +102,7 @@ class TESTMTPviewer(unittest.TestCase):
         self.viewer.clickFwd()
         logger.flushHandler()
         self.assertRegex(self.stream.getvalue(),
-                         r"ERROR:.*On latest scan. Can't go forward\n")
+                         r".*ERROR | .*On latest scan. Can't go forward\n")
 
         # If not on last scan, should increment viewScanIndex by one
         self.viewer.viewScanIndex = 3

@@ -23,7 +23,9 @@ from viewer.MTPclient import MTPclient
 
 import sys
 import logging
-from EOLpython.logger.messageHandler import Logger as logger
+from EOLpython.logger.messageHandler import Logger
+
+logger = Logger("EOLlogger")
 
 
 class TESTreadiwg(unittest.TestCase):
@@ -32,7 +34,7 @@ class TESTreadiwg(unittest.TestCase):
         # Set up logging
         self.stream = sys.stdout  # Send log messages to stdout
         loglevel = logging.INFO
-        logger.initLogger(self.stream, loglevel)
+        logger.initStream(self.stream, loglevel)
 
         # Location of default ascii_parms file
         self.ascii_parms = os.path.join(getrootdir(), 'Data', 'NGV',

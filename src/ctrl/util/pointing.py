@@ -10,7 +10,9 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2022
 ###############################################################################
 from math import cos, sin, atan, asin, sqrt
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class pointMTP():
@@ -159,7 +161,7 @@ class pointMTP():
                     else:
                         fEc = Ec_at_Emax - 180
 
-        logger.printmsg("debug", "in fEc, original value = " +
-                        str(Elevation) + " corrected el = " + str(fEc))
+        logger.debug("in fEc, original value = " +
+                     str(Elevation) + " corrected el = " + str(fEc))
 
         return fEc

@@ -19,7 +19,9 @@
 import os
 from datetime import datetime
 from lib.rootdir import getrootdir
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class ICARTT():
@@ -55,9 +57,9 @@ class ICARTT():
 
             # Check that filepath exists
             if not os.path.exists(filepath):
-                logger.printmsg('ERROR', 'Dir ' + filepath + ' does not ' +
-                                'exist. Create dir and click OK to continue,' +
-                                'or click Quit to exit.')
+                logger.error('Dir ' + filepath + ' does not ' +
+                             'exist. Create dir and click OK to continue,' +
+                             'or click Quit to exit.')
 
             # Create ICARTT-compliant filename
             filename = 'MP_' + platform + "_" + date + '_' + revision + '.ict'
@@ -195,9 +197,9 @@ class ICARTT():
             # record that has ATP metadata, or an exception if none found
             ATPindex = self.client.reader.testATP()
         except Exception:
-            logger.printmsg("ERROR", "Temperature profiles don't exist for" +
-                            " this flight. Maybe data hasn't been processed " +
-                            "yet?", " Can't create ICARTT file.")
+            logger.error("Temperature profiles don't exist for" +
+                         " this flight. Maybe data hasn't been processed " +
+                         "yet?", " Can't create ICARTT file.")
             return(False)  # Failed to build header
 
         # Missing data indicators (-9999, -99999, etc)

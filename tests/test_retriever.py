@@ -23,7 +23,9 @@ import unittest
 import logging
 from io import StringIO
 from util.retriever import Retriever
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class TESTretriever(unittest.TestCase):
@@ -49,7 +51,7 @@ class TESTretriever(unittest.TestCase):
         self.stream = StringIO()  # Set output stream to buffer
 
         # Instantiate a logger
-        self.log = logger.initLogger(self.stream, logging.INFO)
+        self.log = logger.initStream(self.stream, logging.INFO)
 
     def test_getRCSet(self):
         """ Test creation of a functioning retrieval_coefficient_fileset """

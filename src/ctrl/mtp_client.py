@@ -19,7 +19,9 @@ from ctrl.util.CIR import MTPProbeCIR
 from ctrl.util.format import MTPDataFormat
 from ctrl.lib.mtpcommand import MTPcommand
 from ctrl.test.manualProbeQuery import MTPQuery
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class MTPClient():
@@ -38,7 +40,7 @@ class MTPClient():
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        self.udp_ip = "192.168.84.255"
+        self.udp_ip = "192.168.84.255"  # These should NOT be hardcoded - JAA
         self.ric_send_port = 32106  # 7 on the ground, 6 on the GV
         self.nidas_send_port = 30101
 
@@ -64,8 +66,7 @@ class MTPClient():
         try:
             self.rawfile.close()
         except Exception as err:
-            logger.printmsg("ERROR", err + " Unable to close file " +
-                            self.rawfilename)
+            logger.error(err + " Unable to close file " + self.rawfilename)
 
     def printMenu(self):
         """ List user options """
@@ -118,8 +119,7 @@ class MTPClient():
 
         elif cmdInput == '6':
 
-            logger.printmsg("info", "sit tight - Bline scan typically takes " +
-                            "6 seconds")
+            logger.info("sit tight - Bline scan typically takes 6 seconds")
 
             # Make sure the buffer is clear before starting the scan.
             self.clearBuffer()
@@ -153,21 +153,24 @@ class MTPClient():
             exit(1)
 
         else:
-            logger.printmsg("info", "Unknown command. Please try again.")
+            logger.info("Unknown command. Please try again.")
 
-    def cycle(self, app=None):
+    def cycle(self):
         self.cycleMode = True
-        success = self.initProbe()  # Initialize probe. Return true if success
+
+        # Initialize probe. Return true if success
+        success = self.initProbe()
         if not success:  # Keep trying
-            logger.printmsg("info", "Init failed. Trying again")
+            logger.info("Init failed. Trying again")
             time.sleep(1)  # Emulate manual response time. Prob not needed
             # Move home, then init again, because this is what I do
             self.move.moveHome()
             success = self.initProbe()
 
-        success = self.move.moveHome()  # Move home. Returns true if successful
+        # Move home. Returns true if successful
+        success = self.move.moveHome()
         if not success:  # Keep trying
-            logger.printmsg("info", "Move home failed. Trying again")
+            logger.info("Move home failed. Trying again")
             time.sleep(1)  # Emulate manual response time. Prob not needed
             success = self.move.moveHome()
 
@@ -175,8 +178,6 @@ class MTPClient():
             # In command line mode, capture keyboard strokes
             if self.gui is False:  # In command line mode
                 self.captureExit()
-            else:  # In GUI mode
-                app.processEvents()
 
             self.createRawRec()
 
@@ -205,33 +206,29 @@ class MTPClient():
                 exit(1)
 
     def createRawRec(self):
-        logger.printmsg("info", "sit tight - complete scans " +
-                        "typically take 17s")
+        logger.info("sit tight - complete scans typically take 17s")
         firstTime = datetime.datetime.now(datetime.timezone.utc)
 
         # Create a raw record
         raw = self.fmt.createRawRecord(self.move)
-        logger.printmsg("info", "RAW\n" + raw)
+        logger.info("RAW\n" + raw)
 
         # Command finished
         nowTime = datetime.datetime.now(datetime.timezone.utc)
-        logger.printmsg("info", "record creation took " +
-                        str(nowTime-firstTime))
+        logger.info("record creation took " + str(nowTime-firstTime))
 
         # Write raw record to output file
         self.writeRaw(raw + "\n")
 
         writeTime = datetime.datetime.now(datetime.timezone.utc)
-        logger.printmsg("info", "record write took " +
-                        str(writeTime-nowTime))
+        logger.info("record write took " + str(writeTime-nowTime))
 
         # Create the UDP packet
         udpLine = self.fmt.createUDPpacket()
         self.sendUDP(udpLine)
 
         udpTime = datetime.datetime.now(datetime.timezone.utc)
-        logger.printmsg("info", "udp creation took " +
-                        str(udpTime-writeTime))
+        logger.info("udp creation took " + str(udpTime-writeTime))
 
     def writeFileTime(self, time):
         """
@@ -266,12 +263,11 @@ class MTPClient():
             # Move to first angle in readBline
             cmd, currentClkStep = self.fmt.getAngle(80, 0)
             s = self.move.moveTo(cmd, self.data)
-            logger.printmsg('info', "First angle reached = " + str(s))
+            logger.info("First angle reached = " + str(s))
 
             # Command finished
             nowTime = datetime.datetime.now(datetime.timezone.utc)
-            logger.printmsg("info", "single move took " +
-                            str(nowTime-firstTime))
+            logger.info("single move took " + str(nowTime-firstTime))
 
     def readFreqTest(self):
         """ Test (and time) read freq for all channels - no move """
@@ -284,9 +280,8 @@ class MTPClient():
         # Command finished
         nowTime = datetime.datetime.now(datetime.timezone.utc)
 
-        logger.printmsg("info", "data from one position:" + str(countStr))
-        logger.printmsg("info", "freq triplet creation took " +
-                        str(nowTime-firstTime))
+        logger.info("data from one position:" + str(countStr))
+        logger.info("freq triplet creation took " + str(nowTime-firstTime))
 
     def createElineTest(self):
         """ Create E line """
