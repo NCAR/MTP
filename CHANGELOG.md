@@ -18,6 +18,8 @@ probe.
 
 - Update tests to use class variable instead of env var to indicate testing mode.
 
+- Remove excess checks and adjust timing on some loops to tighten up scan time
+
 ## [0.2] - 2022-08-29 - ACCLIP FF03 TEST
 
 This version of the software will be flown on ACCLIP FF03 from Anchorage to RMMA

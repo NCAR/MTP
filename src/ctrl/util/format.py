@@ -40,7 +40,6 @@ class MTPDataFormat():
         self.iwg.clearIWG()
 
         # Get the Bline data
-        move.moveHome()
         raw = self.readBline(move) + '\n'  # Read B data from probe
 
         # UTC timestamp of Raw record is right after B line is collected
@@ -335,7 +334,7 @@ class MTPDataFormat():
         """
         cmd = self.commandDict.getCommand("read_M1")
         self.serialPort.write(cmd)
-        self.m1 = self.init.readEchos(6, cmd)
+        self.m1 = self.init.readEchos(2, cmd)
         self.m1 = self.init.sanitize(self.m1)  # clean up buffer & return data
         data = "M01: " + str(self.m1)
 
@@ -356,7 +355,7 @@ class MTPDataFormat():
         """
         cmd = self.commandDict.getCommand("read_M2")
         self.serialPort.write(cmd)
-        self.m2 = self.init.readEchos(6, cmd)
+        self.m2 = self.init.readEchos(2, cmd)
         self.m2 = self.init.sanitize(self.m2)  # clean up buffer & return data
         data = "M02: " + str(self.m2)
 
@@ -377,7 +376,7 @@ class MTPDataFormat():
         """
         cmd = self.commandDict.getCommand("read_P")
         self.serialPort.write(cmd)
-        self.pt = self.init.readEchos(6, cmd)
+        self.pt = self.init.readEchos(2, cmd)
         self.pt = self.init.sanitize(self.pt)  # clean up buffer & return data
         data = "Pt: " + str(self.pt)
 

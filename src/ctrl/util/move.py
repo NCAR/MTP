@@ -55,6 +55,8 @@ class MTPProbeMove():
         if answerFromProbe.find(b'`') != -1:
             index = answerFromProbe.find(b'`') + 1  # Find backtick
             stlen = answerFromProbe.find(b'\r\n$')
+            logger.info("readEnc success with value " +
+                        str(answerFromProbe[index:stlen-1]))
             return(answerFromProbe[index:stlen])
         else:
             logger.warning("Didn't find backtick in readEnc")
@@ -120,15 +122,15 @@ class MTPProbeMove():
         # Step:\xff/0`\r\nStep:\xff/0@\r\n'
         cmd = self.commandDict.getCommand(home)
         self.serialPort.write(cmd)
-        answerFromProbe = self.init.readEchos(4, cmd)
+        answerFromProbe = self.init.readEchos(3, cmd)
         # Wait up to 3 seconds for stepper to complete moving
         # Return True of stepper done moving
-        return(self.moveWait(home, answerFromProbe, .5))
+        return(self.moveWait(home, answerFromProbe, 1.3))
 
     def moveWait(self, cmdstr, answerFromProbe, delay):
         """
         Wait for stepper to quit moving. Wait for a maximum of delay seconds.
-        Recheck every 0.07 seconds
+        Recheck every 0.03 seconds
         """
         # See if got status @ = No error. Step @ does NOT mean move is
         # completed. Still need to check status. Just note received @ and
