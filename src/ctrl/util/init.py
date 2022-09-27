@@ -174,7 +174,7 @@ class MTPProbeInit():
 
             # read_ready with .01 second timeout
             ports = [self.iwg.socket()]
-            read_ready, _, _ = select.select(ports, [], [], 0.01)
+            read_ready, _, _ = select.select(ports, [], [], 0.002)
 
             if self.loglevel == "DEBUG":
                 if len(read_ready) == 0:
