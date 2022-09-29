@@ -39,7 +39,7 @@ class MTPiwg():
         self.sockI.setblocking(False)
 
     def socket(self):
-        return(self.sockI)
+        return self.sockI
 
     def initIWG(self, asciiparms):
         """
@@ -90,8 +90,6 @@ class MTPiwg():
 
     def saveIWG(self):
         # Store IWG record to values field in data dictionary
-        # This currently saves INSTANTANEOUS IWG values, which are then
-        # used in the A line. Need to update to do scan averaging - JAA
         status = self.iwg.parseIwgPacket(self.dataI, self.asciiparms)
         if status is True:  # Successful parse of IWG packet
             # Store to date, data, & asciiPacket
@@ -128,7 +126,7 @@ class MTPiwg():
         self.srlon = numpy.nan
 
         if len(self.scanIWGlist) == 0:
-            return(False)  # Nothing to average so bail
+            return False  # Nothing to average so bail
 
         # calculate avg and rmse pitch
         valueList = self.getVals(self.pitch)
@@ -160,7 +158,7 @@ class MTPiwg():
         self.salon = self.avg(valueList)
         self.srlon = self.rmse(valueList, self.salon)
 
-        return(True)
+        return True
 
     def getVals(self, var):
         """
@@ -171,30 +169,30 @@ class MTPiwg():
             if iwgrec['values'][var]['val'] != '':  # Skip missing values
                 valueList.append(float(iwgrec['values'][var]['val']))
 
-        return(valueList)
+        return valueList
 
     def rmse(self, valueList, avg):
         """ Calculate RMSE from a list of values and their average """
         rmse = 0
         if len(valueList) == 0:
-            return(numpy.nan)  # Nothing to find RMSE so return missing
+            return numpy.nan  # Nothing to find RMSE so return missing
         else:
             for val in valueList:
                 rmse = rmse + (float(val) - avg)**2
             rmse = numpy.sqrt(rmse/len(valueList))
 
-        return(rmse)
+        return rmse
 
     def avg(self, valueList):
         """ Calculate the average of a list of values """
         if len(valueList) == 0:
-            return(numpy.nan)  # Nothing to average so return missing
+            return numpy.nan  # Nothing to average so return missing
         else:
-            return(sum(valueList)/len(valueList))
+            return sum(valueList)/len(valueList)
 
     def getIWG(self):
         """ Return the complete IWG line as received """
-        return(self.iwgrecord['asciiPacket'])
+        return self.iwgrecord['asciiPacket']
 
     def saveAvg(self, date, aline):
         """
@@ -207,47 +205,47 @@ class MTPiwg():
     def getLastAvgTime(self):
         """ Get the time of the last successful average """
         if self.iwgrecord['date'] != "":
-            return(self.iwgrecord['date'])
+            return self.iwgrecord['date']
         else:
-            return("")  # Never had IWG
+            return ""  # Never had IWG
 
     def getAvgAline(self):
         """
         Get the IWG average portion of the A line from last successful average
         """
-        return(self.iwgrecord['data'])
+        return self.iwgrecord['data']
 
     def getPitch(self):
         """ Return instantaneous aircraft pitch """
         if self.iwgrecord['values'][self.pitch]['val'] == '':
             self.iwgrecord['values'][self.pitch]['val'] = self.defaultPitch
-        return(self.iwgrecord['values'][self.pitch]['val'])
+        return self.iwgrecord['values'][self.pitch]['val']
 
     def getSAPitch(self):
         """ Return scan average aircraft pitch """
         if numpy.isnan(self.sapitch):
             self.sapitch = self.defaultPitch
-        return(self.sapitch)
+        return self.sapitch
 
     def getSRPitch(self):
         """ Return scan RMSE pitch """
-        return(self.srpitch)
+        return self.srpitch
 
     def getRoll(self):
         """ Return instantaneous aircraft roll """
         if self.iwgrecord['values'][self.roll]['val'] == '':
             self.iwgrecord['values'][self.roll]['val'] = self.defaultRoll
-        return(self.iwgrecord['values'][self.roll]['val'])
+        return self.iwgrecord['values'][self.roll]['val']
 
     def getSARoll(self):
         """ Return scan average aircraft roll """
         if numpy.isnan(self.saroll):
             self.saroll = self.defaultRoll
-        return(self.saroll)
+        return self.saroll
 
     def getSRRoll(self):
         """ Return scan RMSE roll """
-        return(self.srroll)
+        return self.srroll
 
     def getPalt(self):
         """ Return instantaneous pressure altitude in km """
@@ -258,49 +256,49 @@ class MTPiwg():
                            "contains pressure altitude in feet. Units " +
                            "may be wrong in A line")
         var = self.iwgrecord['values'][self.paltf]['val']
-        return(float(var) * 0.0003048)  # Feet to km
+        return float(var) * 0.0003048  # Feet to km
 
     def getSAPalt(self):
         """ Return scan average pressure altitude in km """
-        return(self.sapalt * 0.0003048)  # Feet to km
+        return self.sapalt * 0.0003048  # Feet to km
 
     def getSRPalt(self):
         """ Return scan RMSE pressure altitude in km """
-        return(self.srpalt * 0.0003048)  # Feet to km
+        return self.srpalt * 0.0003048  # Feet to km
 
     def getAtx(self):
         """ Return instantaneous air temperature """
         # Return air temperature in Kelvin (convert C to K)
-        return(float(self.iwgrecord['values'][self.atx]['val']) + 273.15)
+        return float(self.iwgrecord['values'][self.atx]['val']) + 273.15
 
     def getSAAtx(self):
         """ Return scan average air temperature """
-        return(self.saatx + 273.15)  # C to K
+        return self.saatx + 273.15  # C to K
 
     def getSRAtx(self):
         """ Return scan RMSE air temperature """
-        return(self.sratx)
+        return self.sratx
 
     def getLat(self):
         """ Return instantaneous aircraft latitude """
-        return(self.iwgrecord['values'][self.lat]['val'])
+        return self.iwgrecord['values'][self.lat]['val']
 
     def getSALat(self):
         """ Return scan average aircraft latitude """
-        return(self.salat)
+        return self.salat
 
     def getSRLat(self):
         """ Return scan RMSE aircraft latitude """
-        return(self.srlat)
+        return self.srlat
 
     def getLon(self):
         """ Return instantaneous aircraft longitude """
-        return(self.iwgrecord['values'][self.lon]['val'])
+        return self.iwgrecord['values'][self.lon]['val']
 
     def getSALon(self):
         """ Return scan average aircraft longitude """
-        return(self.salon)
+        return self.salon
 
     def getSRLon(self):
         """ Return scan RMSE aircraft longitude """
-        return(self.srlon)
+        return self.srlon
