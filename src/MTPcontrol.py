@@ -56,7 +56,7 @@ def parse_args():
     # Parse the command line arguments
     args = parser.parse_args()
 
-    return(args)
+    return args
 
 
 def main():
@@ -93,9 +93,15 @@ def main():
     asciiparms = configfile.getPath('ascii_parms')
     iwg.initIWG(asciiparms)
 
+    # Instantiate the GUI if requested
+    if args.gui is True:  # Run in GUI mode
+        app = QApplication([])
+    else:
+        app = None
+
     # Instantiate client which handles user commands
     try:
-        client = MTPClient(rawfilename, configfile, args, iwg)
+        client = MTPClient(rawfilename, configfile, args, iwg, app)
         client.writeFileTime(nowTime.strftime("%H:%M:%S %m-%d-%Y"))
     except Exception as e:
         logger.error("Unable to open Raw file: " + e)
@@ -105,8 +111,6 @@ def main():
     probeResponding = False
 
     if args.gui is True:  # Run in GUI mode
-
-        app = QApplication([])
 
         # Instantiate the GUI
         ctrlview = MTPControlView(app, client, iwg)

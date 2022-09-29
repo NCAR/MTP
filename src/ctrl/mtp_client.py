@@ -26,7 +26,7 @@ logger = QLogger("EOLlogger")
 
 class MTPClient():
 
-    def __init__(self, rawfilename, configfile, args, iwg):
+    def __init__(self, rawfilename, configfile, args, iwg, app=None):
         self.rawfilename = rawfilename
         self.gui = args.gui
 
@@ -50,13 +50,14 @@ class MTPClient():
         # Dictionary of allowed commands to send to firmware
         commandDict = MTPcommand()
 
-        self.init = MTPProbeInit(args, port, commandDict, args.loglevel, iwg)
+        self.init = MTPProbeInit(args, port, commandDict, args.loglevel, iwg,
+                                 app)
         self.move = MTPProbeMove(self.init, commandDict)
         self.data = MTPProbeCIR(self.init, commandDict)
         self.fmt = MTPDataFormat(self.init, self.data, commandDict, iwg)
 
     def bootCheck(self):
-        return(self.init.bootCheck())
+        return self.init.bootCheck()
 
     def clearBuffer(self):
         self.init.clearBuffer()
@@ -90,7 +91,7 @@ class MTPClient():
     def initProbe(self):
         # Initialize probe
         status = self.init.init()
-        return(status)  # True if success, False if init failed
+        return status  # True if success, False if init failed
 
     def readInput(self, cmdInput):
         if cmdInput == '0':

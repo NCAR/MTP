@@ -83,7 +83,7 @@ class MTPiwg():
         # Display the latest IWG packet.
         if iwgWindow:
             iwgWindow.setPlainText(self.dataI)
-        else:  # No GUI so print to screen
+        else:  # No GUI so print to screen/log
             logger.info(self.dataI)
 
         self.saveIWG()

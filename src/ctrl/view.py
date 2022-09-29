@@ -180,6 +180,7 @@ class MTPControlView(QWidget):
         self.IWG1Box.setPlainText('IWG1,YYYYMMDDTHHMMSS,-xx.xxxx,xxx.xxx,')
         self.IWG1Box.setReadOnly(True)
         self.IWG1Box.setFrameStyle(QFrame.Panel | QFrame.Sunken)
+        self.client.init.setIWG1Box(self.IWG1Box)
 
         # Push Buttons
         self.initProbe = QPushButton("(Re)init Probe")
