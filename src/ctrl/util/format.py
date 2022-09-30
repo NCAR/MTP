@@ -15,12 +15,14 @@ logger = QLogger("EOLlogger")
 
 class MTPDataFormat():
 
-    def __init__(self, init, data, commandDict, iwg):
+    def __init__(self, client, init, data, commandDict, iwg, app):
         self.serialPort = init.getSerialPort()
         self.init = init
         self.commandDict = commandDict
         self.data = data
         self.iwg = iwg
+        self.app = app
+        self.client = client
 
         # functions that control pointing adjustments that correct for
         # aircraft attitute and canister mounting on aircraft
@@ -66,6 +68,8 @@ class MTPDataFormat():
 
         # Get all the housekeeping data
         move.moveHome()
+        if self.app:
+            self.client.view.updateAngle("Target")  # Update displayed angle
         raw = raw + self.readM1line() + '\n'  # Read M1 data from the probe
         raw = raw + self.readM2line() + '\n'  # Read M2 data from the probe
         raw = raw + self.readPTline() + '\n'  # Read PT data from the probe
@@ -84,12 +88,18 @@ class MTPDataFormat():
         else:
             # No new IWG data, so use previous average for up to 10 minutes,
             # else report missing.
-            lastTime = self.iwg.getLastAvgTime()
-            if lastTime != "" \
-               and self.nowTime-lastTime < datetime.timedelta(minutes=10):
+            lastAvgTime = self.iwg.getLastAvgTime()
+            if lastAvgTime != "" and self.nowTime-lastAvgTime < \
+               datetime.timedelta(minutes=10):
                 self.aline = self.iwg.getAvgAline()
+                if self.app:
+                    self.client.view.setLEDyellow(
+                        self.client.view.receivingIWGLED)
             else:
                 self.aline = self.readAline()  # Create missing A line
+                if self.app:
+                    self.client.view.setLEDred(
+                        self.client.view.receivingIWGLED)
 
         # Get the IWG line
         # This will be the most recent instantaneous IWG line receive from the
@@ -202,11 +212,19 @@ class MTPDataFormat():
         for angle in self.elAngles:
 
             # Correct angle based on aircraft pitch/roll from latest IWG packet
-            angle = self.pointing.fEc(self.iwg.getPitch(), self.iwg.getRoll(),
-                                      angle)
+            corrAngle = self.pointing.fEc(self.iwg.getPitch(),
+                                          self.iwg.getRoll(), angle)
 
-            moveToCommand, currentClkStep = self.getAngle(angle,
+            moveToCommand, currentClkStep = self.getAngle(corrAngle,
                                                           currentClkStep)
+
+            # Update GUI display with current scan angle, pitch, and roll
+            if self.app:
+                self.client.view.updateAngle(str(angle))
+                self.client.view.updatePitch("%05.2f" % float(
+                                             self.iwg.getPitch()))
+                self.client.view.updateRoll("%04.2f" % float(
+                                             self.iwg.getRoll()))
 
             if (move.moveTo(moveToCommand, self.data)):
 

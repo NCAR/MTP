@@ -114,6 +114,9 @@ def main():
 
         # Instantiate the GUI
         ctrlview = MTPControlView(app, client, iwg)
+        ctrlview.updateLogfile(log_filepath)  # Display log path
+        # Connect the GUI to the client so client can update GUI
+        client.connectGUI(ctrlview)
 
         # Run the application until the user closes it.
         sys.exit(app.exec_())
@@ -137,8 +140,7 @@ def main():
                     if len(read_ready) == 0:
                         print('timed out')
 
-                if iwg.socket() in read_ready:
-                    iwg.readIWG()
+                client.processIWG(read_ready, None)
 
                 if sys.stdin in read_ready:
                     cmdInput = sys.stdin.readline()

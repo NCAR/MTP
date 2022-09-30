@@ -20,6 +20,10 @@ probe.
 
 - Remove excess checks and adjust timing on some loops to tighten up scan time
 
+- Turn duplicate processIWG code into a single function.
+
+- Implement GUI: fix display if IWG to GUI, implement display of values to GUI. Still need to code overheat and overvoltage and display proj info from config file.
+
 ## [0.2] - 2022-08-29 - ACCLIP FF03 TEST
 
 This version of the software will be flown on ACCLIP FF03 from Anchorage to RMMA

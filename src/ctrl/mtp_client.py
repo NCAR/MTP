@@ -29,6 +29,13 @@ class MTPClient():
     def __init__(self, rawfilename, configfile, args, iwg, app=None):
         self.rawfilename = rawfilename
         self.gui = args.gui
+        self.iwg = iwg
+        self.app = app
+
+        # Initialize counters
+        self.cyclesSinceLastStop = 0
+        self.totalCycles = 0
+        self.elapsedTime = datetime.timedelta(seconds=0)
 
         # Open output file for raw data
         try:
@@ -50,11 +57,18 @@ class MTPClient():
         # Dictionary of allowed commands to send to firmware
         commandDict = MTPcommand()
 
-        self.init = MTPProbeInit(args, port, commandDict, args.loglevel, iwg,
-                                 app)
+        self.init = MTPProbeInit(self, args, port, commandDict, args.loglevel,
+                                 iwg, app)
         self.move = MTPProbeMove(self.init, commandDict)
         self.data = MTPProbeCIR(self.init, commandDict)
-        self.fmt = MTPDataFormat(self.init, self.data, commandDict, iwg)
+        self.fmt = MTPDataFormat(self, self.init, self.data, commandDict, iwg,
+                                 app)
+
+    def connectGUI(self, view):
+        """
+        Connect the view to the client so the client can update the view
+        """
+        self.view = view
 
     def bootCheck(self):
         return self.init.bootCheck()
@@ -91,6 +105,12 @@ class MTPClient():
     def initProbe(self):
         # Initialize probe
         status = self.init.init()
+        if self.app:
+            if status is True:
+                self.view.setLEDgreen(self.view.probeStatusLED)
+            else:
+                self.view.setLEDred(self.view.probeStatusLED)
+
         return status  # True if success, False if init failed
 
     def readInput(self, cmdInput):
@@ -183,6 +203,7 @@ class MTPClient():
             self.createRawRec()
 
     def stopCycle(self):
+        self.cyclesSinceLastStop = 0
         self.cycleMode = False
 
     def captureExit(self):
@@ -231,6 +252,13 @@ class MTPClient():
         udpTime = datetime.datetime.now(datetime.timezone.utc)
         logger.info("udp creation took " + str(udpTime-writeTime))
 
+        self.cyclesSinceLastStop += 1
+        self.totalCycles += 1
+        self.elapsedTime = udpTime-firstTime
+        if self.app:
+            self.view.updateGUIEndOfLoop(self.elapsedTime, self.totalCycles,
+                                         self.cyclesSinceLastStop)
+
     def writeFileTime(self, time):
         """
         Write a line giving the file open time as the first line of the raw
@@ -243,14 +271,34 @@ class MTPClient():
         self.rawfile.write(raw)
         self.rawfile.flush()
 
+    def processIWG(self, read_ready, iwgBox):
+        """
+        If IWG packet available, display it and save it to the dictionary
+        """
+        lastIWG = datetime.datetime.now()  # Missing IWG if > 1 sec since last
+        if self.iwg.socket() in read_ready:
+            self.iwg.readIWG(iwgBox)  # read, save, and display
+            if iwgBox:  # Update status light
+                self.view.setLEDgreen(self.view.receivingIWGLED)
+            lastIWG = datetime.datetime.now()
+        else:
+            currIWG = datetime.datetime.now()
+            if iwgBox:  # Update status light
+                if currIWG - lastIWG > datetime.timedelta(seconds=1):
+                    self.view.setLEDred(self.view.receivingIWGLED)
+
     def sendUDP(self, udpLine):
         """ Send UDP packet to RIC and nidas """
-        if self.sock:  # Sent to RIC
+        if self.sock:
+            # Sent to RIC
             self.sock.sendto(udpLine.encode('utf-8'),
                              (self.udp_ip, self.ric_send_port))
-        if self.sock:  # Send to nidas ip needs to be 192.168.84.255
+            # Send to nidas ip needs to be 192.168.84.255
             self.sock.sendto(udpLine.encode(),
                              (self.udp_ip, self.nidas_send_port))
+            # Update LED
+            if self.app and self.cycleMode is True:
+                self.view.updateUDPStatus(True)
 
     def singleMoveTest(self):
         """ Test (and time) moving to first angle from home """

@@ -19,10 +19,13 @@ logger = QLogger("EOLlogger")
 
 class MTPProbeInit():
 
-    def __init__(self, args, port, commandDict, loglevel, iwg, app=None):
+    def __init__(self, client, args, port, commandDict, loglevel, iwg,
+                 app=None):
         ''' initial setup of serialPort, UDP socket '''
         self.iwg = iwg
         self.app = app
+        self.client = client
+        self.IWG1Box = None
 
         try:
             self.serialPort = serial.Serial(args.device, 9600, timeout=0.15)
@@ -44,8 +47,6 @@ class MTPProbeInit():
     def setIWG1Box(self, IWG1Box):
         if self.app:
             self.IWG1Box = IWG1Box
-        else:
-            self.IWG1Box = None
 
     def getSerialPort(self):
         ''' return serial port '''
@@ -191,8 +192,7 @@ class MTPProbeInit():
                 if len(read_ready) == 0:
                     print('timed out')
 
-            if self.iwg.socket() in read_ready:
-                self.iwg.readIWG(self.IWG1Box)
+            self.client.processIWG(read_ready, self.IWG1Box)
 
             response = self.serialPort.readline()
             if len(response) == 0:

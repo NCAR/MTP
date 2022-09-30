@@ -71,9 +71,7 @@ class MTPControlView(QWidget):
         ports = [self.iwg.socket()]
         read_ready, _, _ = select.select(ports, [], [], 0.01)
 
-        # If IWG packet available, display it and save it to the dictionary
-        if self.iwg.socket() in read_ready:
-            self.iwg.readIWG(self.IWG1Box)
+        self.client.processIWG(read_ready, self.IWG1Box)
 
     def initUI(self):
         """ Create the GUI """
@@ -91,6 +89,7 @@ class MTPControlView(QWidget):
         self.flightNumber = QLabel("Flight #")
         self.planeName = QLabel("Aircraft Name")
         self.nominalPitch = QLabel("Nominal Pitch")
+        self.nominalRoll = QLabel("Nominal Roll")
         self.frequencies = QLabel("Frequencies")
         self.allScanAngles = QLabel("Elevation Angles:")
         self.projectLocation = QLabel("Data/logs saved to:")
@@ -106,7 +105,7 @@ class MTPControlView(QWidget):
 
         self.projectLocationBox = QLineEdit()
         self.projectLocationBox.setStyleSheet("padding-left:5")
-        self.projectLocationBox.setText('~/Desktop/$Project')  # JAA
+        self.projectLocationBox.setText('~/Desktop/$Project')
         self.projectLocationBox.setReadOnly(True)
 
         self.loopTimerBox = QLineEdit()
@@ -123,7 +122,6 @@ class MTPControlView(QWidget):
         self.numFramesSinceLastResetBox.setText('0')
         self.numFramesSinceLastResetBox.setStyleSheet("padding-left:5")
         self.numFramesSinceLastResetBox.setFixedWidth(self.shortWidth)
-        # self.numFramesSinceLastResetBox.setOverwriteMode(True)
         self.numFramesSinceLastResetBox.setReadOnly(True)
 
         # from config.mtph
@@ -132,10 +130,15 @@ class MTPControlView(QWidget):
         self.planeNameBox.setStyleSheet("padding-left:5")
         self.planeNameBox.setReadOnly(True)
         self.nominalPitchBox = QLineEdit()
-        self.nominalPitchBox.setText('3')
+        self.nominalPitchBox.setText('2.7')
         self.nominalPitchBox.setStyleSheet("padding-left:5")
         self.nominalPitchBox.setFixedWidth(self.shortWidth)
         self.nominalPitchBox.setReadOnly(True)
+        self.nominalRollBox = QLineEdit()
+        self.nominalRollBox.setText('0')
+        self.nominalRollBox.setStyleSheet("padding-left:5")
+        self.nominalRollBox.setFixedWidth(self.shortWidth)
+        self.nominalRollBox.setReadOnly(True)
         self.frequenciesBox = QLineEdit()  # also known as channels
         self.frequenciesBox.setText('55.51, 56.65, 58.8')
         self.frequenciesBox.setStyleSheet("padding-left:5;")
@@ -151,7 +154,6 @@ class MTPControlView(QWidget):
         self.elAngleBox.setText('Target')
         self.elAngleBox.setStyleSheet("padding-left:5")
         self.elAngleBox.setFixedWidth(self.shortWidth)
-        # self.elAngleBox.setOverwriteMode(True)
         self.elAngleBox.setReadOnly(True)
 
         # from/to (flight name) config.yaml
@@ -185,7 +187,7 @@ class MTPControlView(QWidget):
         # Push Buttons
         self.initProbe = QPushButton("(Re)init Probe")
         self.initProbe.clicked.connect(self.initProbeClicked)
-        self.initProbe.setEnabled(False)  # Leave disabled for now
+        self.initProbe.setEnabled(True)
         self.scanStatusButton = QPushButton("Start Scanning")
         self.scanStatusButton.clicked.connect(self.scanStatusClicked)
         self.scanStatusButton.setEnabled(True)
@@ -254,21 +256,24 @@ class MTPControlView(QWidget):
         LineTimer.addWidget(self.loopTimerBox)
         LineTimer.addWidget(self.loopTimer)
         LineTimer.addStretch()
-        LineTimer.addWidget(self.nominalPitch)
-        LineTimer.addWidget(self.nominalPitchBox)
+        LineTimer.addWidget(self.frequencies)
+        LineTimer.addWidget(self.frequenciesBox)
 
         # Total scans received and scan frequencies
         LineNumFrames = QHBoxLayout()
         LineNumFrames.addWidget(self.totalNumFramesBox)
         LineNumFrames.addWidget(self.totalNumFrames)
         LineNumFrames.addStretch()
-        LineNumFrames.addWidget(self.frequencies)
-        LineNumFrames.addWidget(self.frequenciesBox)
+        LineNumFrames.addWidget(self.nominalPitch)
+        LineNumFrames.addWidget(self.nominalPitchBox)
 
         # Total scans since last reset
         LineResetFrames = QHBoxLayout()
         LineResetFrames.addWidget(self.numFramesSinceLastResetBox)
         LineResetFrames.addWidget(self.numFramesSinceLastReset)
+        LineResetFrames.addStretch()
+        LineResetFrames.addWidget(self.nominalRoll)
+        LineResetFrames.addWidget(self.nominalRollBox)
 
         # Elevation angles
         LineElAngle = QHBoxLayout()
@@ -387,6 +392,7 @@ class MTPControlView(QWidget):
             self.setLEDred(self.scanStatusLED)
             self.scanStatusButton.setText("Start Scanning")
             self.client.stopCycle()
+            self.setLEDred(self.sendingUDPLED)
 
     def setLEDred(self, led):
         ICON_RED_LED = QtGui.QPixmap(QSize(30, 30))
@@ -403,27 +409,38 @@ class MTPControlView(QWidget):
         ICON_GREEN_LED.fill(QtGui.QColor("green"))
         led.setPixmap(ICON_GREEN_LED)
 
+    def updateUDPStatus(self, status):
+        if status is True:
+            self.setLEDgreen(self.sendingUDPLED)
+        else:
+            self.setLEDred(self.sendingUDPLED)
+
     def setFlightNumber(self):
         # Dialog for setting flight number
         self.flightNumber.clear()
         self.flightNumber.setText("Target")
 
-    def atTarget(self):
-        # Update GUI
-        # Note that having the clear here masks the 'target, target'
-        # potential long scan indicator
-        self.elAngleBox.clear()
-        self.elAngleBox.setText("Target")
+    def updateLogfile(self, filename: str):
+        self.projectLocationBox.clear()
+        self.projectLocationBox.setText(filename)
 
-    def updateAngle(self, angle):
+    def updateAngle(self, angle: str):
         self.elAngleBox.clear()
         self.elAngleBox.setText(angle)
+
+    def updatePitch(self, pitch: str):
+        self.nominalPitchBox.clear()
+        self.nominalPitchBox.setText(pitch)
+
+    def updateRoll(self, pitch: str):
+        self.nominalRollBox.clear()
+        self.nominalRollBox.setText(pitch)
 
     def updateGUIEndOfLoop(self, elapsedTime,
                            totalCycles, cyclesSinceLastStop):
         self.loopTimerBox.clear()
-        self.loopTimerBox.setText("{:0.2f}".format(elapsedTime))
+        self.loopTimerBox.setText("%0.2f" % elapsedTime.total_seconds())
         self.totalNumFramesBox.clear()
-        self.totalNumFramesBox.setText(totalCycles)
+        self.totalNumFramesBox.setText(str(totalCycles))
         self.numFramesSinceLastResetBox.clear()
-        self.numFramesSinceLastResetBox.setText(cyclesSinceLastStop)
+        self.numFramesSinceLastResetBox.setText(str(cyclesSinceLastStop))
