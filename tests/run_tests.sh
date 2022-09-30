@@ -26,3 +26,4 @@ python3 -m unittest discover -s ../tests -v -p test_MTPviewer2.py
 python3 -m unittest discover -s ../tests -v -p "test_eng1*py"
 python3 -m unittest discover -s ../tests -v -p "test_eng2*py"
 python3 -m unittest discover -s ../tests -v -p "test_eng3*py"
+python3 -m unittest discover -s ../tests -v -p "test_MTPiwg.py"

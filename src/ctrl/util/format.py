@@ -5,9 +5,11 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2022
 ###############################################################################
+import numpy
 from numpy import isnan
 import datetime
 from ctrl.util.pointing import pointMTP
+from util.math import MTPmath
 from EOLpython.Qlogger.messageHandler import QLogger
 
 logger = QLogger("EOLlogger")
@@ -23,6 +25,12 @@ class MTPDataFormat():
         self.iwg = iwg
         self.app = app
         self.client = client
+
+        # Instantiate an MTPmath class
+        self.math = MTPmath()
+
+        # Var to keep track of probe temperature
+        self.Tsynth = numpy.nan
 
         # functions that control pointing adjustments that correct for
         # aircraft attitute and canister mounting on aircraft
@@ -378,6 +386,17 @@ class MTPDataFormat():
         data = "M02: " + str(self.m2)
 
         logger.info("data from M02 line - " + data)
+
+        # Last value in M02 line is the temperature of they synth. Store it
+        # so it can be used to warn user of probe overheat.
+        self.Tsynth = self.math.calcTfromVal(int(self.m2.split()[-1]))
+        # If probe overheating, warn user.
+        if self.Tsynth > 50:
+            if self.app:
+                self.client.view.setLEDred(self.client.view.overHeatLED)
+            else:
+                logger.warning("**** MTP overheating (T>50). " +
+                               "Turn off to avoid damage ****")
 
         return(data)
 
