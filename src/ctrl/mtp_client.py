@@ -13,6 +13,8 @@ import select
 import socket
 import time
 import datetime
+from lib.config import config
+from ctrl.util.iwg import MTPiwg
 from ctrl.util.init import MTPProbeInit
 from ctrl.util.move import MTPProbeMove
 from ctrl.util.CIR import MTPProbeCIR
@@ -26,10 +28,8 @@ logger = QLogger("EOLlogger")
 
 class MTPClient():
 
-    def __init__(self, rawfilename, configfile, args, iwg, app=None):
-        self.rawfilename = rawfilename
+    def __init__(self, args, nowTime, app=None):
         self.gui = args.gui
-        self.iwg = iwg
         self.app = app
 
         # Initialize counters
@@ -37,32 +37,60 @@ class MTPClient():
         self.totalCycles = 0
         self.elapsedTime = datetime.timedelta(seconds=0)
 
+        # Initialize a config file (includes reading it into a dictionary)
+        self.configfile = self.config(args.config)
+
+        # connect to IWG port
+        self.iwg = self.connectIWG()
+
+        # Create the raw data filename from the current UTC time
+        self.openRaw(nowTime)
+
+        # Dictionary of allowed commands to send to firmware
+        commandDict = MTPcommand()
+
+        # Initialize probe control classes
+        port = self.configfile.getInt('udp_send_port')  # send MTP UDP packets
+        self.init = MTPProbeInit(self, args, port, commandDict, args.loglevel,
+                                 self.iwg, app)
+        self.move = MTPProbeMove(self.init, commandDict)
+        self.data = MTPProbeCIR(self.init, commandDict)
+        self.fmt = MTPDataFormat(self, self.init, self.data, commandDict,
+                                 self.iwg, app)
+
+    def getIWG(self):
+        return self.iwg
+
+    def config(self, configfile_name):
+        # Initialize a config file (includes reading it into a dictionary)
+        return config(configfile_name)
+
+    def connectIWG(self):
+        # connect to IWG port
+        iwgport = self.configfile.getInt('iwg1_port')  # listen for IWG packets
+        iwg = MTPiwg()
+        iwg.connectIWG(iwgport)
+        # Instantiate an IWG reader and configure a dictionary to store the
+        # IWG data
+        asciiparms = self.configfile.getPath('ascii_parms')
+        iwg.initIWG(asciiparms)
+
+        return iwg
+
+    def openRaw(self, nowTime):
         # Open output file for raw data
+        self.rawfileDate = nowTime.strftime("N%Y%m%d%H.%M")
+        rawdir = self.configfile.getPath('rawdir')
+        rawfilename = os.path.join(rawdir, self.rawfileDate)
+
         try:
             self.rawfile = open(rawfilename, "a")
         except Exception:
             raise  # Unable to open file. Pass err back up to calling function
 
-        # Configure UDP socket
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        self.udp_ip = "192.168.84.255"  # These should NOT be hardcoded - JAA
-        self.ric_send_port = 32106  # 7 on the ground, 6 on the GV
-        self.nidas_send_port = 30101
-
-        # Get ports from config file
-        port = configfile.getInt('udp_send_port')  # to send MTP UDP packets
-
-        # Dictionary of allowed commands to send to firmware
-        commandDict = MTPcommand()
-
-        self.init = MTPProbeInit(self, args, port, commandDict, args.loglevel,
-                                 iwg, app)
-        self.move = MTPProbeMove(self.init, commandDict)
-        self.data = MTPProbeCIR(self.init, commandDict)
-        self.fmt = MTPDataFormat(self, self.init, self.data, commandDict, iwg,
-                                 app)
+    def getLogfilePath(self):
+        logdir = self.configfile.getPath('logdir')
+        return os.path.join(logdir, "log." + self.rawfileDate)
 
     def connectGUI(self, view):
         """
@@ -289,11 +317,19 @@ class MTPClient():
 
     def sendUDP(self, udpLine):
         """ Send UDP packet to RIC and nidas """
+        # Configure UDP socket
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+
         if self.sock:
+            self.udp_ip = self.configfile.getVal('udp_ip')
             # Sent to RIC
+            self.ric_send_port = self.configfile.getInt('udp_send_port')
             self.sock.sendto(udpLine.encode('utf-8'),
                              (self.udp_ip, self.ric_send_port))
             # Send to nidas ip needs to be 192.168.84.255
+            self.nidas_send_port = self.configfile.getInt('nidas_port')
             self.sock.sendto(udpLine.encode(),
                              (self.udp_ip, self.nidas_send_port))
             # Update LED

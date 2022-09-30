@@ -13,8 +13,6 @@ import datetime
 import argparse
 import logging
 import select
-from lib.config import config
-from ctrl.util.iwg import MTPiwg
 from ctrl.mtp_client import MTPClient
 from ctrl.view import MTPControlView
 from EOLpython.Qlogger.messageHandler import QLogger
@@ -71,28 +69,6 @@ def main():
     stream = sys.stdout  # send WARNING|ERROR to terminal window
     logger.initStream(stream, args.loglevel, args.logmod)
 
-    # Initialize a config file (includes reading it into a dictionary)
-    configfile = config(args.config)
-
-    # Create the raw data filename from the current UTC time
-    rawfile = nowTime.strftime("N%Y%m%d%H.%M")
-    rawdir = configfile.getPath('rawdir')
-    rawfilename = os.path.join(rawdir, rawfile)
-
-    # In addition, send all messages to logfile
-    logdir = configfile.getPath('logdir')
-    log_filepath = os.path.join(logdir, "log." + rawfile)
-    logger.initLogfile(log_filepath, logging.INFO)
-
-    # connect to IWG port
-    iwgport = configfile.getInt('iwg1_port')   # to listen for IWG packets
-    iwg = MTPiwg()
-    iwg.connectIWG(iwgport)
-    # Instantiate an IWG reader and configure a dictionary to store the
-    # IWG data
-    asciiparms = configfile.getPath('ascii_parms')
-    iwg.initIWG(asciiparms)
-
     # Instantiate the GUI if requested
     if args.gui is True:  # Run in GUI mode
         app = QApplication([])
@@ -101,20 +77,25 @@ def main():
 
     # Instantiate client which handles user commands
     try:
-        client = MTPClient(rawfilename, configfile, args, iwg, app)
+        client = MTPClient(args, nowTime, app)
         client.writeFileTime(nowTime.strftime("%H:%M:%S %m-%d-%Y"))
     except Exception as e:
         logger.error("Unable to open Raw file: " + e)
         print("ERROR: Unable to open Raw data output file: " + e)
         exit(1)
 
+    # In addition, send all messages to logfile
+    logger.initLogfile(client.getLogfilePath(), logging.INFO)
+
+    iwg = client.getIWG()
+
     probeResponding = False
 
     if args.gui is True:  # Run in GUI mode
 
         # Instantiate the GUI
-        ctrlview = MTPControlView(app, client, iwg)
-        ctrlview.updateLogfile(log_filepath)  # Display log path
+        ctrlview = MTPControlView(app, client)
+        ctrlview.updateLogfile(client.getLogfilePath())  # Display log path
         # Connect the GUI to the client so client can update GUI
         client.connectGUI(ctrlview)
 

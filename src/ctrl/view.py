@@ -37,11 +37,10 @@ class Worker(QObject):
 
 class MTPControlView(QWidget):
 
-    def __init__(self, app, client, iwg):
+    def __init__(self, app, client):
 
         self.app = app
         self.client = client
-        self.iwg = iwg
 
         # The QMainWindow class provides a main application window
         super().__init__()
@@ -68,7 +67,8 @@ class MTPControlView(QWidget):
         Connect to IWG data stream and see if there is a packet available to
         read
         """
-        ports = [self.iwg.socket()]
+        iwg = self.client.getIWG()
+        ports = [iwg.socket()]
         read_ready, _, _ = select.select(ports, [], [], 0.01)
 
         self.client.processIWG(read_ready, self.IWG1Box)
@@ -83,6 +83,7 @@ class MTPControlView(QWidget):
         self.IWGPort = QLabel("IWG Port #")
         self.sendingUDP = QLabel("UDP Status")
         self.UDPPort = QLabel("UDP out Port #")
+        self.NIDASPort = QLabel("NIDAS Port #")
         self.overHeat = QLabel("Overheat    ")  # space is so layout is even
         self.overVoltage = QLabel("Overvoltage ")  # space is so layout is even
         self.projectName = QLabel("Project Name")
@@ -126,7 +127,7 @@ class MTPControlView(QWidget):
 
         # from config.mtph
         self.planeNameBox = QLineEdit()
-        self.planeNameBox.setText('NGV')
+        self.planeNameBox.setText(self.client.configfile.getVal('platformID'))
         self.planeNameBox.setStyleSheet("padding-left:5")
         self.planeNameBox.setReadOnly(True)
         self.nominalPitchBox = QLineEdit()
@@ -158,25 +159,34 @@ class MTPControlView(QWidget):
 
         # from/to (flight name) config.yaml
         self.projectNameBox = QLineEdit()
-        self.projectNameBox.setText('ProjectName')
+        self.projectNameBox.setText(self.client.configfile.getVal('project'))
         self.projectNameBox.setStyleSheet("padding-left:5")
         self.projectNameBox.setReadOnly(True)
 
         self.flightNumberBox = QLineEdit()
-        self.flightNumberBox.setText('FlightNum')
+        self.flightNumberBox.setText(self.client.configfile.getVal('fltno'))
         self.flightNumberBox.setStyleSheet("padding-left:5")
         self.flightNumberBox.setReadOnly(True)
 
         self.IWGPortBox = QLineEdit()
-        self.IWGPortBox.setText('7071')
+        self.IWGPortBox.setText(str(
+                                self.client.configfile.getInt('iwg1_port')))
         self.IWGPortBox.setStyleSheet("padding-left:5")
         self.IWGPortBox.setFixedWidth(self.shortWidth)
         self.IWGPortBox.setReadOnly(True)
         self.UDPPortBox = QLineEdit()
-        self.UDPPortBox.setText('32106')
+        self.UDPPortBox.setText(str(self.client.configfile.getInt(
+                                    'udp_read_port')))
         self.UDPPortBox.setStyleSheet("padding-left:5")
         self.UDPPortBox.setFixedWidth(self.shortWidth)
         self.UDPPortBox.setReadOnly(True)
+
+        self.NIDASPortBox = QLineEdit()
+        self.NIDASPortBox.setText(str(self.client.configfile.getInt(
+                                    'nidas_port')))
+        self.NIDASPortBox.setStyleSheet("padding-left:5")
+        self.NIDASPortBox.setFixedWidth(self.shortWidth)
+        self.NIDASPortBox.setReadOnly(True)
 
         self.IWG1Box = QPlainTextEdit()
         self.IWG1Box.setPlainText('IWG1,YYYYMMDDTHHMMSS,-xx.xxxx,xxx.xxx,')
@@ -275,6 +285,13 @@ class MTPControlView(QWidget):
         LineResetFrames.addWidget(self.nominalRoll)
         LineResetFrames.addWidget(self.nominalRollBox)
 
+        # Data/logs save line
+        LineLog = QHBoxLayout()
+        LineLog.addWidget(self.projectLocation)
+        LineLog.addStretch()
+        LineLog.addWidget(self.NIDASPort)
+        LineLog.addWidget(self.NIDASPortBox)
+
         # Elevation angles
         LineElAngle = QHBoxLayout()
         LineElAngle.addWidget(self.allScanAngles)
@@ -321,7 +338,7 @@ class MTPControlView(QWidget):
         mainbox.addLayout(LineAllAngle)
         mainbox.addLayout(LineReceivingUDP)
         mainbox.addLayout(LineSendingUDP)
-        mainbox.addWidget(self.projectLocation)
+        mainbox.addLayout(LineLog)
         mainbox.addWidget(self.projectLocationBox)
         mainbox.addWidget(self.IWG1)
         mainbox.addWidget(self.IWG1Box)

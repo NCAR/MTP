@@ -12,7 +12,7 @@ Changelog for MTP software
 
 - Remove excess checks and adjust timing on some loops to tighten up scan time. Scan time is now ~19 seconds in the lab which is the same as the VB6.
 
-- Implement working GUI including display of state info. (Still need to code overvoltage and display proj info from config file.)
+- Implement working GUI including display of state info. (Still need to code overvoltage)
 
 ## [0.2] - 2022-08-29 - ACCLIP FF03 TEST
 
