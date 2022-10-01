@@ -91,7 +91,7 @@ class config():
             if key != 'json_file' and key != 'filelist':
                 logger.error(key + " not defined in configfile " +
                              self.yamlfile)
-                raise Exception()
+                exit(1)
 
             if key == 'json_file':
                 return ''
