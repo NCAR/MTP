@@ -1,4 +1,5 @@
-############################################################################### # Script to demonstrate select between IWG and MTP. Useful for testing
+###############################################################################
+# Script to demonstrate select between IWG and MTP. Useful for testing
 #
 # To use, start an MTP and IWG feed and then run this script. In a testing
 # environment, in three separate xterms:
@@ -34,12 +35,12 @@ class IWG1():
         self.sockI.setblocking(False)
 
     def socket(self):
-        return(self.sockI)
+        return self.sockI
 
     def readPacket(self):
         """ Use recvfrom to print out ip and port """
-        # return(self.sockI.recv(1024).decode())
-        return(self.sockI.recvfrom(1024))
+        # return self.sockI.recv(1024).decode()
+        return self.sockI.recvfrom(1024)
 
 
 class MTP():
@@ -63,10 +64,10 @@ class MTP():
         # Documentation at
         # https://docs.python.org/3/library/io.html#io.IOBase.readline
 
-        return(self.serialPort.readline())
+        return self.serialPort.readline()
 
     def serial(self):
-        return(self.serialPort)
+        return self.serialPort
 
 
 def main():

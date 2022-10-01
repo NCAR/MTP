@@ -83,4 +83,4 @@ class decodePt():
         # txtTsky.Text = Format$(T(3), " +00.00; -00.00")
 
     def getCount(self, var):
-        return(self.reader.rawscan['Ptline']['values'][var]['val'])
+        return self.reader.rawscan['Ptline']['values'][var]['val']

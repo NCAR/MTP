@@ -93,7 +93,7 @@ class RetrievalCoefficientFileSet():
 
         # Test if got complete fileset
         if ((filelist is None) or (len(self._RCFs) == len(filelist))):
-            return(True)  # Success
+            return True  # Success
         else:
             # Try to give user a helpful error message.
             # Cases:
@@ -124,17 +124,17 @@ class RetrievalCoefficientFileSet():
 
     def getRCFVector(self):
         """ Return a list of available RCF files """
-        return(self._RCFs)
+        return self._RCFs
 
     def getRCFbyId(self, RCFId):
         """ Given an RCF Id, return the RCF file with that ID """
         for rcf in self._RCFs:
             if (rcf.getId() == RCFId):
-                return(rcf)
+                return rcf
 
         logger.error("In " + inspect.stack()[0][3] + ":" +
                      "  Could not find RCF with ID: " + str(RCFId))
-        return(False)
+        return False
 
     def setFlightLevelsKm(self, FlightLevels, NumFlightLevels):
         """
@@ -154,7 +154,7 @@ class RetrievalCoefficientFileSet():
         if (len(self._RCFs) == 0):
             logger.error("In " + inspect.stack()[0][3] + " call " +
                          "failed: There are currently no RCFs in the set")
-            return(False)
+            return False
 
         for rcf in self._RCFs:
             if not (rcf.testFlightLevelsKm(FlightLevels, NumFlightLevels)):
@@ -162,9 +162,9 @@ class RetrievalCoefficientFileSet():
                              " call failed: ERROR: Failed test of flight " +
                              "levels for RCFID:" + rcf.getId() + ". " +
                              "Number of flight levels varies between RCs.")
-                return(False)
+                return False
 
-        return(True)
+        return True
 
     def getBestWeightedRCSet(self, ScanBrightnessTemps, PAltKm, BTBias):
         """
@@ -280,4 +280,4 @@ class RetrievalCoefficientFileSet():
         RC4R['RCFIndex'] = BestRCIndex
         RC4R['FL_RCs'] = self._RCFs[BestRCIndex].getRCAvgWt(PAltKm)
         RC4R['RCFArray'] = RCFIndex_lnP_Array
-        return(RC4R)
+        return RC4R

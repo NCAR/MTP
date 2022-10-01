@@ -55,7 +55,7 @@ class IWG:
                     newVar = var
                     break
 
-        return(newVar)
+        return newVar
 
     def createPacket(self, newVar):
         """ Create the IWG1line section of the MTP dictionary dynamically """
@@ -64,13 +64,13 @@ class IWG:
             {'val': numpy.nan, 'idx': self.index}
         self.index = self.index + 1
         if self.index > 32:  # Only keep first 31 values; rest are user vals
-            return(False)
+            return False
         else:
-            return(True)
+            return True
 
     def getIwgPacket(self):
         """  Return the IWG packet to the caller """
-        return(self.iwg['asciiPacket'])
+        return self.iwg['asciiPacket']
 
     def parseIwgPacket(self, IWGpacket, ascii_parms_file):
         """
@@ -79,13 +79,13 @@ class IWG:
         Ignore them when self.ERROR_FLAG = True
         """
         if self.ERROR_FLAG is True:
-            return(False)  # Did not succeed in reading IWG packet
+            return False  # Did not succeed in reading IWG packet
 
         separator = ','
         self.values = IWGpacket.split(separator)
 
         # Only keep first 31 values; rest are user vals
-        del(self.values[33:])
+        del self.values[33:]
 
         # values[0] contains the packet identifier, in this case 'IWG1' so skip
         # values[1] contains the datetime, i.e. yyyymmddThhMMss
@@ -117,4 +117,4 @@ class IWG:
                 self.iwg['values'][key]['val'] = \
                     self.values[int(self.iwg['values'][key]['idx'])]
 
-        return(True)  # Successful parse of IWG packet
+        return True  # Successful parse of IWG packet

@@ -43,13 +43,13 @@ class ScanTemp():
     def getWindow(self):
 
         # Return pointer to the graphics window
-        return(self.canvas)
+        return self.canvas
 
     def getAngles(self):
         """ Create an array of the angles corresponding to each SCNT value """
         angles = numpy.array(range(10))+1
 
-        return(angles)
+        return angles
 
     def configureAxis(self):
         """ Configure axis labels and limits, inc. invert right axis """
@@ -128,14 +128,14 @@ class ScanTemp():
         Get the minimum temperature from the union of tb and temperature scans.
         Used for auto-scaling plots
         """
-        return(min(tb + template))
+        return min(tb + template)
 
     def maxTemp(self, tb, template):
         """
         Get the maximum temperature from the union of tb and temperature scans.
         Used for auto-scaling plots
         """
-        return(max(tb + template))
+        return max(tb + template)
 
     def plotACALT(self, ACAltKm, xmin, xmax):
         """ Plot aircraft altitude in black. Corresponds to left axis """

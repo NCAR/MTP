@@ -204,7 +204,7 @@ class MTPviewer(QMainWindow):
         if (ang+1 == 6):
             cell.setStyleSheet("QPlainTextEdit {background-color: lightgreen}")
         grid.addWidget(cell, ang+2, chan-1, 1, 1)
-        return(cell)
+        return cell
 
     def writeTB(self, cell):
         """ Display the brightness temperatures in the GUI """
@@ -508,7 +508,7 @@ class MTPviewer(QMainWindow):
         try:
             self.client.readSocket()  # Read data from socket
         except Exception:
-            return()
+            return
 
         try:
             # Perform calcs on raw MTP data - converts counts to brightness
@@ -606,7 +606,7 @@ class MTPviewer(QMainWindow):
             self.profile.draw()
             self.RCF1.setPlainText('')  # Clear display of last RCF used
             self.RCF2.setPlainText('')  # Clear display of last RCF2 used
-            return()
+            return
 
         # ---------- Retrieval succeeded ----------
         self.ATP = self.client.getATP()

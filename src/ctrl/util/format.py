@@ -126,7 +126,7 @@ class MTPDataFormat():
 
         logger.info("Raw record creation took " + str(self.nowTime-firstTime))
 
-        return(rawRecord)
+        return rawRecord
 
     def createUDPpacket(self):
         """ Create the UDP packet to send to nidas and RIC """
@@ -148,7 +148,7 @@ class MTPDataFormat():
         udpLine = udpLine.replace(' ', ',')
         logger.info("UDP packet: " + udpLine)
 
-        return(udpLine)
+        return udpLine
 
     def readAline(self):
         """
@@ -186,7 +186,7 @@ class MTPDataFormat():
         srlon = self.iwg.getSRLon()  # SRLON
         aline = aline + "%+06.3f " % (-9.999 if isnan(srlon) else srlon)
 
-        return(aline)
+        return aline
 
     def setNoise(self, cmd):
         self.serialPort.write(cmd)
@@ -318,7 +318,7 @@ class MTPDataFormat():
 
     def getBdata(self):
         """ Return the B data only (without B at the front) """
-        return(self.b)
+        return self.b
 
     def readEline(self):
         """
@@ -349,7 +349,7 @@ class MTPDataFormat():
 
     def getEdata(self):
         """ Return the E data only (without E at the front) """
-        return(self.e)
+        return self.e
 
     def readM1line(self):
         """
@@ -366,11 +366,11 @@ class MTPDataFormat():
 
         logger.info("data from M01 line - " + data)
 
-        return(data)
+        return data
 
     def getM1data(self):
         """ Return the M01 data only (without M01: at the front) """
-        return(self.m1)
+        return self.m1
 
     def readM2line(self):
         """
@@ -398,11 +398,11 @@ class MTPDataFormat():
                 logger.warning("**** MTP overheating (T>50). " +
                                "Turn off to avoid damage ****")
 
-        return(data)
+        return data
 
     def getM2data(self):
         """ Return the M02 data only (without M02: at the front) """
-        return(self.m2)
+        return self.m2
 
     def readPTline(self):
         """
@@ -419,8 +419,8 @@ class MTPDataFormat():
 
         logger.info("data from Pt line - " + data)
 
-        return(data)
+        return data
 
     def getPTdata(self):
         """ Return the Pt data only (without Pt: at the front) """
-        return(self.pt)
+        return self.pt

@@ -38,10 +38,10 @@ class MTPProbeMove():
             stlen = answerFromProbe.find(b'\r\n$')
             logger.info("readScan success with value " +
                         str(answerFromProbe[index:stlen-1]))
-            return(answerFromProbe[index:stlen-1])
+            return answerFromProbe[index:stlen-1]
         else:
             logger.warning("Didn't find backtick in readScan")
-            return("-99999")
+            return "-99999"
 
     def readEnc(self):
         """
@@ -57,10 +57,10 @@ class MTPProbeMove():
             stlen = answerFromProbe.find(b'\r\n$')
             logger.info("readEnc success with value " +
                         str(answerFromProbe[index:stlen-1]))
-            return(answerFromProbe[index:stlen])
+            return answerFromProbe[index:stlen]
         else:
             logger.warning("Didn't find backtick in readEnc")
-            return("-99999")
+            return "-99999"
 
     def moveHome(self):
         """
@@ -125,7 +125,7 @@ class MTPProbeMove():
         answerFromProbe = self.init.readEchos(3, cmd)
         # Wait up to 3 seconds for stepper to complete moving
         # Return True of stepper done moving
-        return(self.moveWait(home, answerFromProbe, 1.3))
+        return self.moveWait(home, answerFromProbe, 1.3)
 
     def moveWait(self, cmdstr, answerFromProbe, delay):
         """
@@ -158,7 +158,7 @@ class MTPProbeMove():
             if not self.init.stepperBusy(int(stat)):
                 # success
                 logger.info(cmdstr + " successful")
-                return(True)
+                return True
 
             # Increment timeinloop
             timeinloop = datetime.datetime.now() - loopStartTime
@@ -166,7 +166,7 @@ class MTPProbeMove():
         # If looped for delay seconds and stepper still moving, return
         # False
         logger.warning("MTP reports stepper still moving")
-        return(False)
+        return False
 
     def moveTo(self, location, data):
         # VB6 has if nsteps < 20, don't move. Not sure this ever occurs since
@@ -181,7 +181,7 @@ class MTPProbeMove():
 
         # Wait up to 3 seconds for stepper to complete moving
         # Return True if stepper done moving
-        return(self.moveWait("move", echo, 3))
+        return self.moveWait("move", echo, 3)
 
     def isMovePossibleFromHome(self):
         """
@@ -198,10 +198,10 @@ class MTPProbeMove():
             else:
                 logger.error("Move not possible. Not in home" +
                              " position")
-                return(False)
+                return False
         else:
             logger.error("readScan() failed. Unknown position")
-            return(False)
+            return False
 
         # Check that integrator has finished
         s = self.init.getStatus()

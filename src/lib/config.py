@@ -84,7 +84,7 @@ class config():
     def getVal(self, key):
         """ Get value for given key in the yaml file """
         if key in self.projConfig.keys():
-            return(self.projConfig[key])
+            return self.projConfig[key]
         else:
             # if no json_file defined, then write json_file to projdir
             # If no filelist, all RCF files are used
@@ -94,15 +94,15 @@ class config():
                 raise Exception()
 
             if key == 'json_file':
-                return('')
+                return ''
             else:
-                return(None)
+                return None
 
     def getInt(self, key):
         """ Read a param from the config file that should be an integer """
         val = self.getVal(key)
         if val.isdigit():
-            return(int(val))
+            return int(val)
         else:
             logger.error("Error in config file - " + key +
                          " should be an integer. Edit config file " +
@@ -114,7 +114,7 @@ class config():
     def getPath(self, key):
         """ Read a param from the config file that should be a path """
         newpath = self.prependDir(key, self.getProjDir())
-        return(newpath)
+        return newpath
 
     def prependDir(self, key, projdir):
         val = self.getVal(key)
@@ -135,9 +135,9 @@ class config():
             self.readConfig(self.yamlfile)
             self.prependDir(key, projdir)  # Loop until user fixes issue
 
-        return(newpath)
+        return newpath
 
     def getProjDir(self):
         """ Read proj dir, if defined, from config file. """
         projdir = self.yamlfile.split("config")[0]
-        return(projdir)
+        return projdir
