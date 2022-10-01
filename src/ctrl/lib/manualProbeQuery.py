@@ -41,7 +41,7 @@ class MTPQuery():
 
             # Check for q to exit this fn and return to main menu
             if query == 'q':
-                return()
+                return
 
             # Manual read one line from the serial port (ending in /r/n)
             if query == 'r':

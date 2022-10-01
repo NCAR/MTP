@@ -20,7 +20,7 @@ from ctrl.util.move import MTPProbeMove
 from ctrl.util.CIR import MTPProbeCIR
 from ctrl.util.format import MTPDataFormat
 from ctrl.lib.mtpcommand import MTPcommand
-from ctrl.test.manualProbeQuery import MTPQuery
+from ctrl.lib.manualProbeQuery import MTPQuery
 from EOLpython.Qlogger.messageHandler import QLogger
 
 logger = QLogger("EOLlogger")
