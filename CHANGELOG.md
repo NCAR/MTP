@@ -6,7 +6,7 @@ Changelog for MTP software
 
 - Update `tests` and `code` to work with new refactored EOLpython logger and to use class variable instead of env var to indicate testing mode. Combine all tests calls under one run_tests script.
 
-- Write to `logfile` by default. Set default loglevel to WARNING and add --v command line option to get info level messages.
+- Write to `logfile` by default. Set default loglevel to WARNING and add --v command line option to get info level messages sent to console. When --debug called, debug messages go to both console and logfile. In GUI mode, only WARNING and ERROR message generate message display boxes.
 
 - Fix `BUG` in integrator logic that was cause of first integration (Angle 1, Channel 1) being zero during ACCLIP FF03.
 

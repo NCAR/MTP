@@ -34,17 +34,14 @@ def parse_args():
         '--device', type=str, default='COM6',
         help="Device on which to receive messages from MTP instrument")
     parser.add_argument(
-        '--debug', dest='loglevel', action='store_const',
-        const=logging.DEBUG, default=logging.WARNING,
-        help="Show debug log messages. If --v also set, the level that" +
-        "appears later in the command will prevail, eg --debug --v displays" +
-        "info level messages and higher")
+        '--debug', dest='logleveld', action='store_const',
+        const=logging.DEBUG, default=logging.INFO,
+        help="Show debug log messages.")
     parser.add_argument(
         '--v', dest='loglevel', action='store_const',
         const=logging.INFO, default=logging.WARNING,
         help="Verbose mode - show informational log messages. If --debug " +
-        "also set, the level that appears later in the command will prevail," +
-        " eg --v --debug displays debug level messages and higher")
+        "also set, debug level will be set")
     parser.add_argument(
         '--logmod', type=str, default=None, help="Limit logging to " +
         "given module")
@@ -53,6 +50,10 @@ def parse_args():
 
     # Parse the command line arguments
     args = parser.parse_args()
+
+    # Resolve loglevel
+    if args.logleveld == logging.DEBUG:
+        args.loglevel = args.logleveld
 
     return args
 
@@ -85,7 +86,7 @@ def main():
         exit(1)
 
     # In addition, send all messages to logfile
-    logger.initLogfile(client.getLogfilePath(), logging.INFO)
+    logger.initLogfile(client.getLogfilePath(), args.logleveld)
 
     iwg = client.getIWG()
 
