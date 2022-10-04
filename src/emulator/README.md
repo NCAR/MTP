@@ -1,6 +1,6 @@
 # MTP emulator
 
-## For testing the MTP control program ctrl/view.py
+## For testing the MTP control program MTPcontrol.py
 To run the MTP instrument emulator, start the emulator and note the lines it returns:
 
 ```
@@ -9,10 +9,10 @@ Emulator connecting to virtual serial port: /var/folders/ph/6ph43gj971lfy2qn4r4p
 User clients connect to virtual serial port: /var/folders/ph/6ph43gj971lfy2qn4r4p7_vw000244/T/tmp46e5rvbk/userport
 ```
 
-You will not get the command prompt back. Leave this window open. Then in another window start ctrl/view.py with the userport as a command line option:
+You will not get the command prompt back. Leave this window open. Then in another window start MTPcontrol.py with the userport as a command line option:
 
 ```
-python3 view.py --mtph Config.mtph --device=/var/folders/ph/6ph43gj971lfy2qn4r4p7_vw000244/T/tmp46e5rvbk/userport
+python3 MTPcontrol.py --config=../LAB/config/sample_proj.yml --device=/var/folders/ph/6ph43gj971lfy2qn4r4p7_vw000244/T/tmp46e5rvbk/userport
 ```
 
 The control code window should launch, initialize, and start cycling through the view angles.

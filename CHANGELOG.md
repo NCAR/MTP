@@ -17,6 +17,8 @@ Changelog for MTP software
 - Disambiguate send_port and read_port now that both MTPcontrol and MTPviewer
 get ports from config file.
 
+- Add a complete sample project setup dir as LAB.
+
 ## [0.2] - 2022-08-29 - ACCLIP FF03 TEST
 
 This version of the software will be flown on ACCLIP FF03 from Anchorage to RMMA

@@ -1,4 +1,4 @@
-Both src\ctrl\view.py and src\MTPviewer.py reference a project configuration directory with the following components:
+Both src\MTPcontrol.py and src\MTPviewer.py reference a project configuration directory with the following components:
 ```
   <project>\  <- project name
     config\
@@ -11,6 +11,7 @@ Both src\ctrl\view.py and src\MTPviewer.py reference a project configuration dir
     Raw\
     RC\  <- contains project RCF files
 ```
+This directory contains a LAB project setup suitable for testing. For a field project, you can copy this dir to the project area, then:
  * Copy the ascii_parms file from the RAF proj dir for the project
  * Create/update config/proj.yml. Use the sample_proj.yml as a starting point.
    * Edit the PROJECT and FLIGHT

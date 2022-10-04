@@ -15,8 +15,8 @@
 ###############################################################################
 
 # Project info
-project: 'PROJECT'  # Enter project name here, e.g. 'ACCLIP'
-fltno: 'flight'     # Enter flight number here, e.g. 'ff01'
+project: 'LAB'
+fltno: 'lf01'
 
 # ICARTT header info
 pi: 'Julie Haggerty (haggerty@ucar.edu)'
@@ -33,7 +33,8 @@ view_send_port: 32107  # from viewer to MTP/RIC
 view_read_port: 32106  # from MTP/RIC to viewer
 iwg1_port: 7071       # IWG1 packets from GV
 nidas_port: 30101     # MTP UDP packets to nidas
-udp_ip: "192.168.84.255"
+udp_ip: "127.0.0.1"
+#udp_ip: "192.168.84.255"
 
 # Current MTP scan setup
 NUM_SCAN_ANGLES: 10   # Number of scan angles being read
@@ -73,6 +74,9 @@ GEC: [[19.87, 0.1], [23.1, 0.1], [26.05, 0.1]]  # Per channel slope, intercept
 
 # Location of Raw data dir relative to projdir
 rawdir: 'Raw'
+
+# Location of log dir relative to projdir
+logdir: 'logs'
 
 # Location of ascii_parms file relative to projdir
 ascii_parms: 'config/ascii_parms'
