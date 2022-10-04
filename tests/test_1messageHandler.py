@@ -91,8 +91,11 @@ class TESTprintmsg(unittest.TestCase):
         logger.setDisableMessageBox(False)  # test instantiating boxes
 
         with patch.object(logger, 'msgbox') as mock_method:
+            logger.debug("test app")
+            mock_method.assert_not_called()
+
             logger.info("test app")
-            mock_method.assert_called()
+            mock_method.assert_not_called()
 
             logger.warning("test app")
             mock_method.assert_called()
