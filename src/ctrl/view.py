@@ -176,7 +176,7 @@ class MTPControlView(QWidget):
         self.IWGPortBox.setReadOnly(True)
         self.UDPPortBox = QLineEdit()
         self.UDPPortBox.setText(str(self.client.configfile.getInt(
-                                    'udp_read_port')))
+                                    'inst_read_port')))
         self.UDPPortBox.setStyleSheet("padding-left:5")
         self.UDPPortBox.setFixedWidth(self.shortWidth)
         self.UDPPortBox.setReadOnly(True)

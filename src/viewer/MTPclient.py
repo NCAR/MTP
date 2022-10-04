@@ -105,10 +105,10 @@ class MTPclient():
         # Initialize a config file (includes reading it)
         self.configfile = config(filename)
 
-        # udp_send_port is port from viewer to MTP
-        self.udp_send_port = self.configfile.getInt('udp_send_port')
-        # udp_read_port is from MTP to viewer
-        self.udp_read_port = self.configfile.getInt('udp_read_port')
+        # view_send_port is port from viewer to MTP
+        self.udp_send_port = self.configfile.getInt('view_send_port')
+        # view_read_port is from MTP to viewer
+        self.udp_read_port = self.configfile.getInt('view_read_port')
         # port to receive IWG1 packets from GV
         self.iwg1_port = self.configfile.getInt('iwg1_port')
 

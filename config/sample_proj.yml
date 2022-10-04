@@ -27,8 +27,10 @@ revision: 'R0'
 revision_comment: 'initial release'
 
 # Port setting
-udp_send_port: 32107  # from viewer to MTP
-udp_read_port: 32106  # from MTP to viewer
+inst_send_port: 32106 # from MTP to RIC (onboard) or viewer (in lab)
+inst_read_port: 32107 # not used
+view_send_port: 32107  # from viewer to MTP/RIC
+view_read_port: 32106  # from MTP/RIC to viewer
 iwg1_port: 7071       # IWG1 packets from GV
 nidas_port: 30101     # MTP UDP packets to nidas
 udp_ip: "192.168.84.255"

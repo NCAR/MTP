@@ -50,7 +50,7 @@ class MTPClient():
         commandDict = MTPcommand()
 
         # Initialize probe control classes
-        port = self.configfile.getInt('udp_send_port')  # send MTP UDP packets
+        port = self.configfile.getInt('inst_send_port')  # send MTP UDP packets
         self.init = MTPProbeInit(self, args, port, commandDict, args.loglevel,
                                  self.iwg, app)
         self.move = MTPProbeMove(self.init, commandDict)
@@ -325,7 +325,7 @@ class MTPClient():
         if self.sock:
             self.udp_ip = self.configfile.getVal('udp_ip')
             # Sent to RIC
-            self.ric_send_port = self.configfile.getInt('udp_send_port')
+            self.ric_send_port = self.configfile.getInt('inst_send_port')
             self.sock.sendto(udpLine.encode('utf-8'),
                              (self.udp_ip, self.ric_send_port))
             # Send to nidas ip needs to be 192.168.84.255
