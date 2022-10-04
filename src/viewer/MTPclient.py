@@ -83,7 +83,7 @@ class MTPclient():
         # Parse the command line arguments
         args = parser.parse_args()
 
-        return(args)
+        return args
 
     def initIWG(self):
         """
@@ -99,7 +99,7 @@ class MTPclient():
         # list provided in the ascii_parms file.
         self.iwg.initIWGfromAsciiParms(self.getAsciiParms())
 
-        return(self.iwg)
+        return self.iwg
 
     def readConfig(self, filename):
         # Initialize a config file (includes reading it)
@@ -143,14 +143,14 @@ class MTPclient():
     def getAsciiParms(self):
         """ Return path to ascii_parms file """
         try:
-            return(self.configfile.getPath('ascii_parms'))
+            return self.configfile.getPath('ascii_parms')
         except Exception:
             exit(1)
 
     def getProj(self):
         """ Return the project name of the current project from config file """
         try:
-            return(self.configfile.getVal('project'))
+            return self.configfile.getVal('project')
         except Exception:
             exit(1)
 
@@ -167,7 +167,7 @@ class MTPclient():
     def getFltno(self):
         """ Return the flight number of the current flight from config file """
         try:
-            return(self.configfile.getVal('fltno'))
+            return self.configfile.getVal('fltno')
         except Exception:
             exit(1)
 
@@ -183,14 +183,14 @@ class MTPclient():
         self.RCFdir = os.path.join(getrootdir(), Dir)
 
     def getIWGport(self):
-        return(self.iwg1_port)
+        return self.iwg1_port
 
     def getUDPport(self):
-        return(self.udp_read_port)
+        return self.udp_read_port
 
     def getTBI(self):
         """ Return the inverted brightness temperature array """
-        return(self.reader.getTBI())
+        return self.reader.getTBI()
 
     def clearData(self):
         """ Clear the flight dictionary and JSON file on disk """
@@ -222,10 +222,10 @@ class MTPclient():
 
         # Default to projdir if jsondir is not set
         if jsondir is None:
-            return(self.reader.getJson(projdir, self.getProj(),
-                                       self.getFltno()))
+            return self.reader.getJson(projdir, self.getProj(),
+                                       self.getFltno())
 
-        return(self.reader.getJson(jsondir, self.getProj(), self.getFltno()))
+        return self.reader.getJson(jsondir, self.getProj(), self.getFltno())
 
     def processScan(self):
         """
@@ -264,11 +264,11 @@ class MTPclient():
 
     def getBestWtdRCSet(self):
         """ Return the best weighted RC set """
-        return(self.reader.getBestWtdRCSet())
+        return self.reader.getBestWtdRCSet()
 
     def getATP(self):
         """ Return the ATP profile and metadata """
-        return(self.reader.getATP())
+        return self.reader.getATP()
 
     def createRecord(self):
         """ Generate the data strings for each data line and save to dict """
@@ -289,7 +289,7 @@ class MTPclient():
         acaltkm = float(rawscan['Aline']['values']['SAPALT']['val'])  # km
         try:
             BestWtdRCSet = self.retriever.getRCSet(tbi, acaltkm)
-            return(BestWtdRCSet)
+            return BestWtdRCSet
         except Exception:
             raise
 
@@ -328,7 +328,7 @@ class MTPclient():
         """
         Return the calculated brightness temperatures from the Bline
         """
-        return(self.reader.getCalcVal('Bline', 'SCNT', 'tb'))
+        return self.reader.getCalcVal('Bline', 'SCNT', 'tb')
 
     def calcTB(self):
         """
@@ -376,7 +376,7 @@ class MTPclient():
                 else:
                     array_inv[i*self.NUM_SCAN_ANGLES+j] = \
                         array[j*self.NUM_CHANNELS+i]
-        return(array_inv)
+        return array_inv
 
     def getProfile(self, tbi, BestWtdRCSet):
         """
@@ -434,10 +434,10 @@ class MTPclient():
                      ATP['trop']['val'][1]['tempc']] = \
                         trop.findTropopause(startTropIndex)
 
-            return(ATP)
+            return ATP
 
         else:
-            return(False)  # Could not create a profile from this scan
+            return False  # Could not create a profile from this scan
 
     def connectMTP(self):
         """ Connection to UDP data streams """

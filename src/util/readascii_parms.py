@@ -35,11 +35,11 @@ class AsciiParms:
             logger.error(str(err) + " Copy ascii_parms for " +
                          "project into config/ dir in order to parse IWG" +
                          " packet correctly then rerun code.")
-            return(False)
+            return False
         except Exception as error:
             logger.error(str(error) + " Unexpected error " +
                          "occurred while trying to open ascii_parms file")
-            return(False)
+            return False
 
     def readVar(self):
         """
@@ -57,12 +57,12 @@ class AsciiParms:
                 next
             else:
                 newVar = line.rstrip('\n')
-                return(newVar)
+                return newVar
 
-        return(None)  # Get here at EOF
+        return None  # Get here at EOF
 
     def get(self):
-        return(self.ascii_parms_file)
+        return self.ascii_parms_file
 
     def close(self):
         self.ascii_parms.close()

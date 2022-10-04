@@ -59,9 +59,6 @@ class MTPEmulator():
 
         self.sport = serial.Serial(device, 9600, timeout=0)
         self.sport.nonblocking()
-        # status if 04 indicates synthesizer out of lock. Maybe better to use
-        # 00. Does probe return 04 regularly? If so, ask Julie if synthesizer
-        # status out of lock is a concern... - JAA
 
         self.statusset = False
 
@@ -223,7 +220,7 @@ class MTPEmulator():
         """ Convert nibble to asc hex 0-f """
 
         hx = "0123456789ABCDEF"
-        return(hx[nx])
+        return hx[nx]
 
     def UART(self, line, chaos, state):
         """
@@ -268,12 +265,9 @@ class MTPEmulator():
         if string.encode('utf-8').find(b'?') != -1:
             self.sport.write(string.encode('utf-8'))
             self.sport.write(b'Step:/0`1000010\r\n')  # Home position
-            return()
+            return
 
-        # including D,d for 'unknown'
-        # D is a UART command - move negative. Better to use value not used
-        # otherwise. - JAA
-        error = ['@', '`', 'A', 'a', 'B', 'b', 'C', 'c', 'D', 'd', 'E', 'e',
+        error = ['@', '`', 'A', 'a', 'B', 'b', 'C', 'c', 'E', 'e',
                  'G', 'g', 'I', 'i', 'K', 'k', 'O', 'o']
         # Note: The MTP control program sends strings like
         # b'U/1J0D######J3R\r\n'. This *appears* to indicate the stepper
@@ -357,8 +351,8 @@ class MTPEmulator():
                         return random.choice(['01', '03', '05', '07'])
                 elif chaos == 'extreme':
                     if not self.statusset:
-                        return(random.choice(['00', '01', '02', '03',
-                                              '04', '05', '06', '07']))
+                        return random.choice(['00', '01', '02', '03',
+                                              '04', '05', '06', '07'])
             else:
                 # emulate stop
                 # this else should only run once per 'stop'
@@ -380,8 +374,8 @@ class MTPEmulator():
                     # currently emulates that the probe is stuck
                     # signifigant investment to logic out the rest
                     if not self.statusset:
-                        return(random.choice(['00', '01', '02', '03',
-                                              '04', '05', '06', '07']))
+                        return random.choice(['00', '01', '02', '03',
+                                              '04', '05', '06', '07'])
 
         else:
             return '04'
@@ -493,7 +487,7 @@ def parse_args():
     # Parse the command line arguments
     args = parser.parse_args()
 
-    return(args)
+    return args
 
 
 def main():

@@ -40,7 +40,7 @@ class TimeSeries():
 
     def getWindow(self):
         """ Return a pointer to the graphics window """
-        return(self.canvas)
+        return self.canvas
 
     def varSelector(self, varlist):
         """ Add a dropdown to select the variable to plot """
@@ -49,7 +49,7 @@ class TimeSeries():
             varSel.addItem(item)
 
         varSel.activated[str].connect(self.selectPlotVar)
-        return(varSel)
+        return varSel
 
     def selectPlotVar(self, text):
         """
@@ -63,7 +63,7 @@ class TimeSeries():
         # prompt user to load some data and return.
         if self.client.reader.getNumRecs() == 0:
             logger.error("No data available: ", "Try loading some raw data")
-            return()
+            return
 
         # Find the date in the data (YYYYMMDD) and convert to base
         # datetime object

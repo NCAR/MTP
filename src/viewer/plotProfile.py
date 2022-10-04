@@ -41,7 +41,7 @@ class Profile():
     def getWindow(self):
 
         # Return pointer to the graphics window
-        return(self.canvas)
+        return self.canvas
 
     def configureAxis(self):
         """ Configure axis labels and limits """

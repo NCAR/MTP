@@ -4,21 +4,15 @@ Changelog for MTP software
 
 ## [Unreleased]
 
-- Update `tests` to work with new refactored EOLpython logger. Change calls to
-logger to new format and check for new format of output messages. Combine all
-tests calls under one run_tests script.
+- Update `tests` and `code` to work with new refactored EOLpython logger and to use class variable instead of env var to indicate testing mode. Combine all tests calls under one run_tests script.
 
-- Update code to use new logger: new call format, implement writing to logfile
-by default. Set default loglevel to WARNING and add --v command line option to
-get info level messages.
+- Write to `logfile` by default. Set default loglevel to WARNING and add --v command line option to get info level messages sent to console. When --debug called, debug messages go to both console and logfile. In GUI mode, only WARNING and ERROR message generate message display boxes.
 
-- Fix `BUG` in integrator logic that is likely cause of first integration
-(Angle 1, Channel 1) being zero during ACCLIP FF03. Still need to test with
-probe.
+- Fix `BUG` in integrator logic that was cause of first integration (Angle 1, Channel 1) being zero during ACCLIP FF03.
 
-- Update tests to use class variable instead of env var to indicate testing mode.
+- Remove excess checks and adjust timing on some loops to tighten up scan time. Scan time is now ~19 seconds in the lab which is the same as the VB6.
 
-- Remove excess checks and adjust timing on some loops to tighten up scan time
+- Implement working GUI including display of state info. (Still need to code overvoltage)
 
 ## [0.2] - 2022-08-29 - ACCLIP FF03 TEST
 

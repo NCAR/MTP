@@ -75,7 +75,7 @@ class readGVnc:
                                  " from " + ncfile + ". Variable not found. " +
                                  "Click OK to continue or Quit to exit.")
 
-        return(self.ncdata)
+        return self.ncdata
 
     def NGseconds(self):
         """
@@ -99,7 +99,7 @@ class readGVnc:
         # Add diff to dtime to get secs since midnight of start date of flight.
         dtime = dtime + diff
 
-        return(dtime)
+        return dtime
 
     # def CtoK(self):
         # Does conversions from C to K (+273.15), Z to P fZtoP(), fPtoZ(),
@@ -155,4 +155,4 @@ class readGVnc:
         # Find row where time=timestr and get var from second column (index 1)
         # Returns a one-item list
         chunk = vals.loc[(vals[0] == timestr), 1]
-        return(chunk.values[0])  # Return value of var as float
+        return chunk.values[0]  # Return value of var as float

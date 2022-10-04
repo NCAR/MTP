@@ -78,7 +78,7 @@ class Curtain(QMainWindow):
     def getWindow(self):
 
         # Return pointer to the graphics window
-        return(self.canvas)
+        return self.canvas
 
     def configureAxis(self, realtime):
         """ Configure axis labels and limits """

@@ -80,11 +80,11 @@ class MTPProbeCIR():
             # integrator started or done
             if state == "start":
                 if self.init.integratorBusy(int(stat)):
-                    return(True)  # Integrator busy
+                    return True  # Integrator busy
 
             elif state == "done":
                 if not self.init.integratorBusy(int(stat)):
-                    return(True)  # Integrator finished
+                    return True  # Integrator finished
 
             else:
                 logger.error("unknown state")
@@ -94,7 +94,7 @@ class MTPProbeCIR():
 
         # If looped for 3 seconds and integrator never started, return False
         logger.error("Integrator never started")
-        return(False)
+        return False
 
     def readDatumFromProbe(self):
         cmd = self.commandDict.getCommand("count2")

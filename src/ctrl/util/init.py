@@ -19,9 +19,13 @@ logger = QLogger("EOLlogger")
 
 class MTPProbeInit():
 
-    def __init__(self, args, port, commandDict, loglevel, iwg):
+    def __init__(self, client, args, port, commandDict, loglevel, iwg,
+                 app=None):
         ''' initial setup of serialPort, UDP socket '''
         self.iwg = iwg
+        self.app = app
+        self.client = client
+        self.IWG1Box = None
 
         try:
             self.serialPort = serial.Serial(args.device, 9600, timeout=0.15)
@@ -39,6 +43,10 @@ class MTPProbeInit():
         self.commandDict = commandDict
 
         self.loglevel = logging.getLevelName(loglevel)
+
+    def setIWG1Box(self, IWG1Box):
+        if self.app:
+            self.IWG1Box = IWG1Box
 
     def getSerialPort(self):
         ''' return serial port '''
@@ -87,25 +95,25 @@ class MTPProbeInit():
         """
         state = status & 1  # Get Bit 0
         if state == 1:  # Integrator busy
-            return(True)
+            return True
         else:
-            return(False)
+            return False
 
     def stepperBusy(self, status):
         """ Return True if stepper moving, False if not moving """
         state = status & 2  # Get Bit 1
         if state == 2:  # Stepper moving
-            return(True)
+            return True
         else:
-            return(False)
+            return False
 
     def synthesizerBusy(self, status):
         """ Return True if synthesizer locked, False if out of lock """
         state = status & 4  # Get Bit 2
         if state == 4:  # Synthesizer locked
-            return(True)
+            return True
         else:
-            return(False)  # Synthesizer out of lock
+            return False  # Synthesizer out of lock
 
     def findChar(self, array, binaryString, offset=0):
         '''
@@ -169,8 +177,12 @@ class MTPProbeInit():
                            "NOT match command sent. Sent " + str(cmd))
 
         # Read remaining responses from probe, interleave with checking for
-        # IWG packets.
+        # IWG packets and processing events if in GUI mode
         for i in range(num-1):  # Loop until get num-1 non-empty responses
+
+            # Process GUI events if in GUI mode
+            if self.app:
+                self.app.processEvents()
 
             # read_ready with .01 second timeout
             ports = [self.iwg.socket()]
@@ -180,8 +192,7 @@ class MTPProbeInit():
                 if len(read_ready) == 0:
                     print('timed out')
 
-            if self.iwg.socket() in read_ready:
-                self.iwg.readIWG()
+            self.client.processIWG(read_ready, self.IWG1Box)
 
             response = self.serialPort.readline()
             if len(response) == 0:
@@ -224,7 +235,7 @@ class MTPProbeInit():
         # And one final check that you got it all
         self.clearBuffer()
 
-        return(buf)
+        return buf
 
     def handleNonemptyBuffer(self):
         """
@@ -388,7 +399,7 @@ class MTPProbeInit():
         if not emptyAnswer.match(answerFromProbe):
             logger.error(" Need to handle probe response " +
                          str(answerFromProbe) + "#### Need to update code")
-            return(False)
+            return False
 
         # Init1
         #  - Set polarity of home sensor to 1 ('f1')
@@ -408,7 +419,7 @@ class MTPProbeInit():
             logger.info("init1 succeeded")
         else:
             logger.warning("init1 failed #### Need to update code")
-            return(False)
+            return False
 
         time.sleep(0.2)  # From VB6 code
 
@@ -427,7 +438,7 @@ class MTPProbeInit():
             logger.info("init2 succeeded")
         else:
             logger.warning("init2 failed #### Need to update code")
-            return(False)
+            return False
 
         # After both init commands,
         # status = 6,7 indicates probe thinks it is moving, clears when home1
@@ -436,7 +447,7 @@ class MTPProbeInit():
         # status = 4 is preferred status
 
         logger.info("init successful")
-        return(True)
+        return True
 
     def sendInit(self, init, maxAttempts=6):
         """ Send init command to probe. Handles init1 and init2 """
@@ -452,10 +463,10 @@ class MTPProbeInit():
             status = self.findStat(answerFromProbe)
             if status == '@':
                 # success - no error. Break out of loop
-                return(True)
+                return True
             else:
                 logger.warning(init + " status " + str(status) +
                                ", resending " + init + " command.")
                 errorStatus = errorStatus + 1
 
-        return(False)
+        return False

@@ -245,7 +245,7 @@ class MTPprocessor(QMainWindow):
         # of an abundance of caution, check and warn user if not true.
         if len(self.textbox.selectedItems()) != 1:
             logger.error("Please select a single flight")
-            return()
+            return
 
         # Get file user selected
         selectedRawFile = self.textbox.selectedItems()[0].text()

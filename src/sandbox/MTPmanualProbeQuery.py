@@ -10,7 +10,7 @@ import logging
 import serial
 import socket
 import argparse
-from ctrl.test.manualProbeQuery import MTPQuery
+from ctrl.lib.manualProbeQuery import MTPQuery
 from EOLpython.Qlogger.messageHandler import QLogger as logger
 
 

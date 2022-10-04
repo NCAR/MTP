@@ -13,8 +13,6 @@ import datetime
 import argparse
 import logging
 import select
-from lib.config import config
-from ctrl.util.iwg import MTPiwg
 from ctrl.mtp_client import MTPClient
 from ctrl.view import MTPControlView
 from EOLpython.Qlogger.messageHandler import QLogger
@@ -36,17 +34,14 @@ def parse_args():
         '--device', type=str, default='COM6',
         help="Device on which to receive messages from MTP instrument")
     parser.add_argument(
-        '--debug', dest='loglevel', action='store_const',
-        const=logging.DEBUG, default=logging.WARNING,
-        help="Show debug log messages. If --v also set, the level that" +
-        "appears later in the command will prevail, eg --debug --v displays" +
-        "info level messages and higher")
+        '--debug', dest='logleveld', action='store_const',
+        const=logging.DEBUG, default=logging.INFO,
+        help="Show debug log messages.")
     parser.add_argument(
         '--v', dest='loglevel', action='store_const',
         const=logging.INFO, default=logging.WARNING,
         help="Verbose mode - show informational log messages. If --debug " +
-        "also set, the level that appears later in the command will prevail," +
-        " eg --v --debug displays debug level messages and higher")
+        "also set, debug level will be set")
     parser.add_argument(
         '--logmod', type=str, default=None, help="Limit logging to " +
         "given module")
@@ -56,7 +51,11 @@ def parse_args():
     # Parse the command line arguments
     args = parser.parse_args()
 
-    return(args)
+    # Resolve loglevel
+    if args.logleveld == logging.DEBUG:
+        args.loglevel = args.logleveld
+
+    return args
 
 
 def main():
@@ -71,45 +70,35 @@ def main():
     stream = sys.stdout  # send WARNING|ERROR to terminal window
     logger.initStream(stream, args.loglevel, args.logmod)
 
-    # Initialize a config file (includes reading it into a dictionary)
-    configfile = config(args.config)
-
-    # Create the raw data filename from the current UTC time
-    rawfile = nowTime.strftime("N%Y%m%d%H.%M")
-    rawdir = configfile.getPath('rawdir')
-    rawfilename = os.path.join(rawdir, rawfile)
-
-    # In addition, send all messages to logfile
-    logdir = configfile.getPath('logdir')
-    log_filepath = os.path.join(logdir, "log." + rawfile)
-    logger.initLogfile(log_filepath, logging.INFO)
-
-    # connect to IWG port
-    iwgport = configfile.getInt('iwg1_port')   # to listen for IWG packets
-    iwg = MTPiwg()
-    iwg.connectIWG(iwgport)
-    # Instantiate an IWG reader and configure a dictionary to store the
-    # IWG data
-    asciiparms = configfile.getPath('ascii_parms')
-    iwg.initIWG(asciiparms)
+    # Instantiate the GUI if requested
+    if args.gui is True:  # Run in GUI mode
+        app = QApplication([])
+    else:
+        app = None
 
     # Instantiate client which handles user commands
     try:
-        client = MTPClient(rawfilename, configfile, args, iwg)
+        client = MTPClient(args, nowTime, app)
         client.writeFileTime(nowTime.strftime("%H:%M:%S %m-%d-%Y"))
     except Exception as e:
         logger.error("Unable to open Raw file: " + e)
         print("ERROR: Unable to open Raw data output file: " + e)
         exit(1)
 
+    # In addition, send all messages to logfile
+    logger.initLogfile(client.getLogfilePath(), args.logleveld)
+
+    iwg = client.getIWG()
+
     probeResponding = False
 
     if args.gui is True:  # Run in GUI mode
 
-        app = QApplication([])
-
         # Instantiate the GUI
-        ctrlview = MTPControlView(app, client, iwg)
+        ctrlview = MTPControlView(app, client)
+        ctrlview.updateLogfile(client.getLogfilePath())  # Display log path
+        # Connect the GUI to the client so client can update GUI
+        client.connectGUI(ctrlview)
 
         # Run the application until the user closes it.
         sys.exit(app.exec_())
@@ -133,8 +122,7 @@ def main():
                     if len(read_ready) == 0:
                         print('timed out')
 
-                if iwg.socket() in read_ready:
-                    iwg.readIWG()
+                client.processIWG(read_ready, None)
 
                 if sys.stdin in read_ready:
                     cmdInput = sys.stdin.readline()

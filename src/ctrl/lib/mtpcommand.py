@@ -202,11 +202,11 @@ class MTPcommand():
 
     def getCommand(self, key):
         """ Return the command for a given user-requested key """
-        return(self.command[key])
+        return self.command[key]
 
     def getCommands(self):
         """ Return a list of all possible user commands """
-        return(self.command.keys())
+        return self.command.keys()
 
     def getCommandValues(self):
         """ Return a list of all possible MTP commands """
@@ -214,4 +214,4 @@ class MTPcommand():
         for value in self.command.values():
             list.append(value)
 
-        return(list)
+        return list

@@ -97,4 +97,4 @@ class BrightnessTemperature():
                 C = int(scnt[i + j*3])  # MTP Scan Counts[Angle, Channel]
                 self.tb[i + j*3] = float(OAT) + (C - CHor) / self.Geqn[i]
 
-        return(self.tb)
+        return self.tb

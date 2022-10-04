@@ -57,24 +57,3 @@ The user menu of MTPcontrolTest provides the following functionality:
 
 #### x = Exit
  * Quit this code.
-
-
-## Not updated yet
-
-IWGDaisy.py
-
-Qt_manualProbeQuery.py
-- Script that opens port to MTP using PyQt5.QSerialPort
-
-dehex.py
-
-qtUDPread.py
-
-qtUDPwrite.py
-
-read_IWG.py
-
-read_UDP.py
-
-spikes.py
-- checks for spikes in B data line

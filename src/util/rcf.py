@@ -83,15 +83,15 @@ class RetrievalCoefficientFile():
             self.rcf.close()
         except Exception as err:
             logger.error(err + " Unable to close file " + self._RCFFileName)
-            return(False)
+            return False
 
     def getNUM_BRT_TEMPS(self):
         """ Return the number of brightness temperatures from this RCF file """
-        return(self.NUM_BRT_TEMPS)
+        return self.NUM_BRT_TEMPS
 
     def getNUM_RETR_LVLS(self):
         """ Return the number of retrieval levels from this RCF file """
-        return(self.NUM_RETR_LVLS)
+        return self.NUM_RETR_LVLS
 
     def getRCF(self):
         """
@@ -214,20 +214,20 @@ class RetrievalCoefficientFile():
 
     def getId(self):
         """ Return a string containing the RCF ID """
-        return(self._RCFId)
+        return self._RCFId
 
     def getFileName(self):
         """ Return a string containing the name of the RCF file """
-        return(self._RCFFileName)
+        return self._RCFFileName
 
     def getRCF_HDR(self):
         """
         When using getRCF_HDR, be advised that char arrays have no endstring!
         """
-        return(self._RCFHdr)
+        return self._RCFHdr
 
     def getFL_RC_Vec(self):
-        return(self._RCFFl)
+        return self._RCFFl
 
     def getRCAvgWt(self, PAltKm):
         """
@@ -352,7 +352,7 @@ class RetrievalCoefficientFile():
                          "RCFID: " + self.getId() + ", number of flight " +
                          "levels input - " + str(Len) + " - is not equal " +
                          "to number in RCF - " + str(self._RCFHdr['NFL']))
-            return(False)
+            return False
 
         # Test that the flight levels are in decreasing order
         for i in range(Len):
@@ -361,7 +361,7 @@ class RetrievalCoefficientFile():
                 logger.error("In " + inspect.stack()[0][3] +
                              " for RCFID: " + self.getId() + ", flight " +
                              "levels are not in decreasing altitude.")
-                return(False)
+                return False
 
         # Add test for flight levels of current rcf equal to flight levels
         # passed in to this fn. This is used by rcf_set to confirm all RCFs in
@@ -372,9 +372,9 @@ class RetrievalCoefficientFile():
                     logger.error("In " + inspect.stack()[0][3] +
                                  " for RCFID: " + self.getId() + ", " +
                                  "flight levels are not as expected.")
-                    return(False)
+                    return False
 
-        return(True)
+        return True
 
 
 if __name__ == "__main__":

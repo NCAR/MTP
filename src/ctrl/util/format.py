@@ -5,9 +5,11 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2022
 ###############################################################################
+import numpy
 from numpy import isnan
 import datetime
 from ctrl.util.pointing import pointMTP
+from util.math import MTPmath
 from EOLpython.Qlogger.messageHandler import QLogger
 
 logger = QLogger("EOLlogger")
@@ -15,12 +17,20 @@ logger = QLogger("EOLlogger")
 
 class MTPDataFormat():
 
-    def __init__(self, init, data, commandDict, iwg):
+    def __init__(self, client, init, data, commandDict, iwg, app):
         self.serialPort = init.getSerialPort()
         self.init = init
         self.commandDict = commandDict
         self.data = data
         self.iwg = iwg
+        self.app = app
+        self.client = client
+
+        # Instantiate an MTPmath class
+        self.math = MTPmath()
+
+        # Var to keep track of probe temperature
+        self.Tsynth = numpy.nan
 
         # functions that control pointing adjustments that correct for
         # aircraft attitute and canister mounting on aircraft
@@ -66,6 +76,8 @@ class MTPDataFormat():
 
         # Get all the housekeeping data
         move.moveHome()
+        if self.app:
+            self.client.view.updateAngle("Target")  # Update displayed angle
         raw = raw + self.readM1line() + '\n'  # Read M1 data from the probe
         raw = raw + self.readM2line() + '\n'  # Read M2 data from the probe
         raw = raw + self.readPTline() + '\n'  # Read PT data from the probe
@@ -84,12 +96,18 @@ class MTPDataFormat():
         else:
             # No new IWG data, so use previous average for up to 10 minutes,
             # else report missing.
-            lastTime = self.iwg.getLastAvgTime()
-            if lastTime != "" \
-               and self.nowTime-lastTime < datetime.timedelta(minutes=10):
+            lastAvgTime = self.iwg.getLastAvgTime()
+            if lastAvgTime != "" and self.nowTime-lastAvgTime < \
+               datetime.timedelta(minutes=10):
                 self.aline = self.iwg.getAvgAline()
+                if self.app:
+                    self.client.view.setLEDyellow(
+                        self.client.view.receivingIWGLED)
             else:
                 self.aline = self.readAline()  # Create missing A line
+                if self.app:
+                    self.client.view.setLEDred(
+                        self.client.view.receivingIWGLED)
 
         # Get the IWG line
         # This will be the most recent instantaneous IWG line receive from the
@@ -108,7 +126,7 @@ class MTPDataFormat():
 
         logger.info("Raw record creation took " + str(self.nowTime-firstTime))
 
-        return(rawRecord)
+        return rawRecord
 
     def createUDPpacket(self):
         """ Create the UDP packet to send to nidas and RIC """
@@ -130,7 +148,7 @@ class MTPDataFormat():
         udpLine = udpLine.replace(' ', ',')
         logger.info("UDP packet: " + udpLine)
 
-        return(udpLine)
+        return udpLine
 
     def readAline(self):
         """
@@ -168,7 +186,7 @@ class MTPDataFormat():
         srlon = self.iwg.getSRLon()  # SRLON
         aline = aline + "%+06.3f " % (-9.999 if isnan(srlon) else srlon)
 
-        return(aline)
+        return aline
 
     def setNoise(self, cmd):
         self.serialPort.write(cmd)
@@ -202,11 +220,19 @@ class MTPDataFormat():
         for angle in self.elAngles:
 
             # Correct angle based on aircraft pitch/roll from latest IWG packet
-            angle = self.pointing.fEc(self.iwg.getPitch(), self.iwg.getRoll(),
-                                      angle)
+            corrAngle = self.pointing.fEc(self.iwg.getPitch(),
+                                          self.iwg.getRoll(), angle)
 
-            moveToCommand, currentClkStep = self.getAngle(angle,
+            moveToCommand, currentClkStep = self.getAngle(corrAngle,
                                                           currentClkStep)
+
+            # Update GUI display with current scan angle, pitch, and roll
+            if self.app:
+                self.client.view.updateAngle(str(angle))
+                self.client.view.updatePitch("%05.2f" % float(
+                                             self.iwg.getPitch()))
+                self.client.view.updateRoll("%04.2f" % float(
+                                             self.iwg.getRoll()))
 
             if (move.moveTo(moveToCommand, self.data)):
 
@@ -292,7 +318,7 @@ class MTPDataFormat():
 
     def getBdata(self):
         """ Return the B data only (without B at the front) """
-        return(self.b)
+        return self.b
 
     def readEline(self):
         """
@@ -323,7 +349,7 @@ class MTPDataFormat():
 
     def getEdata(self):
         """ Return the E data only (without E at the front) """
-        return(self.e)
+        return self.e
 
     def readM1line(self):
         """
@@ -340,11 +366,11 @@ class MTPDataFormat():
 
         logger.info("data from M01 line - " + data)
 
-        return(data)
+        return data
 
     def getM1data(self):
         """ Return the M01 data only (without M01: at the front) """
-        return(self.m1)
+        return self.m1
 
     def readM2line(self):
         """
@@ -361,11 +387,22 @@ class MTPDataFormat():
 
         logger.info("data from M02 line - " + data)
 
-        return(data)
+        # Last value in M02 line is the temperature of they synth. Store it
+        # so it can be used to warn user of probe overheat.
+        self.Tsynth = self.math.calcTfromVal(int(self.m2.split()[-1]))
+        # If probe overheating, warn user.
+        if self.Tsynth > 50:
+            if self.app:
+                self.client.view.setLEDred(self.client.view.overHeatLED)
+            else:
+                logger.warning("**** MTP overheating (T>50). " +
+                               "Turn off to avoid damage ****")
+
+        return data
 
     def getM2data(self):
         """ Return the M02 data only (without M02: at the front) """
-        return(self.m2)
+        return self.m2
 
     def readPTline(self):
         """
@@ -382,8 +419,8 @@ class MTPDataFormat():
 
         logger.info("data from Pt line - " + data)
 
-        return(data)
+        return data
 
     def getPTdata(self):
         """ Return the Pt data only (without Pt: at the front) """
-        return(self.pt)
+        return self.pt
