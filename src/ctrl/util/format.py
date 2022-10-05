@@ -389,6 +389,8 @@ class MTPDataFormat():
         if self.Tsynth > 50:
             if self.app:
                 self.client.view.setLEDred(self.client.view.overHeatLED)
+                self.client.view.warning.setText("T Synth = %0.2f" %
+                                                 self.Tsynth)
             else:
                 logger.warning("**** MTP overheating (T>50). " +
                                "Turn off to avoid damage ****")
