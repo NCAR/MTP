@@ -8,7 +8,7 @@
 import time
 import select
 from PyQt5.QtWidgets import QWidget, QPushButton, QPlainTextEdit, \
-                            QVBoxLayout, QLabel, QHBoxLayout, QGroupBox, QFrame
+        QGridLayout, QVBoxLayout, QLabel, QHBoxLayout, QGroupBox, QFrame
 from PyQt5 import QtGui
 from PyQt5.QtCore import QSize, QThread, QObject, pyqtSignal
 from PyQt5.QtWidgets import (QLineEdit, QDialog)
@@ -84,11 +84,10 @@ class MTPControlView(QWidget):
         self.sendingUDP = QLabel("UDP Status")
         self.UDPPort = QLabel("UDP out Port #")
         self.NIDASPort = QLabel("NIDAS Port #")
-        self.overHeat = QLabel("Overheat    ")  # space is so layout is even
-        self.overVoltage = QLabel("Overvoltage ")  # space is so layout is even
-        self.projectName = QLabel("Project Name")
+        self.overHeat = QLabel("Housekeeping Variable Status")
+        self.projectName = QLabel("Project")
         self.flightNumber = QLabel("Flight #")
-        self.planeName = QLabel("Aircraft Name")
+        self.planeName = QLabel("Aircraft")
         self.nominalPitch = QLabel("Nominal Pitch")
         self.nominalRoll = QLabel("Nominal Roll")
         self.frequencies = QLabel("Frequencies")
@@ -106,6 +105,7 @@ class MTPControlView(QWidget):
 
         self.projectLocationBox = QLineEdit()
         self.projectLocationBox.setStyleSheet("padding-left:5")
+        self.projectLocationBox.setFixedWidth(300)
         self.projectLocationBox.setText('~/Desktop/$Project')
         self.projectLocationBox.setReadOnly(True)
 
@@ -129,6 +129,7 @@ class MTPControlView(QWidget):
         self.planeNameBox = QLineEdit()
         self.planeNameBox.setText(self.client.configfile.getVal('platformID'))
         self.planeNameBox.setStyleSheet("padding-left:5")
+        self.planeNameBox.setFixedWidth(self.shortWidth)
         self.planeNameBox.setReadOnly(True)
         self.nominalPitchBox = QLineEdit()
         self.nominalPitchBox.setText('2.7')
@@ -169,6 +170,7 @@ class MTPControlView(QWidget):
         self.flightNumberBox = QLineEdit()
         self.flightNumberBox.setText(self.client.configfile.getVal('fltno'))
         self.flightNumberBox.setStyleSheet("padding-left:5")
+        self.flightNumberBox.setFixedWidth(self.shortWidth)
         self.flightNumberBox.setReadOnly(True)
 
         self.IWGPortBox = QLineEdit()
@@ -207,6 +209,12 @@ class MTPControlView(QWidget):
         self.shutdownProbe = QPushButton("Quit")
         self.shutdownProbe.clicked.connect(self.shutdownProbeClicked)
 
+        # Warning placeholder
+        self.warning = QLabel("")
+        self.warning.setStyleSheet("QLabel { color: red }")
+        self.warning.setFixedHeight(35)
+        self.warning.setFixedWidth(150)
+
         # staus 'LED's'
         self.probeStatusLED = QLabel('')
         self.setLEDred(self.probeStatusLED)
@@ -218,16 +226,10 @@ class MTPControlView(QWidget):
         self.setLEDred(self.sendingUDPLED)
         self.overHeatLED = QLabel('')  # Updated at end of each scan
         self.setLEDgreen(self.overHeatLED)
-        self.overVoltageLED = QLabel('')  # Updated at end of each scan
-        self.setLEDgreen(self.overVoltageLED)
 
         # Control Buttons
         LineProbeStatus = QHBoxLayout()
-        LineProbeStatus.addWidget(self.planeName)
-        LineProbeStatus.addWidget(self.planeNameBox)
-        LineProbeStatus.addStretch()
         LineProbeStatus.addWidget(self.initProbe)
-        LineProbeStatus.addStretch()
         LineProbeStatus.addWidget(self.scanStatusButton)
 
         # Probe Status Indicators
@@ -237,12 +239,10 @@ class MTPControlView(QWidget):
         ScanStatus = QVBoxLayout()
         ScanStatus.addWidget(self.scanStatus)
         ScanStatus.addWidget(self.scanStatusLED)
-        overHeatStatus = QVBoxLayout()
-        overHeatStatus.addWidget(self.overHeat)
-        overHeatStatus.addWidget(self.overHeatLED)
-        overVoltageStatus = QVBoxLayout()
-        overVoltageStatus.addWidget(self.overVoltage)
-        overVoltageStatus.addWidget(self.overVoltageLED)
+        overHeatStatus = QGridLayout()
+        overHeatStatus.addWidget(self.overHeat, 0, 0, 1, 2)
+        overHeatStatus.addWidget(self.overHeatLED, 1, 0, 1, 1)
+        overHeatStatus.addWidget(self.warning, 1, 1, 1, 1)
 
         ProbeBox = QGroupBox()
         ProbeBox.setLayout(ProbeStatus)
@@ -250,8 +250,6 @@ class MTPControlView(QWidget):
         ScanBox.setLayout(ScanStatus)
         overHeatBox = QGroupBox()
         overHeatBox.setLayout(overHeatStatus)
-        overVoltageBox = QGroupBox()
-        overVoltageBox.setLayout(overVoltageStatus)
 
         LineScanStatus = QHBoxLayout()
         LineScanStatus.setSpacing(0)  # Tighten up grey boxes
@@ -262,7 +260,6 @@ class MTPControlView(QWidget):
         LineScanStatus.addStretch()
         LineScanStatus.addWidget(overHeatBox)
         LineScanStatus.addStretch()
-        LineScanStatus.addWidget(overVoltageBox)
 
         # Scan timer
         LineTimer = QHBoxLayout()
@@ -292,8 +289,14 @@ class MTPControlView(QWidget):
         LineLog = QHBoxLayout()
         LineLog.addWidget(self.projectLocation)
         LineLog.addStretch()
-        LineLog.addWidget(self.NIDASPort)
-        LineLog.addWidget(self.NIDASPortBox)
+        LineLog.addWidget(self.projectLocationBox)
+
+        # IWG1 label line
+        LineIWG1 = QHBoxLayout()
+        LineIWG1.addWidget(self.IWG1)
+        LineIWG1.addStretch()
+        LineIWG1.addWidget(self.NIDASPort)
+        LineIWG1.addWidget(self.NIDASPortBox)
 
         # Elevation angles
         LineElAngle = QHBoxLayout()
@@ -328,12 +331,16 @@ class MTPControlView(QWidget):
         LineProjectName.addStretch()
         LineProjectName.addWidget(self.flightNumber)
         LineProjectName.addWidget(self.flightNumberBox)
+        LineProjectName.addStretch()
+        LineProjectName.addWidget(self.planeName)
+        LineProjectName.addWidget(self.planeNameBox)
 
         # Put it all together
         mainbox = QVBoxLayout()
         mainbox.addLayout(LineProjectName)
         mainbox.addLayout(LineProbeStatus)
         mainbox.addLayout(LineScanStatus)
+        mainbox.addLayout(LineLog)
         mainbox.addLayout(LineTimer)
         mainbox.addLayout(LineNumFrames)
         mainbox.addLayout(LineResetFrames)
@@ -341,9 +348,7 @@ class MTPControlView(QWidget):
         mainbox.addLayout(LineAllAngle)
         mainbox.addLayout(LineReceivingUDP)
         mainbox.addLayout(LineSendingUDP)
-        mainbox.addLayout(LineLog)
-        mainbox.addWidget(self.projectLocationBox)
-        mainbox.addWidget(self.IWG1)
+        mainbox.addLayout(LineIWG1)
         mainbox.addWidget(self.IWG1Box)
         mainbox.addWidget(self.shutdownProbe)
 

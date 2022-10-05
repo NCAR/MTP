@@ -12,7 +12,9 @@ Changelog for MTP software
 
 - Remove excess checks and adjust timing on some loops to tighten up scan time. Scan time is now ~19 seconds in the lab which is the same as the VB6.
 
-- Implement working control program GUI including display of state info. (Still need to code overvoltage). Update viewer to still display counts and housekeeping when IWG is not available. When IWG comes back, may need to restart viewer to see derived temperature profile. (This is a bug I haven't tracked down yet.)
+- Implement working control program GUI, `MTPcontrol` including display of state info. (Still need to code overvoltage). 
+
+- Update `MTPviewer` to still display counts and housekeeping when IWG is not available. When IWG comes back, may need to restart viewer to see derived temperature profile. (This is a bug I haven't tracked down yet.)
 
 - Disambiguate send_port and read_port now that both MTPcontrol and MTPviewer
 get ports from config file.
