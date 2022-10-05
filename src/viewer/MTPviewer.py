@@ -106,7 +106,7 @@ class MTPviewer(QMainWindow):
         self.setWindowTitle('MTP viewer')
 
         # Set the initial size of the window created. it is user resizeable.
-        self.resize(800, 855)
+        self.resize(800, 810)
 
         # Define central widget to hold everything
         self.view = QWidget()
@@ -229,7 +229,7 @@ class MTPviewer(QMainWindow):
         self.RCF2.setPlainText('')
         self.MRI.setPlainText('')
         self.filedata.setPlainText("MTP data block display")
-        self.iwg.setPlainText("IWG1,YYYYMMDDTHHMMSS,-xx.xxxx,xxx.xxx,")
+        # self.iwg.setPlainText("IWG1,YYYYMMDDTHHMMSS,-xx.xxxx,xxx.xxx,")
         self.eng1.setPlainText(self.header_eng1)
         self.eng2.setPlainText(self.header_eng2)
         self.eng3.setPlainText(self.header_eng3)
@@ -247,7 +247,7 @@ class MTPviewer(QMainWindow):
 
         self.eng1 = QPlainTextEdit()
         self.eng1.setReadOnly(True)
-        self.eng1.setFixedHeight(300)
+        self.eng1.setFixedHeight(200)
         self.eng1.setDocumentTitle("Pt")
         self.layout.addWidget(self.eng1, 10, 0, 1, 3)
         self.eng1.setFrameStyle(QFrame.Panel | QFrame.Sunken)
@@ -437,7 +437,7 @@ class MTPviewer(QMainWindow):
         # Create a File data display window
         self.filedata = QPlainTextEdit()
         self.filedata.setReadOnly(True)
-        self.filedata.setFixedHeight(160)
+        self.filedata.setFixedHeight(150)
         self.layout.addWidget(self.filedata, 4, 0, 4, 10)
         self.filedata.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.filedata.appendPlainText("MTP data block display")
@@ -457,14 +457,14 @@ class MTPviewer(QMainWindow):
         # End temporary display block
 
         # IWG record display window
-        self.iwg = QPlainTextEdit()
-        self.iwg.setReadOnly(True)
-        self.iwg.setFixedHeight(40)
-        self.layout.addWidget(self.iwg, 8, 0, 1, 10)
-        self.iwg.setFrameStyle(QFrame.Panel | QFrame.Sunken)
+        # self.iwg = QPlainTextEdit()
+        # self.iwg.setReadOnly(True)
+        # self.iwg.setFixedHeight(40)
+        # self.layout.addWidget(self.iwg, 8, 0, 1, 10)
+        # self.iwg.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         # Temporarily insert some sample data to get an idea how it will
         # look. Remove this when get data parsing coded.
-        self.iwg.appendPlainText("IWG1,YYYYMMDDTHHMMSS,-xx.xxxx,xxx.xxx,")
+        # self.iwg.appendPlainText("IWG1,YYYYMMDDTHHMMSS,-xx.xxxx,xxx.xxx,")
         # End temporary display block
 
     def displayScan(self, index):
