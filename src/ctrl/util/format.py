@@ -17,7 +17,7 @@ logger = QLogger("EOLlogger")
 
 class MTPDataFormat():
 
-    def __init__(self, client, init, data, commandDict, iwg, app):
+    def __init__(self, client, init, data, commandDict, iwg, app, configfile):
         self.serialPort = init.getSerialPort()
         self.init = init
         self.commandDict = commandDict
@@ -34,11 +34,12 @@ class MTPDataFormat():
 
         # functions that control pointing adjustments that correct for
         # aircraft attitute and canister mounting on aircraft
-        self.pointing = pointMTP()
+        [yi, pi, ri] = configfile.getVal('Offsets')
+        self.pointing = pointMTP(float(yi), float(pi), float(ri))
 
-        # Read elAngles from Config.mtph, for now... - JAA
-        self.zel = -179.8
-        self.elAngles = [80, 55, 42, 25, 12, 0, -12, -25, -42, -80]
+        # Elevation angles at which to scan.
+        self.zel = configfile.getVal('TargetAngle')
+        self.elAngles = configfile.getVal('ElAngles')
 
     def createRawRecord(self, move):
         """ Create a complete Raw record """
@@ -221,7 +222,7 @@ class MTPDataFormat():
 
             # Correct angle based on aircraft pitch/roll from latest IWG packet
             corrAngle = self.pointing.fEc(self.iwg.getPitch(),
-                                          self.iwg.getRoll(), angle)
+                                          self.iwg.getRoll(), float(angle))
 
             moveToCommand, currentClkStep = self.getAngle(corrAngle,
                                                           currentClkStep)
@@ -269,7 +270,7 @@ class MTPDataFormat():
         Return: move command
         """
         logger.debug("Zel to be added to targetEl: " + str(self.zel))
-        targetEl = targetEl + self.zel
+        targetEl = targetEl + float(self.zel)
 
         # 128 step resolution from init.py::moveHome
         stepDeg = 80/20 * (128 * (200/360))
@@ -283,12 +284,6 @@ class MTPDataFormat():
         # nsteps check here
         nstep = targetClkStep - currentClkStep
         logger.debug("calculated nstep: " + str(nstep))
-        # Figure out if need this when implement MAM correction - JAA
-        # if nstep == 0:
-        #     logger.info("nstep is zero loop")
-        #     # suspect this occurs when pitch/roll/z are 0
-        #     # need to have a catch case when above are nan's
-        #     return
 
         # save current step so difference is actual step difference
         currentClkStep = currentClkStep + int(nstep)

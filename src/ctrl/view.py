@@ -95,7 +95,7 @@ class MTPControlView(QWidget):
         self.allScanAngles = QLabel("Elevation Angles:")
         self.projectLocation = QLabel("Data/logs saved to:")
 
-        self.loopTimer = QLabel("Time since last scan")
+        self.loopTimer = QLabel("Scan interval")
         self.totalNumFrames = QLabel("Total scans")
         self.numFramesSinceLastReset = QLabel("Scans since reset")
         self.elAngle = QLabel("Current El. Angle")
@@ -141,14 +141,17 @@ class MTPControlView(QWidget):
         self.nominalRollBox.setFixedWidth(self.shortWidth)
         self.nominalRollBox.setReadOnly(True)
         self.frequenciesBox = QLineEdit()  # also known as channels
-        self.frequenciesBox.setText('55.51, 56.65, 58.8')
+        textfrequencies = ", "
+        self.frequenciesBox.setText(textfrequencies.join(
+            self.client.configfile.getVal('Frequencies')))
+        self.frequenciesBox.setFixedWidth(155)
         self.frequenciesBox.setStyleSheet("padding-left:5;")
         self.frequenciesBox.setReadOnly(True)
         self.allScanAnglesBox = QPlainTextEdit()
-        self.allScanAnglesBox.setPlainText(
-            "80.00, 55.00, 42.00, 25.00, 12.00, 0.00, -12.00, -25.00, " +
-            "-42.00, -80.00")
-        self.allScanAnglesBox.setFixedHeight(40)
+        textScanAngles = ", "
+        self.allScanAnglesBox.setPlainText(textScanAngles.join(
+            self.client.configfile.getVal('ElAngles')))
+        self.allScanAnglesBox.setFixedHeight(25)
         self.allScanAnglesBox.setReadOnly(True)
         # Current elevation - GUI updates before correction applied
         self.elAngleBox = QLineEdit()

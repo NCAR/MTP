@@ -17,16 +17,16 @@ logger = QLogger("EOLlogger")
 
 class pointMTP():
 
-    def __init__(self):
+    def __init__(self, yi, pi, ri):
         self.MAM = [['nan', 'nan', 'nan', 'nan'], ['nan', 'nan', 'nan', 'nan'],
                     ['nan', 'nan', 'nan', 'nan'], ['nan', 'nan', 'nan', 'nan']]
 
         # Pitch, roll and yaw specific to NSF HAIPER GV
         # This will change if the way the canister is mounted on the GV
         # changes.
-        self.yi = -1.600   # Read in from Config.mtph
-        self.pi = -3.576
-        self.ri = -0.123
+        self.yi = yi
+        self.pi = pi
+        self.ri = ri
 
         # Radians per degree = arctan(1)/45
         self.rpd = atan(1) / 45

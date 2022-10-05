@@ -51,12 +51,13 @@ class MTPClient():
 
         # Initialize probe control classes
         port = self.configfile.getInt('inst_send_port')  # send MTP UDP packets
+        fghz = self.configfile.getVal('Frequencies')  # scan frequencies
         self.init = MTPProbeInit(self, args, port, commandDict, args.loglevel,
                                  self.iwg, app)
         self.move = MTPProbeMove(self.init, commandDict)
-        self.data = MTPProbeCIR(self.init, commandDict)
+        self.data = MTPProbeCIR(self.init, commandDict, fghz)
         self.fmt = MTPDataFormat(self, self.init, self.data, commandDict,
-                                 self.iwg, app)
+                                 self.iwg, app, self.configfile)
 
     def getIWG(self):
         return self.iwg

@@ -534,7 +534,7 @@ class MTPviewer(QMainWindow):
             if index is not None:
                 msg = msg + " on scan " + str(index+1)
             logger.warning(msg + " -- " + str(err) +
-                        "\nClick OK to stop seeing this message ")
+                           "\nClick OK to stop seeing this message ")
             # Do not get to this point until user clicks OK
             self.clicked['retrieval'] = True  # Only show error once
 

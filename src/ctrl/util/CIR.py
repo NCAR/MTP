@@ -13,14 +13,12 @@ logger = QLogger("EOLlogger")
 
 class MTPProbeCIR():
 
-    def __init__(self, init, commandDict):
+    def __init__(self, init, commandDict, fghz):
         self.serialPort = init.getSerialPort()
         self.init = init
         self.commandDict = commandDict
 
         self.fcmd = []
-        # Update to read from Config.mtph - JAA
-        fghz = [56.363, 57.612, 58.363]  # freq in gigahertz
 
         # either 'C' or 'F' (set in lib/storePacket.py)
         # F mode formatting #####.# instead of cmode formatting #####
@@ -28,8 +26,8 @@ class MTPProbeCIR():
         mode = 'C'  # Always use 'C'. 'F' prone to frequency collapse
 
         # Convert freq to integer to send to Firmware
-        for f in fghz:
-            fby4 = (1000 * f)/4  # MHz
+        for f in fghz:  # freq in gigahertz
+            fby4 = (1000 * float(f))/4  # MHz
             # convert to SNP channel (integer) 0.5 MHz = step size
             chan = '{:.5}'.format(str(fby4/0.5))
             logger.debug("tune: chan = " + chan)

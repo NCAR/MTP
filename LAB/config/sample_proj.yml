@@ -40,6 +40,12 @@ udp_ip: "127.0.0.1"
 NUM_SCAN_ANGLES: 10   # Number of scan angles being read
 NUM_CHANNELS: 3       # Number of channels being read
 LOC_HOR: 5            # Scan Angle Index of horizontal scan. Index starts at 0
+# Canister offset [yaw, pitch, roll] - specific to NSF HAIPER GV
+# This will change if the way the canister is mounted on the GV changes.
+Offsets: [-1.600, -3.576, -0.123]  # Canister offset from aircraft pointing
+Frequencies: [56.363, 57.612, 58.363]
+ElAngles: [80, 55, 42, 25, 12, 0, -12, -25, -42, -80]  # Scan angles
+TargetAngle: -179.8   # Angle to point at target
 
 # Gain equation constants
 GeqnMin: 10           # Minimum acceptable gain
