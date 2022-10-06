@@ -209,7 +209,7 @@ class MTPDataFormat():
 
         # Confirm in home position and ready to move (not integrating or
         # already moving)
-        if not move.isMovePossibleFromHome():
+        if not move.isMovePossibleFromHome(0.3):
             # VB6 doesn't do this check so still does scan here. We will add
             # something to the log and go ahead and scan.
             logger.error("B line created anyway")

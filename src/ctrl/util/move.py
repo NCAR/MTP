@@ -183,7 +183,7 @@ class MTPProbeMove():
         # Return True if stepper done moving
         return self.moveWait("move", echo, 3)
 
-    def isMovePossibleFromHome(self):
+    def isMovePossibleFromHome(self, delay):
         """
         Returns: True if move is possible otherwise does debugging
         """
@@ -191,7 +191,7 @@ class MTPProbeMove():
         # Check that we are in the HOME position
         # First time through, position reported as 10. Then for each
         # subsequent scan, it is reported as 1000010.
-        position = self.readScan(.3)
+        position = self.readScan(delay)
         if position != "-99999":
             if abs(1000000 - int(position)) < 20 or abs(int(position)) < 20:
                 logger.info("MTP in home position")

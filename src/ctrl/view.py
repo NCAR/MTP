@@ -26,8 +26,12 @@ class Worker(QObject):
 
     def loop(self):
         """ Just loop and emit a signal every 0.1 seconds """
+        # When this was done every .1 seconds, it called connectIWG
+        # about 220 times per scan, which added 2 seconds per scan.
+        # IWG packets only come once per seconds, so if we check
+        # every .8 seconds, say, should get them all. Try it...
         while self._isRunning is True:
-            time.sleep(0.1)
+            time.sleep(0.8)
             self.looping.emit()
 
     def stop(self):
