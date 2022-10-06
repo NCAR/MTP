@@ -225,8 +225,6 @@ class MTPClient():
             time.sleep(1)  # Emulate manual response time. Prob not needed
             success = self.move.moveHome()
 
-        self.move.isMovePossibleFromHome(1)
-
         while self.cycleMode is True:  # Cycle probe until user requests exit
             # In command line mode, capture keyboard strokes
             if self.gui is False:  # In command line mode
