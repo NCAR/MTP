@@ -79,14 +79,15 @@ def main():
     # Instantiate client which handles user commands
     try:
         client = MTPClient(args, nowTime, app)
+        # In addition, send all messages to logfile.
+        logger.initLogfile(client.getLogfilePath(), args.logleveld)
+        # Then finish init so any log message will go to logfile
+        client.initClient(args)
         client.writeFileTime(nowTime.strftime("%H:%M:%S %m-%d-%Y"))
     except Exception as e:
         logger.error("Unable to open Raw file: " + e)
         print("ERROR: Unable to open Raw data output file: " + e)
         exit(1)
-
-    # In addition, send all messages to logfile
-    logger.initLogfile(client.getLogfilePath(), args.logleveld)
 
     iwg = client.getIWG()
 

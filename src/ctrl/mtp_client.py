@@ -40,11 +40,12 @@ class MTPClient():
         # Initialize a config file (includes reading it into a dictionary)
         self.configfile = self.config(args.config)
 
-        # connect to IWG port
-        self.iwg = self.connectIWG()
-
         # Create the raw data filename from the current UTC time
         self.openRaw(nowTime)
+
+    def initClient(self, args):
+        # connect to IWG port
+        self.iwg = self.connectIWG()
 
         # Dictionary of allowed commands to send to firmware
         commandDict = MTPcommand()
@@ -53,11 +54,11 @@ class MTPClient():
         port = self.configfile.getInt('inst_send_port')  # send MTP UDP packets
         fghz = self.configfile.getVal('Frequencies')  # scan frequencies
         self.init = MTPProbeInit(self, args, port, commandDict, args.loglevel,
-                                 self.iwg, app)
+                                 self.iwg, self.app)
         self.move = MTPProbeMove(self.init, commandDict)
         self.data = MTPProbeCIR(self.init, commandDict, fghz)
         self.fmt = MTPDataFormat(self, self.init, self.data, commandDict,
-                                 self.iwg, app, self.configfile)
+                                 self.iwg, self.app, self.configfile)
 
     def getIWG(self):
         return self.iwg
