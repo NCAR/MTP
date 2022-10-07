@@ -183,16 +183,17 @@ class MTPProbeInit():
             # Process GUI events if in GUI mode
             if self.app:
                 self.app.processEvents()
+            else:
+                # GUI mode has a thread for IWG, but console mode does not
+                # So if in console mode, read_ready with .002 second timeout
+                ports = [self.iwg.socket()]
+                read_ready, _, _ = select.select(ports, [], [], 0.002)
 
-            # read_ready with .01 second timeout
-            ports = [self.iwg.socket()]
-            read_ready, _, _ = select.select(ports, [], [], 0.002)
+                if self.loglevel == "DEBUG":
+                    if len(read_ready) == 0:
+                        print('timed out')
 
-            if self.loglevel == "DEBUG":
-                if len(read_ready) == 0:
-                    print('timed out')
-
-            self.client.processIWG(read_ready, self.IWG1Box)
+                self.client.processIWG(read_ready, self.IWG1Box)
 
             response = self.serialPort.readline()
             if len(response) == 0:

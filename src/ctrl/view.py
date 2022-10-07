@@ -73,7 +73,7 @@ class MTPControlView(QWidget):
         """
         iwg = self.client.getIWG()
         ports = [iwg.socket()]
-        read_ready, _, _ = select.select(ports, [], [], 0.01)
+        read_ready, _, _ = select.select(ports, [], [], 0.002)
 
         self.client.processIWG(read_ready, self.IWG1Box)
 
