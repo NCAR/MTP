@@ -27,9 +27,14 @@ revision: 'R0'
 revision_comment: 'initial release'
 
 # Port setting
-udp_send_port: 32106  # fron viewer to MTP
-udp_read_port: 32107  # from MTP to viewer
+inst_send_port: 32106  # from viewer to MTP
+inst_read_port: 32107  # from MTP to viewer
+view_send_port: 32107  # from viewer to MTP/RIC
+view_read_port: 32106  # from MTP/RIC to viewer
 iwg1_port: 7071       # IWG1 packets from GV
+nidas_port: 30101     # MTP UDP packets to nidas
+udp_ip: "127.0.0.1"
+#udp_ip: "192.168.84.255"
 
 # Current MTP scan setup
 NUM_SCAN_ANGLES: 10   # Number of scan angles being read
