@@ -21,6 +21,8 @@ get ports from config file.
 
 - Add a complete sample project setup dir as LAB.
 
+- Add limit checking per Josh's recommended ranges.
+
 ## [0.2] - 2022-08-29 - ACCLIP FF03 TEST
 
 This version of the software will be flown on ACCLIP FF03 from Anchorage to RMMA

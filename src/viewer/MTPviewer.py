@@ -69,6 +69,12 @@ class MTPviewer(QMainWindow):
         # user.
         self.app.processEvents()
 
+        # Some vars to determine limits on housekeeping values
+        self.accmin = 999.9
+        self.accmax = -999.9
+        self.voltmin = [999.9] * 8
+        self.voltmax = [-999.9] * 8
+
     def connectSocket(self):
         # Connect UDP feeds to sockets
         self.client.connect_udp()
@@ -872,7 +878,19 @@ class MTPviewer(QMainWindow):
                 T = "%+5.2f" % self.client.reader.getCalcVal('Ptline', var,
                                                              'temperature')
 
+                # Warn user if temps outside -40 to 50C by changing font
+                # to red
+                if (float(T) < -40.0 or float(T) > 50.0):  # -40 to 50
+                    fmt = self.eng1.currentCharFormat()
+                    fmt.setForeground(Qt.red)  # red
+                    self.eng1.setCurrentCharFormat(fmt)
+
             self.eng1.appendPlainText(name + "\t" + val + "  " + R + "  " + T)
+
+            # If had a color change, change back to black for next var
+            fmt = self.eng1.currentCharFormat()
+            fmt.setForeground(Qt.black)  # back to normal
+            self.eng1.setCurrentCharFormat(fmt)
 
     def writeEng2(self):
         """
@@ -883,7 +901,8 @@ class MTPviewer(QMainWindow):
         # and rewrite the header.
         self.eng2.setPlainText(self.header_eng2)
 
-        # Then append all the lines of data,including ohms and temp
+        # Then append all the lines of data, including ohms and temp
+        i = 0
         for var in self.client.reader.getVarList('M01line'):
             name = self.client.reader.getName('M01line', var)
             val = self.client.reader.getVar('M01line', var)
@@ -892,16 +911,37 @@ class MTPviewer(QMainWindow):
             # and read in as the string ''
             if (val == ''):
                 val = "%10s" % ' '
-                volts = ' '
+                voltsstr = ' '
             elif numpy.isnan(volts):
                 val = "%04d" % int(val)
-                volts = 'N/A'
+                voltsstr = 'N/A'
             else:
                 val = "%04d" % int(val)
-                volts = "%+06.2fV" % volts
+                voltsstr = "%+06.2fV" % volts
+
+                # Confirm that volts don't vary by more than 5%
+                if volts < self.voltmin[i]:
+                    self.voltmin[i] = volts
+                if volts > self.voltmax[i]:
+                    self.voltmax[i] = volts
+                mean = (self.voltmin[i] + self.voltmax[i]) / 2
+                dev = (self.voltmax[i] - self.voltmin[i])/mean
+
+                if self.voltmin[i] != 999.9 and abs(dev) > 0.05:  # > 5%
+                    fmt = self.eng2.currentCharFormat()
+                    fmt.setForeground(Qt.red)  # red
+                    self.eng2.setCurrentCharFormat(fmt)
 
             # Write the M01 values to the Engineering window
-            self.eng2.appendPlainText(name + "\t" + val + "  " + volts)
+            self.eng2.appendPlainText(name + "\t" + val + "  " + voltsstr)
+
+            # If had a color change, change back to black for next var
+            fmt = self.eng2.currentCharFormat()
+            fmt.setForeground(Qt.black)  # back to normal
+            self.eng2.setCurrentCharFormat(fmt)
+
+            # Set index of next var
+            i += 1
 
     def writeEng3(self):
         """
@@ -927,22 +967,37 @@ class MTPviewer(QMainWindow):
                 degstr = 'N/A'
             else:
                 val = "%04d" % int(val)
-                # If Tsynth goes over 50, warn user by changing bkgnd to red
-                if (var == 'TSYNCNTE' and deg > 50.0):
-                    fmt = self.eng3.currentCharFormat()
-                    fmt.setForeground(Qt.red)  # red
-                    self.eng3.setCurrentCharFormat(fmt)
-                if var == 'ACCPCNTE':  # Set units of Acceler to g
+
+                if var == 'ACCPCNTE':
+                    # Set units of Acceler to g
                     degstr = "%+06.2f g" % deg
-                else:
+
+                    # Warn user if Acceler varies by more than .5g by changing
+                    # font to red
+                    if deg < self.accmin:
+                        self.accmin = deg
+                    if deg > self.accmax:
+                        self.accmax = deg
+                    if self.accmin != 999.9 and self.accmax - self.accmin > .5:
+                        fmt = self.eng3.currentCharFormat()
+                        fmt.setForeground(Qt.red)  # red
+                        self.eng3.setCurrentCharFormat(fmt)
+                else:  # all other vars are temperatures
                     degstr = "%+06.2f C" % deg
 
+                    # Warn user if temps outside -40 to 50C by changing font
+                    # to red
+                    if (deg < -40.0 or deg > 50.0):  # -40 to 50
+                        fmt = self.eng3.currentCharFormat()
+                        fmt.setForeground(Qt.red)  # red
+                        self.eng3.setCurrentCharFormat(fmt)
+
             self.eng3.appendPlainText(name + "\t" + val + "  " + degstr)
-            # Only change the Tsynth line, rest should remain black
-            if (var == 'TSYNCNTE' and deg > 50.0):
-                fmt = self.eng3.currentCharFormat()
-                fmt.setForeground(Qt.black)  # back to normal
-                self.eng3.setCurrentCharFormat(fmt)
+
+            # If had a color change, change back to black for next var
+            fmt = self.eng3.currentCharFormat()
+            fmt.setForeground(Qt.black)  # back to normal
+            self.eng3.setCurrentCharFormat(fmt)
 
     def clickBack(self):
         """ Go back to previous scan and show plots and data. """
