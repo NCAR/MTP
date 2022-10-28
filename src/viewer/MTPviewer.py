@@ -40,12 +40,6 @@ class MTPviewer(QMainWindow):
 
         self.cell = [[numpy.nan for j in range(10)] for i in range(3)]
 
-        self.clicked = {  # Only show error msgs once
-            'retrieval': False,
-            'curtain': False,
-            'iwg': False
-        }
-
         self.trop = TropopauseRecord  # Used to populate empty scans with nans
 
         # In order to support stepping forward and back through scans, we need
@@ -534,14 +528,10 @@ class MTPviewer(QMainWindow):
         self.updateDataDisplay()  # Update the display
 
     def reportFailedRetrieval(self, err, index=None):
-        if not self.clicked['retrieval']:
-            msg = "Could not perform retrieval"
-            if index is not None:
-                msg = msg + " on scan " + str(index+1)
-            logger.warning(msg + " -- " + str(err) +
-                           "\nClick OK to stop seeing this message ")
-            # Do not get to this point until user clicks OK
-            self.clicked['retrieval'] = True  # Only show error once
+        msg = "Could not perform retrieval"
+        if index is not None:
+            msg = msg + " on scan " + str(index+1)
+        logger.info(msg + " -- " + str(err))
 
     def updateDataDisplay(self):
         """ Update display to latest scan """
@@ -609,6 +599,14 @@ class MTPviewer(QMainWindow):
             # Overwrite profile with blank plot
             self.profile.clear()
             self.profile.configure()  # Layout the profile plot
+            # Try to figure out a useful message for the watermark.
+            PA = self.client.reader.rawscan['Aline']['values']['SAPALT']['val']
+            if float(PA) <= 0:
+                self.profile.watermark('Alt is ' + PA + '\nMust be >0')
+            elif self.client.reader.rawscan['BestWtdRCSet'] == "":
+                self.profile.watermark('RCs missing')
+            else:
+                self.profile.watermark('Retrieval Failed\nCheck log')
             self.profile.draw()
             self.RCF1.setPlainText('')  # Clear display of last RCF used
             self.RCF2.setPlainText('')  # Clear display of last RCF2 used
@@ -714,14 +712,10 @@ class MTPviewer(QMainWindow):
                 self.curtain.addTrop(thisscan['ATP']['trop']['val'][0])
                 self.curtain.addMRI(thisscan['BestWtdRCSet']['SumLnProb'])
             except Exception:
-                # profile was not generated - only warn user once
-                if not self.clicked['curtain']:
-                    logger.info("While generating curtain plot, found that " +
-                                "temperature profile doesn't exist for scan " +
-                                str(index+1) + " Click OK to stop seeing " +
-                                "this message for future scans.")
-                    self.clicked['curtain'] = True
-
+                # profile was not generated
+                logger.info("While generating curtain plot, found that " +
+                            "temperature profile doesn't exist for scan " +
+                            str(index+1))
                 # Add missing vals for this scan
                 temperature = [numpy.nan] * 33
                 self.curtain.addAltTemp(temperature, [numpy.nan] * 33,
@@ -837,15 +831,11 @@ class MTPviewer(QMainWindow):
         self.filedata.appendPlainText(self.client.reader.getPtline())
         self.filedata.appendPlainText(self.client.reader.getEline())
 
-        # If static Aline and realtime mode, throw up warning box
-        # Discovered that this box PLUS turning the line red just confused
-        # the operator, so don't throw up the box. Red line is good enough.
-        # if (lastAline == thisAline):
-        #    if self.args.realtime and not self.clicked['iwg']:
-        #        logger.error("IWG packet no longer being received. " +
-        #                     "Click OK to stop seeing this message " +
-        #                     "for future scans.")
-        #        self.clicked['iwg'] = True
+        # If static Aline and realtime mode, add message to logfile
+        if self.viewScanIndex != 0:  # First record
+            if (lastAline == thisAline):
+                if self.args.realtime:
+                    logger.info("IWG packet no longer being received. ")
 
     def writeIWG(self):
         """

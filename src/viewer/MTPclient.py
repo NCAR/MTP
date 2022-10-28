@@ -34,6 +34,10 @@ class MTPclient():
         # Instantiate an instance of an MTP reader
         self.reader = readMTP()
 
+        # Flag used to keep track of if there is sufficient information so that
+        # retrievals can be performed.
+        self._retrievalFlag = True
+
     def config(self, configfile_name):
         """ Read in config file and set up a bunch of stuff """
         self.configfile_name = configfile_name
@@ -46,11 +50,12 @@ class MTPclient():
         self.initIWG()
 
         # Instantiate an RCF retriever
-        # If this fails, code will crash, so exit gracefully
+        # If this fails, set flag indicating retrievals cannot be performed.
+        # rawscan['ATP'] will be empty ("")
         try:
             self.initRetriever()
         except Exception:
-            exit(1)
+            self._retrievalFlag = False
 
     def connect_udp(self):
         # Connect to the MTP and IWG UDP feeds
@@ -130,7 +135,7 @@ class MTPclient():
         """
         if not os.path.isdir(self.RCFdir):
             logger.error("RCF dir " + self.RCFdir + " doesn't " +
-                         "exist.", "Click OK to select correct dir. Don't" +
+                         "exist. Click OK to select correct dir. Don't" +
                          " forget to update config file with correct dir " +
                          "path")
             # Launch a file selector for user to select correct RCFdir
@@ -249,10 +254,14 @@ class MTPclient():
 
     def createProfile(self):
         """ Perform retrieval and derive the physical temperature profile """
+        if self._retrievalFlag is False:  # No RCs available
+            raise Exception
+
         # Perform retrieval for a single scan
         try:
             self.BestWtdRCSet = self.getTemplate(self.getTBI())
         except Exception:
+            self.BestWtdRCSet = ""
             raise  # Pass error back up to calling function
 
         # If retrieval succeeded, get the physical temperature profile (and
@@ -261,6 +270,8 @@ class MTPclient():
 
         self.ATP = self.getProfile(self.getTBI(), self.BestWtdRCSet)
         self.reader.saveATP(self.ATP)
+
+        return True
 
     def getBestWtdRCSet(self):
         """ Return the best weighted RC set """

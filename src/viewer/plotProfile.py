@@ -76,6 +76,14 @@ class Profile():
         self.ax.tick_params(which='minor', color='grey')
         self.ax.grid(which='both', color='lightgrey', linestyle='dotted')
 
+    def watermark(self, msg):
+        # If the retrieval failed, call this fn to add a watermark to the
+        # profile plot that states this, so user knows who profile is not
+        # being plotted.
+        self.ax.text(0.5, 0.5, msg, transform=self.ax.transAxes, fontsize=18,
+                     color='gray', alpha=0.5, ha='center', va='center',
+                     rotation='40')
+
     def plotProfile(self, temperature, altitude):
         """
         Plot profile vs temperature in the self.profile plot window

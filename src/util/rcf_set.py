@@ -91,6 +91,11 @@ class RetrievalCoefficientFileSet():
                     else:
                         self._RCFs.pop()
 
+        # Test if RC dir is empty. If it is, raise exception which will cause
+        # retrievals NOT to be performed, but will allow code to continue.
+        if len(self._RCFs) == 0:
+            raise Exception("RC dir is empty")
+
         # Test if got complete fileset
         if ((filelist is None) or (len(self._RCFs) == len(filelist))):
             return True  # Success
