@@ -30,10 +30,10 @@ class MTPQuery():
         while 1:  # Loop until user types 'q'
 
             # Print available options
-            logger.printmsg("info", "")
-            logger.printmsg("info", "Available commands are...")
+            logger.info("")
+            logger.info("Available commands are...")
             for i in range(0, len(self.commandlist)):
-                logger.printmsg("info", str(self.commandlist[i]))
+                logger.info(str(self.commandlist[i]))
 
             query = input("What command shall we send to the probe?\n" +
                           "Enter 'q' to quit and return to main menu\n" +
@@ -46,7 +46,7 @@ class MTPQuery():
             # Manual read one line from the serial port (ending in /r/n)
             if query == 'r':
                 buf = self.serialPort.readline()
-                logger.printmsg("info", "read " + str(buf))
+                logger.info("read " + str(buf))
                 continue
 
             query = query + '\r\n'
@@ -75,7 +75,7 @@ class MTPQuery():
 
             if i == len(self.commandlist)-1:
                 # If didn't find a valid command, warn user
-                logger.printmsg("info", "Command not in valid cmd list")
+                logger.info("Command not in valid cmd list")
                 answer = input("Command not recognized: " + query +
                                "Enter 'y' to send anyway\n")
                 if answer == 'y':
@@ -87,12 +87,12 @@ class MTPQuery():
 
         # send command
         self.serialPort.write(query)
-        logger.printmsg("info", "sending: " + str(query))
+        logger.info("sending: " + str(query))
 
         for i in range(7):  # Read up to 6 returned lines
             print(i)
             buf = self.serialPort.readline()
-            logger.printmsg("info", "read " + str(buf))
+            logger.info("read " + str(buf))
 
         # Add parsing temperature call from M line so if working for a while
         # can intermittently check probe temperature.
