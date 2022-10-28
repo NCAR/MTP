@@ -37,7 +37,7 @@ class TESTpointing(unittest.TestCase):
         # Instantiate a logger
         self.log = logger.initStream(self.stream, logging.INFO)
 
-        self.point = pointMTP()
+        self.point = pointMTP(-1.600, -3.576, -0.123)
 
     def test_rpd(self):
         rpd = 0.017453292519943295
