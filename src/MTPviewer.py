@@ -5,7 +5,9 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
+import os
 import sys
+import datetime
 from viewer.MTPviewer import MTPviewer
 from PyQt5.QtWidgets import QApplication
 from viewer.MTPclient import MTPclient
@@ -35,6 +37,13 @@ def main():
     # instantiated first in case it needs to call a fileselector.
     # This also connects to the MTP and IWG feeds
     client.config(args.config)
+
+    # In addition, send all messages to logfile
+    logdir = client.configfile.getPath('logdir')
+    nowTime = datetime.datetime.now(datetime.timezone.utc)
+    fileDate = nowTime.strftime("N%Y%m%d%H.%M")
+    logger.initLogfile(os.path.join(logdir, "viewlog." + fileDate),
+                       args.loglevel)
 
     # Instantiate the GUI
     viewer = MTPviewer(client, app, args)
