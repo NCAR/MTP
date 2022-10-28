@@ -521,7 +521,6 @@ class MTPviewer(QMainWindow):
             # temperatures and stores everything in a rawscan dictionary
             self.client.processScan()
             self.client.createRecord()
-
             self.client.createProfile()
 
         except Exception as err:
@@ -719,8 +718,8 @@ class MTPviewer(QMainWindow):
                 if not self.clicked['curtain']:
                     logger.info("While generating curtain plot, found that " +
                                 "temperature profile doesn't exist for scan " +
-                                str(index+1), "Click OK to stop seeing this " +
-                                "message for future scans.")
+                                str(index+1) + " Click OK to stop seeing " +
+                                "this message for future scans.")
                     self.clicked['curtain'] = True
 
                 # Add missing vals for this scan

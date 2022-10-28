@@ -62,7 +62,7 @@ class TimeSeries():
         # Test and make sure there is data in the flightData array. If empty,
         # prompt user to load some data and return.
         if self.client.reader.getNumRecs() == 0:
-            logger.error("No data available: ", "Try loading some raw data")
+            logger.error("No data available. Try loading some raw data")
             return
 
         # Find the date in the data (YYYYMMDD) and convert to base

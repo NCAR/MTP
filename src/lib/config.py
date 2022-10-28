@@ -29,7 +29,7 @@ class config():
             try:
                 self.readConfig(yamlfile)
             except Exception as err:
-                logger.error(str(err), "Click OK to select correct file.")
+                logger.error(str(err) + " Click OK to select correct file.")
                 self.selectConfig()
 
             # If in debug mode, print contents of config file
@@ -47,7 +47,7 @@ class config():
         dialog box
         """
         logger.error("config file" + self.yamlfile + " doesn't " +
-                     "exist.", "Click OK to select correct file.")
+                     "exist. Click OK to select correct file.")
 
         # Launch a file selector for user to select correct config file
         self.loader = FileSelector()
@@ -130,7 +130,7 @@ class config():
         # Check that new path exists. If not, warn user
         if not os.path.exists(newpath):
             logger.error('Invalid path given in config file: ' +
-                         newpath, "Edit config file " + self.yamlfile +
+                         newpath + " Edit config file " + self.yamlfile +
                          " then click OK to reload it")
             self.readConfig(self.yamlfile)
             self.prependDir(key, projdir)  # Loop until user fixes issue

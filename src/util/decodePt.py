@@ -62,10 +62,10 @@ class decodePt():
             # Commented out because it just confused users.
             # if int(self.getCount(var)) == 16383:
             #   varname = self.reader.rawscan['Ptline']['values'][var]['name']
-            #   logger.printmsg("WARNING", "count for var " + varname + " =" +
-            #                   " 16383. VB6 code would display this as N/A." +
-            #                   " Not sure why so this code doesn't do that." +
-            #                   " Dismiss this warning to display this scan.")
+            #   logger.warning("count for var " + varname + " =" +
+            #                  " 16383. VB6 code would display this as N/A." +
+            #                  " Not sure why so this code doesn't do that." +
+            #                  " Dismiss this warning to display this scan.")
 
             # Resistance from counts (R)
             # R[i] = 350 + (Ct[i] - Ct[0]) / rslop
