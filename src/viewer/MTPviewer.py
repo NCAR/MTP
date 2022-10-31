@@ -795,12 +795,14 @@ class MTPviewer(QMainWindow):
 
             self.scanlen.setText(str(timedelta))
 
+            # Set the scan back to the current line
+            self.client.reader.setRawscan(self.viewScanIndex)  # current line
+
     def writeData(self):
         """ Write the latest data record to the data display box """
         self.filedata.appendPlainText("")  # Space between records
 
         # If A line is not changing (other than date), set text color to red.
-
         if self.viewScanIndex != 0:  # First record
             self.client.reader.setRawscan(self.viewScanIndex)  # current line
             thisAline = self.client.reader.getAline()[20:100]  # IWG section
