@@ -5,11 +5,12 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2022
 ###############################################################################
-import numpy
 from numpy import isnan
 import datetime
 from ctrl.util.pointing import pointMTP
 from util.math import MTPmath
+from util.ck_limits import MTPCkLimit
+from util.readmtp import readMTP
 from EOLpython.Qlogger.messageHandler import QLogger
 
 logger = QLogger("EOLlogger")
@@ -26,11 +27,10 @@ class MTPDataFormat():
         self.app = app
         self.client = client
 
-        # Instantiate an MTPmath class
+        # Instantiate MTPmath and MTPCkLimit classes
         self.math = MTPmath()
-
-        # Var to keep track of probe temperature
-        self.Tsynth = numpy.nan
+        self.limits = MTPCkLimit()
+        self.emptyscan = readMTP()  # Empty record instance to access metadata
 
         # functions that control pointing adjustments that correct for
         # aircraft attitute and canister mounting on aircraft
@@ -366,6 +366,22 @@ class MTPDataFormat():
 
         logger.info("data from M01 line - " + data)
 
+        M01vals = data.split(' ')
+        errormsg = ''  # reset error to blank message
+        for i in range(1, 9):
+            fact = self.emptyscan.getFactByIndex('M01line', i-1)  # Get factor
+            volts = self.math.calcV(int(M01vals[i]), fact)
+            # If voltage is out of range, warn user.
+            if not self.limits.ckVolts(volts, i-1):  # Failed check
+                name = self.emptyscan.getNameByIndex('M01line', i-1)
+                msg = "%s = %0.2f\n" % (name, volts)
+                errormsg += msg
+                if self.app:
+                    self.client.view.setLEDred(self.client.view.overHeatLED)
+                    self.client.view.warning.setText(errormsg.strip())
+                else:
+                    logger.warning("**** MTP voltage out of range: " + msg)
+
         return data
 
     def getM1data(self):
@@ -387,18 +403,39 @@ class MTPDataFormat():
 
         logger.info("data from M02 line - " + data)
 
-        # Last value in M02 line is the temperature of they synth. Store it
-        # so it can be used to warn user of probe overheat.
-        self.Tsynth = self.math.calcTfromVal(int(self.m2.split()[-1]))
-        # If probe overheating, warn user.
-        if self.Tsynth > 50:
+        M02vals = data.split(' ')
+        errormsg = ''  # reset error to blank message
+
+        # Calculate acceleration (ACCPCNTE) from first val in M02line
+        G = self.math.calcG(float(M02vals[1]))
+        # If T varies by > .5g, warn user
+        if not self.limits.ckAccel(G):  # Failed check
+            name = self.emptyscan.getNameByIndex('M02line', 0)
+            msg = "%s = %0.2f\n" % (name, G)
+            errormsg += msg
             if self.app:
                 self.client.view.setLEDred(self.client.view.overHeatLED)
-                self.client.view.warning.setText("T Synth = %0.2f" %
-                                                 self.Tsynth)
+                self.client.view.warning.setText(errormsg.strip())
             else:
-                logger.warning("**** MTP overheating (T>50). " +
-                               "Turn off to avoid damage ****")
+                logger.warning("**** MTP Acceleration out of range: " +
+                               msg + "Turn off to avoid damage ****")
+
+        for i in range(2, 9):  # Last val is junk due to extra space at EOL
+            Tval = self.math.calcTfromVal(float(M02vals[i]))
+            if isnan(Tval):
+                continue  # Don't need to check missing vals
+            # If temperature of val out of range, warn user.
+            elif not self.limits.ckTemperature(Tval):  # Failed check
+                # Get variable name
+                name = self.emptyscan.getNameByIndex('M02line', i-1)
+                msg = "%s = %0.2f\n" % (name, Tval)
+                errormsg += msg
+                if self.app:
+                    self.client.view.setLEDred(self.client.view.overHeatLED)
+                    self.client.view.warning.setText(errormsg.strip())
+                else:
+                    logger.warning("**** MTP temperature out of range: " +
+                                   msg + "Turn off to avoid damage ****")
 
         return data
 
@@ -420,6 +457,24 @@ class MTPDataFormat():
         data = "Pt: " + str(self.pt)
 
         logger.info("data from Pt line - " + data)
+
+        Ptvals = data.split(' ')  # First val is string "Pt:"
+        errormsg = ''  # reset error to blank message
+        for i in range(2, 8):  # First and last val don't have temperature
+            Tval = self.math.calcPtT(int(Ptvals[1]), int(Ptvals[i]),
+                                     int(Ptvals[8]))
+            # If temperature of val out of range, warn user.
+            if not self.limits.ckTemperature(Tval):  # Failed check
+                # Get variable name
+                name = self.emptyscan.getNameByIndex('Ptline', i-1)
+                msg = "%s = %0.2f\n" % (name, Tval)
+                errormsg += msg
+                if self.app:
+                    self.client.view.setLEDred(self.client.view.overHeatLED)
+                    self.client.view.warning.setText(errormsg.strip())
+                else:
+                    logger.warning("**** MTP temperature out of range: " +
+                                   msg + "Turn off to avoid damage ****")
 
         return data
 

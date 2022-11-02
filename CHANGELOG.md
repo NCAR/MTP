@@ -4,24 +4,26 @@ Changelog for MTP software
 
 ## [Unreleased]
 
-- Update `tests` and `code` to work with new refactored EOLpython logger and to use class variable instead of env var to indicate testing mode. Combine all tests calls under one run_tests script.
-
+### Added
 - Write to `logfile` by default. Set default loglevel to WARNING and add --v command line option to get info level messages sent to console. When --debug called, debug messages go to both console and logfile. In GUI mode, only WARNING and ERROR message generate message display boxes.
+
+- Implement working control program GUI for `MTPcontrol` including display of state info.
+
+- Add a complete sample project setup dir as LAB.
+
+- Add `limit checking` per Josh's recommended ranges.
+
+### Changed
+- Update `tests` and `code` to work with new refactored EOLpython logger and to use class variable instead of env var to indicate testing mode. Combine all tests calls under one run_tests script.
 
 - Fix `BUG` in integrator logic that was cause of first integration (Angle 1, Channel 1) being zero during ACCLIP FF03.
 
 - Remove excess checks and adjust timing on some loops to tighten up scan time. Scan time is now ~19 seconds in the lab which is the same as the VB6.
 
-- Implement working control program GUI, `MTPcontrol` including display of state info. (Still need to code overvoltage). 
-
 - Update `MTPviewer` to still display counts and housekeeping when IWG is not available. When IWG comes back, may need to restart viewer to see derived temperature profile. (This is a bug I haven't tracked down yet.)
 
 - Disambiguate send_port and read_port now that both MTPcontrol and MTPviewer
 get ports from config file.
-
-- Add a complete sample project setup dir as LAB.
-
-- Add limit checking per Josh's recommended ranges.
 
 - MTPviewer: If RCFs are missing (RC dir is empty), or other errors that cause
 prfiles not to be generated, code will catch this and display a message on the
@@ -29,7 +31,7 @@ profile plot rather than pop up a warning box.
 
 ## [0.2] - 2022-08-29 - ACCLIP FF03 TEST
 
-This version of the software will be flown on ACCLIP FF03 from Anchorage to RMMA
+This version of the software was flown on ACCLIP FF03 from Anchorage to RMMA
 for additional testing.
 
 ### Added

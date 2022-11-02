@@ -15,6 +15,7 @@ from PyQt5.QtWidgets import QMainWindow, QGridLayout, QWidget, \
 from PyQt5.QtCore import QSocketNotifier, Qt
 from PyQt5.QtGui import QFontMetrics, QFont
 from util.profile_structs import TropopauseRecord
+from util.ck_limits import MTPCkLimit
 from viewer.plotScanTemp import ScanTemp
 from viewer.plotProfile import Profile
 from viewer.plotCurtain import Curtain
@@ -63,11 +64,8 @@ class MTPviewer(QMainWindow):
         # user.
         self.app.processEvents()
 
-        # Some vars to determine limits on housekeeping values
-        self.accmin = 999.9
-        self.accmax = -999.9
-        self.voltmin = [999.9] * 8
-        self.voltmax = [-999.9] * 8
+        # Class to determine limits on housekeeping values
+        self.limits = MTPCkLimit()
 
     def connectSocket(self):
         # Connect UDP feeds to sockets
@@ -871,7 +869,7 @@ class MTPviewer(QMainWindow):
 
                 # Warn user if temps outside -40 to 50C by changing font
                 # to red
-                if (float(T) < -40.0 or float(T) > 50.0):  # -40 to 50
+                if not self.limits.ckTemperature(float(T)):  # Failed check
                     fmt = self.eng1.currentCharFormat()
                     fmt.setForeground(Qt.red)  # red
                     self.eng1.setCurrentCharFormat(fmt)
@@ -911,14 +909,7 @@ class MTPviewer(QMainWindow):
                 voltsstr = "%+06.2fV" % volts
 
                 # Confirm that volts don't vary by more than 5%
-                if volts < self.voltmin[i]:
-                    self.voltmin[i] = volts
-                if volts > self.voltmax[i]:
-                    self.voltmax[i] = volts
-                mean = (self.voltmin[i] + self.voltmax[i]) / 2
-                dev = (self.voltmax[i] - self.voltmin[i])/mean
-
-                if self.voltmin[i] != 999.9 and abs(dev) > 0.05:  # > 5%
+                if not self.limits.ckVolts(volts, i):  # Failed check
                     fmt = self.eng2.currentCharFormat()
                     fmt.setForeground(Qt.red)  # red
                     self.eng2.setCurrentCharFormat(fmt)
@@ -965,11 +956,7 @@ class MTPviewer(QMainWindow):
 
                     # Warn user if Acceler varies by more than .5g by changing
                     # font to red
-                    if deg < self.accmin:
-                        self.accmin = deg
-                    if deg > self.accmax:
-                        self.accmax = deg
-                    if self.accmin != 999.9 and self.accmax - self.accmin > .5:
+                    if not self.limits.ckAccel(deg):  # Failed check
                         fmt = self.eng3.currentCharFormat()
                         fmt.setForeground(Qt.red)  # red
                         self.eng3.setCurrentCharFormat(fmt)
@@ -978,7 +965,7 @@ class MTPviewer(QMainWindow):
 
                     # Warn user if temps outside -40 to 50C by changing font
                     # to red
-                    if (deg < -40.0 or deg > 50.0):  # -40 to 50
+                    if not self.limits.ckTemperature(deg):  # Failed check
                         fmt = self.eng3.currentCharFormat()
                         fmt.setForeground(Qt.red)  # red
                         self.eng3.setCurrentCharFormat(fmt)

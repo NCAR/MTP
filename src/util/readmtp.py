@@ -596,6 +596,18 @@ class readMTP:
     def getName(self, linetype, var):
         return self.rawscan[linetype]['values'][var]['name']
 
+    def getFactByIndex(self, linetype, i):
+        """ Get variable scaling factor by index """
+        for var in self.rawscan[linetype]['values']:
+            if self.rawscan[linetype]['values'][var]['idx'] == i:
+                return self.rawscan[linetype]['values'][var]['fact']
+
+    def getNameByIndex(self, linetype, i):
+        """ Get variable name by index """
+        for var in self.rawscan[linetype]['values']:
+            if self.rawscan[linetype]['values'][var]['idx'] == i:
+                return self.rawscan[linetype]['values'][var]['name']
+
     def saveTBI(self, tbi):
         """ Save the inverted brightness temperature to the scan """
         self.rawscan['tbi'] = tbi

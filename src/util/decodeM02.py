@@ -34,7 +34,9 @@ class decodeM02():
                 T = numpy.nan
             else:
                 if var == 'ACCPCNTE':  # MMA1250D accelerometer 2.5V +-.25V @0G
-                    T = -1.0 * ((val * 0.001) - 2.5) / 0.4
+                    # Assign result to T val to make looping easier. This is
+                    # really an acceleration, not a temperature.
+                    T = self.math.calcG(val)
                 else:
                     T = self.math.calcTfromVal(val)
 
