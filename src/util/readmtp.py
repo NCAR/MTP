@@ -20,7 +20,7 @@
 # E 021506 022917 022752 019806 021164 020697
 #
 # The variables in each line are (they should match the project
-# nidas/default.xml file:
+# nidas/default.xml file):
 #
 # A <date> <time> SAPITCH SRPITCH SAROLL SRROLL SAPALT SRPALT SAAT SRAT SALAT
 #     SRLAT SALON SRLON SMCMD SMENC
@@ -60,14 +60,20 @@ logger = QLogger("EOLlogger")
 class readMTP:
 
     def __init__(self):
-        # Instantiate dictionary to hold the MTP data.
+        # Instantiate dictionary to hold the MTP data. curscan is the current
+        # scan/record we are working with.
         self.curscan = copy.deepcopy(MTPrecord)
 
         # An array of MTP data dictionaries - used to display a single variable
-        # across time.
+        # across time. flightData is only used for reading. After the current
+        # scan (curscan) is collected and processed, the record is COPIED to
+        # the end of flightData, and the next scan can be collected in curscan.
         self.flightData = []
 
-        # Set the scan we are working with to be the current scan
+        # Set the scan we are working with to be the current scan. rawscan is
+        # always the active scan being worked with. It can point to curscan if
+        # we are collecting/processing data, or one of the flightData scans if
+        # we are displaying data.
         self.rawscan = self.curscan
 
     def getJson(self, projdir, proj, fltno):
@@ -396,6 +402,8 @@ class readMTP:
         """
         Parse an Ascii packet and store it's values in the data dictionary
         """
+        self.resetRawscan()  # Writing is always done into a curscan instance
+
         # Save the entire UDP packet to the dictionary. Useful for figuring out
         # what happened if something goes wrong downstream during processing.
         self.rawscan['asciiPacket'] = UDPpacket
