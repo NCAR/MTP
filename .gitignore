@@ -6,8 +6,11 @@ LAB/RC
 LAB/Raw
 LAB/logs
 LAB/LAB*json
-Data
+Data/NGV/DEEPWAVE/Raw/save
+Data/NGV/DEEPWAVE/logs
+Data/NGV/DEEPWAVE/final
+Data/NGV/DEEPWAVE/DEEPWAVE*json
+Data/NGV/TI3GER
+Data/NGV/TORERO/logs
 src/emulator/output.txt
 
-tests/test_data/CSET/LRT
-tests/test_data/DEEPWAVE/LRT
