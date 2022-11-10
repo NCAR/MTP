@@ -1,6 +1,17 @@
+###############################################################################
+# Checks for spikes in the B data line. Needs to be updated to be clearer on
+# what the output means.
+#
+# Usage: python3 spikes.py N<rawfile>
+#
+# Written in Python 3
+#
+# COPYRIGHT:   University Corporation for Atmospheric Research, 2022
+###############################################################################
+from sys import argv
 
-
-f = open("../MTP_data.txt", 'r')
+script, fieName = argv
+f = open(fieName, 'r')
 
 oldline = 0
 
@@ -10,18 +21,17 @@ for line in f:
         # remove trailing end of line \n or \r\n's
         line = line.rstrip()
         # remove B and space from start
-        line = line[2: len(line)]             
+        line = line[2: len(line)]
         line = line.split(" ")
-        
-        if oldline is not 0:
+
+        if oldline != 0:
             # all cases but first
-            print (line)
+            print(line)
 
             for index, data in enumerate(line):
-                #print( index, data )
+                print(index, data)
                 difference = abs(int(data)-int(oldline[index]))
-                print (difference)
-
+                print(difference)
 
         else:
             # first case

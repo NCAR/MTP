@@ -17,6 +17,7 @@
 ###############################################################################
 import os
 import unittest
+from unittest.mock import patch
 import argparse
 from viewer.MTPviewer import MTPviewer
 from PyQt5.QtWidgets import QApplication
@@ -25,7 +26,9 @@ from lib.rootdir import getrootdir
 
 import sys
 import logging
-from EOLpython.logger.messageHandler import Logger as logger
+from EOLpython.logger.messageHandler import Logger
+
+logger = Logger("EOLlogger")
 
 
 class TESTeng2(unittest.TestCase):
@@ -38,7 +41,7 @@ class TESTeng2(unittest.TestCase):
                                        'DEEPWAVE', 'config', 'proj.yml')
         self.stream = sys.stdout  # Send log messages to stdout
         loglevel = logging.INFO
-        logger.initLogger(self.stream, loglevel)
+        logger.initStream(self.stream, loglevel)
 
         self.app = QApplication([])
         self.client = MTPclient()
@@ -47,7 +50,8 @@ class TESTeng2(unittest.TestCase):
         self.args = argparse.Namespace(cnts=False, postprocess=False,
                                        realtime=True)
 
-        self.viewer = MTPviewer(self.client, self.app, self.args)
+        with patch.object(MTPviewer, 'setFltno'):
+            self.viewer = MTPviewer(self.client, self.app, self.args)
 
     def test_eng2_noJSON(self):
         """ Test Engineering 2 display window shows what we expect """

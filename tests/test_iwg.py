@@ -23,7 +23,9 @@ from viewer.MTPclient import MTPclient
 
 import sys
 import logging
-from EOLpython.logger.messageHandler import Logger as logger
+from EOLpython.logger.messageHandler import Logger
+
+logger = Logger("EOLlogger")
 
 
 class TESTreadiwg(unittest.TestCase):
@@ -32,7 +34,7 @@ class TESTreadiwg(unittest.TestCase):
         # Set up logging
         self.stream = sys.stdout  # Send log messages to stdout
         loglevel = logging.INFO
-        logger.initLogger(self.stream, loglevel)
+        logger.initStream(self.stream, loglevel)
 
         # Location of default ascii_parms file
         self.ascii_parms = os.path.join(getrootdir(), 'Data', 'NGV',
@@ -55,6 +57,30 @@ class TESTreadiwg(unittest.TestCase):
         self.client.reader.parseLine(self.iwgrec)
 
         self.iwg = self.client.initIWG()
+
+    def test_ignoreUserVals(self):
+        """ Test that user values at end of IWG packet are ignored """
+        # Add a few values to end of IWG packet but do not change ascii_parms
+        self.userrec = self.iwgrec + "999,999,999,999"
+        self.rawscan = self.client.reader.rawscan
+        self.iwg.parseIwgPacket(self.userrec, self.ascii_parms)
+        self.assertEqual(len(self.rawscan['IWG1line']['values']),
+                         len(self.iwg.values))
+
+    def test_getVar(self):
+        """ Test that get expected var by index """
+        var = self.iwg.getVar(self.ascii_parms, 1)
+        self.assertEqual(var, "GGLAT")
+        var = self.iwg.getVar(self.ascii_parms, 2)
+        self.assertEqual(var, "GGLON")
+        var = self.iwg.getVar(self.ascii_parms, 5)
+        self.assertEqual(var, "PALTF")
+        var = self.iwg.getVar(self.ascii_parms, 15)
+        self.assertEqual(var, "PITCH")
+        var = self.iwg.getVar(self.ascii_parms, 16)
+        self.assertEqual(var, "ROLL")
+        var = self.iwg.getVar(self.ascii_parms, 19)
+        self.assertEqual(var, "ATX")
 
     def test_getIwgPacket(self):
         """ Test the IWG line parses as expected """

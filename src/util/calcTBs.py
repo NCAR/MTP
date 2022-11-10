@@ -34,7 +34,7 @@ class BrightnessTemperature():
         self.Geqn = [None] * self.channels
         self.tb = [None] * self.channels * self.angles
 
-        # Gain OFfset and per channel Gain Eqn Constants (slope and intercept)
+        # Gain Offset and per channel Gain Eqn Constants (slope and intercept)
         self.GOF = float(configfile.getVal('GOF'))
         self.GEC = configfile.getVal('GEC')
 
@@ -97,4 +97,4 @@ class BrightnessTemperature():
                 C = int(scnt[i + j*3])  # MTP Scan Counts[Angle, Channel]
                 self.tb[i + j*3] = float(OAT) + (C - CHor) / self.Geqn[i]
 
-        return(self.tb)
+        return self.tb

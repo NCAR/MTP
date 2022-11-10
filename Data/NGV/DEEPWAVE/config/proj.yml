@@ -27,9 +27,14 @@ revision: 'R0'
 revision_comment: 'initial release'
 
 # Port setting
-udp_send_port: 32106  # fron viewer to MTP
-udp_read_port: 32107  # from MTP to viewer
+inst_send_port: 32106  # from viewer to MTP
+inst_read_port: 32107  # from MTP to viewer
+view_send_port: 32107  # from viewer to MTP/RIC
+view_read_port: 32106  # from MTP/RIC to viewer
 iwg1_port: 7071       # IWG1 packets from GV
+nidas_port: 30101     # MTP UDP packets to nidas
+udp_ip: "127.0.0.1"
+#udp_ip: "192.168.84.255"
 
 # Current MTP scan setup
 NUM_SCAN_ANGLES: 10   # Number of scan angles being read
@@ -54,28 +59,37 @@ GEC: [[19.87, 0.1], [23.1, 0.1], [26.05, 0.1]]  # Per channel slope, intercept
 # GEC: [[19.43, 0.2], [22.44, 0.2],[25.29, 0.2]]
 
 ###############################################################################
-# Locations of required files. Project dir (projdir) must be an absolute path,
-# and all other paths are relative to projdir. During testing, comment out
-# projdir and add 'Data/NGV/DEEPWAVE' to beginning of all other file paths.
+# Locations of required files. All paths are relative to
+# the path to the project config file given in the --config command line
+# argument. 
 # Then:
 #     cd src
-#     python3 MTPviewer.py
+#     python3 MTPviewer.py --config="../Data/NGV/<project>/config/proj.yml"
 # You can use either '\' or '/' to separate path components. Code will adjust
 # it for OS you are running on.
 ###############################################################################
-# Project directory to hold data and config info. If commented out, defaults to
-# top dir of code checkout, e.g. .../MTP/
-#projdir: '<put absolute path here>'
+# There used to be a projdir element here. It has been replaced
+# in favor of using the --config command line argument
+# to derive the project directory
+
+# Location of Raw data dir relative to projdir
+rawdir: 'Raw'
+
+# Location of log dir relative to projdir
+logdir: 'logs'
 
 # Location of ascii_parms file relative to projdir
-ascii_parms: 'Data/NGV/DEEPWAVE/config/ascii_parms'
+ascii_parms: 'config/ascii_parms'
 
 # Location of RCF dir relative to projdir
-RCFdir: 'Data/NGV/DEEPWAVE/RC'
+RCFdir: 'RC'
 #filelist: ["NRCDE067", "NRCDA067"]
 
 # Dir holding production processing configuration stuff relative to projdir
-PRODdir: 'Data/NGV/DEEPWAVE/config/Production'
+PRODdir: 'config/Production'
 
 # Dir to hold final data (ICARTT, etc)
-datadir: 'Data/NGV/DEEPWAVE/final'
+datadir: 'final'
+
+# Location where json file is to be written relative to projdir
+json_file: ''

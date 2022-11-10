@@ -5,11 +5,15 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
+import os
 import sys
+import datetime
 from viewer.MTPviewer import MTPviewer
 from PyQt5.QtWidgets import QApplication
 from viewer.MTPclient import MTPclient
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 def main():
@@ -22,7 +26,7 @@ def main():
 
     # Configure logging
     stream = sys.stdout
-    logger.initLogger(stream, args.loglevel, args.logmod)
+    logger.initStream(stream, args.loglevel, args.logmod)
 
     # Every GUI app must have exactly one instance of QApplication. The
     # QApplication class manages the GUI application's control flow and
@@ -34,12 +38,19 @@ def main():
     # This also connects to the MTP and IWG feeds
     client.config(args.config)
 
+    # In addition, send all messages to logfile
+    logdir = client.configfile.getPath('logdir')
+    nowTime = datetime.datetime.now(datetime.timezone.utc)
+    fileDate = nowTime.strftime("N%Y%m%d%H.%M")
+    logger.initLogfile(os.path.join(logdir, "viewlog." + fileDate),
+                       args.loglevel)
+
     # Instantiate the GUI
     viewer = MTPviewer(client, app, args)
     viewer.loadJson(client.getMtpRealTimeFilename())
     viewer.show()
 
-    # Run the application until the user closes it.
+    # Run the application until the user closes it
     sys.exit(app.exec_())
 
 

@@ -23,7 +23,11 @@ class Curtain(QMainWindow):
         consists of altitude vs temperature
         """
 
-        self.maxAltkm = 32  # The maximum altitude to plot
+        self.maxAltkm = 20  # The maximum altitude to plot, was 32
+        self.minCmap = 170  # was 200
+        self.maxCmap = 320  # was 300
+        self.xWinSize = 750  # was 500
+        self.yWinSize = 450  # was 300
 
         super().__init__(parent)
         self.initUI()
@@ -34,7 +38,6 @@ class Curtain(QMainWindow):
         self.data = []    # 2-D array of temperatures
         self.alt = []     # 2-D array of altitudes
         self.time = []    # 1-D array of times (to label X-axis)
-        self.actime = []  # 1-D array of times (without duplicate first entry)
         self.acalt = []   # 1-D array of ACALT
         self.trop = []    # 1-D array of lowest tropopause (plot vs actime)
         self.mri = []     # 1-D array of MRI indicator (quality of fit)
@@ -47,8 +50,8 @@ class Curtain(QMainWindow):
         # Set window title
         self.setWindowTitle('Curtain Plot for flight')
 
-        # Copy more from initUI in viewer.MTPviewer
-        self.resize(500, 300)
+        # Set popup window size
+        self.resize(self.xWinSize, self.yWinSize)
 
         # Define central widget to hold everything
         self.view = QWidget()
@@ -72,24 +75,18 @@ class Curtain(QMainWindow):
 
         self.layout.addWidget(self.canvas, 0, 0)
 
-        # Configure axis label and limits so looks like what expect even if
-        # data not flowing. When data is plotting, this is cleared and
-        # re-configured. See plotCurtain()
-        self.configureAxis()
-
     def getWindow(self):
 
         # Return pointer to the graphics window
-        return(self.canvas)
+        return self.canvas
 
-    def configureAxis(self):
+    def configureAxis(self, realtime):
         """ Configure axis labels and limits """
 
         # set limits and label for left Y axis (km)
         self.ax.set_ylabel('Pressure Altitude (km)')
         self.ax.set_ylim(0.0, self.maxAltkm)
         self.ax.yaxis.set_major_locator(MultipleLocator(5))
-        self.ax.set_yticklabels(numpy.arange(-5, self.maxAltkm, 5))
 
         # add right axis with altitude in kft 28km = 91.86kft)
         self.axR.set_ylabel('Altitude (kft)')
@@ -104,36 +101,67 @@ class Curtain(QMainWindow):
         self.cmap = plt.get_cmap('jet')  # Set the color scale
 
         # Label X-axis with time, not plot number.
-        levels = MaxNLocator(nbins=33).tick_values(200, 300)
+        levels = MaxNLocator(nbins=33).tick_values(self.minCmap, self.maxCmap)
         self.norm = BoundaryNorm(levels, ncolors=self.cmap.N, clip=True)
 
-    def clear(self):
+        # Add watermark for preliminary data if in realtime mode
+        if realtime:
+            self.ax.text(0.5, 0.5, 'preliminary data',
+                         transform=self.ax.transAxes, fontsize=40,
+                         color='gray', alpha=0.5, ha='center', va='center',
+                         rotation='30')
+
+    def clear(self, realtime):
         # Clear the plot of data, labels and formatting.
         self.ax.clear()
         self.axR.clear()
         # Add back the labels and formatting
-        self.configureAxis()
+        self.configureAxis(realtime)
 
-    def addAlt(self, altitude):
-        """ Build 2-D array of altitudes """
+    def addAltTemp(self, temperature, altitude, ACAlt):
+        """ Build 2-D arrays: altitudes and temperatures
+
+        Mask out temperatures when scan is greater than 8km from aircraft
+        and when altitude is missing
+        """
+
         # Convert nans in alt to zero, so when temperature is nan, will plot
         # NaN at zero alt.
         alt = numpy.nan_to_num(altitude).tolist()
         for i in range(len(alt)):
             if self.first:
-                self.alt.append([alt[i], alt[i]])
+                if (alt[i] == 0.0 or abs(alt[i] - float(ACAlt)) > 8):
+                    temperature[i] = numpy.nan
+                self.alt.append([alt[i]])  # init array with first value
             else:
-                self.alt[i].append(alt[i])
+                if (alt[i] == 0.0 or abs(alt[i] - float(ACAlt)) > 8):
+                    temperature[i] = numpy.nan
+                self.alt[i].append(alt[i])  # Append across arrays
 
-    def addTemp(self, temperature):
-        """ Build 2-D array of temperatures """
         self.data.append(temperature)
+
+        # Stuff to plot values - useful for debugging. When counting
+        # across second dimension, select first value in first dim, 0.
+        # All lengths are the same, so this is arbitrary.
+        # self.alt and self.data should have same dimensions
+        # print(len(self.alt))  # altitude array vertical length
+        # print(len(self.data[0]))  # temperature array vertical length
+        # print(len(self.alt[0]))  # altitude array horizontal length
+        # print(len(self.data))  # temperature array horizontal length
+        # Now print the current profile
+        # for i in range(len(temperature)):
+        #     print(self.alt[i][len(self.data)-1])
+        # print(temperature)
 
     def addTime(self, time, temperature):
         """ Create a 2-D aray of times """
+
+        # Catch midnight rollover
+        if (len(self.time) > 0):
+            if (time/3600.0 < self.time[0]):  # Found midnight rollover
+                time = time + 86400
+
         # Create 1-D array of profile times (convert seconds to hours)
-        if self.first:
-            self.time.append((time-17)/3600.0)
         self.time.append(time/3600.0)
 
         # Now build a 2-D array of self.time arrays
@@ -156,13 +184,37 @@ class Curtain(QMainWindow):
     def plotCurtain(self):
         """
         Plot profile vs temperature in the self.profile plot window
-        """
 
-        # Plot the temperature as a color mesh. Time on X-axis. Altitude on
-        # Y-axis. Have to invert temperature array to match.
+        Plot the temperature as a color mesh. Time on X-axis. Altitude on
+        Y-axis. Have to invert temperature array to match.
+
+        From help(pcolormesh):
+          If ``shading='flat'`` the dimensions of *X* and *Y* should be one
+          greater than those of *C*, and the quadrilateral is colored due
+          to the value at ``C[i, j]``.  If *X*, *Y* and *C* have equal
+          dimensions, a warning will be raised and the last row and column
+          of *C* will be ignored.
+
+          If ``shading='nearest'`` or ``'gouraud'``, the dimensions of *X*
+          and *Y* should be the same as those of *C* (if not, a ValueError
+          will be raised).
+            - For ``'nearest'`` the color ``C[i, j]`` is centered on
+            ``(X[i, j], Y[i, j])``.
+            - For ``'gouraud'``, a smooth interpolation is carried out between
+              the quadrilateral corners.
+
+          If *X* and/or *Y* are 1-D arrays or column vectors they will be
+          expanded as needed into the appropriate 2-D arrays, making a
+          rectangular grid.
+
+        So gourand SHOULD give interpoalted shading, but it does not make much
+        of a difference. Using nearest for now.
+        """
         im = self.ax.pcolormesh(self.time, self.alt,
-                                numpy.transpose(self.data), cmap=self.cmap,
-                                norm=self.norm, axes=self.ax)
+                                numpy.transpose(self.data), shading='nearest',
+                                cmap=self.cmap,  # color scale
+                                norm=self.norm,
+                                axes=self.ax)
 
         # Only use the QuadMesh object to create the legend the first time
         if self.first:
@@ -171,18 +223,21 @@ class Curtain(QMainWindow):
 
     def plotACALT(self):
         """ Plot the aircraft altitude on the left axis """
-        self.ax.plot(self.actime, self.acalt, color='black')
+        self.ax.plot(self.time, self.acalt, color='black',
+                     linestyle='dashed')
 
     def plotTropopause(self):
         """ Plot the tropopause on the left axis """
-        self.ax.plot(self.actime, self.trop, color='white')
+        self.ax.plot(self.time, self.trop, color='white',
+                     linestyle='', marker='+', markersize=2)
 
     def plotMRI(self):
         """
         Plot the MRI. MRI (data quality metric) ranges from .1-.2ish - plotted
         on pressure altitude scale. MRI is BestWtdRCSet['SumLnProb'])
         """
-        self.ax.vlines(self.actime, 0, self.mri, color='black')
+        self.ax.plot(self.time, self.mri, color='grey',
+                     linestyle='', marker='.', markersize=1)
 
 #   def markBadScan(self):  # TBD
 #       """

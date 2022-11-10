@@ -23,23 +23,24 @@ from lib.rootdir import getrootdir
 
 import logging
 from io import StringIO
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
+# Set environment var to indicate we are in testing mode
+# Need this to logger won't try to open message boxes
+logger.setDisableMessageBox(True)
 
 
 class TESTMTPclient(unittest.TestCase):
 
     def setUp(self):
 
-        # Set environment var to indicate we are in testing mode
-        # Need this to logger won't try to open message boxes
-        os.environ["TEST_FLAG"] = "true"
-
         # For testing, we want to capture the log messages in a buffer so we
         # can compare the log output to what we expect.
         self.stream = StringIO()  # Set output stream to buffer
 
         # Instantiate a logger
-        self.log = logger.initLogger(self.stream, logging.INFO)
+        self.log = logger.initStream(self.stream, logging.INFO)
 
         # Instantiate an MTP controller
         self.client = MTPclient()
@@ -120,5 +121,4 @@ class TESTMTPclient(unittest.TestCase):
         self.assertEqual(len(ATP['trop']['val']), 2)
 
     def tearDown(self):
-        if "TEST_FLAG" in os.environ:
-            del os.environ['TEST_FLAG']
+        pass

@@ -68,7 +68,10 @@ class Retriever():
 
         # If fileset created successfully, find the best template to match
         # the scanned brightness temperatures
-        return(self.rcf_set.getBestWeightedRCSet(ScanBTs, ACAltKm, 0.0))
+        try:
+            return self.rcf_set.getBestWeightedRCSet(ScanBTs, ACAltKm, 0.0)
+        except Exception:
+            raise
 
     def retrieve(self, ScanBTs, BestWtdRCSet):
         """
@@ -120,7 +123,7 @@ class Retriever():
                 self.ATP['Altitudes'][l] = numpy.nan
                 self.ATP['Temperatures'][l] = numpy.nan
 
-        return(self.ATP)
+        return self.ATP
 
     def checkMissing(self, ATP):
         """
@@ -134,9 +137,9 @@ class Retriever():
 
         if (nMissMTP == self.NUM_RETR_LVLS):
             # All temperatures are missing
-            return(True)
+            return True
         else:
-            return(False)
+            return False
 
     def Pressure2Km(self, Pressures):
         """
@@ -190,7 +193,7 @@ class Retriever():
 
             Altitudes.append(Altitude)
 
-        return(Altitudes)
+        return Altitudes
 
 
 if __name__ == "__main__":

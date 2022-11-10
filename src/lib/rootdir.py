@@ -13,4 +13,4 @@ def getrootdir():
     """ Return a rootdir variable that holds the root dir of the checkout """
     rootdir = os.path.dirname(os.path.dirname(os.path.dirname(
               os.path.abspath(__file__))))
-    return(rootdir)
+    return rootdir

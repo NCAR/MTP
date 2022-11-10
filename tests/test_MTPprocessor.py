@@ -30,7 +30,9 @@ from util.MTP import MTPrecord
 
 import sys
 import logging
-from EOLpython.logger.messageHandler import Logger as logger
+from EOLpython.logger.messageHandler import Logger
+
+logger = Logger("EOLlogger")
 
 
 class TESTMTPprocessor(unittest.TestCase):
@@ -48,13 +50,14 @@ class TESTMTPprocessor(unittest.TestCase):
         # Setup logging
         self.stream = sys.stdout  # Send log messages to stdout
         loglevel = logging.INFO
-        logger.initLogger(self.stream, loglevel)
+        logger.initStream(self.stream, loglevel)
 
         self.app = QApplication([])
         self.client = MTPclient()
         self.client.readConfig(self.configfile)
         self.args = argparse.Namespace(PRODdir=self.proddir, realtime=False)
-        self.viewer = MTPviewer(self.client, self.app, self.args)
+        with patch.object(MTPviewer, 'setFltno'):
+            self.viewer = MTPviewer(self.client, self.app, self.args)
         self.processor = MTPprocessor(self.viewer, self.client)
 
         self.maxDiff = None
@@ -63,7 +66,7 @@ class TESTMTPprocessor(unittest.TestCase):
         """ Test accuracy of read of setup files in config/Production dir """
         self.assertEqual(self.args.PRODdir,
                          os.path.join('Data', 'NGV', 'DEEPWAVE', 'config',
-                        'Production'))
+                                      'Production'))
 
         self.processor.readSetup(self.client.configfile.getPath("PRODdir"))
         self.assertEqual(self.processor.filelist[0]['rawFile'],

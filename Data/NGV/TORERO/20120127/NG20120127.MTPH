@@ -1,0 +1,38 @@
+[Program]
+MTPH_control.vbp
+
+[Aircraft]
+NGV
+
+[NominalPitch]
+3
+
+[Offsets]
++1.600  'Yi
+-3.576  'Pi
+-0.123  'Ri
+
+[Frequencies]
+3
+56.363
+57.612
+58.363
+
+[Integ. Time]
+200.0 mS
+
+[El. Angles]
+10     	'10 sky views + target = 11
+-179.8 	' location of fiduciary 2008/03/17
+80.00	' first sky view 20080317
+55.00
+42.00
+25.00
+12.00
+0.00	' Horizon
+-12.00
+-25.00
+-42.00
+-80.00	'last skyview
+
+[End]

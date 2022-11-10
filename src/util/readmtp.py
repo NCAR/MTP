@@ -20,7 +20,7 @@
 # E 021506 022917 022752 019806 021164 020697
 #
 # The variables in each line are (they should match the project
-# nidas/default.xml file:
+# nidas/default.xml file):
 #
 # A <date> <time> SAPITCH SRPITCH SAROLL SRROLL SAPALT SRPALT SAAT SRAT SALAT
 #     SRLAT SALON SRLON SMCMD SMENC
@@ -52,27 +52,35 @@ import numpy
 import json
 import copy
 from util.MTP import MTPrecord
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class readMTP:
 
     def __init__(self):
-        # Instantiate dictionary to hold the MTP data.
+        # Instantiate dictionary to hold the MTP data. curscan is the current
+        # scan/record we are working with.
         self.curscan = copy.deepcopy(MTPrecord)
 
         # An array of MTP data dictionaries - used to display a single variable
-        # across time.
+        # across time. flightData is only used for reading. After the current
+        # scan (curscan) is collected and processed, the record is COPIED to
+        # the end of flightData, and the next scan can be collected in curscan.
         self.flightData = []
 
-        # Set the scan we are working with to be the current scan
+        # Set the scan we are working with to be the current scan. rawscan is
+        # always the active scan being worked with. It can point to curscan if
+        # we are collecting/processing data, or one of the flightData scans if
+        # we are displaying data.
         self.rawscan = self.curscan
 
     def getJson(self, projdir, proj, fltno):
         """ Build name of json file to save flight data to """
         # This is used if the code is restarted mid-flight to provide access
         # to previous data.
-        return(os.path.join(projdir, proj+fltno.lower()+'.mtpRealTime.json'))
+        return os.path.join(projdir, proj+fltno.lower()+'.mtpRealTime.json')
 
     def setRawscan(self, index):
         """ Set the MTP data dictionary we want to read a scan from """
@@ -84,12 +92,12 @@ class readMTP:
         try:
             self.rawscan = self.flightData[index]
         except Exception as err:
-            logger.printmsg("ERROR", "No data available: " + str(err),
-                            "Try loading some raw data")
+            logger.error("No data available: " + str(err),
+                         "Try loading some raw data")
             self.rawscan = None
             raise
 
-        return(True)
+        return True
 
     def resetRawscan(self):
         """ Set the data dictionary back to the current scan """
@@ -97,27 +105,28 @@ class readMTP:
 
     def getRawscan(self):
         """ Return a pointer to the MTP data dictionary of the current scan """
-        return(self.rawscan)
+        return self.rawscan
 
     def getRecord(self, index):
         """ Return a pointer to the MTP data dictionary for a specific scan """
-        return(self.flightData[index])
+        return self.flightData[index]
 
     def getNumRecs(self):
         """ Return the number of records in the array of scans """
-        return(len(self.flightData))
+        return len(self.flightData)
 
     def readRawScan(self, raw_data_file):
         """
         Read in a scan (a group of lines) from an MTP .RAW file and store them
-        to a dictionary
+        to a dictionary. Keep looping until have a complete scan or reach end
+        of file.
         """
         while True:
 
             # Read in a single line
             line = raw_data_file.readline()
             if len(line) == 0:  # EOF
-                return(False)  # At EOF
+                return False  # At EOF
 
             # Store line to dictionary
             self.parseLine(line)
@@ -133,7 +142,7 @@ class readMTP:
                 for linetype in self.rawscan:
                     if 'found' in self.rawscan[linetype]:
                         self.rawscan[linetype]['found'] = False
-                return(True)  # Not at EOF
+                return True  # Not at EOF
 
     def reportScanStatus(self, selectedRawFile):
         """
@@ -146,8 +155,7 @@ class readMTP:
                 status += linetype + ": " + \
                           str(self.rawscan[linetype]['found']) + "\n"
 
-        logger.printmsg('ERROR', "No complete scans found in" +
-                        selectedRawFile, status)
+        logger.error("No complete scans found in" + selectedRawFile, status)
 
     def clearFlightData(self):
         """ clear the flightData list of dictionaries """
@@ -163,7 +171,7 @@ class readMTP:
             if os.path.exists(filename):
                 os.remove(filename)
         except Exception as e:
-            logger.printmsg('ERROR', "Failed to remove JSON file " + e)
+            logger.error("Failed to remove JSON file " + e)
 
     def save(self, filename):
         """ Append the current record to a JSON file on disk """
@@ -177,7 +185,7 @@ class readMTP:
         """
         # Check if file exists. If not, nothing to load, so return failed
         if not os.path.isfile(filename):
-            return(False)
+            return False
 
         with open(filename, 'r') as f:
             previous_data = [json.loads(line) for line in f]
@@ -191,7 +199,7 @@ class readMTP:
         previous_data.extend(self.flightData)
         self.flightData = previous_data
 
-        return(True)
+        return True
 
     def parseLine(self, line):
         """
@@ -219,15 +227,19 @@ class readMTP:
                     # Mark found
                     self.rawscan[linetype]['found'] = True
                     # Exit matching loop
-                    return(True)
+                    return True
 
     def getACAlt(self):
         """ Return the aircraft alititude (km) from the Aline """
-        return(self.rawscan['Aline']['values']['SAPALT']['val'])
+        return self.rawscan['Aline']['values']['SAPALT']['val']
 
     def getDate(self):
         """ Return the date of the current A line record """
-        return(self.rawscan['Aline']['values']['DATE']['val'])
+        return self.rawscan['Aline']['values']['DATE']['val']
+
+    def getTime(self):
+        """ Return the date and time of the current A line record """
+        return self.rawscan['Aline']['values']['timestr']['val']
 
     def getAline(self):
         """ Return the A line to the caller """
@@ -235,37 +247,37 @@ class readMTP:
         Aline = "A " + self.rawscan['Aline']['values']['DATE']['val'] + " " + \
                 self.rawscan['Aline']['values']['timestr']['val'] + " " + \
                 self.rawscan['Aline']['data']
-        return(Aline)
+        return Aline
 
     def getBline(self):
         """ Return the B line to the caller """
         # Create the Bline
         Bline = "B " + self.rawscan['Bline']['data']
-        return(Bline)
+        return Bline
 
     def getM01line(self):
         """ Return the M01 line to the caller """
         # Create the M01line
         M01line = "M01: " + self.rawscan['M01line']['data']
-        return(M01line)
+        return M01line
 
     def getM02line(self):
         """ Return the M02 line to the caller """
         # Create the M02line
         M02line = "M02: " + self.rawscan['M02line']['data']
-        return(M02line)
+        return M02line
 
     def getPtline(self):
         """ Return the Pt line to the caller """
         # Create the Ptline
         Ptline = "Pt: " + self.rawscan['Ptline']['data']
-        return(Ptline)
+        return Ptline
 
     def getEline(self):
         """ Return the E line to the caller """
         # Create the Eline
         Eline = "E " + self.rawscan['Eline']['data']
-        return(Eline)
+        return Eline
 
     def getAsciiPacket(self):
         """
@@ -301,7 +313,7 @@ class readMTP:
         separator = ','
         UDPpacket = separator.join(values)
 
-        return(UDPpacket)
+        return UDPpacket
 
     def createAdata(self):
         """
@@ -390,6 +402,8 @@ class readMTP:
         """
         Parse an Ascii packet and store it's values in the data dictionary
         """
+        self.resetRawscan()  # Writing is always done into a curscan instance
+
         # Save the entire UDP packet to the dictionary. Useful for figuring out
         # what happened if something goes wrong downstream during processing.
         self.rawscan['asciiPacket'] = UDPpacket
@@ -397,6 +411,13 @@ class readMTP:
         # Split string on commas
         separator = ','
         values = UDPpacket.split(separator)
+
+        # If UDP packet is short, or for some other reason we ended out with
+        # less than 75 values, warn user and do not attempt to parse packet.
+        if len(values) < 75:
+            logger.warning("UDP packet received is short. Skipping packet. " +
+                           "Click 'OK' to dismiss this message")
+            raise Exception("UDP packet received is short. Skipping packet")
 
         # values[0] contains the packet identifier, in this case 'MTP' so skip
         # values[1] contains the datetime, i.e. yyyymmddThhMMss
@@ -466,16 +487,16 @@ class readMTP:
     def getVar(self, linetype, var):
         """ Get the value of a variable from the data dictionary """
         if self.rawscan is not None:
-            return(self.rawscan[linetype]['values'][var]['val'])
+            return self.rawscan[linetype]['values'][var]['val']
         else:
-            return(None)
+            return None
 
     def getVarList(self, linetype):
         """ Get the list of variable names that are in the dictionary """
         if self.rawscan is not None:
-            return(list(self.rawscan[linetype]['values']))
+            return list(self.rawscan[linetype]['values'])
         else:
-            return(None)
+            return None
 
     def getVarArray(self, linetype, var):
         """ Get an array containing all measured values of a variable """
@@ -485,11 +506,11 @@ class readMTP:
         if self.rawscan is not None:
             if type(self.flightData[0][linetype]['values'][var]
                     ['val']) is list:
-                return(None)
+                return None
             for i in range(len(self.flightData)):
                 self.varArray.append(self.flightData[i][linetype]
                                      ['values'][var]['val'])
-        return(self.varArray)
+        return self.varArray
 
     def getVarArrayi(self, linetype, var, index):
         """ Get an array containing all measured values of a variable """
@@ -501,15 +522,15 @@ class readMTP:
         if self.rawscan is not None:
             if type(self.flightData[0][linetype]['values'][var]
                     ['val']) is not list:
-                return(None)
+                return None
             for i in range(len(self.flightData)):
                 self.varArray.append(float(self.flightData[i][linetype]
                                            ['values'][var]['val'][index]))
-        return(self.varArray)
+        return self.varArray
 
     def get_metadata(self, linetype, var, key):
         """ Get the metadata with keyword key for the variable """
-        return(self.flightData[0][linetype]['values'][var][key])
+        return self.flightData[0][linetype]['values'][var][key]
 
     def getATPmetadata(self, var, key, index=0):
         """ Get the metadata with keyword key for variable in ATP dict """
@@ -518,7 +539,7 @@ class readMTP:
         except Exception:
             raise
 
-        return(metadata)
+        return metadata
 
     def testATP(self, index=None):
         """
@@ -531,14 +552,14 @@ class readMTP:
         if index is not None:
             try:
                 self.getATPmetadata('RCFMRIndex', '_FillValue', index)
-                return(index)
+                return index
             except Exception:
                 raise
         else:
             for index in range(len(self.flightData)):  # Loop through scans
                 try:
                     self.getATPmetadata('RCFMRIndex', '_FillValue', index)
-                    return(index)
+                    return index
                 except Exception:
                     # found exception for this scan, but might not for the
                     # next. Just looking for one good scan, so keep going.
@@ -561,9 +582,8 @@ class readMTP:
            (calctype == 'volts' and linetype == 'M01line')):
             self.rawscan[linetype]['values'][var][calctype] = value
         else:
-            logger.printmsg("WARNING", " linetype " + linetype + " doesn't " +
-                            "have a " + calctype + " entry in the MTP " +
-                            "dictionary. Ignored.")
+            logger.warning(" linetype " + linetype + " doesn't have a " +
+                           calctype + " entry in the MTP dictionary. Ignored.")
 
     def getCalcVal(self, linetype, var, calctype):
         """
@@ -577,12 +597,24 @@ class readMTP:
            (calctype == 'temperature' and linetype == 'Ptline') or
            (calctype == 'temperature' and linetype == 'M02line') or
            (calctype == 'volts' and linetype == 'M01line')):
-            return(self.rawscan[linetype]['values'][var][calctype])
+            return self.rawscan[linetype]['values'][var][calctype]
         else:
-            return(numpy.nan)
+            return numpy.nan
 
     def getName(self, linetype, var):
-        return(self.rawscan[linetype]['values'][var]['name'])
+        return self.rawscan[linetype]['values'][var]['name']
+
+    def getFactByIndex(self, linetype, i):
+        """ Get variable scaling factor by index """
+        for var in self.rawscan[linetype]['values']:
+            if self.rawscan[linetype]['values'][var]['idx'] == i:
+                return self.rawscan[linetype]['values'][var]['fact']
+
+    def getNameByIndex(self, linetype, i):
+        """ Get variable name by index """
+        for var in self.rawscan[linetype]['values']:
+            if self.rawscan[linetype]['values'][var]['idx'] == i:
+                return self.rawscan[linetype]['values'][var]['name']
 
     def saveTBI(self, tbi):
         """ Save the inverted brightness temperature to the scan """
@@ -590,16 +622,16 @@ class readMTP:
 
     def getTBI(self):
         """ Retrieve the brightness temperatures for the current scan """
-        return(self.rawscan['tbi'])
+        return self.rawscan['tbi']
 
     def saveATP(self, ATP):
         self.rawscan['ATP'] = copy.deepcopy(ATP)
 
     def getATP(self):
-        return(self.rawscan['ATP'])
+        return self.rawscan['ATP']
 
     def saveBestWtdRCSet(self, BestWtdRCSet):
         self.rawscan['BestWtdRCSet'] = copy.deepcopy(BestWtdRCSet)
 
     def getBestWtdRCSet(self):
-        return(self.rawscan['BestWtdRCSet'])
+        return self.rawscan['BestWtdRCSet']

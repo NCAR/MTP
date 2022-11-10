@@ -1,0 +1,13 @@
+name: mtp
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - conda
+  - python=3.10
+  - metpy
+  - pyqt
+  - pyyaml
+  - netcdf4
+  - pyserial
+prefix: C:\Users\lroot\Miniconda3

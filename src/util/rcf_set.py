@@ -31,7 +31,9 @@ import math
 import inspect
 from util.rcf_structs import RC_Set_4Retrieval
 from util.rcf import RetrievalCoefficientFile
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class RetrievalCoefficientFileSet():
@@ -61,8 +63,8 @@ class RetrievalCoefficientFileSet():
                 try:
                     rcf = RetrievalCoefficientFile(Directory + "/" + filename)
                 except Exception as err:
-                    logger.printmsg("ERROR", "Error opening RCF file. " +
-                                    "Failure to make fileset", str(err))
+                    logger.error("Error opening RCF file. " +
+                                 "Failure to make fileset", str(err))
                     raise
 
                 # If success making fileset, append to list of RCFs
@@ -73,26 +75,30 @@ class RetrievalCoefficientFileSet():
                 if filelist is None:
                     # If in debug mode, print out names of RCF files that
                     # will be loaded.
-                    logger.printmsg("DEBUG", "Found RCF file:" + filename +
-                                    "  with ID:" + self._RCFs[i].getId())
+                    logger.debug("Found RCF file:" + filename +
+                                 "  with ID:" + self._RCFs[i].getId())
                     i += 1
                 else:
                     for j in range(len(filelist)):
                         if (filelist[j] == self._RCFs[i].getId()):
                             # If in debug mode, print out names of RCF files
                             # that will be loaded.
-                            logger.printmsg("DEBUG", "Found RCF file:" +
-                                            filename + "  with ID:" +
-                                            self._RCFs[i].getId())
+                            logger.debug("Found RCF file:" + filename +
+                                         " with ID:" + self._RCFs[i].getId())
                             found = 1
                     if found:
                         i += 1
                     else:
                         self._RCFs.pop()
 
+        # Test if RC dir is empty. If it is, raise exception which will cause
+        # retrievals NOT to be performed, but will allow code to continue.
+        if len(self._RCFs) == 0:
+            raise Exception("RC dir is empty")
+
         # Test if got complete fileset
         if ((filelist is None) or (len(self._RCFs) == len(filelist))):
-            return(True)  # Success
+            return True  # Success
         else:
             # Try to give user a helpful error message.
             # Cases:
@@ -106,35 +112,34 @@ class RetrievalCoefficientFileSet():
                     if re.match(re.compile(filelist[j]), filename):
                         found = True
                 if not found:
-                    logger.printmsg("ERROR", "Failed to make fileset. " +
-                                    "Requested RCF file " +
-                                    str(filelist[j]) + " does not " +
-                                    "exist in RCFdir " + Directory)
+                    logger.error("Failed to make fileset. Requested RCF " +
+                                 "file " + str(filelist[j]) + " does not " +
+                                 "exist in RCFdir " + Directory)
                     errmsg = True
             if errmsg:  # User got some useful info, so return
                 raise Exception()
 
             # If get here, user still doesn't have a useful msg. Default to..
-            logger.printmsg("ERROR", "Failed to make fileset. " +
-                            "Number of requested RCF files, " +
-                            str(len(filelist)) +
-                            ", does not match number loaded, " +
-                            str(len(self._RCFs)))
+            logger.error("Failed to make fileset. " +
+                         "Number of requested RCF files, " +
+                         str(len(filelist)) +
+                         ", does not match number loaded, " +
+                         str(len(self._RCFs)))
             raise Exception()
 
     def getRCFVector(self):
         """ Return a list of available RCF files """
-        return(self._RCFs)
+        return self._RCFs
 
     def getRCFbyId(self, RCFId):
         """ Given an RCF Id, return the RCF file with that ID """
         for rcf in self._RCFs:
             if (rcf.getId() == RCFId):
-                return(rcf)
+                return rcf
 
-        logger.printmsg("ERROR", "In " + inspect.stack()[0][3] + ":" +
-                        "  Could not find RCF with ID: " + str(RCFId))
-        return(False)
+        logger.error("In " + inspect.stack()[0][3] + ":" +
+                     "  Could not find RCF with ID: " + str(RCFId))
+        return False
 
     def setFlightLevelsKm(self, FlightLevels, NumFlightLevels):
         """
@@ -152,18 +157,19 @@ class RetrievalCoefficientFileSet():
 
         """
         if (len(self._RCFs) == 0):
-            logger.printmsg("ERROR", "In " + inspect.stack()[0][3] + " call " +
-                            "failed: There are currently no RCFs in the set")
-            return(False)
+            logger.error("In " + inspect.stack()[0][3] + " call " +
+                         "failed: There are currently no RCFs in the set")
+            return False
 
         for rcf in self._RCFs:
             if not (rcf.testFlightLevelsKm(FlightLevels, NumFlightLevels)):
-                logger.printmsg("ERROR", "In " + inspect.stack()[0][3] +
-                                " call failed: ERROR: Failed test of flight " +
-                                "levels for RCFID:" + rcf.getId())
-                return(False)
+                logger.error("In " + inspect.stack()[0][3] +
+                             " call failed: ERROR: Failed test of flight " +
+                             "levels for RCFID:" + rcf.getId() + ". " +
+                             "Number of flight levels varies between RCs.")
+                return False
 
-        return(True)
+        return True
 
     def getBestWeightedRCSet(self, ScanBrightnessTemps, PAltKm, BTBias):
         """
@@ -190,6 +196,11 @@ class RetrievalCoefficientFileSet():
         """
 
         thisRCFIndex = 0  # Which RCF index are we looking at?
+
+        # Initialize an empty array that will hold
+        # RCF indexes and that index's corresponding lnP.
+        RCFIndex_lnP_Array = [[-1, 100000000000]
+                              for i in range(len(self._RCFs))]
 
         # Step through the vector of Retrieval Coefficient files (aka
         # templates) to obtain the best match for the scan at the input
@@ -234,16 +245,38 @@ class RetrievalCoefficientFileSet():
             thislnP = 8 * math.sqrt(RCFBTWeightedMean**2 + RCFBTStdDev**2) / \
                 RCFit.getNUM_BRT_TEMPS()
 
-            # BestlnP is the sum of the ln of Probabilities for the BestRCIndex
-            # BestRCIndex is the index of "best" template (so far)
-            # What should BestlnP, BestRCIndex default to?
-            if (RCFit == self._RCFs[0]):
-                BestlnP = thislnP
-                BestRCIndex = 0
-            elif (thislnP < BestlnP):
-                BestlnP = thislnP
-                BestRCIndex = thisRCFIndex
+            # If this is the first item:
+            if (RCFIndex_lnP_Array[0][0] == -1):
+                # Just make the first space the current values
+                RCFIndex_lnP_Array[0] = list([thisRCFIndex, thislnP])
+            # Otherwise, sort the current values into the correct spot
+            # (Method similar to bubble sort)
+            else:
+                temp = list([thisRCFIndex, thislnP])
+                # Every value is going to be inserted somewhere, so insert
+                # at the beginning and swap up until sorted
+                for j in range(len(RCFIndex_lnP_Array) - 1):
+                    if (temp[1] < RCFIndex_lnP_Array[j][1]):
+                        i = j
+                        while ((temp[1] < RCFIndex_lnP_Array[i][1])
+                                and (i < len(RCFIndex_lnP_Array) - 1)):
+                            temp2 = RCFIndex_lnP_Array[i]
+                            RCFIndex_lnP_Array[i] = temp
+                            temp = temp2
+                            i += 1
+                RCFIndex_lnP_Array[i] = temp
             thisRCFIndex += 1
+
+        # Access the values that are the best from the first
+        # element in the array
+        BestRCIndex = RCFIndex_lnP_Array[0][0]
+        BestlnP = RCFIndex_lnP_Array[0][1]
+
+        # Replace all the first elements of RCFIndex_lnP_Arrray
+        # with the RCFId instead of RCFIndex
+        for i in range(len(RCFIndex_lnP_Array)):
+            RCFIndex_lnP_Array[i][0] = \
+                self._RCFs[RCFIndex_lnP_Array[i][0]].getId()
 
         RC4R = RC_Set_4Retrieval
         RC4R['SumLnProb'] = BestlnP
@@ -251,4 +284,5 @@ class RetrievalCoefficientFileSet():
         RC4R['RCFId'] = self._RCFs[BestRCIndex].getId()
         RC4R['RCFIndex'] = BestRCIndex
         RC4R['FL_RCs'] = self._RCFs[BestRCIndex].getRCAvgWt(PAltKm)
-        return(RC4R)
+        RC4R['RCFArray'] = RCFIndex_lnP_Array
+        return RC4R

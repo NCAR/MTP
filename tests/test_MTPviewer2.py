@@ -18,6 +18,7 @@
 ###############################################################################
 import os
 import unittest
+from unittest.mock import patch
 import argparse
 import logging
 from io import StringIO
@@ -25,23 +26,24 @@ from viewer.MTPclient import MTPclient
 from viewer.MTPviewer import MTPviewer
 from PyQt5.QtWidgets import QApplication
 from lib.rootdir import getrootdir
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
+# Set environment var to indicate we are in testing mode
+# Need this to logger won't try to open message boxes
+logger.setDisableMessageBox(True)
 
 
 class TESTMTPviewer(unittest.TestCase):
 
     def setUp(self):
 
-        # Set environment var to indicate we are in testing mode
-        # Need this to logger won't try to open message boxes
-        os.environ["TEST_FLAG"] = "true"
-
         # For testing, we want to capture the log messages in a buffer so we
         # can compare the log output to what we expect.
         self.stream = StringIO()  # Set output stream to buffer
 
         # Instantiate a logger
-        self.log = logger.initLogger(self.stream, logging.INFO)
+        self.log = logger.initStream(self.stream, logging.INFO)
 
         # Location of default config file
         self.configfile = os.path.join(getrootdir(), 'Data', 'NGV',
@@ -54,7 +56,8 @@ class TESTMTPviewer(unittest.TestCase):
         self.app = QApplication([])
         self.client.config(self.configfile)
 
-        self.viewer = MTPviewer(self.client, self.app, self.args)
+        with patch.object(MTPviewer, 'setFltno'):
+            self.viewer = MTPviewer(self.client, self.app, self.args)
 
     def test_clickGo(self):
         """ Test that clicking go goes to index selected by user """
@@ -76,7 +79,7 @@ class TESTMTPviewer(unittest.TestCase):
         self.viewer.clickGo()
         logger.flushHandler()
         self.assertRegex(self.stream.getvalue(),
-                         r"ERROR:.*Select scan in range 1 - " +
+                         r".*ERROR | .*Select scan in range 1 - " +
                          str(self.viewer.currentScanIndex+1))
 
     def tearDown(self):

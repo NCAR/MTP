@@ -1,12 +1,16 @@
 *__pycache__
 *pyc
 *.swp
-config/RCF/NRCD[F-Y]067.RCF
-config/RCF/NRCE*057.RCF
-config/RCF/NRCF*057.RCF
-config/RCF/NRCF*067.RCF
-config/RCF/NRCG*067.RCF
-src/emulator/test_sock.py
+LAB/NG
+LAB/RC
+LAB/Raw
+LAB/logs
+LAB/LAB*json
+Data/NGV/DEEPWAVE/Raw/save
+Data/NGV/DEEPWAVE/logs
+Data/NGV/DEEPWAVE/final
+Data/NGV/DEEPWAVE/DEEPWAVE*json
+Data/NGV/TI3GER
+Data/NGV/TORERO/logs
+src/emulator/output.txt
 
-tests/test_data/CSET/LRT/CSETrf09.nc
-tests/test_data/DEEPWAVE/LRT/V0.0_20140905/DEEPWAVErf01.nc

@@ -16,6 +16,7 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
 import numpy
+from util.math import MTPmath
 
 
 class decodeM02():
@@ -23,11 +24,7 @@ class decodeM02():
     def __init__(self, reader):
 
         self.reader = reader
-
-        # Thermistor constants
-        self.A = 0.0009376
-        self.B = 0.0002208
-        self.C = 0.0000001276
+        self.math = MTPmath()
 
     def calcVals(self):
 
@@ -37,15 +34,10 @@ class decodeM02():
                 T = numpy.nan
             else:
                 if var == 'ACCPCNTE':  # MMA1250D accelerometer 2.5V +-.25V @0G
-                    T = -1.0 * ((val * 0.001) - 2.5) / 0.4
+                    # Assign result to T val to make looping easier. This is
+                    # really an acceleration, not a temperature.
+                    T = self.math.calcG(val)
                 else:
-                    if (val == 4095) or (val == 0):
-                        T = numpy.nan
-                    else:
-                        cnt = 4096 - val
-                        RR = (1 / (cnt / 4096)) - 1
-                        Rt = 34800 * RR
-                        T = (1 / (self.A + self.B * numpy.log(Rt) +
-                                  self.C * numpy.log(Rt)**3) - 273.16)
+                    T = self.math.calcTfromVal(val)
 
             self.reader.setCalcVal('M02line', var, T, 'temperature')

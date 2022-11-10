@@ -1,0 +1,119 @@
+1                             ' Cal File Format
+' c:\MTP\Data\NGV\TORERO\20120129\NG20120129.CAL was last written on 06-18-2012 at 17:01:45
+' This CAL-file follows a few simple but mandatory format requirements.
+' Settings are entered into categories which occupy a single line and
+' must be bracketed by square brackets (e.g. [PATH]). Variables for which
+' settings are assigned must have exactly the same name in the program in
+' which they are used and be followed by an equal sign (=). Spaces are
+' not allowed. Anything beyond the first space in a line is ignored.
+' Blank lines are also ignored, but are required betweeen categories.
+
+[GENERAL]
+GenDate=20120618_170145       'Analysis Date
+yyyymmdd$=20120129            'Flight Date
+UTstart=+0                    'Start UT
+UTend=+0                      'End UT
+Channels=+3                   'Number of frequency channels
+Nel=+10                       'Number of elevation angles
+LocHor=+6                     'Scan Position when viewing the Horizon
+RHS=True                      'True if MTP is on Right Hand Side of Aircraft
+Emissivity=+0.004             'Emissivity of window
+Reflectivity=+0.006           'Reflectivity of window
+DeltaTmin=+0                  'Minimum OAT-TGT Temperature Difference
+Pitchmin=-5                   'Minimum allowable Pitch
+Pitchmax=+10                  'Maximum allowable Pitch
+RollLimit=-10                 'Maximum allowable Roll (+ or -)
+Nsamples=+1596                'Total Number of Samples
+
+[FIT_INFO]
+Nfit=+4                       'Number of Fit coefficients
+Offset=+0                     'Fit Offset
+FitVar1=Offset                'Fit Variable1
+GEC11=+19.87                  'Fit coefficient11
+GEC21=+23.1                   'Fit coefficient21
+GEC31=+26.05                  'Fit coefficient31
+GOF1=+40.6                    'Fit Parameter Offset
+FitVar2=Tifa                  'Fit Variable2
+GEC12=-0.1                    'Fit coefficient12
+GEC22=-0.1                    'Fit coefficient22
+GEC32=-0.1                    'Fit coefficient32
+GOF2=+0                       'Fit Parameter Offset
+FitVar3
+GEC13=+0                      'Fit coefficient13
+GEC23=+0                      'Fit coefficient23
+GEC33=+0                      'Fit coefficient33
+GOF3=+0                       'Fit Parameter Offset
+FitVar4
+GEC14=+0                      'Fit coefficient14
+GEC24=+0                      'Fit coefficient24
+GEC34=+0                      'Fit coefficient34
+Target=+0                     'Target temperature offset in cycles
+Mixer=+0                      'Mixer temperature offset in cycles
+Nav=-0.29                     'Nav temperature offset in cycles
+Noise=+0                      'Noise Diode temperature offset in cycles
+
+[ND_INFO]
+TrefND=+38.5                  'Noise Diode reference temperature
+Cnd01=+86.857                 'Noise Diode fit parameter10
+Cnd11=+0                      'Noise Diode fit parameter11
+Cnd21=+0                      'Noise Diode fit parameter12
+Cnd02=+77.031                 'Noise Diode fit parameter20
+Cnd12=+0                      'Noise Diode fit parameter21
+Cnd22=+0                      'Noise Diode fit parameter22
+Cnd03=+80.475                 'Noise Diode fit parameter30
+Cnd13=+0                      'Noise Diode fit parameter31
+Cnd23=+0                      'Noise Diode fit parameter32
+
+[GAIN_INFO]
+GainScale=+2                  'Gain scale used (1=GE, 2=ND, 3=OAT)
+OATsource=+2                  'OAT source used (1=MTP, 2=A/C, 3=MMS)
+REFsource=+2                  'Reference Temperature (1=Target, 2=OAT)
+OATnavCOR=+0                  'OAT temperature correction (added)
+RAWextension=RNG              'Extension of RAW data file
+
+[MA_INFO]
+UseMAforCB=True               'Use Moving Average for Base Counts
+UseMAforCS=False              'Use Moving Average for Sky Counts
+UseMAforCN=True               'Use Moving Average for Noise Diode Counts
+UseMAforTtgt=True             'Use Moving Average for Target Temperature
+UseMAforTifa=False            'Use Moving Average for IF Amp Temperature
+CMAcycles=+9                  'Slow Cycle Moving Average count
+CMAcycles2=+3                 'Fast Cycle Moving Average count
+
+[CHANNEL_INFO]
+ChInfo1=+1                    'Channel 1 Information Content
+ChInfo2=+1                    'Channel 2 Information Content
+ChInfo3=+1                    'Channel 3 Information Content
+
+[WINDOW_CORRECTIONS]
+WCT101=+0.82                  'Window Correction Table Entry, WCT101
+WCT102=-0.19                  'Window Correction Table Entry, WCT102
+WCT103=-0.19                  'Window Correction Table Entry, WCT103
+WCT104=-0.12                  'Window Correction Table Entry, WCT104
+WCT105=+0.07                  'Window Correction Table Entry, WCT105
+WCT106=+0                     'Window Correction Table Entry, WCT106
+WCT107=-0.03                  'Window Correction Table Entry, WCT107
+WCT108=-0.01                  'Window Correction Table Entry, WCT108
+WCT109=-0.07                  'Window Correction Table Entry, WCT109
+WCT110=+0.27                  'Window Correction Table Entry, WCT110
+WCT201=+0.97                  'Window Correction Table Entry, WCT201
+WCT202=+0.98                  'Window Correction Table Entry, WCT202
+WCT203=+0.91                  'Window Correction Table Entry, WCT203
+WCT204=+0.61                  'Window Correction Table Entry, WCT204
+WCT205=+0.28                  'Window Correction Table Entry, WCT205
+WCT206=+0                     'Window Correction Table Entry, WCT206
+WCT207=+0.09                  'Window Correction Table Entry, WCT207
+WCT208=+0.31                  'Window Correction Table Entry, WCT208
+WCT209=+0.66                  'Window Correction Table Entry, WCT209
+WCT210=+0.64                  'Window Correction Table Entry, WCT210
+WCT301=+0.3                   'Window Correction Table Entry, WCT301
+WCT302=+0.06                  'Window Correction Table Entry, WCT302
+WCT303=+0.11                  'Window Correction Table Entry, WCT303
+WCT304=+0.22                  'Window Correction Table Entry, WCT304
+WCT305=+0.12                  'Window Correction Table Entry, WCT305
+WCT306=+0                     'Window Correction Table Entry, WCT306
+WCT307=+0.13                  'Window Correction Table Entry, WCT307
+WCT308=+0.03                  'Window Correction Table Entry, WCT308
+WCT309=-0.05                  'Window Correction Table Entry, WCT309
+WCT310=+0                     'Window Correction Table Entry, WCT310
+ 

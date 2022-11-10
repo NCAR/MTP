@@ -30,7 +30,9 @@ from util.calcTBs import BrightnessTemperature
 
 import sys
 import logging
-from EOLpython.logger.messageHandler import Logger as logger
+from EOLpython.logger.messageHandler import Logger
+
+logger = Logger("EOLlogger")
 
 
 class TESTcalcTBs(unittest.TestCase):
@@ -38,7 +40,7 @@ class TESTcalcTBs(unittest.TestCase):
     def setUp(self):
         self.stream = sys.stdout  # Send log messages to stdout
         loglevel = logging.INFO
-        logger.initLogger(self.stream, loglevel)
+        logger.initStream(self.stream, loglevel)
 
         udp = "MTP,20140606T062418,+06.49,00.19,-00.79,00.87,+04.00,0.06," + \
               "263.32,00.48,-43.290,+0.005,+172.296,+0.051,+074684," + \
@@ -65,8 +67,7 @@ class TESTcalcTBs(unittest.TestCase):
         # Read gain constants from the config file
         self.config = os.path.join(getrootdir(), 'Data', 'NGV', 'DEEPWAVE',
                                    'config', 'proj.yml')
-        configfile = config()
-        configfile.read(self.config)
+        configfile = config(self.config)
 
         # Calculate the brightness temperatures
         tb = BrightnessTemperature(configfile)

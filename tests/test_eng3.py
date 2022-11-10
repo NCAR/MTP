@@ -17,6 +17,7 @@
 ###############################################################################
 import os
 import unittest
+from unittest.mock import patch
 import argparse
 from viewer.MTPviewer import MTPviewer
 from PyQt5.QtWidgets import QApplication
@@ -25,7 +26,9 @@ from lib.rootdir import getrootdir
 
 import sys
 import logging
-from EOLpython.logger.messageHandler import Logger as logger
+from EOLpython.logger.messageHandler import Logger
+
+logger = Logger("EOLlogger")
 
 
 class TESTeng3(unittest.TestCase):
@@ -38,7 +41,7 @@ class TESTeng3(unittest.TestCase):
                                        'DEEPWAVE', 'config', 'proj.yml')
         self.stream = sys.stdout  # Send log messages to stdout
         loglevel = logging.INFO
-        logger.initLogger(self.stream, loglevel)
+        logger.initStream(self.stream, loglevel)
 
         self.app = QApplication([])
         self.client = MTPclient()
@@ -47,7 +50,10 @@ class TESTeng3(unittest.TestCase):
         self.args = argparse.Namespace(cnts=False, postprocess=False,
                                        realtime=True)
 
-        self.viewer = MTPviewer(self.client, self.app, self.args)
+        with patch.object(MTPviewer, 'setFltno'):
+            self.viewer = MTPviewer(self.client, self.app, self.args)
+
+        self.maxDiff = None
 
     def test_eng3_noJSON(self):
         """ Test Engineering 3 display window shows what we expect """
@@ -77,13 +83,13 @@ class TESTeng3(unittest.TestCase):
         self.assertEqual(self.viewer.eng3.toPlainText(),
                          "Channel\tCounts  Value\n" +
                          "Acceler\t2061  +01.10 g\n" +
-                         "T Data\t1316  +39.51 C\n" +
-                         "T Motor\t2188  +18.51 C\n" +
-                         "T Pod Air\t2743  +06.16 C\n" +
-                         "T Scan\t2697  +07.21 C\n" +
-                         "T Pwr Sup\t1591  +32.27 C\n" +
+                         "T Data\t1316  +39.52 C\n" +
+                         "T Motor\t2188  +18.52 C\n" +
+                         "T Pod Air\t2743  +06.17 C\n" +
+                         "T Scan\t2697  +07.22 C\n" +
+                         "T Pwr Sup\t1591  +32.28 C\n" +
                          "T N/C\t4095  N/A\n" +
-                         "T Synth\t1535  +33.67 C")
+                         "T Synth\t1535  +33.68 C")
 
         # Send an MTP packet to the parser and confirm it gets parsed
         # correctly.
@@ -100,13 +106,13 @@ class TESTeng3(unittest.TestCase):
         self.assertEqual(self.viewer.eng3.toPlainText(),
                          "Channel\tCounts  Value\n" +
                          "Acceler\t2510  -00.03 g\n" +
-                         "T Data\t1277  +40.62 C\n" +
-                         "T Motor\t1835  +26.43 C\n" +
-                         "T Pod Air\t1994  +22.81 C\n" +
-                         "T Scan\t1926  +24.35 C\n" +
-                         "T Pwr Sup\t1497  +34.65 C\n" +
+                         "T Data\t1277  +40.63 C\n" +
+                         "T Motor\t1835  +26.44 C\n" +
+                         "T Pod Air\t1994  +22.82 C\n" +
+                         "T Scan\t1926  +24.36 C\n" +
+                         "T Pwr Sup\t1497  +34.66 C\n" +
                          "T N/C\t4095  N/A\n" +
-                         "T Synth\t1491  +34.80 C")
+                         "T Synth\t1491  +34.81 C")
 
     # def ():
         # Test plotting of scnt

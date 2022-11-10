@@ -21,8 +21,13 @@
 ###############################################################################
 import os
 import unittest
+import logging
+from io import StringIO
 from util.readmtp import readMTP
 from lib.rootdir import getrootdir
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class TESTparseAsciiPacket(unittest.TestCase):
@@ -43,6 +48,13 @@ class TESTparseAsciiPacket(unittest.TestCase):
         mtp = readMTP()
         self.rawscan = mtp.getRawscan()
         mtp.parseAsciiPacket(udp)
+
+        # For testing, we want to capture the log messages in a buffer so we
+        # can compare the log output to what we expect.
+        self.stream = StringIO()  # Set output stream to buffer
+
+        # Instantiate a logger
+        self.log = logger.initStream(self.stream, logging.INFO)
 
     def testAline(self):
         """ Test Aline saved to MTP dictionary correctly """
@@ -215,3 +227,6 @@ class TESTparseAsciiPacket(unittest.TestCase):
                          '020582')
         self.assertEqual(self.rawscan['Eline']['values']['TCNT']['val'][5],
                          '020097')
+
+    def tearDown(self):
+        logger.delHandler()

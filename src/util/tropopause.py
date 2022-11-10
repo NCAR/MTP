@@ -68,11 +68,11 @@ class Tropopause():
                 lapseRate = (self.tempc[i+1] - self.tempc[i]) / \
                             (self.altc[i+1] - self.altc[i])
                 if (lapseRate >= referenceLapseRate):
-                    return([lapseRate, i])
+                    return [lapseRate, i]
 
         # If no tropopause found, return nan
         i = self.NUM_RETR_LVLS
-        return([numpy.nan, i])
+        return [numpy.nan, i]
 
     def Tinterp(self, altInterp, startidx):
         """
@@ -87,7 +87,7 @@ class Tropopause():
 
         # Don’t interpolate between bottom two layers (Why?)
         if (altInterp <= self.altc[1] + 0.01):
-            return(numpy.nan)
+            return numpy.nan
 
         # starting at startidx, find first measurement above altInterp
         for i in range(startidx, self.NUM_RETR_LVLS):
@@ -95,15 +95,15 @@ class Tropopause():
                 break
 
         if (self.altc[i] < altInterp):
-            return(numpy.nan)  # Ran out of RAOB
+            return numpy.nan  # Ran out of RAOB
 
         # Interpolate temperature
         altBot = self.altc[i - 1]  # altitude at bottom of layer to interpolate
         tempTop = self.tempc[i]    # temperature at top of layer to interpolate
         tempBot = self.tempc[i - 1]  # temp at bottom of layer to interpolate
 
-        return(tempBot + ((tempTop - tempBot) * (altInterp - altBot) /
-                          (self.altc[i] - altBot)))
+        return tempBot + ((tempTop - tempBot) * (altInterp - altBot) /
+                          (self.altc[i] - altBot))
 
     def averageLapseRate(self, LT, step, startidx):
         """
@@ -134,7 +134,7 @@ class Tropopause():
             tempBot = self.Tinterp(altBot, startidx)
             tempTop = self.Tinterp(altTop, startidx)
             if (numpy.isnan(tempTop)):
-                return(numpy.nan)  # Ran out of RAOB; didn't find tropopause
+                return numpy.nan  # Ran out of RAOB; didn't find tropopause
 
             # Calculate average lapse rate from the bottom of the layer to our
             # current level
@@ -144,17 +144,16 @@ class Tropopause():
 
         LRavg = deltaTsum / (step * nlayers)
 
-        return(LRavg)  # average lapse rate
+        return LRavg  # average lapse rate
 
     def findGap(self, LT, step, startidx):
         """
         If have a tropopause from a previous call to this routine, need to find
         a break between tropopauses before can look for the next one. This
         break is defined as a region where the lapse rate is less than -3 K/km.
-        MJ notes that he decided to search in a 2KM layer (rather than 1 km -
-        not sure where the initial definition comes from) as 1 km is too
-        sensitive for RAOB data causing too many double (and not credible)
-        tropopauses.
+        MJ notes that he decided to search in a 2KM layer (rather than 1 km as
+        defined in WMO) as 1 km is too sensitive for RAOB data causing too many
+        double (and not credible) tropopauses.
 
         Output:
             altBot - altitude of lowest layer to loop for next tropopause
@@ -178,9 +177,11 @@ class Tropopause():
                 # our current level
                 LRavg = (tempTop - tempBot) / self.referenceLayerThickness
             if (numpy.isnan(LRavg)):
-                return(numpy.nan)  # no tropopause found
+                return numpy.nan  # no tropopause found
 
             altBot = altBot + step
+
+        return altBot
 
     def findStart(self, startidx, minidx):
         """
@@ -194,12 +195,12 @@ class Tropopause():
         for i in range(startidx+1, self.NUM_RETR_LVLS):
             if (self.altc[i] > minidx):
                 startidx = i
-                return(startidx)
+                return startidx
 
         # Ran out of RAOB
         startidx = -1
 
-        return(startidx)
+        return startidx
 
     def findTropopause(self, startidx):
         """
@@ -222,19 +223,22 @@ class Tropopause():
         tempctrop = numpy.nan
 
         # At this point, startidx will be the value set in the previous pass
-        # through.
+        # through. If it is zero, we are looking for the first tropopause. If
+        # it is greater than zero, we are looking for a second or greater
+        # tropopause.
         if startidx != 0:
+            LT = startidx
             # Locate lowest layer above gap between tropopauses.
             altBot = self.findGap(LT, step, startidx)
             if (numpy.isnan(altBot)):
                 # no tropopause found
-                return(startidx, numpy.nan, numpy.nan, numpy.nan)
+                return startidx, numpy.nan, numpy.nan, numpy.nan
 
             # Locate first retrieval above identified break (altBot)
             startidx = self.findStart(startidx, altBot)
             if (startidx == -1):
                 # no tropopause found
-                return(startidx, numpy.nan, numpy.nan, numpy.nan)
+                return startidx, numpy.nan, numpy.nan, numpy.nan
 
         else:
             # Locate first retrieval above lowest altitude to look for
@@ -242,7 +246,7 @@ class Tropopause():
             startidx = self.findStart(startidx, self.minHt)
             if (startidx == -1):
                 # no tropopause found
-                return(startidx, numpy.nan, numpy.nan, numpy.nan)
+                return startidx, numpy.nan, numpy.nan, numpy.nan
 
         # Find the next tropopause (could be the first)
         # referenceLapseRate is the cutoff lapse rate that indicates a
@@ -257,7 +261,7 @@ class Tropopause():
                                                self.referenceLapseRate)
             if (numpy.isnan(LRavg)):  # no tropopause found
                 startidx = LT
-                return(startidx, numpy.nan, numpy.nan, numpy.nan)
+                return startidx, numpy.nan, numpy.nan, numpy.nan
 
             # For the second part of the WMO definition, confirm that the
             # average lapse rate from our possible tropopause (LT) to any level
@@ -284,7 +288,7 @@ class Tropopause():
                                               startidx)
                 if (numpy.isnan(LRavg)):  # no tropopause found
                     startidx = LT
-                    return(startidx, numpy.nan, numpy.nan, numpy.nan)
+                    return startidx, numpy.nan, numpy.nan, numpy.nan
 
                 if (LRavg < self.referenceLapseRate):
                     continue
@@ -295,7 +299,7 @@ class Tropopause():
                 LRavg = self.averageLapseRate(LT, step, startidx)
                 if (numpy.isnan(LRavg)):  # no tropopause found
                     startidx = LT
-                    return(startidx, numpy.nan, numpy.nan, numpy.nan)
+                    return startidx, numpy.nan, numpy.nan, numpy.nan
 
             # Check if average lapse rate over reference layer exceeds -2K/km.
             # If so, found tropopause. If not, failed WMO criteria and still
@@ -313,4 +317,4 @@ class Tropopause():
         startidx = LT
 
         # Return index to level of tropopause; zero indicated none found
-        return([startidx, LT, altctrop, tempctrop])
+        return [startidx, LT, altctrop, tempctrop]

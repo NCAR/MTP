@@ -19,7 +19,9 @@
 import os
 from datetime import datetime
 from lib.rootdir import getrootdir
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class ICARTT():
@@ -36,14 +38,14 @@ class ICARTT():
         self.client.reader.setRawscan(0)
         date = self.client.reader.getVar('Aline', 'DATE')
         self.client.reader.resetRawscan()
-        return(date)
+        return date
 
     def getICARTT(self):
         """ Build name of ICARTT file to save data to """
 
         date = self.get_startdate()
         if date is None:
-            return(None)
+            return None
         else:
             platform = self.client.configfile.getVal('platformID')
             revision = self.client.configfile.getVal('revision')
@@ -55,16 +57,16 @@ class ICARTT():
 
             # Check that filepath exists
             if not os.path.exists(filepath):
-                logger.printmsg('ERROR', 'Dir ' + filepath + ' does not ' +
-                                'exist. Create dir and click OK to continue,' +
-                                'or click Quit to exit.')
+                logger.error('Dir ' + filepath + ' does not ' +
+                             'exist. Create dir and click OK to continue,' +
+                             'or click Quit to exit.')
 
             # Create ICARTT-compliant filename
             filename = 'MP_' + platform + "_" + date + '_' + revision + '.ict'
             # -or- Create MTP traditional filename
             # filename = 'MP' + date + '.NGV'
 
-            return(os.path.join(filepath, filename))
+            return os.path.join(filepath, filename)
 
     def put_var(self, line, var):
         """
@@ -195,10 +197,10 @@ class ICARTT():
             # record that has ATP metadata, or an exception if none found
             ATPindex = self.client.reader.testATP()
         except Exception:
-            logger.printmsg("ERROR", "Temperature profiles don't exist for" +
-                            " this flight. Maybe data hasn't been processed " +
-                            "yet?", " Can't create ICARTT file.")
-            return(False)  # Failed to build header
+            logger.error("Temperature profiles don't exist for" +
+                         " this flight. Maybe data hasn't been processed " +
+                         "yet?", " Can't create ICARTT file.")
+            return False  # Failed to build header
 
         # Missing data indicators (-9999, -99999, etc)
         # NOTE: Since I haven't started writing the data out, this may change
@@ -351,7 +353,7 @@ class ICARTT():
         self.header = str(self.numlines) + ", " + self.file_format_index + \
             "\n" + self.header
 
-        return(True)  # Succeeded in building ICARTT header
+        return True  # Succeeded in building ICARTT header
 
     def saveHeader(self, filename):
         """ Save header to ICARTT file """
@@ -361,9 +363,9 @@ class ICARTT():
             with open(filename, 'w') as f:
                 # Write the header to the ICARTT file
                 f.write(self.header)
-            return(True)
+            return True
         else:
-            return(False)
+            return False
 
     def saveData(self, filename):
         """ Loop through flightData and save to ICARTT file """
@@ -392,7 +394,7 @@ class ICARTT():
         # of the array, which wreaks havoc in this routine. So check for it
         # and return.
         if rec['ATP'] == "":
-            return()
+            return
 
         # -- dependent unbounded line for this record --
         # start_time

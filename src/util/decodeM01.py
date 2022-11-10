@@ -15,6 +15,7 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
 import numpy
+from util.math import MTPmath
 
 
 class decodeM01():
@@ -22,6 +23,7 @@ class decodeM01():
     def __init__(self, reader):
 
         self.reader = reader
+        self.math = MTPmath()
 
     def calcVolts(self):
         """ Convert engineering mulltiplxr counts to voltages """
@@ -34,6 +36,6 @@ class decodeM01():
             if val == '':  # Value missing from MTP UDP string
                 V = numpy.nan
             else:
-                V = fact * (int(val) / 1000)
+                V = self.math.calcV(int(val), fact)
 
             self.reader.setCalcVal('M01line', var, V, 'volts')

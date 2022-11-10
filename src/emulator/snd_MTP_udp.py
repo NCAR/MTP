@@ -54,7 +54,8 @@ def main(args):
 
     # Instantiate an instance of an IWG reader. Have it point to the same
     # MTP dictionary as the MTP reader
-    # iwg = IWG(reader.getRawscan())
+    # rawscan = reader.getRawscan()
+    # iwg = IWG(rawscan['IWG1line'])
     # Init and open ascii parms file
     # status = True
     # ascii_parms = AsciiParms(ascii_parms_file)

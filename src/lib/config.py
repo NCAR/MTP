@@ -9,13 +9,16 @@ import os
 import yaml
 from lib.rootdir import getrootdir
 from EOLpython.util.fileselector import FileSelector
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class config():
 
-    def __init__(self):
+    def __init__(self, yamlfile):
         self.projConfig = {}  # initialize dictionary to hold yamlfile contents
+        self.read(yamlfile)
 
     def read(self, yamlfile):
 
@@ -26,13 +29,12 @@ class config():
             try:
                 self.readConfig(yamlfile)
             except Exception as err:
-                logger.printmsg("ERROR", str(err), "Click OK to select" +
-                                " correct file.")
+                logger.error(str(err) + " Click OK to select correct file.")
                 self.selectConfig()
 
             # If in debug mode, print contents of config file
             for key, value in self.projConfig.items():
-                logger.printmsg("DEBUG", key + ": " + str(value))
+                logger.debug(key + ": " + str(value))
         else:
             self.selectConfig()
 
@@ -42,10 +44,10 @@ class config():
         line doesn't exist (or if user used default and that doesn't exist)
 
         Will loop until correct file is selected or user clicks "Quit" in
-        printmsg dialog
+        dialog box
         """
-        logger.printmsg("ERROR", "config file" + self.yamlfile + " doesn't " +
-                        "exist.", "Click OK to select correct file.")
+        logger.error("config file" + self.yamlfile + " doesn't " +
+                     "exist. Click OK to select correct file.")
 
         # Launch a file selector for user to select correct config file
         self.loader = FileSelector()
@@ -64,36 +66,55 @@ class config():
         self.projConfig = yaml.load(infile, Loader=yaml.BaseLoader)
         infile.close()
 
+    def writeConfig(self, yamlfile):
+        """ Write config file with any changes held in """
+        try:
+            # This creates a ugly YAML file - can we do better?
+            outfile = open(yamlfile, 'w')
+            yaml.dump(self.projConfig, outfile, default_flow_style=False)
+            outfile.close()
+        except Exception:
+            logger.error("Could not update config file with new fltno")
+            raise Exception()
+
+    def setVal(self, key, value):
+        """ Set value for given key in yaml file """
+        self.projConfig[key] = value
+
     def getVal(self, key):
         """ Get value for given key in the yaml file """
         if key in self.projConfig.keys():
-            return(self.projConfig[key])
+            return self.projConfig[key]
         else:
-            # Projdir defaults so OK. If no filelist, all RCF files are used
-            if key != 'projdir' and key != 'filelist':
-                logger.printmsg("ERROR", key + " not defined in configfile " +
-                                self.yamlfile)
-                raise Exception()
+            # if no json_file defined, then write json_file to projdir
+            # If no filelist, all RCF files are used
+            if key != 'json_file' and key != 'filelist':
+                logger.error(key + " not defined in configfile " +
+                             self.yamlfile)
+                exit(1)
 
-            return(None)
+            if key == 'json_file':
+                return ''
+            else:
+                return None
 
     def getInt(self, key):
         """ Read a param from the config file that should be an integer """
         val = self.getVal(key)
         if val.isdigit():
-            return(int(val))
+            return int(val)
         else:
-            logger.printmsg("ERROR", "Error in config file - " + key +
-                            " should be an integer. Edit config file " +
-                            self.yamlfile + " then" +
-                            " click OK to be prompted to reload it")
+            logger.error("Error in config file - " + key +
+                         " should be an integer. Edit config file " +
+                         self.yamlfile + " then" +
+                         " click OK to be prompted to reload it")
             self.readConfig(self.yamlfile)
             self.getInt(key)  # Try again. Will loop until user fixes issue.
 
     def getPath(self, key):
         """ Read a param from the config file that should be a path """
         newpath = self.prependDir(key, self.getProjDir())
-        return(newpath)
+        return newpath
 
     def prependDir(self, key, projdir):
         val = self.getVal(key)
@@ -101,24 +122,22 @@ class config():
         path_components = val.split('/')
         # Join correctly for OS we are running on. The splat operator (*)
         # unpacks a list - who knew?
-        if projdir is None:
-            # Assume paths are relative to code checkout - for testing
-            newpath = os.path.join(getrootdir(), *path_components)
-        else:
-            # Use project directory given in config file as rootdir for data
-            # and config files.
-            newpath = os.path.join(projdir, *path_components)
+
+        # Use project directory given in config file as rootdir for data
+        # and config files.
+        newpath = os.path.join(projdir, *path_components)
 
         # Check that new path exists. If not, warn user
         if not os.path.exists(newpath):
-            logger.printmsg('ERROR', 'Invalid path given in config file: ' +
-                            newpath, "Edit config file " + self.yamlfile +
-                            " then click OK to reload it")
+            logger.error('Invalid path given in config file: ' +
+                         newpath + " Edit config file " + self.yamlfile +
+                         " then click OK to reload it")
             self.readConfig(self.yamlfile)
             self.prependDir(key, projdir)  # Loop until user fixes issue
 
-        return(newpath)
+        return newpath
 
     def getProjDir(self):
         """ Read proj dir, if defined, from config file. """
-        return(self.getVal("projdir"))
+        projdir = self.yamlfile.split("config")[0]
+        return projdir

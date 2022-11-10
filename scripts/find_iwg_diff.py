@@ -3,7 +3,7 @@
 # > diff NGYYYYMMDD.RAW NGYYYYMMDD.RNG > mtp_<proj>_raw_rng.diff
 #
 # While trying to determine what the MTP VB6 code does to transform a RAW
-# file into an RNG file, it became helpful to just diff the two files and 
+# file into an RNG file, it became helpful to just diff the two files and
 # see what I found. Turns out I found lots of lines that were different.
 # This script compares a set of matched records from the two files and reports
 # while values changed, using the ascii_parms file to equate data vaules with

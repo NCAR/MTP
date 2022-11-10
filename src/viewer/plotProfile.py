@@ -5,6 +5,7 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
+import numpy
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import (
        FigureCanvasQTAgg as FigureCanvas)
@@ -40,7 +41,7 @@ class Profile():
     def getWindow(self):
 
         # Return pointer to the graphics window
-        return(self.canvas)
+        return self.canvas
 
     def configureAxis(self):
         """ Configure axis labels and limits """
@@ -75,6 +76,14 @@ class Profile():
         self.ax.tick_params(which='minor', color='grey')
         self.ax.grid(which='both', color='lightgrey', linestyle='dotted')
 
+    def watermark(self, msg):
+        # If the retrieval failed, call this fn to add a watermark to the
+        # profile plot that states this, so user knows who profile is not
+        # being plotted.
+        self.ax.text(0.5, 0.5, msg, transform=self.ax.transAxes, fontsize=18,
+                     color='gray', alpha=0.5, ha='center', va='center',
+                     rotation='40')
+
     def plotProfile(self, temperature, altitude):
         """
         Plot profile vs temperature in the self.profile plot window
@@ -97,8 +106,10 @@ class Profile():
 
     def plotTropopause(self, trop):
         """ Plot the tropopause on the left axis """
-        self.ax.hlines(float(trop['altc']), self.tbxlimL, self.tbxlimR,
-                       color='lightgrey', linestyle='dashed')
+        # Only plot tropopause if it exists (prevent nan errors)
+        if not numpy.isnan(trop['altc']):
+            self.ax.hlines(float(trop['altc']), self.tbxlimL, self.tbxlimR,
+                           color='lightgrey', linestyle='dashed')
 
     def plotLapseRate(self, trop, lapseRate):
         """

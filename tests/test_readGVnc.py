@@ -23,7 +23,9 @@ from util.readGVnc import readGVnc
 
 import sys
 import logging
-from EOLpython.logger.messageHandler import Logger as logger
+from EOLpython.logger.messageHandler import Logger
+
+logger = Logger("EOLlogger")
 
 
 class TESTreadgvnc(unittest.TestCase):
@@ -47,7 +49,7 @@ class TESTreadgvnc(unittest.TestCase):
         # Instantiate a logger so can call just this test
         self.stream = sys.stdout  # Send log messages to stdout
         loglevel = logging.INFO
-        logger.initLogger(self.stream, loglevel)
+        logger.initStream(self.stream, loglevel)
 
         self.mtp = {
             # sample data values taken from the DEEPWAVE RAW and RNG data files

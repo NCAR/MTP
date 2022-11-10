@@ -1,0 +1,31 @@
+#!/usr/bin/env python3
+
+#
+# Script to mock up an MTPcurrent.raw file. Used to test mtpudpd during
+# development
+#
+import re
+import os
+import time
+import sys
+
+path = "mtp"
+filename = "mtpCurrent.raw"
+
+if not os.path.isdir(path):
+    try:
+        os.mkdir(path)
+    except Exception as e:
+        print("Could not create dir %s: %s", path, e)
+        sys.exit(1)
+
+f = open("/Users/janine/dev/MTP/Data/NGV/DEEPWAVE/Raw/N2014060606.22", "r")
+for line in f:
+    if re.match("^A", line):
+        o = open(os.path.join(path, filename), "w")
+    if re.match("^[ABMPE]", line):
+        o.write(line)
+    if re.match("^E", line.rstrip('\n')):
+        o.close()
+        time.sleep(3)
+f.close()

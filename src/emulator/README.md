@@ -1,6 +1,25 @@
 # MTP emulator
 
-To emulate real-time conditions, start snd_IWG.sh in one window:
+## For testing the MTP control program MTPcontrol.py
+To run the MTP instrument emulator, start the emulator and note the lines it returns:
+
+```
+> python3 mtp_emulator.py [--debug]
+Emulator connecting to virtual serial port: /var/folders/ph/6ph43gj971lfy2qn4r4p7_vw000244/T/tmp46e5rvbk/mtpport
+User clients connect to virtual serial port: /var/folders/ph/6ph43gj971lfy2qn4r4p7_vw000244/T/tmp46e5rvbk/userport
+```
+
+You will not get the command prompt back. Leave this window open. Then in another window start MTPcontrol.py with the userport as a command line option:
+
+```
+python3 MTPcontrol.py --config=../LAB/config/sample_proj.yml --device=/var/folders/ph/6ph43gj971lfy2qn4r4p7_vw000244/T/tmp46e5rvbk/userport
+```
+
+The control code window should launch, initialize, and start cycling through the view angles.
+
+## For testing MTPviewer
+To emulate real-time conditions receiving IWG packets and MTP data over UDP on
+the airplane, start snd_IWG.sh in one window:
 
 ```
 ./snd_IWG.sh

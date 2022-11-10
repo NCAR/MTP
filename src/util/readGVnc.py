@@ -10,7 +10,9 @@
 ###############################################################################
 import netCDF4
 import pandas as pd
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class readGVnc:
@@ -55,7 +57,7 @@ class readGVnc:
         # If user requested a list via the optional varlist in the call
         # to this fn, overwrite varlist with it.
         self.varlist = varlist
-        logger.printmsg("DEBUG", "reading " + str(varlist))
+        logger.debug("reading " + str(varlist))
 
         # Now loop through varlist and add variable data to DataFrame
         if varlist is not None:
@@ -69,12 +71,11 @@ class readGVnc:
                                   axis=1, ignore_index=True)
                 else:
                     # print(nc.variables.keys())
-                    logger.printmsg("ERROR", "Error extracting variable " +
-                                    var + " from " + ncfile + ". Variable " +
-                                    "not found. Click OK to continue or " +
-                                    "Quit to exit.")
+                    logger.error("Error extracting variable " + var +
+                                 " from " + ncfile + ". Variable not found. " +
+                                 "Click OK to continue or Quit to exit.")
 
-        return(self.ncdata)
+        return self.ncdata
 
     def NGseconds(self):
         """
@@ -98,7 +99,7 @@ class readGVnc:
         # Add diff to dtime to get secs since midnight of start date of flight.
         dtime = dtime + diff
 
-        return(dtime)
+        return dtime
 
     # def CtoK(self):
         # Does conversions from C to K (+273.15), Z to P fZtoP(), fPtoZ(),
@@ -154,4 +155,4 @@ class readGVnc:
         # Find row where time=timestr and get var from second column (index 1)
         # Returns a one-item list
         chunk = vals.loc[(vals[0] == timestr), 1]
-        return(chunk.values[0])  # Return value of var as float
+        return chunk.values[0]  # Return value of var as float

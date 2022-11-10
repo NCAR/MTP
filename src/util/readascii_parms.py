@@ -12,7 +12,9 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
 import re
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class AsciiParms:
@@ -30,14 +32,14 @@ class AsciiParms:
         try:
             self.ascii_parms = open(self.ascii_parms_file, 'r')
         except OSError as err:
-            logger.printmsg("ERROR", str(err) + " Copy ascii_parms for " +
-                            "project into config/ dir in order to parse IWG" +
-                            " packet correctly then rerun code.")
-            return(False)
+            logger.error(str(err) + " Copy ascii_parms for " +
+                         "project into config/ dir in order to parse IWG" +
+                         " packet correctly then rerun code.")
+            return False
         except Exception as error:
-            logger.printmsg("ERROR", str(error) + " Unexpected error " +
-                            "occurred while trying to open ascii_parms file")
-            return(False)
+            logger.error(str(error) + " Unexpected error " +
+                         "occurred while trying to open ascii_parms file")
+            return False
 
     def readVar(self):
         """
@@ -55,12 +57,12 @@ class AsciiParms:
                 next
             else:
                 newVar = line.rstrip('\n')
-                return(newVar)
+                return newVar
 
-        return(None)  # Get here at EOF
+        return None  # Get here at EOF
 
     def get(self):
-        return(self.ascii_parms_file)
+        return self.ascii_parms_file
 
     def close(self):
         self.ascii_parms.close()

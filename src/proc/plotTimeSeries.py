@@ -11,7 +11,9 @@ import matplotlib.dates as mdates
 from matplotlib.backends.backend_qt5agg import (
        FigureCanvasQTAgg as FigureCanvas)
 from PyQt5.QtWidgets import QComboBox
-from EOLpython.Qlogger.messageHandler import QLogger as logger
+from EOLpython.Qlogger.messageHandler import QLogger
+
+logger = QLogger("EOLlogger")
 
 
 class TimeSeries():
@@ -38,7 +40,7 @@ class TimeSeries():
 
     def getWindow(self):
         """ Return a pointer to the graphics window """
-        return(self.canvas)
+        return self.canvas
 
     def varSelector(self, varlist):
         """ Add a dropdown to select the variable to plot """
@@ -47,7 +49,7 @@ class TimeSeries():
             varSel.addItem(item)
 
         varSel.activated[str].connect(self.selectPlotVar)
-        return(varSel)
+        return varSel
 
     def selectPlotVar(self, text):
         """
@@ -60,9 +62,8 @@ class TimeSeries():
         # Test and make sure there is data in the flightData array. If empty,
         # prompt user to load some data and return.
         if self.client.reader.getNumRecs() == 0:
-            logger.printmsg("ERROR", "No data available: ",
-                            "Try loading some raw data")
-            return()
+            logger.error("No data available. Try loading some raw data")
+            return
 
         # Find the date in the data (YYYYMMDD) and convert to base
         # datetime object
