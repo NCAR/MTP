@@ -6,8 +6,7 @@ LAB/RC
 LAB/Raw
 LAB/logs
 LAB/LAB*json
-Data
+Data/NGV/DEEPWAVE/logs
+Data/NGV/DEEPWAVE/DEEPWAVE*json
 src/emulator/output.txt
 
-tests/test_data/CSET/LRT
-tests/test_data/DEEPWAVE/LRT
