@@ -6,7 +6,7 @@
 # the data here and formatted it into columns to make it easier to read.
 #
 # seconds    lat (deg) lon(deg) alt(m) angle  TB(56.363) TB(57.612) TB(58.363)
-# since 
+# since
 # unixtime
 # 1651091380 19.284874 -156.069 4226.0  1     267.066806 269.287445 272.4185533
 # 1651091380 19.284874 -156.069 4226.0  2     265.714228 266.555201 266.9693227
@@ -27,10 +27,8 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2022
 ###############################################################################
-import copy
 import numpy
 import time
-#from util.MTP import MTPrecord
 from util.readmtp import readMTP
 from EOLpython.Qlogger.messageHandler import QLogger
 
@@ -38,17 +36,6 @@ logger = QLogger("EOLlogger")
 
 
 class readMTHP(readMTP):
-
-#   def __init__(self):
-#       # Instantiate dictionary to hold the MTP data. curscan is the current
-#       # scan/record we are working with.
-#       self.curscan = copy.deepcopy(MTPrecord)
-
-#       # Set the scan we are working with to be the current scan. rawscan is
-#       # always the active scan being worked with. It can point to curscan if
-#       # we are collecting/processing data, or one of the flightData scans if
-#       # we are displaying data.
-#       self.rawscan = self.curscan
 
     def readRawScan(self, raw_data_file):
         """
@@ -97,16 +84,16 @@ class readMTHP(readMTP):
                 if angle == 10:
                     continue  # Skip angle 10 (-55)
                 if angle == 11:
-                    angle = 10  # Reset 
+                    angle = 10  # Reset
                 if angle == expected_angle_index:
                     # Save in original order to 'tb'
                     index = (angle - 1) * 3
-                    self.rawscan['Bline']['values']['SCNT']['tb'][index] = \
-                        float(ch1)
-                    self.rawscan['Bline']['values']['SCNT']['tb'][index + 1] = \
-                        float(ch2)
-                    self.rawscan['Bline']['values']['SCNT']['tb'][index + 2] = \
-                        float(ch3)
+                    self.rawscan['Bline']['values']['SCNT']['tb'][index] \
+                        = float(ch1)
+                    self.rawscan['Bline']['values']['SCNT']['tb'][index + 1] \
+                        = float(ch2)
+                    self.rawscan['Bline']['values']['SCNT']['tb'][index + 2] \
+                        = float(ch3)
 
                     # Save in inverted order to 'tbi'
                     index = angle - 1
@@ -114,32 +101,24 @@ class readMTHP(readMTP):
                     self.rawscan['tbi'][index + 10] = float(ch2)
                     self.rawscan['tbi'][index + 20] = float(ch3)
                 else:
-                    logger.info("Angle %s was not expected. Should be %d" % \
-                        (angle, expected_angle_index))
+                    logger.info("Angle %s was not expected. Should be %d" %
+                                (angle, expected_angle_index))
                 expected_angle_index = expected_angle_index + 1
-
 
             # Check if we have a complete scan (all angles have found = True
             if angle == 10:
-                # Confirm there are no nans left in 'tbi' record
-                # NANs are actually valid in MTHP scans
-                #for tbval in self.rawscan['Bline']['values']['SCNT']['tbi']:
-                #    if numpy.isnan(tbval):
-                #        logger.warning("Incomplete MTHP scan at time %s (epoch time %s" % \
-                        #            (self.rawscan['Aline']['values']['timestr']['val']), self.vals[0])
-
                 return True
 
     def saveLocation(self, var, val, expected_val):
         # Modifies expected_val
         if numpy.isnan(float(expected_val)):
             expected_val = val
-            self.rawscan['Aline']['values'][var]['val'] =  val
+            self.rawscan['Aline']['values'][var]['val'] = val
         else:
             if expected_val != val:  # error in input data
                 logger.info("%s %f varies in single scan" % (var, val))
 
-        return(expected_val)
+        return expected_val
 
     def parseTime(self, epochtime):
         # Convert time from seconds since UNIX time to UTC
