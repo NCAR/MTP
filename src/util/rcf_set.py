@@ -26,6 +26,7 @@
 # VB6 and Algorithm Copyright MJ Mahoney, NASA Jet Propulsion Laboratory
 ###############################################################################
 import os
+import numpy
 import re
 import math
 import inspect
@@ -221,13 +222,15 @@ class RetrievalCoefficientFileSet():
                 Weight = 1/AvgWtSet['sOBrms'][BTIndex]**2
                 SumWeights = SumWeights + Weight
 
-                # Measured BT - Model BT = BTBias
-                Diff = ScanBrightnessTemps[BTIndex]-AvgWtSet['sOBav'][BTIndex]
+                if not (numpy.isnan(ScanBrightnessTemps[BTIndex])):
+                    # Measured BT - Model BT = BTBias
+                    Diff = ScanBrightnessTemps[BTIndex] - \
+                           AvgWtSet['sOBav'][BTIndex]
 
-                if (Weight > 0):
-                    NumBTsIncl += 1
-                    SumWeightedAvg = SumWeightedAvg + Weight * Diff
-                    SumSquares = SumSquares + Weight * (Diff**2)
+                    if (Weight > 0):
+                        NumBTsIncl += 1
+                        SumWeightedAvg = SumWeightedAvg + Weight * Diff
+                        SumSquares = SumSquares + Weight * (Diff**2)
 
             # The weighted mean of this RCF's BTs
             RCFBTWeightedMean = SumWeightedAvg / SumWeights

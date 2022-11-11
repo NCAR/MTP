@@ -12,6 +12,7 @@ import numpy
 import logging
 import argparse
 from util.readmtp import readMTP
+from util.readmthp import readMTHP
 from util.readiwg import IWG
 from util.decodePt import decodePt
 from util.decodeM01 import decodeM01
@@ -33,6 +34,7 @@ class MTPclient():
 
         # Instantiate an instance of an MTP reader
         self.reader = readMTP()
+        self.Hreader = readMTHP()
 
         # Flag used to keep track of if there is sufficient information so that
         # retrievals can be performed.
@@ -84,6 +86,9 @@ class MTPclient():
         parser.add_argument(
             '--rt', dest='realtime', action='store_const', const=True,
             default=False, help='Run in real-time monitoring mode.')
+        parser.add_argument(
+            '--mthp', dest='mthp', action='store_const', const=True,
+            default=False, help='Process MTHP data instead of MTP data')
 
         # Parse the command line arguments
         args = parser.parse_args()

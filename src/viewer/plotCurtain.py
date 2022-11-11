@@ -153,16 +153,16 @@ class Curtain(QMainWindow):
         #     print(self.alt[i][len(self.data)-1])
         # print(temperature)
 
-    def addTime(self, time, temperature):
+    def addTime(self, time: float, temperature):
         """ Create a 2-D aray of times """
 
         # Catch midnight rollover
         if (len(self.time) > 0):
-            if (time/3600.0 < self.time[0]):  # Found midnight rollover
+            if (float(time)/3600.0 < self.time[0]):  # Found midnight rollover
                 time = time + 86400
 
         # Create 1-D array of profile times (convert seconds to hours)
-        self.time.append(time/3600.0)
+        self.time.append(float(time)/3600.0)
 
         # Now build a 2-D array of self.time arrays
         timearr = []

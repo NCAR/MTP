@@ -26,7 +26,7 @@ logger = QLogger("EOLlogger")
 
 class MTPprocessor(QMainWindow):
 
-    def __init__(self, viewer, client, parent=None):
+    def __init__(self, viewer, client, mthp, parent=None):
         """
         Create a window to be the post-flight processing environment.
         Requires access to a raw MTP data file and a final RAF Low-Rate (LRT)
@@ -35,6 +35,7 @@ class MTPprocessor(QMainWindow):
 
         self.client = client
         self.viewer = viewer
+        self.MTHP = mthp  # True if processing MTHP data, false for MTP data
 
         super().__init__(parent)
         self.filelist = []
@@ -280,22 +281,26 @@ class MTPprocessor(QMainWindow):
             # Read raw_data_file until get a single complete rawscan
             # Returns False when reaches EOF
             # Each record is saved to the flightData array
+            if self.MTHP:
+                self.client.reader = self.client.Hreader
+
             haveData = self.client.reader.readRawScan(self.raw_data_file)
 
             if haveData is True:  # Found a complete raw scan
-                # Combine the separate lines from a raw scan into a UDP
-                # packet
-                packet = self.client.reader.getAsciiPacket()
+                if not self.MTHP:
+                    # Combine the separate lines from a raw scan into a UDP
+                    # packet
+                    packet = self.client.reader.getAsciiPacket()
 
-                # Parse the packet and store values in data dictionary
-                try:
-                    self.client.reader.parseAsciiPacket(packet)
-                except Exception:
-                    continue
+                    # Parse the packet and store values in data dictionary
+                    try:
+                        self.client.reader.parseAsciiPacket(packet)
+                    except Exception:
+                        continue
 
-                # Perform calcs on the raw MTP data
-                self.client.processScan()
-                self.client.createRecord()
+                    # Perform calcs on the raw MTP data
+                    self.client.processScan()
+                    self.client.createRecord()
 
                 # Skip doing retrievals and speed up reading in raw data file.
                 # The idea then is to wait until after doing a tbfit to process

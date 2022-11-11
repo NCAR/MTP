@@ -52,7 +52,7 @@ class TESTMTPviewer(unittest.TestCase):
         # Instantiate an MTP controller
         self.client = MTPclient()
         self.args = argparse.Namespace(cnts=False, postprocess=False,
-                                       realtime=False)
+                                       realtime=False, mthp=False)
         self.app = QApplication([])
         self.client.config(self.configfile)
 

@@ -16,6 +16,7 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
 import os
+import numpy
 import unittest
 from unittest.mock import patch
 import argparse
@@ -52,6 +53,26 @@ class TESTeng2(unittest.TestCase):
 
         with patch.object(MTPviewer, 'setFltno'):
             self.viewer = MTPviewer(self.client, self.app, self.args)
+
+    def test_eng2_nan(self):
+        """
+        Test if Engineering 2 line contains NaN that they are handled correctly
+        """
+        mtp = self.client.reader  # Just done so lines aren't too long below
+        values = [numpy.nan] * 8
+        mtp.assignM01values(values)
+        self.assertIsInstance(mtp.getVar('M01line', 'VM08CNTE'), float)
+        self.viewer.writeEng2()
+        self.assertEqual(self.viewer.eng2.toPlainText(),
+                         "Channel\tCounts  Volts\n" +
+                         "-8V  PS\t             \n" +   # 13 spaces to preserve
+                         "Video V.\t             \n" +  # display layout
+                         "+8V  PS\t             \n" +
+                         "+24V Step\t             \n" +
+                         "+15V Syn\t             \n" +
+                         "+15V PS\t             \n" +
+                         "VCC  PS\t             \n" +
+                         "-15V PS\t             ")
 
     def test_eng2_noJSON(self):
         """ Test Engineering 2 display window shows what we expect """

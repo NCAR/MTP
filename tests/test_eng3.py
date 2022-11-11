@@ -16,6 +16,7 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
 import os
+import numpy
 import unittest
 from unittest.mock import patch
 import argparse
@@ -54,6 +55,26 @@ class TESTeng3(unittest.TestCase):
             self.viewer = MTPviewer(self.client, self.app, self.args)
 
         self.maxDiff = None
+
+    def test_eng3_nan(self):
+        """
+        Test if Engineering 3 line contains NaN that they are handled correctly
+        """
+        mtp = self.client.reader  # Just done so lines aren't too long below
+        values = [numpy.nan] * 8
+        mtp.assignM02values(values)
+        self.assertIsInstance(mtp.getVar('M02line', 'ACCPCNTE'), float)
+        self.viewer.writeEng3()
+        self.assertEqual(self.viewer.eng3.toPlainText(),
+                         "Channel\tCounts  Value\n" +
+                         "Acceler\t              \n" +  # 14 spaces to preserve
+                         "T Data\t              \n" +   # display layout
+                         "T Motor\t              \n" +
+                         "T Pod Air\t              \n" +
+                         "T Scan\t              \n" +
+                         "T Pwr Sup\t              \n" +
+                         "T N/C\t              \n" +
+                         "T Synth\t              ")
 
     def test_eng3_noJSON(self):
         """ Test Engineering 3 display window shows what we expect """

@@ -17,6 +17,7 @@
 ###############################################################################
 import os
 import unittest
+import numpy
 from unittest.mock import patch
 import argparse
 from viewer.MTPviewer import MTPviewer
@@ -52,6 +53,26 @@ class TESTeng1(unittest.TestCase):
 
         with patch.object(MTPviewer, 'setFltno'):
             self.viewer = MTPviewer(self.client, self.app, self.args)
+
+    def test_eng1_nan(self):
+        """
+        Test if Pt line contains NaN that they are handled correctly
+        """
+        mtp = self.client.reader  # Just done so lines aren't too long below
+        values = [numpy.nan] * 8
+        mtp.assignPtvalues(values)
+        self.assertIsInstance(mtp.getVar('Ptline', 'TWINCNTP'), float)
+        self.viewer.writeEng1()
+        self.assertEqual(self.viewer.eng1.toPlainText(),
+                         "Channel\tCounts  Ohms  Temp  \n" +
+                         "Rref 350\tN/A  N/A  \n" +
+                         "Target 1\tN/A  N/A   +nan\n" +
+                         "Target 2\tN/A  N/A   +nan\n" +
+                         "Window\tN/A  N/A   +nan\n" +
+                         "Mixer\tN/A  N/A   +nan\n" +
+                         "Dblr Amp\tN/A  N/A   +nan\n" +
+                         "Noise D.\tN/A  N/A   +nan\n" +
+                         "Rref 600\tN/A  N/A  ")
 
     def test_eng1_noJSON(self):
         """ Test Engineering 1 display window shows what we expect """

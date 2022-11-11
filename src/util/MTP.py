@@ -29,7 +29,7 @@ MTPrecord = {
         're': "^A (........) (..):(..):(..) (.*)",
         'found': False,
         'date': "",  # YYYYMMDDTHHMMSS
-        'data': [],  # A string containing the data values after date/time
+        'data': '',  # A string containing the data values after date/time
         'values': {'DATE': {  # MTP Scan Date (YYYYMMDD)
                   'val': numpy.nan},
                  'timestr': {  # MTP Scan Time (HHMMSS)
@@ -92,7 +92,7 @@ MTPrecord = {
         'found': False,
         'date': "",
         'asciiPacket': "",
-        'data': [],
+        'data': '',
         'values': {'DATE': {  # IWG1 packet Date (YYYYMMDD)
                   'val': numpy.nan},
                  'TIME': {  # IWG1 packet Time (HHMMSS) converted to secs
@@ -105,7 +105,7 @@ MTPrecord = {
     'Bline': {
         're': "(^B) (.*)",
         'found': False,
-        'data': [],
+        'data': '',
         'values': {'SCNT': {  # MTP Scan Counts[Angle,Channel]
                   'val': [numpy.nan]*30,
                   'tb': [numpy.nan]*30}  # Calculated Brightness Temperatures
@@ -114,7 +114,7 @@ MTPrecord = {
     'M01line': {  # MTP Engineering Multiplxr
         're': "(^M01): (.*)",
         'found': False,
-        'data': [],
+        'data': '',
         'values': {'VM08CNTE': {  # Voltage minus 8 Counts
                         'val': numpy.nan, 'idx': 0,
                         'fact': -2.73,  # factors from decodeM01 in VB6
@@ -162,7 +162,7 @@ MTPrecord = {
     'M02line': {  # MTP Engineering Multiplxr
         're': "(^M02): (.*)",
         'found': False,
-        'data': [],
+        'data': '',
         'values': {'ACCPCNTE': {  # Acceler Counts
                         'val': numpy.nan, 'idx': 0,
                         'temperature': numpy.nan,  # Calculated acceleration
@@ -200,7 +200,7 @@ MTPrecord = {
     'Ptline': {  # MTP Platinum Multiplxr
         're': "(^Pt): (.*)",
         'found': False,
-        'data': [],
+        'data': '',
         'values': {'TR350CNTP': {  # R350 Counts
                          'val': numpy.nan, 'idx': 0,
                          'resistance': numpy.nan,   # Calculated resistance
@@ -246,7 +246,7 @@ MTPrecord = {
     'Eline': {
         're': "(^E) (.*)",
         'found': False,
-        'data': [],
+        'data': '',
         # The vector of counts produced by the MTP target. This vector is of
         # length 6 - three per channel for the noise diode turned on (stored as
         # the first three values) and three for it turned off (the next 3).
@@ -254,7 +254,7 @@ MTPrecord = {
                     'val': [numpy.nan]*6}
                    },
     },
-    'tbi': "",  # Will hold an inverted brightness temperature array
+    'tbi': [numpy.nan]*30,  # Holds an inverted brightness temperature array
     'BestWtdRCSet': "",  # Will hold an RC_Set_4Retrieval dictionary
     'ATP': "",  # Will hold an AtmosphericTemperatureProfile dictionary
 }

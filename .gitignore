@@ -10,7 +10,8 @@ Data/NGV/DEEPWAVE/Raw/save
 Data/NGV/DEEPWAVE/logs
 Data/NGV/DEEPWAVE/final
 Data/NGV/DEEPWAVE/DEEPWAVE*json
-Data/NGV/TI3GER
+Data/NGV/TI3GER/logs
+Data/NGV/TI3GER/TI3GER*json
 Data/NGV/TORERO/logs
 src/emulator/output.txt
 

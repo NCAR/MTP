@@ -36,7 +36,7 @@ class MTPviewer(QMainWindow):
         if self.args.realtime:
             self.processor = None
         else:
-            self.processor = MTPprocessor(self, self.client)
+            self.processor = MTPprocessor(self, self.client, self.args.mthp)
             self.processor.readSetup(self.client.configfile.getPath("PRODdir"))
 
         self.cell = [[numpy.nan for j in range(10)] for i in range(3)]
@@ -856,9 +856,14 @@ class MTPviewer(QMainWindow):
         # Then append all the lines of data,including ohms and temp
         for var in self.client.reader.getVarList('Ptline'):
             name = self.client.reader.getName('Ptline', var)
-            val = "%05d" % int(self.client.reader.getVar('Ptline', var))
-            R = "%06.2f" % self.client.reader.getCalcVal('Ptline', var,
-                                                         'resistance')
+            val = self.client.reader.getVar('Ptline', var)
+            if type(val) == float and numpy.isnan(val):
+                val = 'N/A'
+                R = 'N/A'
+            else:
+                val = "%05d" % int(val)
+                R = "%06.2f" % self.client.reader.getCalcVal('Ptline', var,
+                                                             'resistance')
 
             # For whatever reason, the Temp is not displayed in the VB code
             # for the low and hi ref channels. So block them out here.
@@ -896,7 +901,11 @@ class MTPviewer(QMainWindow):
         for var in self.client.reader.getVarList('M01line'):
             name = self.client.reader.getName('M01line', var)
             val = self.client.reader.getVar('M01line', var)
-            volts = self.client.reader.getCalcVal('M01line', var, 'volts')
+            if type(val) == float and numpy.isnan(val):
+                val = ''
+                volts = numpy.nan
+            else:
+                volts = self.client.reader.getCalcVal('M01line', var, 'volts')
             # Check for missing values in the MTP UDP feed, indicated by ,,
             # and read in as the string ''
             if (val == ''):
@@ -940,12 +949,15 @@ class MTPviewer(QMainWindow):
             name = self.client.reader.getName('M02line', var)
             val = self.client.reader.getVar('M02line', var)
             deg = self.client.reader.getCalcVal('M02line', var, 'temperature')
+            if type(val) == float and numpy.isnan(val):
+                val = ''
+                deg = numpy.nan
             # Check for missing values in the MTP UDP feed, indicated by ,,
             # and read in as the string ''
             if (val == ''):
                 val = "%10s" % ' '
                 degstr = '  '
-            elif numpy.isnan(deg):
+            elif type(deg) == float and numpy.isnan(deg):
                 val = "%04d" % int(val)
                 degstr = 'N/A'
             else:
