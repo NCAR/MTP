@@ -95,11 +95,12 @@ class Retriever():
             Temperature = BestWtdRCSet['FL_RCs']['sRTav'][l]
             self.PressureAlts.append(BestWtdRCSet['FL_RCs']['sBPrl'][l])
             for j in range(self.rcf_set._RCFs[0].getNUM_BRT_TEMPS()):
-                BtDiff = (ScanBTs[j] - BestWtdRCSet['FL_RCs']['sOBav'][j])
-                Temperature = Temperature + \
-                    (BestWtdRCSet['FL_RCs']['Src']
-                                 [l * self.rcf_set._RCFs[0].getNUM_BRT_TEMPS()
-                                  + j] * BtDiff)
+                if not numpy.isnan(ScanBTs[j]):
+                    BtDiff = (ScanBTs[j] - BestWtdRCSet['FL_RCs']['sOBav'][j])
+                    Temperature = Temperature + \
+                        (BestWtdRCSet['FL_RCs']['Src'][l *
+                         self.rcf_set._RCFs[0].getNUM_BRT_TEMPS() + j]
+                         * BtDiff)
             self.ATP['Temperatures'].append(Temperature)
 
         # Copy all elements from the returned vector to ATP['Altitudes']
