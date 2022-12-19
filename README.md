@@ -1,3 +1,6 @@
+
+[![DOI](https://img.shields.io/badge/DOI-10.26023/tydq-2669)](https://doi.org/10.26023/tydq-2669)
+
 <img align="left" width="175" height="175" src="./doc/images/tropo.png">
 
 ```
