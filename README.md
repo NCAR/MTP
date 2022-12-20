@@ -186,5 +186,5 @@ OR
 ## Citation
 When referencing this software in publications and proposals, please use the identifier 10.26023/tydq-2669 -- for example as a citation:
 
-Aquino, J. et al (2022). MTP [Software]. UCAR/NCAR - Earth Observing Laboratory. https://doi.org/10.26023/tydq-2669
+Aquino, J., Dewerd, C., & Webster, C. (2022). MTP [Software]. UCAR/NCAR - Earth Observing Laboratory. https://doi.org/10.26023/tydq-2669
 
