@@ -22,6 +22,11 @@
 # 1651091386 19.275332 -156.062 4292.3  1     258.431222 260.982892 259.7816012
 # 1651091386 19.275332 -156.062 4292.3  2     256.121395 258.486764 258.4142367
 # , etc. where the angles [1-11] are [80,55,42,25,12,0,-12,-25,-42,-55,-80]
+
+# 2023/02/02: An updated file format received 2023/01/17 replaces the angle
+# column with the actual angles and omits -55. Code has been updated to handle
+# both cases. Also, previous version of code inadvertently flipped the profiles
+# vertically. This has been corrected.
 #
 # Written in Python 3
 #
@@ -48,7 +53,8 @@ class readMTHP(readMTP):
         reclat = numpy.nan
         reclon = numpy.nan
         recalt = numpy.nan
-        expected_angle_index = 1
+        expected_angle_index = 1  # Index 1 corresponds to +80
+        self.angles = [80,55,42,25,12,0,-12,-25,-42,-80]
 
         while True:
 
@@ -81,13 +87,20 @@ class readMTHP(readMTP):
                 ch1 = self.vals[5]  # 56.363 frequency channel
                 ch2 = self.vals[6]  # 57.612 frequency channel
                 ch3 = self.vals[7]  # 58.363 frequency channel
-                if angle == 10:
+
+                # RF08 file received 2022/11/11 had angles 1-11 (index)
+                if angle == 10:  # This is an index indicator of angle
                     continue  # Skip angle 10 (-55)
-                if angle == 11:
+                if angle == 11:  # This is an index indicator of angle
                     angle = 10  # Reset
-                if angle == expected_angle_index:
+
+                # RF08 file received 2023/01/17 had angles 80 to -80
+                if angle < 1 or angle > 11:
+                    expected_angle = self.angles[expected_angle_index - 1]
+
+                if angle == expected_angle_index or angle == expected_angle:
                     # Save in original order to 'tb'
-                    index = (angle - 1) * 3
+                    index = (10 - expected_angle_index) * 3
                     self.rawscan['Bline']['values']['SCNT']['tb'][index] \
                         = float(ch1)
                     self.rawscan['Bline']['values']['SCNT']['tb'][index + 1] \
@@ -96,17 +109,17 @@ class readMTHP(readMTP):
                         = float(ch3)
 
                     # Save in inverted order to 'tbi'
-                    index = angle - 1
+                    index = 10 - expected_angle_index
                     self.rawscan['tbi'][index] = float(ch1)
                     self.rawscan['tbi'][index + 10] = float(ch2)
                     self.rawscan['tbi'][index + 20] = float(ch3)
                 else:
-                    logger.info("Angle %s was not expected. Should be %d" %
-                                (angle, expected_angle_index))
+                    logger.info("Angle %s was not expected. Should be %d or %d" %
+                                (angle, expected_angle_index, expected_angle))
                 expected_angle_index = expected_angle_index + 1
 
             # Check if we have a complete scan (all angles have found = True
-            if angle == 10:
+            if angle == 10 or angle == -80:
                 return True
 
     def saveLocation(self, var, val, expected_val):
