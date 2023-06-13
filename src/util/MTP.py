@@ -32,7 +32,7 @@ MTPrecord = {
         'data': '',  # A string containing the data values after date/time
         'values': {'DATE': {  # MTP Scan Date (YYYYMMDD)
                   'val': numpy.nan},
-                 'timestr': {  # MTP Scan Time (HHMMSS)
+                 'timestr': {  # MTP Scan Time (HH:MM:SS)
                   'val': numpy.nan},
                  'TIME': {  # MTP Scan Time (HHMMSS) converted to secs
                   'val': numpy.nan},
