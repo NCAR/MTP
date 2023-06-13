@@ -54,7 +54,7 @@ class readMTHP(readMTP):
         reclon = numpy.nan
         recalt = numpy.nan
         expected_angle_index = 1  # Index 1 corresponds to +80
-        self.angles = [80,55,42,25,12,0,-12,-25,-42,-80]
+        self.angles = [80, 55, 42, 25, 12, 0, -12, -25, -42, -80]
 
         while True:
 
@@ -114,8 +114,9 @@ class readMTHP(readMTP):
                     self.rawscan['tbi'][index + 10] = float(ch2)
                     self.rawscan['tbi'][index + 20] = float(ch3)
                 else:
-                    logger.info("Angle %s was not expected. Should be %d or %d" %
-                                (angle, expected_angle_index, expected_angle))
+                    logger.info("Angle %s was not expected. Should be %d or %d"
+                                % (angle, expected_angle_index, expected_angle)
+                                )
                 expected_angle_index = expected_angle_index + 1
 
             # Check if we have a complete scan (all angles have found = True
