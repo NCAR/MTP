@@ -51,6 +51,7 @@ import re
 import numpy
 import json
 import copy
+import datetime
 from util.MTP import MTPrecord
 from EOLpython.Qlogger.messageHandler import QLogger
 
@@ -425,7 +426,7 @@ class readMTP:
         if (m):
             # Save YYYYMMDD to variable DATE
             self.rawscan['Aline']['values']['DATE']['val'] = m.group(1)
-            # Save HHMMSS to variable TIME
+            # Save HH:MM:SS to variable timestr
             self.rawscan['Aline']['values']['timestr']['val'] = \
                 m.group(2)+":"+m.group(3)+":"+m.group(4)
             # Save seconds since midnight to variable TIME
@@ -635,3 +636,56 @@ class readMTP:
 
     def getBestWtdRCSet(self):
         return self.rawscan['BestWtdRCSet']
+
+    def openTB(self, filename):
+        """ Open a file to save the brightness temperatures in MTHP format """
+        print("Opening " + filename)
+        try:
+            self.tbfile = open(filename, 'a')
+        except Exception as e:
+            logger.error("Unable to open " + filename + ". Brightness " +
+                         "temperatures will not be written out: ", e)
+
+    def writeTB(self, reader, configfile):
+        """
+        The MTHP group has requested brightness temperatures from our MTP. This
+        function writes out the data as ascii text in the format they prefer:
+          seconds                              bright  bright  bright
+          since unix  lat  lon  alt     elev   temp    temp    temp
+          time        deg  deg  meters  angle  56.363  57.612  58.363
+        It is called with the --tb option to the command line.
+        """
+        # Get the current record
+        rawscan = reader.getRawscan()
+
+        # Parse out the date/time and convert to unixtime
+        y = int(rawscan['Aline']['values']['DATE']['val'][0:4])
+        m = int(rawscan['Aline']['values']['DATE']['val'][4:6])
+        d = int(rawscan['Aline']['values']['DATE']['val'][6:8])
+        h = int(rawscan['Aline']['values']['timestr']['val'][0:2])
+        n = int(rawscan['Aline']['values']['timestr']['val'][3:5])
+        s = int(rawscan['Aline']['values']['timestr']['val'][6:8])
+        unixtime = datetime.datetime(y, m, d, h, n, s).timestamp()
+
+        # Get the elevation angles
+        self.elAngles = configfile.getVal('ElAngles')
+
+        # Create the output line
+        for j in range(configfile.getInt('NUM_SCAN_ANGLES')):
+            buf = "%.1f,%.3f,%.3f,%.1f,%s," % \
+                (float(unixtime),
+                 float(rawscan['Aline']['values']['SALAT']['val']),
+                 float(rawscan['Aline']['values']['SALON']['val']),
+                 float(rawscan['Aline']['values']['SAPALT']['val'])*1000,
+                 self.elAngles[j])
+            for i in range(configfile.getInt('NUM_CHANNELS')):
+                # Should this be a call to MTPclient -> getTB?? - JAA
+                tb = reader.getCalcVal('Bline', 'SCNT', 'tb')
+                buf += "%.2f," % (float(tb[j*3+i]))
+            buf += "\n"
+            self.tbfile.write(buf)  # Write a line for each angle
+
+        return(buf)
+
+    def closeTB(self):
+        self.tbfile.close()

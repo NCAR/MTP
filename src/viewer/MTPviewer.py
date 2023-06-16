@@ -36,7 +36,8 @@ class MTPviewer(QMainWindow):
         if self.args.realtime:
             self.processor = None
         else:
-            self.processor = MTPprocessor(self, self.client, self.args.mthp)
+            self.processor = MTPprocessor(self, self.client, self.args.mthp,
+                                          self.args.tb)
             self.processor.readSetup(self.client.configfile.getPath("PRODdir"))
 
         self.cell = [[numpy.nan for j in range(10)] for i in range(3)]

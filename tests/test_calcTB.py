@@ -21,6 +21,7 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
 import os
+from unittest.mock import mock_open, patch
 from lib.rootdir import getrootdir
 from lib.config import config
 import unittest
@@ -51,15 +52,15 @@ class TESTcalcTBs(unittest.TestCase):
               "2228,2898,3082,1930,2923,2431,2944,2002,1345,2069,2239," + \
               "2166,1506,4095,1533,2175,13808,13811,10259,13368,13416," + \
               "13310,14460,020890,022318,022138,019200,020582,020097"
-        mtp = readMTP()  # Instantiate a reader
+        self.mtp = readMTP()  # Instantiate a reader
         # Save the contents of the udp packet to the MTP dictionary
-        mtp.parseAsciiPacket(udp)
+        self.mtp.parseAsciiPacket(udp)
 
-        pt = decodePt(mtp)  # Instantiate a decoder for the Pt line
+        pt = decodePt(self.mtp)  # Instantiate a decoder for the Pt line
         pt.calcTemp()       # Calculate the temperatures for the Pt values
 
         # Save off the values needed for calc brightness temperature
-        self.rawscan = mtp.getRawscan()
+        self.rawscan = self.mtp.getRawscan()
         Tifa = self.rawscan['Ptline']['values']['TMIXCNTP']['temperature']
         OAT = self.rawscan['Aline']['values']['SAAT']['val']
         scnt = self.rawscan['Bline']['values']['SCNT']['val']
@@ -67,10 +68,10 @@ class TESTcalcTBs(unittest.TestCase):
         # Read gain constants from the config file
         self.config = os.path.join(getrootdir(), 'Data', 'NGV', 'DEEPWAVE',
                                    'config', 'proj.yml')
-        configfile = config(self.config)
+        self.configfile = config(self.config)
 
         # Calculate the brightness temperatures
-        tb = BrightnessTemperature(configfile)
+        tb = BrightnessTemperature(self.configfile)
         self.rawscan['Bline']['values']['SCNT']['tb'] = \
             tb.TBcalculationRT(Tifa, OAT, scnt)
 
@@ -91,3 +92,13 @@ class TESTcalcTBs(unittest.TestCase):
             self.assertEqual(
                 "%8.4f" % self.rawscan['Bline']['values']['SCNT']['tb'][i],
                 tb[i])
+
+    def testWriteTB(self):
+        """ Test that the ascii csv line is formed correctly """
+        out = "1402057458.0,-43.290,172.296,4000.0,-80,266.05,264.49,264.01,\n"
+        with patch('__main__.open', mock_open()):
+            with open("junk") as self.tbfile:
+                self.mtp.openTB("junk")
+            buf = self.mtp.writeTB(self.mtp, self.configfile)
+        self.mtp.closeTB()
+        self.assertEqual(buf, out)

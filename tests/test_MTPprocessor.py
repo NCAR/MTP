@@ -56,10 +56,11 @@ class TESTMTPprocessor(unittest.TestCase):
         self.client = MTPclient()
         self.client.readConfig(self.configfile)
         self.args = argparse.Namespace(PRODdir=self.proddir, realtime=False,
-                                       mthp=False)
+                                       mthp=False, tb=False)
         with patch.object(MTPviewer, 'setFltno'):
             self.viewer = MTPviewer(self.client, self.app, self.args)
-        self.processor = MTPprocessor(self.viewer, self.client, self.args.mthp)
+        self.processor = MTPprocessor(self.viewer, self.client, self.args.mthp,
+                                      self.args.tb)
 
         self.maxDiff = None
 

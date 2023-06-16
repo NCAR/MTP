@@ -84,6 +84,9 @@ class MTPclient():
             '--cnts', dest='cnts', action='store_const', const=True,
             help='Plot counts instead of scan/template. Useful for testing')
         parser.add_argument(
+            '--tb', dest='tb', action='store_const', const=True, default=False,
+            help='Write brightness temperatures to an ascii file')
+        parser.add_argument(
             '--rt', dest='realtime', action='store_const', const=True,
             default=False, help='Run in real-time monitoring mode.')
         parser.add_argument(
