@@ -1,7 +1,7 @@
 pipeline {
   agent {
      node { 
-        label 'CentOS8'
+        label 'CentOS8_x86_64'
         } 
   }
   environment {
@@ -37,7 +37,7 @@ conda activate mtp
   }
   post {
     failure {
-      mail(subject: 'MTP Jenkinsfile build failed', body: 'See build console output within jenkins for details', to: 'janine@ucar.edu cdewerd@ucar.edu cjw@ucar.edu taylort@ucar.edu')
+      mail(subject: 'MTP Jenkinsfile build failed', body: 'See build console output within jenkins for details', to: 'janine@ucar.edu cdewerd@ucar.edu cjw@ucar.edu')
     }
 
   }
