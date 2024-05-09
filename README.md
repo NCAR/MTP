@@ -171,7 +171,7 @@ OR
 > ../tests/run_tests.sh
 ```
 
-* On a WINDOWS10:
+* On a WINDOWS10 machine:
 ```
 > cd src
 OR
