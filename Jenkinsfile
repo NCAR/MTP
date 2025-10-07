@@ -5,10 +5,7 @@ pipeline {
         } 
   }
   environment {
-    def fileContent = readFile('/var/lib/jenkins/.conda/environments.txt')
-    if (fileContent.contains('/opt/local/anaconda3/envs/mtp')) {
-      condaenv = fileExists '/opt/local/anaconda3/envs/mtp'
-    }
+    condaenv = fileExists '/opt/local/anaconda3/envs/mtp'
   }
   stages {
     stage('Checkout Scm') {
