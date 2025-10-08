@@ -16,7 +16,7 @@ import select
 from ctrl.mtp_client import MTPClient
 from ctrl.view import MTPControlView
 from EOLpython.Qlogger.messageHandler import QLogger
-from PyQt5.QtWidgets import QApplication
+from PyQT6.QtWidgets import QApplication
 
 logger = QLogger("EOLlogger")
 

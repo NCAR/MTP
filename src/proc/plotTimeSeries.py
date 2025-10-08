@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from matplotlib.backends.backend_qt5agg import (
        FigureCanvasQTAgg as FigureCanvas)
-from PyQt5.QtWidgets import QComboBox
+from PyQT6.QtWidgets import QComboBox
 from EOLpython.Qlogger.messageHandler import QLogger
 
 logger = QLogger("EOLlogger")

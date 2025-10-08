@@ -16,7 +16,7 @@
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
 #import unittest
-#from PyQt5.QtWidgets import QApplication
+#from PyQt6.QtWidgets import QApplication
 
 #from viewer.MTPviewer import MTPviewer
 #from viewer.MTPclient import MTPclient

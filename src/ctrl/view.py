@@ -7,11 +7,11 @@
 ###############################################################################
 import time
 import select
-from PyQt5.QtWidgets import QWidget, QPushButton, QPlainTextEdit, \
+from PyQT6.QtWidgets import QWidget, QPushButton, QPlainTextEdit, \
         QGridLayout, QVBoxLayout, QLabel, QHBoxLayout, QGroupBox, QFrame
-from PyQt5 import QtGui
-from PyQt5.QtCore import QSize, QThread, QObject, pyqtSignal
-from PyQt5.QtWidgets import (QLineEdit, QDialog)
+from PyQT6 import QtGui
+from PyQT6.QtCore import QSize, QThread, QObject, pyqtSignal
+from PyQT6.QtWidgets import (QLineEdit, QDialog)
 from EOLpython.Qlogger.messageHandler import QLogger
 
 logger = QLogger("EOLlogger")

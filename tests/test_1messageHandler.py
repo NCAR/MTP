@@ -22,7 +22,7 @@ import unittest
 import logging
 from io import StringIO
 from unittest.mock import patch
-from PyQt5.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication
 from EOLpython.Qlogger.messageHandler import QLogger
 
 logger = QLogger("EOLlogger")

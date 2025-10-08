@@ -9,11 +9,11 @@
 ###############################################################################
 import numpy
 import datetime
-from PyQt5.QtWidgets import QMainWindow, QGridLayout, QWidget, \
+from PyQt6.QtWidgets import QMainWindow, QGridLayout, QWidget, \
         QPlainTextEdit, QFrame, QAction, QLabel, QPushButton, QGroupBox, \
         QLineEdit, QInputDialog
-from PyQt5.QtCore import QSocketNotifier, Qt
-from PyQt5.QtGui import QFontMetrics, QFont
+from PyQt6.QtCore import QSocketNotifier, Qt
+from PyQt6.QtGui import QFontMetrics, QFont
 from util.profile_structs import TropopauseRecord
 from util.ck_limits import MTPCkLimit
 from viewer.plotScanTemp import ScanTemp

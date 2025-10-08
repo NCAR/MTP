@@ -6,7 +6,7 @@
 #
 # COPYRIGHT:   University Corporation for Atmospheric Research, 2019
 ###############################################################################
-from PyQt5.QtNetwork import QUdpSocket, QHostAddress
+from PyQt6.QtNetwork import QUdpSocket, QHostAddress
 
 
 class grabSocket():

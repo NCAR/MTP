@@ -15,10 +15,10 @@ from matplotlib.backends.backend_qt5agg import (
 from util.readGVnc import readGVnc
 from proc.file_struct import data_files
 from proc.plotTimeSeries import TimeSeries
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QMainWindow, QGridLayout, QWidget, QAction, \
+from PyQT6.QtCore import Qt
+from PyQT6.QtWidgets import QMainWindow, QGridLayout, QWidget, QAction, \
                             QListWidget, QLabel
-from PyQt5.QtGui import QFont
+from PyQT6.QtGui import QFont
 from EOLpython.Qlogger.messageHandler import QLogger
 
 logger = QLogger("EOLlogger")

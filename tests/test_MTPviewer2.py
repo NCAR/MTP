@@ -24,7 +24,7 @@ import logging
 from io import StringIO
 from viewer.MTPclient import MTPclient
 from viewer.MTPviewer import MTPviewer
-from PyQt5.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication
 from lib.rootdir import getrootdir
 from EOLpython.Qlogger.messageHandler import QLogger
 

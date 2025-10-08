@@ -12,7 +12,7 @@ from matplotlib.backends.backend_qt5agg import (
 from matplotlib.ticker import MultipleLocator
 from matplotlib.colors import BoundaryNorm
 from matplotlib.ticker import MaxNLocator
-from PyQt5.QtWidgets import QMainWindow, QGridLayout, QWidget
+from PyQt6.QtWidgets import QMainWindow, QGridLayout, QWidget
 
 
 class Curtain(QMainWindow):

@@ -9,7 +9,7 @@ import os
 import sys
 import datetime
 from viewer.MTPviewer import MTPviewer
-from PyQt5.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication
 from viewer.MTPclient import MTPclient
 from EOLpython.Qlogger.messageHandler import QLogger
 

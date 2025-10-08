@@ -20,7 +20,7 @@ import unittest
 from unittest.mock import patch
 import argparse
 from viewer.MTPviewer import MTPviewer
-from PyQt5.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication
 from viewer.MTPclient import MTPclient
 from lib.rootdir import getrootdir
 

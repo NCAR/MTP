@@ -67,7 +67,7 @@ import re
 import time
 # import math
 import argparse
-# from PyQt5.QtCore import QFileSystemWatcher
+# from PyQt6.QtCore import QFileSystemWatcher
 from socket import socket, AF_INET, SOCK_DGRAM, IPPROTO_IP, IP_MULTICAST_TTL, \
     SOL_SOCKET, SO_BROADCAST, SO_REUSEADDR
 
